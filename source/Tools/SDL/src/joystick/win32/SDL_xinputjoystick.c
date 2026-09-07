@@ -19,6 +19,7 @@
 	Sam Lantinga
 	slouken@libsdl.org
 */
+#include "pch.h"
 #include "SDL_config.h"
 
 #ifdef SDL_JOYSTICK_XINPUT

@@ -19,6 +19,7 @@
     Sam Lantinga
     slouken@libsdl.org
 */
+#include "pch.h"
 #include "SDL_config.h"
 
 /* Dummy SDL video driver implementation; this is just enough to make an

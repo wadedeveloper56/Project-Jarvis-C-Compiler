@@ -19,6 +19,7 @@
     Sam Lantinga
     slouken@libsdl.org
 */
+#include "pch.h"
 #include "SDL_config.h"
 
 /* This is the CD-audio control API for Simple DirectMedia Layer */

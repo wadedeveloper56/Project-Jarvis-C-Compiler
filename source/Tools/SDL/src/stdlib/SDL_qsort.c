@@ -41,6 +41,7 @@
  *
  * Gareth McCaughan   Peterhouse   Cambridge   1998
  */
+#include "pch.h"
 #include "SDL_config.h"
 
 /*
