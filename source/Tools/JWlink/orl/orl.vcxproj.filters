@@ -125,61 +125,61 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="orlold.c">
+    <ClCompile Include="orlold.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="pch.c">
+    <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\orlentry.c">
+    <ClCompile Include="c\orlentry.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\orlflhnd.c">
+    <ClCompile Include="c\orlflhnd.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\orlhash.c">
+    <ClCompile Include="c\orlhash.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="coff\c\coffentr.c">
+    <ClCompile Include="coff\c\coffentr.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="coff\c\coffflhn.c">
+    <ClCompile Include="coff\c\coffflhn.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="coff\c\coffimpl.c">
+    <ClCompile Include="coff\c\coffimpl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="coff\c\coffload.c">
+    <ClCompile Include="coff\c\coffload.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="coff\c\cofflwlv.c">
+    <ClCompile Include="coff\c\cofflwlv.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="elf\c\elfentr.c">
+    <ClCompile Include="elf\c\elfentr.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="elf\c\elfflhn.c">
+    <ClCompile Include="elf\c\elfflhn.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="elf\c\elfload.c">
+    <ClCompile Include="elf\c\elfload.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="elf\c\elflwlv.c">
+    <ClCompile Include="elf\c\elflwlv.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="omf\c\omfdrctv.c">
+    <ClCompile Include="omf\c\omfdrctv.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="omf\c\omfentr.c">
+    <ClCompile Include="omf\c\omfentr.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="omf\c\omfflhn.c">
+    <ClCompile Include="omf\c\omfflhn.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="omf\c\omfload.c">
+    <ClCompile Include="omf\c\omfload.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="omf\c\omfmunge.c">
+    <ClCompile Include="omf\c\omfmunge.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

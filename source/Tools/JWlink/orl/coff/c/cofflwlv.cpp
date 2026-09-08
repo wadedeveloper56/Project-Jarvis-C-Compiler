@@ -66,7 +66,7 @@ orl_return CoffCreateSymbolHandles( coff_file_handle file_hnd )
         } else {
             len = strlen( current->symbol->name.name_string );
             if( strlen( current->symbol->name.name_string ) >= COFF_SYM_NAME_LEN ) {
-                current->name = _ClientAlloc( file_hnd, COFF_SYM_NAME_LEN + 1 );
+                current->name = (char *) _ClientAlloc( file_hnd, COFF_SYM_NAME_LEN + 1 );
                 strncpy( current->name, current->symbol->name.name_string, COFF_SYM_NAME_LEN );
                 current->name[COFF_SYM_NAME_LEN] = '\0';
                 current->name_alloced = COFF_TRUE;
@@ -81,28 +81,28 @@ orl_return CoffCreateSymbolHandles( coff_file_handle file_hnd )
             }
         }
         sechdl = NULL;
-        current->type = 0;
+        current->type = (orl_symbol_type)0;
         switch( current->symbol->sec_num ) {
             case IMAGE_SYM_DEBUG:
-                current->type |= ORL_SYM_TYPE_DEBUG;
+                DO_OR_EQ(orl_symbol_type, current->type, |=, ORL_SYM_TYPE_DEBUG);
                 current->binding = ORL_SYM_BINDING_NONE;
                 break;
             case IMAGE_SYM_ABSOLUTE:
-                current->type |= ORL_SYM_TYPE_ABSOLUTE;
+                DO_OR_EQ(orl_symbol_type, current->type, |=, ORL_SYM_TYPE_ABSOLUTE);
                 current->binding = ORL_SYM_BINDING_NONE; // ?
                 break;
             case IMAGE_SYM_UNDEFINED:
                 if( current->symbol->value == 0) {
-                    current->type |= ORL_SYM_TYPE_UNDEFINED;
+                    DO_OR_EQ(orl_symbol_type, current->type, |=, ORL_SYM_TYPE_UNDEFINED);
                 } else {
-                    current->type |= ORL_SYM_TYPE_COMMON;
+                    DO_OR_EQ(orl_symbol_type, current->type, |=, ORL_SYM_TYPE_COMMON);
                 }
                 break;
             default:
-                current->type |= ORL_SYM_TYPE_DEFINED;
+                DO_OR_EQ(orl_symbol_type, current->type, |=, ORL_SYM_TYPE_DEFINED);
                 sechdl = file_hnd->orig_sec_hnd[current->symbol->sec_num - 1];
                 if( sechdl->flags & ORL_SEC_FLAG_COMDAT ) {
-                    current->type |= ORL_SYM_CDAT_MASK;
+                    DO_OR_EQ(orl_symbol_type, current->type, |=, ORL_SYM_CDAT_MASK);
                 }
                 break;
         }
@@ -138,9 +138,9 @@ orl_return CoffCreateSymbolHandles( coff_file_handle file_hnd )
                 }
                 type = _CoffComplexType( current->symbol->type );
                 if( type & IMAGE_SYM_DTYPE_FUNCTION ) {
-                    current->type |= ORL_SYM_TYPE_FUNCTION;
+                    DO_OR_EQ(orl_symbol_type, current->type, |=, ORL_SYM_TYPE_FUNCTION);
                 } else {
-                    current->type |= ORL_SYM_TYPE_OBJECT;
+                    DO_OR_EQ(orl_symbol_type, current->type, |=, ORL_SYM_TYPE_OBJECT);
                 }
                 break;
             case IMAGE_SYM_CLASS_STATIC:
@@ -148,26 +148,25 @@ orl_return CoffCreateSymbolHandles( coff_file_handle file_hnd )
                 if( current->symbol->num_aux == 0 ) {
                     if( sechdl != NULL
                         && strcmp( sechdl->name, current->name ) == 0 ) {
-                        current->type |= ORL_SYM_TYPE_SECTION;
+                        DO_OR_EQ(orl_symbol_type, current->type, |=, ORL_SYM_TYPE_SECTION);
                     } else {
                         type = _CoffComplexType( current->symbol->type );
                         if( type & IMAGE_SYM_DTYPE_FUNCTION ) {
-                            current->type |= ORL_SYM_TYPE_FUNCTION;
+                            DO_OR_EQ(orl_symbol_type, current->type, |=, ORL_SYM_TYPE_FUNCTION);
                         } else {
-                            current->type |= ORL_SYM_TYPE_OBJECT;
+                            DO_OR_EQ(orl_symbol_type, current->type, |=, ORL_SYM_TYPE_OBJECT);
                         }
                     }
                 } else if( current->symbol->num_aux == 1
                         && current->type & ORL_SYM_CDAT_MASK ) {
-                    current->type |= ORL_SYM_TYPE_SECTION;
+                    DO_OR_EQ(orl_symbol_type, current->type, |=, ORL_SYM_TYPE_SECTION);
                     aux = (coff_sym_section *)(current->symbol + 1);
-                    current->type &= ~ORL_SYM_CDAT_MASK;
-                    current->type |= (aux->selection << ORL_SYM_CDAT_SHIFT)
-                                        & ORL_SYM_CDAT_MASK;
+                    DO_AND_EQ(orl_symbol_type, current->type, &=, ~ORL_SYM_CDAT_MASK);
+                    DO_OR_EQ(orl_symbol_type, current->type, |=, (aux->selection << ORL_SYM_CDAT_SHIFT) & ORL_SYM_CDAT_MASK);
                 } else {
                     type = _CoffComplexType( current->symbol->type );
                     if( type & IMAGE_SYM_DTYPE_FUNCTION ) {
-                        current->type |= ORL_SYM_TYPE_FUNCTION;
+                        DO_OR_EQ(orl_symbol_type, current->type, |=, ORL_SYM_TYPE_FUNCTION);
                     }
                 }
                 break;
@@ -181,11 +180,11 @@ orl_return CoffCreateSymbolHandles( coff_file_handle file_hnd )
                     current->binding = ORL_SYM_BINDING_NONE;
                 else
                     current->binding = ORL_SYM_BINDING_LOCAL;
-                current->type |= ORL_SYM_TYPE_FUNC_INFO;
+                DO_OR_EQ(orl_symbol_type, current->type, |=, ORL_SYM_TYPE_FUNC_INFO);
                 break;
             case IMAGE_SYM_CLASS_FILE:
                 current->binding = ORL_SYM_BINDING_LOCAL;
-                current->type |= ORL_SYM_TYPE_FILE;
+                DO_OR_EQ(orl_symbol_type, current->type, |=, ORL_SYM_TYPE_FILE);
                 break;
         }
         prev = loop;
@@ -359,7 +358,7 @@ orl_reloc_type CoffConvertRelocType( coff_file_handle coff_file_hnd, coff_reloc_
                 return( ORL_RELOC_TYPE_NONE );
         }
     }
-    return( 0 );
+    return( (orl_reloc_type)0 );
 }
 
 orl_return CoffCreateRelocs( coff_sec_handle orig_sec, coff_sec_handle reloc_sec )
@@ -526,7 +525,7 @@ static orl_return ParseLnkCmd( char *cmd, char **contents, int *len,
         }
     }
     l = value - *contents;
-    arg = malloc( l + 1 );
+    arg = (char *)malloc( l + 1 );
     memcpy( arg, *contents, l );
     *contents = value;
     if ( delim )

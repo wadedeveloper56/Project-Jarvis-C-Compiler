@@ -53,9 +53,9 @@ static void             setInitialData( omf_file_handle ofh )
      */
     ofh->machine_type = ORL_MACHINE_TYPE_I8086;
     ofh->type = ORL_FILE_TYPE_OBJECT;
-    ofh->flags = 0;
-    ofh->flags |= ORL_FILE_FLAG_LITTLE_ENDIAN;
-    ofh->flags |= ORL_FILE_FLAG_16BIT_MACHINE;
+    ofh->flags = (orl_file_flags)0;
+    DO_OR_EQ(orl_file_flags, ofh->flags, |=, ORL_FILE_FLAG_LITTLE_ENDIAN);
+    DO_OR_EQ(orl_file_flags, ofh->flags, |=, ORL_FILE_FLAG_16BIT_MACHINE);
     ofh->debug_style = OMF_DBG_STYLE_CODEVIEW;
 }
 
@@ -135,11 +135,11 @@ static orl_return       loadRecord( omf_file_handle ofh )
 
     assert( ofh );
 
-    buff = _ClientRead( ofh, 2 );
+    buff = (omf_bytes) _ClientRead( ofh, 2 );
     if( !buff ) return( ORL_ERROR );
     len = getUWord( buff, 2 );
     if( len <= 0 ) return( ORL_ERROR );
-    ofh->parsebuf = _ClientRead( ofh, len );
+    ofh->parsebuf = (omf_bytes) _ClientRead( ofh, len );
     if( !ofh->parsebuf ) return( ORL_ERROR );
     ofh->parselen = len - 1;
 
@@ -339,7 +339,7 @@ static orl_return       doTHEADR( omf_file_handle ofh )
 static orl_return       doCOMENT( omf_file_handle ofh )
 {
     orl_return          err;
-    uint_8              class;
+    uint_8              class1;
     uint_8              flags;
     omf_bytes           buffer;
     unsigned int        len;
@@ -352,15 +352,15 @@ static orl_return       doCOMENT( omf_file_handle ofh )
     buffer = ofh->parsebuf;
     len = ofh->parselen;
     flags = buffer[0];
-    class = buffer[1];
+    class1 = buffer[1];
     buffer += 2;
     if( len < 2 ) return( ORL_ERROR );
     len -= 2;
 
-    err = OmfAddComment( ofh, class, flags, buffer, len );
+    err = OmfAddComment( ofh, class1, flags, buffer, len );
     if( err != ORL_OKAY ) return( err );
 
-    switch( class ) {
+    switch( class1 ) {
     case( CMT_WAT_PROC_MODEL ):
     case( CMT_MS_PROC_MODEL ):
         /* Determine CPU
@@ -372,12 +372,12 @@ static orl_return       doCOMENT( omf_file_handle ofh )
             /* 16 bit code
              */
             ofh->machine_type = ORL_MACHINE_TYPE_I8086;
-            _SetWordSize( ofh->flags, ORL_FILE_FLAG_16BIT_MACHINE );
+            _SetWordSize( orl_file_flags, ofh->flags, ORL_FILE_FLAG_16BIT_MACHINE );
             break;
         case( '3' ):
         default:
             ofh->machine_type = ORL_MACHINE_TYPE_I386;
-            _SetWordSize( ofh->flags, ORL_FILE_FLAG_32BIT_MACHINE );
+            _SetWordSize( orl_file_flags, ofh->flags, ORL_FILE_FLAG_32BIT_MACHINE );
             break;
         }
 
@@ -392,7 +392,7 @@ static orl_return       doCOMENT( omf_file_handle ofh )
         if( ( flags == CMT_TNP ) && !memcmp( buffer, EASY_OMF_SIGNATURE, 5 ) ) {
             ofh->status |= OMF_STATUS_EASY_OMF;
             ofh->machine_type = ORL_MACHINE_TYPE_I386;
-            _SetWordSize( ofh->flags, ORL_FILE_FLAG_32BIT_MACHINE );
+            _SetWordSize( orl_file_flags, ofh->flags, ORL_FILE_FLAG_32BIT_MACHINE );
             ofh->status |= OMF_STATUS_ARCH_SET;
         }
         break;
@@ -720,7 +720,7 @@ static orl_return       doSEGDEF( omf_file_handle ofh, omf_rectyp typ )
     omf_bytes           buffer;
     long                len;
     omf_idx             name;
-    omf_idx             class;
+    omf_idx             class1;
     uint_8              datum;
     int                 is32;
     int                 wordsize;
@@ -780,7 +780,7 @@ static orl_return       doSEGDEF( omf_file_handle ofh, omf_rectyp typ )
     }
 
     name = loadIndex( &buffer, &len );
-    class = loadIndex( &buffer, &len );
+    class1 = loadIndex( &buffer, &len );
     loadIndex( &buffer, &len );
 
     if( ofh->status & OMF_STATUS_EASY_OMF ) {
@@ -795,12 +795,12 @@ static orl_return       doSEGDEF( omf_file_handle ofh, omf_rectyp typ )
 
     if( use32 && !( ofh->status & OMF_STATUS_ARCH_SET ) ) {
         ofh->machine_type = ORL_MACHINE_TYPE_I386;
-        _SetWordSize( ofh->flags, ORL_FILE_FLAG_32BIT_MACHINE );
+        _SetWordSize( orl_file_flags, ofh->flags, ORL_FILE_FLAG_32BIT_MACHINE );
         ofh->status |= OMF_STATUS_ARCH_SET;
     }
 
     return( OmfAddSegDef( ofh, is32, align, combine, use32, max, frame, size,
-                          name, class ) );
+                          name, class1 ) );
 }
 
 
@@ -827,7 +827,7 @@ static orl_return       doGRPDEF( omf_file_handle ofh )
      */
     if( len > 65536 ) return( ORL_ERROR );
     size = ( ( len / 2 ) + 1 ) * sizeof( omf_idx );
-    segs = _ClientAlloc( ofh, size );
+    segs = (omf_idx *)_ClientAlloc( ofh, size );
     if( !segs ) return( ORL_OUT_OF_MEMORY );
     memset( segs, 0, size );
 
@@ -1119,14 +1119,14 @@ orl_return OmfLoadFileStructure( omf_file_handle ofh )
     assert( ofh );
 
     setInitialData( ofh );
-    typ = _ClientRead( ofh, 1 );
+    typ = (omf_rectyp *)_ClientRead( ofh, 1 );
     if( !typ || ( *typ != CMD_THEADR ) ) return( ORL_ERROR );
     ofh->last_rec = *typ;
     err = doTHEADR( ofh );
     if( err != ORL_OKAY ) return( err );
 
     for( ;; ) {
-        typ = _ClientRead( ofh, 1 );
+        typ = (omf_rectyp *)_ClientRead( ofh, 1 );
         if( !typ ) {
             err = ORL_ERROR;
             break;

@@ -221,25 +221,25 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="coff\c\coffentr.c" />
-    <ClCompile Include="coff\c\coffflhn.c" />
-    <ClCompile Include="coff\c\coffimpl.c" />
-    <ClCompile Include="coff\c\coffload.c" />
-    <ClCompile Include="coff\c\cofflwlv.c" />
-    <ClCompile Include="c\orlentry.c" />
-    <ClCompile Include="c\orlflhnd.c" />
-    <ClCompile Include="c\orlhash.c" />
-    <ClCompile Include="elf\c\elfentr.c" />
-    <ClCompile Include="elf\c\elfflhn.c" />
-    <ClCompile Include="elf\c\elfload.c" />
-    <ClCompile Include="elf\c\elflwlv.c" />
-    <ClCompile Include="omf\c\omfdrctv.c" />
-    <ClCompile Include="omf\c\omfentr.c" />
-    <ClCompile Include="omf\c\omfflhn.c" />
-    <ClCompile Include="omf\c\omfload.c" />
-    <ClCompile Include="omf\c\omfmunge.c" />
-    <ClCompile Include="orlold.c" />
-    <ClCompile Include="pch.c">
+    <ClCompile Include="coff\c\coffentr.cpp" />
+    <ClCompile Include="coff\c\coffflhn.cpp" />
+    <ClCompile Include="coff\c\coffimpl.cpp" />
+    <ClCompile Include="coff\c\coffload.cpp" />
+    <ClCompile Include="coff\c\cofflwlv.cpp" />
+    <ClCompile Include="c\orlentry.cpp" />
+    <ClCompile Include="c\orlflhnd.cpp" />
+    <ClCompile Include="c\orlhash.cpp" />
+    <ClCompile Include="elf\c\elfentr.cpp" />
+    <ClCompile Include="elf\c\elfflhn.cpp" />
+    <ClCompile Include="elf\c\elfload.cpp" />
+    <ClCompile Include="elf\c\elflwlv.cpp" />
+    <ClCompile Include="omf\c\omfdrctv.cpp" />
+    <ClCompile Include="omf\c\omfentr.cpp" />
+    <ClCompile Include="omf\c\omfflhn.cpp" />
+    <ClCompile Include="omf\c\omfload.cpp" />
+    <ClCompile Include="omf\c\omfmunge.cpp" />
+    <ClCompile Include="orlold.cpp" />
+    <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

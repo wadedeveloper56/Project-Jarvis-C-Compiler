@@ -188,7 +188,7 @@ elf_sec_handle ELFENTRY ElfSecGetSymbolTable( elf_sec_handle elf_sec_hnd )
         case ORL_SEC_TYPE_RELOCS_EXPADD:
             return( elf_sec_hnd->assoc.reloc.symbol_table );
         case ORL_SEC_TYPE_EXPORT:
-            return( elf_sec_hnd->assoc.export.symbol_table );
+            return( elf_sec_hnd->assoc.export1.symbol_table );
         default:
             return( NULL );
     }

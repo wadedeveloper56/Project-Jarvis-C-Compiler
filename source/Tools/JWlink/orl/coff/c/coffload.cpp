@@ -103,31 +103,31 @@ static int determine_file_specs( coff_file_handle coff_file_hnd,
 
     coff_file_hnd->flags = ORL_FILE_FLAG_NONE;
     if( flags & IMAGE_FILE_RELOCS_STRIPPED ) {
-            coff_file_hnd->flags |= ORL_FILE_FLAG_RELOCS_STRIPPED;
+            DO_OR_EQ(orl_file_flags, coff_file_hnd->flags, |=, ORL_FILE_FLAG_RELOCS_STRIPPED);
     }
     if( flags & IMAGE_FILE_LINE_NUMS_STRIPPED ) {
-            coff_file_hnd->flags |= ORL_FILE_FLAG_LINE_NUMS_STRIPPED;
+            DO_OR_EQ(orl_file_flags, coff_file_hnd->flags, |=, ORL_FILE_FLAG_LINE_NUMS_STRIPPED);
     }
     if( flags & IMAGE_FILE_LOCAL_SYMS_STRIPPED ) {
-            coff_file_hnd->flags |= ORL_FILE_FLAG_LOCAL_SYMS_STRIPPED;
+            DO_OR_EQ(orl_file_flags, coff_file_hnd->flags, |=, ORL_FILE_FLAG_LOCAL_SYMS_STRIPPED);
     }
     if( flags & IMAGE_FILE_DEBUG_STRIPPED ) {
-            coff_file_hnd->flags |= ORL_FILE_FLAG_DEBUG_STRIPPED;
+            DO_OR_EQ(orl_file_flags, coff_file_hnd->flags, |=, ORL_FILE_FLAG_DEBUG_STRIPPED);
     }
     if( flags & IMAGE_FILE_16BIT_MACHINE ) {
-            coff_file_hnd->flags |= ORL_FILE_FLAG_16BIT_MACHINE;
+            DO_OR_EQ(orl_file_flags, coff_file_hnd->flags, |=, ORL_FILE_FLAG_16BIT_MACHINE);
     }
     if( flags & IMAGE_FILE_32BIT_MACHINE ) {
-            coff_file_hnd->flags |= ORL_FILE_FLAG_32BIT_MACHINE;
+            DO_OR_EQ(orl_file_flags, coff_file_hnd->flags, |=, ORL_FILE_FLAG_32BIT_MACHINE);
     }
     if( flags & IMAGE_FILE_SYSTEM ) {
-            coff_file_hnd->flags |= ORL_FILE_FLAG_SYSTEM;
+            DO_OR_EQ(orl_file_flags, coff_file_hnd->flags, |=, ORL_FILE_FLAG_SYSTEM);
     }
     if( coff_file_hnd->type != ORL_FILE_TYPE_OBJECT ) {
         /* There are no known big endian PE images, but there are lying
          * cheating PE images that claim to be big endian and aren't.
          */
-        coff_file_hnd->flags |= ORL_FILE_FLAG_LITTLE_ENDIAN;
+        DO_OR_EQ(orl_file_flags, coff_file_hnd->flags, |=, ORL_FILE_FLAG_LITTLE_ENDIAN);
     } else {
         /*
         if( flags & IMAGE_FILE_BYTES_REVERSED_LO ) {
@@ -135,12 +135,12 @@ static int determine_file_specs( coff_file_handle coff_file_hnd,
         }
         */
         if( flags & IMAGE_FILE_BYTES_REVERSED_HI ) {
-            coff_file_hnd->flags |= ORL_FILE_FLAG_BIG_ENDIAN;
+            DO_OR_EQ(orl_file_flags, coff_file_hnd->flags, |=, ORL_FILE_FLAG_BIG_ENDIAN);
         } else {
             /* Inserting a default here - note that the BYTES_REVERSED_LO/HI 
              * flags are now deprecated and neither is supposed to be present.
              */
-            coff_file_hnd->flags |= ORL_FILE_FLAG_LITTLE_ENDIAN;
+            DO_OR_EQ(orl_file_flags, coff_file_hnd->flags, |=, ORL_FILE_FLAG_LITTLE_ENDIAN);
         }
     }
 
@@ -165,13 +165,13 @@ static void determine_section_specs( coff_sec_handle coff_sec_hnd,
         coff_sec_hnd->type = ORL_SEC_TYPE_NOTE;
     } else if( s_hdr->flags & IMAGE_SCN_CNT_CODE ) {
         coff_sec_hnd->type = ORL_SEC_TYPE_PROG_BITS;
-        coff_sec_hnd->flags |= ORL_SEC_FLAG_EXEC;
+        DO_OR_EQ(orl_sec_flags, coff_sec_hnd->flags, |=, ORL_SEC_FLAG_EXEC);
     } else if( s_hdr->flags & IMAGE_SCN_CNT_INITIALIZED_DATA ) {
         coff_sec_hnd->type = ORL_SEC_TYPE_PROG_BITS;
-        coff_sec_hnd->flags |= ORL_SEC_FLAG_INITIALIZED_DATA;
+        DO_OR_EQ(orl_sec_flags, coff_sec_hnd->flags, |=, ORL_SEC_FLAG_INITIALIZED_DATA);
     } else if( s_hdr->flags & IMAGE_SCN_CNT_UNINITIALIZED_DATA ) {
         coff_sec_hnd->type = ORL_SEC_TYPE_PROG_BITS;
-        coff_sec_hnd->flags |= ORL_SEC_FLAG_UNINITIALIZED_DATA;
+        DO_OR_EQ(orl_sec_flags, coff_sec_hnd->flags, |=, ORL_SEC_FLAG_UNINITIALIZED_DATA);
     } else {
         coff_sec_hnd->type = ORL_SEC_TYPE_NONE;
     }
@@ -179,37 +179,37 @@ static void determine_section_specs( coff_sec_handle coff_sec_hnd,
 //      coff_sec_hnd->flags |= ORL_SEC_FLAG_GROUPED;
 //  }
     if( s_hdr->flags & IMAGE_SCN_TYPE_NO_PAD ) {
-        coff_sec_hnd->flags |= ORL_SEC_FLAG_NO_PADDING;
+        DO_OR_EQ(orl_sec_flags, coff_sec_hnd->flags, |=, ORL_SEC_FLAG_NO_PADDING);
     }
 //  if( s_hdr->flags & IMAGE_SCN_LNK_OVER ) {           // no MS support
 //      coff_sec_hnd->flags |= ORL_SEC_FLAG_OVERLAY;
 //  }
     if( s_hdr->flags & IMAGE_SCN_LNK_REMOVE ) {
-        coff_sec_hnd->flags |= ORL_SEC_FLAG_REMOVE;
+        DO_OR_EQ(orl_sec_flags, coff_sec_hnd->flags, |=, ORL_SEC_FLAG_REMOVE);
     }
     if( s_hdr->flags & IMAGE_SCN_LNK_COMDAT ) {
-        coff_sec_hnd->flags |= ORL_SEC_FLAG_COMDAT;
+        DO_OR_EQ(orl_sec_flags, coff_sec_hnd->flags, |=, ORL_SEC_FLAG_COMDAT);
     }
     if( s_hdr->flags & IMAGE_SCN_MEM_DISCARDABLE ) {
-        coff_sec_hnd->flags |= ORL_SEC_FLAG_DISCARDABLE;
+        DO_OR_EQ(orl_sec_flags, coff_sec_hnd->flags, |=, ORL_SEC_FLAG_DISCARDABLE);
     }
     if( s_hdr->flags & IMAGE_SCN_MEM_NOT_CACHED ) {
-        coff_sec_hnd->flags |= ORL_SEC_FLAG_NOT_CACHED;
+        DO_OR_EQ(orl_sec_flags, coff_sec_hnd->flags, |=, ORL_SEC_FLAG_NOT_CACHED);
     }
     if( s_hdr->flags & IMAGE_SCN_MEM_NOT_PAGED ) {
-        coff_sec_hnd->flags |= ORL_SEC_FLAG_NOT_PAGEABLE;
+        DO_OR_EQ(orl_sec_flags, coff_sec_hnd->flags, |=, ORL_SEC_FLAG_NOT_PAGEABLE);
     }
     if( s_hdr->flags & IMAGE_SCN_MEM_SHARED ) {
-        coff_sec_hnd->flags |= ORL_SEC_FLAG_SHARED;
+        DO_OR_EQ(orl_sec_flags, coff_sec_hnd->flags, |=, ORL_SEC_FLAG_SHARED);
     }
     if( s_hdr->flags & IMAGE_SCN_MEM_EXECUTE ) {
-        coff_sec_hnd->flags |= ORL_SEC_FLAG_EXECUTE_PERMISSION;
+        DO_OR_EQ(orl_sec_flags, coff_sec_hnd->flags, |=, ORL_SEC_FLAG_EXECUTE_PERMISSION);
     }
     if( s_hdr->flags & IMAGE_SCN_MEM_READ ) {
-        coff_sec_hnd->flags |= ORL_SEC_FLAG_READ_PERMISSION;
+        DO_OR_EQ(orl_sec_flags, coff_sec_hnd->flags, |=, ORL_SEC_FLAG_READ_PERMISSION);
     }
     if( s_hdr->flags & IMAGE_SCN_MEM_WRITE ) {
-        coff_sec_hnd->flags |= ORL_SEC_FLAG_WRITE_PERMISSION;
+        DO_OR_EQ(orl_sec_flags, coff_sec_hnd->flags, |=, ORL_SEC_FLAG_WRITE_PERMISSION);
     }
     coff_sec_hnd->align = (s_hdr->flags & IMAGE_SCN_ALIGN_MASK)
                                     >> COFF_SEC_FLAG_ALIGN_SHIFT;
@@ -289,7 +289,7 @@ static orl_return load_coff_sec_handles( coff_file_handle coff_file_hnd,
         }
         coff_file_hnd->orig_sec_hnd[loop] = coff_sec_hnd;
         if( s_hdr->name[0] != '/' ) {
-            coff_sec_hnd->name = _ClientAlloc( coff_file_hnd, COFF_SEC_NAME_LEN + 1 );
+            coff_sec_hnd->name = (char *) _ClientAlloc( coff_file_hnd, COFF_SEC_NAME_LEN + 1 );
             if( !(coff_sec_hnd->name) ) {
                 free_coff_sec_handles( coff_file_hnd, loop );
                 _ClientFree( coff_file_hnd, reloc_sec_offset );
@@ -427,13 +427,13 @@ orl_return CoffLoadFileStructure( coff_file_handle coff_file_hnd )
     orl_file_offset     PEoffset = 0;
 
     DEBUG(( DBG_OLD, "CoffLoadFileStructure() enter"));
-    pe_hdr = _ClientRead( coff_file_hnd, 2 );
+    pe_hdr = (pe_header *) _ClientRead( coff_file_hnd, 2 );
     _ClientSeek( coff_file_hnd, -2, SEEK_CUR );
     if( pe_hdr->MZ[0] == 'M' && pe_hdr->MZ[1] == 'Z' ) {
         DEBUG(( DBG_OLD, "CoffLoadFileStructure(): file has MZ header"));
-        pe_hdr = _ClientRead( coff_file_hnd, sizeof( pe_header ) );
+        pe_hdr = (pe_header *) _ClientRead( coff_file_hnd, sizeof( pe_header ) );
         _ClientSeek( coff_file_hnd, pe_hdr->offset - sizeof( pe_header ), SEEK_CUR );
-        PE = _ClientRead( coff_file_hnd, 4 );
+        PE = (char *) _ClientRead( coff_file_hnd, 4 );
         if( PE[0] == 'P' && PE[1] == 'E' && PE[2] == '\0' && PE[3] == '\0' ) {
             PEoffset = pe_hdr->offset + 4;
         } else {
@@ -445,7 +445,7 @@ orl_return CoffLoadFileStructure( coff_file_handle coff_file_hnd )
         DEBUG(( DBG_OLD, "CoffLoadFileStructure: error, COFF file header size != 20, missing LONG_IS_64BITS?" ));
     }
 #endif    
-    coff_file_hnd->f_hdr_buffer = _ClientRead( coff_file_hnd, sizeof( coff_file_header ) );
+    coff_file_hnd->f_hdr_buffer = (coff_file_header *) _ClientRead( coff_file_hnd, sizeof( coff_file_header ) );
     if( !(coff_file_hnd->f_hdr_buffer) ) return( ORL_OUT_OF_MEMORY );
     f_hdr = (coff_file_header *) coff_file_hnd->f_hdr_buffer;
     if( determine_file_specs( coff_file_hnd, f_hdr ) ) {
@@ -454,13 +454,13 @@ orl_return CoffLoadFileStructure( coff_file_handle coff_file_hnd )
         // library structures, change _ClientRead and _ClientSeek
         // macros to read from converted metadata
         DEBUG(( DBG_OLD, "CoffLoadFileStructure(): import object header detected"));
-        error = convert_import_library( coff_file_hnd );
+        error = (orl_return)convert_import_library( coff_file_hnd );
         if ( error != ORL_OKAY ) {
             DEBUG((DBG_OLD, "CoffLoadFileStructure(): convert_import_library() failed"));
             return( error );
         }
         // reread new converted file header and next process as normal
-        coff_file_hnd->f_hdr_buffer = _ClientRead( coff_file_hnd, sizeof( coff_file_header ) );
+        coff_file_hnd->f_hdr_buffer = (coff_file_header *) _ClientRead( coff_file_hnd, sizeof( coff_file_header ) );
         if( !(coff_file_hnd->f_hdr_buffer) ) return( ORL_OUT_OF_MEMORY );
         f_hdr = (coff_file_header *) coff_file_hnd->f_hdr_buffer;
         determine_file_specs( coff_file_hnd, f_hdr );
@@ -488,7 +488,7 @@ orl_return CoffLoadFileStructure( coff_file_handle coff_file_hnd )
     DEBUG((DBG_OLD, "CoffLoadFileStructure(): start section table=%h, num_sections=%h", coff_file_hnd->initial_size, coff_file_hnd->num_sections ));
     sec_header_table_size = coff_file_hnd->num_sections * sizeof( coff_section_header );
     if( coff_file_hnd->num_sections > 0 ) {
-        coff_file_hnd->s_hdr_table_buffer = _ClientRead( coff_file_hnd,
+        coff_file_hnd->s_hdr_table_buffer = (char *) _ClientRead( coff_file_hnd,
                                                          sec_header_table_size);
         if( !(coff_file_hnd->s_hdr_table_buffer) ) {
             DEBUG((DBG_OLD, "CoffLoadFileStructure(): _ClientRead() failed (s_hdr_table_buffer)"));
@@ -516,7 +516,7 @@ orl_return CoffLoadFileStructure( coff_file_handle coff_file_hnd )
     DEBUG((DBG_OLD, "CoffLoadFileStructure(): buf_size=%h", buf_size ));
     coff_file_hnd->size = buf_size;
     buf_size -= coff_file_hnd->initial_size;
-    coff_file_hnd->rest_of_file_buffer = _ClientRead( coff_file_hnd, buf_size );
+    coff_file_hnd->rest_of_file_buffer = (char *) _ClientRead( coff_file_hnd, buf_size );
     if( !(coff_file_hnd->rest_of_file_buffer ) ) {
         DEBUG((DBG_OLD, "CoffLoadFileStructure(): _ClientRead() failed; rest_of_file_buffer=0, initial_size=%h, buf_size=%h", coff_file_hnd->initial_size, buf_size ));
         return( ORL_ERROR );
@@ -537,11 +537,11 @@ orl_return CoffLoadFileStructure( coff_file_handle coff_file_hnd )
         if( last_sec_hnd->size > 0 && last_sec_hnd->offset != 0 ) {
             if( last_sec_hnd->offset == buf_size +
                         coff_file_hnd->initial_size - 4 ) {
-                last_sec_hnd->contents = _ClientRead( coff_file_hnd,
+                last_sec_hnd->contents = (char *) _ClientRead( coff_file_hnd,
                                                   last_sec_hnd->size );
                 coff_file_hnd->size += last_sec_hnd->size;
             } else {
-                last_sec_hnd->contents = coff_file_hnd->rest_of_file_buffer +
+                last_sec_hnd->contents = (char *) coff_file_hnd->rest_of_file_buffer +
                         last_sec_hnd->offset - coff_file_hnd->initial_size +
                         sizeof( coff_sec_size );
             }

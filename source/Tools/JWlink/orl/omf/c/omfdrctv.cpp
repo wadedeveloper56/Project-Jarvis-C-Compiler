@@ -59,7 +59,7 @@ orl_return      OmfParseComments( omf_sec_handle sh, orl_note_callbacks *cb,
         comment = sh->assoc.comment.comments[x];
         assert( comment );
 
-        switch( comment->class ) {
+        switch( comment->class1 ) {
         case( CMT_DEFAULT_LIBRARY ):
             if( cb->lnk_cmd_fn ) {
                 err = cb->lnk_cmd_fn( "defaultlib", (char *)comment->data, cookie );

@@ -49,7 +49,7 @@ omf_handle OMFENTRY OmfInit( orl_funcs * funcs )
 
     assert( funcs );
 
-    oh = funcs->alloc( sizeof( omf_handle_struct ) );
+    oh = (omf_handle) funcs->alloc( sizeof( omf_handle_struct ) );
     if( !oh ) return( NULL );
     oh->funcs = funcs;
     oh->first_file_hnd = NULL;
@@ -78,7 +78,7 @@ omf_file_handle OMFENTRY OmfFileInit( omf_handle oh, void *file )
 
     assert( oh );
 
-    ofh = oh->funcs->alloc( sizeof( omf_file_handle_struct ) );
+    ofh = (omf_file_handle) oh->funcs->alloc( sizeof( omf_file_handle_struct ) );
     if( !ofh ) return( NULL );
 
     memset( ofh, 0, sizeof( omf_file_handle_struct ) );
@@ -129,7 +129,7 @@ orl_return OMFENTRY OmfFileScan( omf_file_handle ofh, unsigned long desired, orl
         ds = ORLHashTableQuery( ofh->symbol_table->assoc.sym.hash_tab,
                                 (orl_hash_value) desired );
         while( ds != NULL ) {
-            sym = ds->data;
+            sym = (omf_symbol_handle) ds->data;
             if( ( sym->typ == ORL_SYM_TYPE_SECTION ) &&
                !( sym->flags & OMF_SYM_FLAGS_GRPDEF ) ) {
                 err = func( (orl_sec_handle) sym->section );
@@ -244,7 +244,7 @@ char * OMFENTRY OmfSecGetClassName( omf_sec_handle sh )
     assert( sh );
 
     if( _IsSegType( sh->type ) ) {
-        return( OmfGetPtrToLName( sh->omf_file_hnd, sh->assoc.seg.class ) );
+        return( OmfGetPtrToLName( sh->omf_file_hnd, sh->assoc.seg.class1 ) );
     }
     return( NULL );
 }

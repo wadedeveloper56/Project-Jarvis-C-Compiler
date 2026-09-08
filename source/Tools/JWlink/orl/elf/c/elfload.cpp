@@ -171,21 +171,21 @@ static void fix_shdr64_byte_order( elf_file_handle elf_file_hnd, Elf64_Shdr *e_s
 // how the rest of the data is to be interpreted
 static void determine_file_class( elf_file_handle elf_file_hnd, Elf32_Ehdr *e_hdr )
 {
-    elf_file_hnd->flags = 0;
+    elf_file_hnd->flags = (orl_file_flags)0;
     switch( e_hdr->e_ident[EI_DATA] ) {
     case ELFLITTLEENDIAN:
-        elf_file_hnd->flags |= ORL_FILE_FLAG_LITTLE_ENDIAN;
+        DO_OR_EQ(orl_file_flags, elf_file_hnd->flags, |=, ORL_FILE_FLAG_LITTLE_ENDIAN);
         break;
     case ELFBIGENDIAN:
-        elf_file_hnd->flags |= ORL_FILE_FLAG_BIG_ENDIAN;
+        DO_OR_EQ(orl_file_flags, elf_file_hnd->flags, |=, ORL_FILE_FLAG_BIG_ENDIAN);
         break;
     }
     switch( e_hdr->e_ident[EI_CLASS] ) {
     case ELFCLASS32:
-        elf_file_hnd->flags |= ORL_FILE_FLAG_32BIT_MACHINE;
+        DO_OR_EQ(orl_file_flags, elf_file_hnd->flags, |=, ORL_FILE_FLAG_32BIT_MACHINE);
         break;
     case ELFCLASS64:
-        elf_file_hnd->flags |= ORL_FILE_FLAG_64BIT_MACHINE;
+        DO_OR_EQ(orl_file_flags, elf_file_hnd->flags, |=, ORL_FILE_FLAG_64BIT_MACHINE);
         break;
     }
 }
@@ -258,7 +258,7 @@ static void determine_section_specs( elf_sec_handle elf_sec_hnd, int sh_type,
     switch( sh_type ) {
     case SHT_PROGBITS:
         elf_sec_hnd->type = ORL_SEC_TYPE_PROG_BITS;
-        elf_sec_hnd->flags |= ORL_SEC_FLAG_INITIALIZED_DATA;
+        DO_OR_EQ(orl_sec_flags, elf_sec_hnd->flags, |=, ORL_SEC_FLAG_INITIALIZED_DATA);
         break;
     case SHT_SYMTAB:
         elf_sec_hnd->type = ORL_SEC_TYPE_SYM_TABLE;
@@ -280,7 +280,7 @@ static void determine_section_specs( elf_sec_handle elf_sec_hnd, int sh_type,
         break;
     case SHT_NOBITS:
         elf_sec_hnd->type = ORL_SEC_TYPE_NO_BITS;
-        elf_sec_hnd->flags |= ORL_SEC_FLAG_UNINITIALIZED_DATA;
+        DO_OR_EQ(orl_sec_flags, elf_sec_hnd->flags, |=, ORL_SEC_FLAG_UNINITIALIZED_DATA);
         break;
     case SHT_REL:
         elf_sec_hnd->type = ORL_SEC_TYPE_RELOCS;
@@ -309,14 +309,14 @@ static void determine_section_specs( elf_sec_handle elf_sec_hnd, int sh_type,
         break;
     }
     if( sh_flags & SHF_WRITE ) {
-        elf_sec_hnd->flags |= ORL_SEC_FLAG_WRITE_PERMISSION;
+        DO_OR_EQ(orl_sec_flags, elf_sec_hnd->flags, |=, ORL_SEC_FLAG_WRITE_PERMISSION);
     }
     if( !(sh_flags & SHF_ALLOC) ) {
-        elf_sec_hnd->flags |= ORL_SEC_FLAG_REMOVE;
+        DO_OR_EQ(orl_sec_flags, elf_sec_hnd->flags, |=, ORL_SEC_FLAG_REMOVE);
     }
     if( sh_flags & SHF_EXECINSTR ) {
         // set execute permission also?
-        elf_sec_hnd->flags |= ORL_SEC_FLAG_EXEC;
+        DO_OR_EQ(orl_sec_flags, elf_sec_hnd->flags, |=, ORL_SEC_FLAG_EXEC);
     }
 }
 
@@ -485,7 +485,7 @@ static orl_return load_elf_sec_handles( elf_file_handle elf_file_hnd, orl_sec_of
             elf_sec_hnd->assoc.import.string_table = elf_file_hnd->orig_sec_hnd[associated_index[loop]];
             break;
         case ORL_SEC_TYPE_EXPORT:
-            elf_sec_hnd->assoc.export.symbol_table = elf_file_hnd->orig_sec_hnd[associated_index[loop]];
+            elf_sec_hnd->assoc.export1.symbol_table = elf_file_hnd->orig_sec_hnd[associated_index[loop]];
             break;
         case ORL_SEC_TYPE_RELOCS:
         case ORL_SEC_TYPE_RELOCS_EXPADD:
@@ -517,8 +517,8 @@ static orl_return load_elf_sec_handles( elf_file_handle elf_file_hnd, orl_sec_of
 
 static int sec_compare( const void *_first_sec, const void *_second_sec )
 {
-    const elf_sec_handle *first_sec = _first_sec;
-    const elf_sec_handle *second_sec = _second_sec;
+    const elf_sec_handle *first_sec = (const elf_sec_handle *) _first_sec;
+    const elf_sec_handle *second_sec = (const elf_sec_handle *) _second_sec;
 
     if( (*first_sec)->offset > (*second_sec)->offset ) {
         return( 1 );
@@ -549,14 +549,14 @@ orl_return ElfLoadFileStructure( elf_file_handle elf_file_hnd )
     int                 shstrndx;
 
     DEBUG(( DBG_OLD, "ElfLoadFileStructure() enter" ));
-    e_hdr32 = _ClientRead( elf_file_hnd, sizeof( e_hdr32->e_ident ) );
+    e_hdr32 = (Elf32_Ehdr *) _ClientRead( elf_file_hnd, sizeof( e_hdr32->e_ident ) );
     if( !(e_hdr32) )
         return( ORL_ERROR );
     determine_file_class( elf_file_hnd, e_hdr32 );
     //_ClientSeek( elf_file_hnd, 0, SEEK_SET );
     _ClientSeek( elf_file_hnd, -(signed)sizeof(e_hdr32->e_ident), SEEK_CUR);
     if( elf_file_hnd->flags & ORL_FILE_FLAG_64BIT_MACHINE ) {
-        e_hdr64 = _ClientRead( elf_file_hnd, sizeof( Elf64_Ehdr ) );
+        e_hdr64 = (Elf64_Ehdr *) _ClientRead( elf_file_hnd, sizeof( Elf64_Ehdr ) );
         if( !(e_hdr64) )
             return( ORL_ERROR );
         DEBUG(( DBG_OLD, "ElfLoadFileStructure(): 64-bit, #sections=%d, ofs=%p", e_hdr64->e_shnum, e_hdr64->e_shoff ));
@@ -570,7 +570,7 @@ orl_return ElfLoadFileStructure( elf_file_handle elf_file_hnd )
         elf_file_hnd->shentsize = e_hdr64->e_shentsize;
         determine_file_specs( elf_file_hnd, (Elf32_Ehdr *)e_hdr64 );
     } else {
-        e_hdr32 = _ClientRead( elf_file_hnd, sizeof( Elf32_Ehdr ) );
+        e_hdr32 = (Elf32_Ehdr *) _ClientRead( elf_file_hnd, sizeof( Elf32_Ehdr ) );
         if( !(e_hdr32) )
             return( ORL_ERROR );
         DEBUG(( DBG_OLD, "ElfLoadFileStructure(): 32-bit" ));
@@ -596,7 +596,7 @@ orl_return ElfLoadFileStructure( elf_file_handle elf_file_hnd )
     //_ClientSeek( elf_file_hnd, ehsize, SEEK_SET );
 
     if( contents_size1 > 0 ) {
-        elf_file_hnd->contents_buffer1 = _ClientRead( elf_file_hnd,
+        elf_file_hnd->contents_buffer1 = (char *) _ClientRead( elf_file_hnd,
                                                       contents_size1 );
         if( !(elf_file_hnd->contents_buffer1) ) {
             return( ORL_ERROR );
@@ -604,10 +604,10 @@ orl_return ElfLoadFileStructure( elf_file_handle elf_file_hnd )
     } else {
         elf_file_hnd->contents_buffer1 = NULL;
     }
-    s_hdr = _ClientRead( elf_file_hnd, sec_header_table_size );
+    s_hdr = (char *) _ClientRead( elf_file_hnd, sec_header_table_size );
     if( !s_hdr )
         return( ORL_ERROR );
-    name_index = _ClientAlloc( elf_file_hnd,
+    name_index = (orl_sec_offset *) _ClientAlloc( elf_file_hnd,
                          sizeof(orl_sec_offset) * elf_file_hnd->num_sections );
     if( !name_index )
         return( ORL_OUT_OF_MEMORY );
@@ -625,7 +625,7 @@ orl_return ElfLoadFileStructure( elf_file_handle elf_file_hnd )
                      - sec_header_table_size;
     if( contents_size2 > 0 ) {
         elf_file_hnd->size = elf_sec_hnd->offset + elf_sec_hnd->size;
-        elf_file_hnd->contents_buffer2 = _ClientRead( elf_file_hnd,
+        elf_file_hnd->contents_buffer2 = (char *) _ClientRead( elf_file_hnd,
                                                       contents_size2 );
         if( !(elf_file_hnd->contents_buffer2) ) {
             _ClientFree( elf_file_hnd, name_index );

@@ -208,13 +208,13 @@ orl_return ElfCreateSymbolHandles( elf_sec_handle elf_sec_hnd )
         }
         switch( current->shndx ) {
         case SHN_ABS:
-            current->type |= ORL_SYM_TYPE_ABSOLUTE;
+            DO_OR_EQ(orl_symbol_type,current->type, |=, ORL_SYM_TYPE_ABSOLUTE);
             break;
         case SHN_COMMON:
-            current->type |= ORL_SYM_TYPE_COMMON;
+            DO_OR_EQ(orl_symbol_type,current->type, |=, ORL_SYM_TYPE_COMMON);
             break;
         case SHN_UNDEF:
-            current->type |= ORL_SYM_TYPE_UNDEFINED;
+            DO_OR_EQ(orl_symbol_type,current->type, |=, ORL_SYM_TYPE_UNDEFINED);
             break;
         }
         current++;
@@ -692,7 +692,7 @@ static orl_return ParseLnkCmd( char *cmd, char **contents, int *len,
         }
     }
     l = value - *contents;
-    arg = malloc( l + 1 );
+    arg = (char *) malloc( l + 1 );
     memcpy( arg, *contents, l );
     *contents = value;
     if ( delim )

@@ -66,7 +66,7 @@ extern orl_return       OmfAddSegDef( omf_file_handle ofh, int is32,
                                       orl_sec_alignment align, int combine,
                                       int use32, int max, orl_sec_frame frame,
                                       orl_sec_size size, omf_idx name,
-                                      omf_idx class );
+                                      omf_idx class1  );
 
 extern orl_return       OmfAddPubDef( omf_file_handle ofh, int is32,
                                       omf_idx group, omf_idx seg,
@@ -78,7 +78,7 @@ extern orl_return       OmfAddGrpDef( omf_file_handle ofh, omf_idx name,
 
 extern orl_return       OmfModEnd( omf_file_handle ofh );
 
-extern orl_return       OmfAddComment( omf_file_handle ofh, uint_8 class,
+extern orl_return       OmfAddComment( omf_file_handle ofh, uint_8 class1,
                                        uint_8 flags, omf_bytes buff, long len );
 
 extern orl_return       OmfAddLineNum( omf_sec_handle sh, unsigned_16 line,
