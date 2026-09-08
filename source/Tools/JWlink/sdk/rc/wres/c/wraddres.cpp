@@ -46,7 +46,7 @@ static WResTypeNode *newTypeNode( const WResID *type )
     int                 extrabytes;
 
     extrabytes = WResIDExtraBytes( type );
-    newnode = WRESALLOC( sizeof( WResTypeNode ) + extrabytes );
+    newnode = (WResTypeNode *)WRESALLOC( sizeof( WResTypeNode ) + extrabytes );
     if (newnode != NULL) {
         newnode->Next = NULL;
         newnode->Prev = NULL;
@@ -66,7 +66,7 @@ static WResLangNode *newLangNode( uint_16 memflags, uint_32 offset,
 {
     WResLangNode        *newnode;
 
-    newnode = WRESALLOC( sizeof( WResLangNode ) );
+    newnode = (WResLangNode *)WRESALLOC( sizeof( WResLangNode ) );
     if( newnode == NULL ) {
         WRES_ERROR( WRS_MALLOC_FAILED );
     } else {
@@ -93,7 +93,7 @@ static WResResNode *newResNode( const WResID *name )
     int                 extrabytes;
 
     extrabytes = WResIDExtraBytes( name );
-    newnode = WRESALLOC( sizeof( WResResNode ) + extrabytes );
+    newnode = (WResResNode *)WRESALLOC( sizeof( WResResNode ) + extrabytes );
     if( newnode == NULL ) {
         WRES_ERROR( WRS_MALLOC_FAILED );
     } else {

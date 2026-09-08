@@ -31,41 +31,28 @@
 
 
 #include "pch.h"
+#include <stddef.h>
+#include <limits.h>
 #include "wresrtns.h"
-#include "read.h"
+#include "util.h"
 #include "reserr.h"
 
-WResIDName * WResReadWResIDName( WResFileID handle )
-/**************************************************/
+WResID * WResIDFromNum( long newnum )
+/***********************************/
+/* allocate an ID and fill it in */
 {
-    WResIDName      newname;
-    WResIDName *    newptr;
-    int             numread;
-    int             error;
+    WResID *    newid;
 
-    /* read the size of the name in */
-    error = ResReadUint8( &(newname.NumChars), handle );
-
-    /* alloc the space for the new record */
-    if (error) {
-        return( NULL );
+    if( (int_32)newnum < SHRT_MIN || ( newnum > 0 && newnum > USHRT_MAX ) ) {
+        newid = NULL;
+        WRES_ERROR( WRS_BAD_PARAMETER );
     } else {
-        /* -1 because one of the chars in the name is declared in the struct */
-        newptr = WRESALLOC( sizeof(WResIDName) + newname.NumChars - 1 );
-    }
-
-    /* read in the characters */
-    if (newptr == NULL) {
-        WRES_ERROR( WRS_MALLOC_FAILED );
-    } else {
-        newptr->NumChars = newname.NumChars;
-        numread = (* WRESREAD) ( handle, newptr->Name, newptr->NumChars );
-        if (numread != newptr->NumChars) {
-            WRES_ERROR( numread == -1 ? WRS_READ_FAILED:WRS_READ_INCOMPLETE );
-            WRESFREE( newptr );
-            newptr = NULL;
+        newid = (WResID *)WRESALLOC( sizeof(WResID) );
+        if (newid == NULL) {
+            WRES_ERROR( WRS_MALLOC_FAILED );
+        } else {
+            WResInitIDFromNum( newnum, newid );
         }
     }
-
-    return( newptr );
-} /* WResReadWResIDName */
+    return( newid );
+} /* WResIDFromNum */

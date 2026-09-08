@@ -386,7 +386,7 @@ MenuItem * ResNewMenuItem( void )
 {
     MenuItem *  newitem;
 
-    newitem = WRESALLOC( sizeof(MenuItem) );
+    newitem = (MenuItem *)WRESALLOC( sizeof(MenuItem) );
     if (newitem == NULL) {
         WRES_ERROR( WRS_MALLOC_FAILED );
     } else {

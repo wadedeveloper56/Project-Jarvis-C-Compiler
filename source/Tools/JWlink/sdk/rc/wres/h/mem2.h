@@ -37,6 +37,6 @@ void ResAddLLItemAtEnd( void **head, void **tail, void *item );
 void ResInsertLLItemAfter( void **head, void **tail, void *who, void *item );
 void ResInsertLLItemBefore( void **head, void **tail, void *who, void *item );
 void *ResDeleteLLItem( void **head, void **tail, void *item );
-void ResReplaceLLItem( void **head, void **tail, void *item, void *new );
+void ResReplaceLLItem( void **head, void **tail, void *item, void *new1 );
 
 #endif

@@ -31,39 +31,32 @@
 
 
 #include "pch.h"
-#include <stddef.h>
 #include <string.h>
-#include "layer0.h"
+#include <limits.h>
 #include "wresrtns.h"
 #include "util.h"
 #include "reserr.h"
 
-WResHelpID * WResHelpIDFromStr( const char * newstr )
-/*******************************************/
-/* allocate a Help ID and fill it in */
+WResIDName * WResIDNameFromStr( char * string )
+/*********************************************/
 {
-    WResHelpID *newid;
-    unsigned    strsize;
+    WResIDName *        newstring;
+    unsigned            stringlen;
 
-    strsize = strlen( newstr );
-    /* check the size of the string:  can it fit in one byte? */
-    if (strsize <= 0xff) {
-        /* allocate the new Help ID */
-        // if strsize is non-zero then the memory allocated is larger
-        // than required by 1 byte
-        newid = WRESALLOC( sizeof(WResHelpID) + strsize );
-
-        if (newid == NULL) {
-            WRES_ERROR( WRS_MALLOC_FAILED );
-        } else {
-            newid->IsName = TRUE;
-            newid->ID.Name.NumChars = strsize;
-            memcpy( newid->ID.Name.Name, newstr, strsize );
-        }
-    } else {
-        WRES_ERROR( WRS_BAD_PARAMETER );
-        newid = NULL;
+    stringlen = strlen( string );
+    if( stringlen >= USHRT_MAX ) {
+        /* truncate the string if it is more that UCHAR_MAX in length */
+        stringlen = USHRT_MAX;
     }
 
-    return( newid );
-} /* WResHelpIDFromStr */
+    newstring = (WResIDName *)WRESALLOC( sizeof(WResIDName) + stringlen - 1 );
+    if (newstring == NULL) {
+        WRES_ERROR( WRS_MALLOC_FAILED );
+    } else {
+        newstring->NumChars = stringlen;
+        /* don't copy the '\0' */
+        memcpy( &(newstring->Name), string, stringlen );
+    }
+
+    return( newstring );
+}

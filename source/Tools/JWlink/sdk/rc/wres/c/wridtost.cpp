@@ -50,7 +50,7 @@ char * WResIDToStr( const WResID * name )
 
     if ( name != NULL && name->IsName) {
         /* alloc space for the string and a \0 char at the end */
-        string = WRESALLOC( name->ID.Name.NumChars + 1 );
+        string = (char *)WRESALLOC( name->ID.Name.NumChars + 1 );
         if (string == NULL) {
             WRES_ERROR( WRS_MALLOC_FAILED );
         } else {
@@ -59,7 +59,7 @@ char * WResIDToStr( const WResID * name )
             string[ name->ID.Name.NumChars ] = '\0';
         }
     } else {
-        string = WRESALLOC( UINT16_MAXDIGITS + 1 );
+        string = (char *)WRESALLOC( UINT16_MAXDIGITS + 1 );
         if( string == NULL ) {
             WRES_ERROR( WRS_MALLOC_FAILED );
         } else {
@@ -79,7 +79,7 @@ char * WResHelpIDToStr( const WResHelpID * name )
 
     if ( name != NULL && name->IsName) {
         /* alloc space for the string and a \0 char at the end */
-        string = WRESALLOC( name->ID.Name.NumChars + 1 );
+        string = (char *)WRESALLOC( name->ID.Name.NumChars + 1 );
         if (string == NULL) {
             WRES_ERROR( WRS_MALLOC_FAILED );
         } else {
@@ -88,7 +88,7 @@ char * WResHelpIDToStr( const WResHelpID * name )
             string[ name->ID.Name.NumChars ] = '\0';
         }
     } else {
-        string = WRESALLOC( UINT32_MAXDIGITS + 1 );
+        string = (char *)WRESALLOC( UINT32_MAXDIGITS + 1 );
         if( string == NULL ) {
             WRES_ERROR( WRS_MALLOC_FAILED );
         } else {

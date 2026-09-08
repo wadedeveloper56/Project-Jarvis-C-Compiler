@@ -31,32 +31,28 @@
 
 
 #include "pch.h"
-#include <string.h>
+#include <stddef.h>
 #include <limits.h>
 #include "wresrtns.h"
 #include "util.h"
 #include "reserr.h"
 
-WResIDName * WResIDNameFromStr( char * string )
-/*********************************************/
+WResHelpID * WResHelpIDFromNum( long newnum )
+/***********************************/
+/* allocate an ID and fill it in */
 {
-    WResIDName *        newstring;
-    unsigned            stringlen;
+    WResHelpID *        newid;
 
-    stringlen = strlen( string );
-    if( stringlen >= USHRT_MAX ) {
-        /* truncate the string if it is more that UCHAR_MAX in length */
-        stringlen = USHRT_MAX;
-    }
-
-    newstring = WRESALLOC( sizeof(WResIDName) + stringlen - 1 );
-    if (newstring == NULL) {
-        WRES_ERROR( WRS_MALLOC_FAILED );
+    if( newnum < 0 || newnum > SHRT_MAX  ) {
+        newid = NULL;
+        WRES_ERROR( WRS_BAD_PARAMETER );
     } else {
-        newstring->NumChars = stringlen;
-        /* don't copy the '\0' */
-        memcpy( &(newstring->Name), string, stringlen );
+        newid = (WResHelpID *)WRESALLOC( sizeof(WResHelpID) );
+        if (newid == NULL) {
+            WRES_ERROR( WRS_MALLOC_FAILED );
+        } else {
+            WResInitHelpIDFromNum( newnum, newid );
+        }
     }
-
-    return( newstring );
-}
+    return( newid );
+} /* WResHelpIDFromNum */

@@ -57,12 +57,12 @@ extern M32ResResourceHeader *M32ResReadResourceHeader( WResFileID handle )
     uint_16                   tmp16;
     uint_32                   tmp32;
 
-    newhead = WRESALLOC( sizeof( M32ResResourceHeader ) );
+    newhead = (M32ResResourceHeader *)WRESALLOC( sizeof( M32ResResourceHeader ) );
     if( newhead == NULL ) {
         error = TRUE;
         WRES_ERROR( WRS_MALLOC_FAILED );
     }
-    newhead->head16 = WRESALLOC( sizeof( MResResourceHeader ) );
+    newhead->head16 = (MResResourceHeader *)WRESALLOC( sizeof( MResResourceHeader ) );
     if( newhead->head16 == NULL ) {
         error = TRUE;
         WRES_ERROR( WRS_MALLOC_FAILED );
@@ -125,7 +125,7 @@ MResResourceHeader *MResReadResourceHeader( WResFileID handle )
     uint_16                 tmp16;
     uint_32                 tmp32;
 
-    newhead = WRESALLOC( sizeof(MResResourceHeader) );
+    newhead = (MResResourceHeader *)WRESALLOC( sizeof(MResResourceHeader) );
     if( newhead == NULL ) {
         error = TRUE;
         WRES_ERROR( WRS_MALLOC_FAILED );

@@ -31,47 +31,39 @@
 
 
 #include "pch.h"
+#include <stddef.h>
 #include <string.h>
+#include "layer0.h"
 #include "wresrtns.h"
-#include "read.h"
+#include "util.h"
 #include "reserr.h"
 
-WResTypeInfo * WResReadTypeRecord( WResFileID handle )
-/****************************************************/
-/* reads in the fields of a type info record from the current position in */
-/* the file identified by fp */
+WResHelpID * WResHelpIDFromStr( const char * newstr )
+/*******************************************/
+/* allocate a Help ID and fill it in */
 {
-    WResTypeInfo        newtype;
-    WResTypeInfo *      newptr;
-    int                 numread;
-    int                 numcharsleft;
-    int                 error;
+    WResHelpID *newid;
+    unsigned    strsize;
 
-    error = WResReadFixedTypeRecord( &newtype, handle );
-    if (error) {
-        return( NULL );
-    }
+    strsize = strlen( newstr );
+    /* check the size of the string:  can it fit in one byte? */
+    if (strsize <= 0xff) {
+        /* allocate the new Help ID */
+        // if strsize is non-zero then the memory allocated is larger
+        // than required by 1 byte
+        newid = (WResHelpID *)WRESALLOC( sizeof(WResHelpID) + strsize );
 
-    if (newtype.TypeName.IsName) {
-        numcharsleft = newtype.TypeName.ID.Name.NumChars - 1;
-    } else {
-        numcharsleft = 0;
-    }
-    newptr = WRESALLOC( sizeof(WResTypeInfo) + numcharsleft );
-    if (newptr == NULL) {
-        WRES_ERROR( WRS_MALLOC_FAILED );
-    } else {
-        memcpy( newptr, &newtype, sizeof(WResTypeInfo) );
-        if (numcharsleft != 0) {
-            numread = (* WRESREAD) ( handle,
-                    &(newptr->TypeName.ID.Name.Name[1]), numcharsleft );
-            if (numread != numcharsleft) {
-                WRES_ERROR( numread == -1 ? WRS_READ_FAILED:WRS_READ_INCOMPLETE );
-                WRESFREE( newptr );
-                newptr = NULL;
-            }
+        if (newid == NULL) {
+            WRES_ERROR( WRS_MALLOC_FAILED );
+        } else {
+            newid->IsName = TRUE;
+            newid->ID.Name.NumChars = strsize;
+            memcpy( newid->ID.Name.Name, newstr, strsize );
         }
+    } else {
+        WRES_ERROR( WRS_BAD_PARAMETER );
+        newid = NULL;
     }
 
-    return( newptr );
-} /* WResReadTypeRecord */
+    return( newid );
+} /* WResHelpIDFromStr */

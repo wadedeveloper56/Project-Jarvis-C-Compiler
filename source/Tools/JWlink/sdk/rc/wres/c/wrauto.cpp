@@ -90,7 +90,7 @@ DepInfo *WResGetAutoDep( char *fname ) {
         ResCloseFile( fhdl );
         return( NULL );
     }
-    ret = WRESALLOC( info->Length );
+    ret = (DepInfo *)WRESALLOC( info->Length );
     if( ret == NULL ) {
         WRES_ERROR( WRS_MALLOC_FAILED );
         WResFreeDir( dir );

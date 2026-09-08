@@ -72,7 +72,7 @@ ResNameOrOrdinal * ResReadNameOrOrdinal( WResFileID handle )
     if (error) {
         newptr = NULL;
     } else {
-        newptr = WRESALLOC( sizeof(ResNameOrOrdinal) + stringlen );
+        newptr = (ResNameOrOrdinal *)WRESALLOC( sizeof(ResNameOrOrdinal) + stringlen );
         error = (newptr == NULL);
         if( error ) WRES_ERROR( WRS_MALLOC_FAILED );
     }
@@ -126,7 +126,7 @@ ResNameOrOrdinal * ResRead32NameOrOrdinal( WResFileID handle )
     if( error ) {
         newptr = NULL;
     } else {
-        newptr = WRESALLOC( sizeof(ResNameOrOrdinal) + stringlen );
+        newptr = (ResNameOrOrdinal *)WRESALLOC( sizeof(ResNameOrOrdinal) + stringlen );
         error = (newptr == NULL);
         if( error ) WRES_ERROR( WRS_MALLOC_FAILED );
     }

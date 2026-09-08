@@ -108,7 +108,7 @@ extern int WINAPI WResLoadResource2( WResDir            dir,
         if( res->Length >= INT_MAX ) {
             return( -1 );
         }
-	res_buffer  = WRESALLOC( res->Length );
+	res_buffer  = (char *)WRESALLOC( res->Length );
 	*lpszBuffer = res_buffer;
         if( *lpszBuffer == NULL ) {
             return( -1 );

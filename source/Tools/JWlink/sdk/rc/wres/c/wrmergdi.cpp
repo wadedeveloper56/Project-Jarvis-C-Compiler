@@ -68,7 +68,7 @@ int WResMergeDirs( WResDir dstdir, WResDir srcdir, WResMergeError **errs ) {
                         langinfo->Length, dstdir, &langinfo->lang,
                         &dup, fileinfo );
         if( !WResIsEmptyWindow( dup ) && errs != NULL ) {
-            newerr = WRESALLOC( sizeof( WResMergeError ) );
+            newerr = (WResMergeError *)WRESALLOC( sizeof( WResMergeError ) );
             newerr->next = *errs;
             *errs = newerr;
             newerr->dstres = dup;

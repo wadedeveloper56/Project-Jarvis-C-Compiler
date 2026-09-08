@@ -44,7 +44,7 @@ extern ResNameOrOrdinal * WResIDToNameOrOrd( WResID * id )
 
     if (id->IsName) {
         /* the one char in the ResNameOrOrdinal gives room for the '\0' */
-        newname = WRESALLOC( sizeof(ResNameOrOrdinal) + id->ID.Name.NumChars );
+        newname = (ResNameOrOrdinal *)WRESALLOC( sizeof(ResNameOrOrdinal) + id->ID.Name.NumChars );
         if (newname == NULL) {
             WRES_ERROR( WRS_MALLOC_FAILED );
         } else {
@@ -52,7 +52,7 @@ extern ResNameOrOrdinal * WResIDToNameOrOrd( WResID * id )
             newname->name[ id->ID.Name.NumChars ] = '\0';
         }
     } else {
-        newname = WRESALLOC( sizeof(ResNameOrOrdinal) );
+        newname = (ResNameOrOrdinal *)WRESALLOC( sizeof(ResNameOrOrdinal) );
         if (newname == NULL) {
             WRES_ERROR( WRS_MALLOC_FAILED );
         } else {
@@ -72,7 +72,7 @@ extern ResNameOrOrdinal * WResHelpIDToNameOrOrd( WResHelpID * id )
 
     if (id->IsName) {
         /* the one char in the ResNameOrOrdinal gives room for the '\0' */
-        newname = WRESALLOC( sizeof(ResNameOrOrdinal) + id->ID.Name.NumChars );
+        newname = (ResNameOrOrdinal *)WRESALLOC( sizeof(ResNameOrOrdinal) + id->ID.Name.NumChars );
         if (newname == NULL) {
             WRES_ERROR( WRS_MALLOC_FAILED );
         } else {
@@ -80,7 +80,7 @@ extern ResNameOrOrdinal * WResHelpIDToNameOrOrd( WResHelpID * id )
             newname->name[ id->ID.Name.NumChars ] = '\0';
         }
     } else {
-        newname = WRESALLOC( sizeof(ResNameOrOrdinal) );
+        newname = (ResNameOrOrdinal *)WRESALLOC( sizeof(ResNameOrOrdinal) );
         if (newname == NULL) {
             WRES_ERROR( WRS_MALLOC_FAILED );
         } else {

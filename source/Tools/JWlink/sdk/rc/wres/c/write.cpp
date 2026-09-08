@@ -126,7 +126,7 @@ int WResWriteWResIDNameUni( const WResIDName *name, uint_8 use_unicode,
             ptr = ConvBuffer;
         } else {
             freebuf = TRUE;
-            ptr = WRESALLOC( 2 * numchars );
+            ptr = (char *)WRESALLOC( 2 * numchars );
         }
         numchars = (ConvToUnicode)( numchars, name->Name, ptr ) / 2;
         error = ResWriteUint16( &numchars, handle );
@@ -294,7 +294,7 @@ extern int ResWriteStringLen( char * string, uint_8 use_unicode,
 
     if( use_unicode ) {
         if( len * 2 > CONV_BUF_SIZE ) {
-            buf = WRESALLOC( 2 * len );
+            buf = (char *)WRESALLOC( 2 * len );
         } else {
             buf = ConvBuffer;
         }

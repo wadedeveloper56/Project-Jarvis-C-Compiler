@@ -30,29 +30,60 @@
 ****************************************************************************/
 
 
+/*
+ * MEM2.C - memory allocation/usage routines
+ *
+ * By:  Craig Eisler
+ *      June 4-5,11-12,17 1990
+ *      July 16,31 1990
+ *      August 1 1990
+ *      September 11 1990
+ *      October 31 1990
+ *      November 4,7,19,22 1990
+ *      December 28 1990
+ *      January 1 1991
+ *      March 30 1991
+ *
+ * Routines:
+ *              ResAddLLItemAtEnd
+ *              ResInsertLLItemAfter
+ *              ResInsertLLItemBefore
+ *              ResDeleteLLItem
+ *              ResReplaceLLItem
+ */
+
 #include "pch.h"
-#include <stddef.h>
-#include <limits.h>
-#include "wresrtns.h"
-#include "util.h"
-#include "reserr.h"
+#include <stdlib.h>
+#include "mem2.h"
 
-WResHelpID * WResHelpIDFromNum( long newnum )
-/***********************************/
-/* allocate an ID and fill it in */
+typedef struct ss {
+struct ss *next,*prev;
+} ss;
+
+
+/*
+ * ResReplaceLLItem - drop a replacement item into a linked list
+ */
+void ResReplaceLLItem( void **headptr, void **tailptr,
+                        void *itemptr, void *newptr )
 {
-    WResHelpID *        newid;
+    ss          **head;
+    ss          **tail;
+    ss          *item;
+    ss          *new1;
 
-    if( newnum < 0 || newnum > SHRT_MAX  ) {
-        newid = NULL;
-        WRES_ERROR( WRS_BAD_PARAMETER );
-    } else {
-        newid = WRESALLOC( sizeof(WResHelpID) );
-        if (newid == NULL) {
-            WRES_ERROR( WRS_MALLOC_FAILED );
-        } else {
-            WResInitHelpIDFromNum( newnum, newid );
-        }
-    }
-    return( newid );
-} /* WResHelpIDFromNum */
+    head = (ss **)headptr;
+    tail = (ss **)tailptr;
+    item = (ss *)itemptr;
+    new1 = (ss *)newptr;
+
+    if( item == *head ) *head = new1;
+    if( item == *tail ) *tail = new1;
+
+    new1->prev = item->prev;
+    new1->next = item->next;
+
+    if( item->prev != NULL ) item->prev->next = new1;
+    if( item->next != NULL ) item->next->prev = new1;
+
+} /* ResReplaceLLItem */

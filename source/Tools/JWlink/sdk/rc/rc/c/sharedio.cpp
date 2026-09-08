@@ -83,7 +83,7 @@ int OpenResFiles( ExtraRes *resnames, ResFileInfo **resinfo, int *allopen,
     *resinfo = NULL;
 
     while( resnames != NULL ) {
-        resfile = RcMemMalloc( sizeof( ResFileInfo ) );
+        resfile = (ResFileInfo *)RcMemMalloc( sizeof( ResFileInfo ) );
         resfile->next = *resinfo;
         *resinfo = resfile;
         resfile->Dir = WResInitDir();
@@ -221,7 +221,7 @@ extern void SharedIOInitStatics( void )
     memset( &errFromWres, 0, sizeof( ErrFrame ) );
 }
 
-void ReportDupResource( WResID *nameid, WResID *typeid, char *file1,
+void ReportDupResource( WResID *nameid, WResID *typeid1, char *file1,
                            char *file2, int warn )
 /*******************************************************************/
 {
@@ -231,10 +231,10 @@ void ReportDupResource( WResID *nameid, WResID *typeid, char *file1,
     char        typebuf[20];
     unsigned    strbase;
 
-    if( typeid->IsName ) {
-        type = WResIDToStr( typeid );
+    if( typeid1->IsName ) {
+        type = WResIDToStr( typeid1 );
     } else {
-        switch( typeid->ID.Num ) {
+        switch( typeid1->ID.Num ) {
         case RT_CURSOR:
         case RT_GROUP_CURSOR:
             type = "cursor";
@@ -275,7 +275,7 @@ void ReportDupResource( WResID *nameid, WResID *typeid, char *file1,
             break;
         default:
             type = typebuf;
-            _itoa( typeid->ID.Num, type, 10 );
+            _itoa( typeid1->ID.Num, type, 10 );
             break;
         }
     }
@@ -286,7 +286,7 @@ void ReportDupResource( WResID *nameid, WResID *typeid, char *file1,
         name = namebuf;
         _itoa( nameid->ID.Num, name, 10 );
     }
-    if( !typeid->IsName && typeid->ID.Num == (uint_16)RT_STRING ) {
+    if( !typeid1->IsName && typeid1->ID.Num == (uint_16)RT_STRING ) {
         strbase = ( nameid->ID.Num - 1 ) * 16;
         if( file1 != NULL && file2 != NULL ) {
             if( warn ) {
@@ -319,7 +319,7 @@ void ReportDupResource( WResID *nameid, WResID *typeid, char *file1,
     if( nameid->IsName ) {
         RcMemFree( name );
     }
-    if( typeid->IsName ) {
+    if( typeid1->IsName ) {
         RcMemFree( type );
     }
 }

@@ -109,7 +109,7 @@ extern int ResWriteVerValueItem( VerValueItem * item, uint_8 use_unicode,
             error = ResWriteString( item->Value.String, use_unicode, handle );
         } else {
             if( use_unicode ) {
-                convbuf = WRESALLOC( 2 * item->strlen );
+                convbuf = (char *)WRESALLOC( 2 * item->strlen );
                 len = (ConvToUnicode)( item->strlen, item->Value.String,
                                         convbuf );
             } else {

@@ -42,7 +42,7 @@ VarString * VarStringStart( void )
 {
     VarString *    newlist;
 
-    newlist = WRESALLOC( sizeof( VarString ) );
+    newlist = (VarString *)WRESALLOC( sizeof( VarString ) );
     if (newlist == NULL) {
         WRES_ERROR( WRS_MALLOC_FAILED );
     } else {
@@ -101,7 +101,7 @@ char * VarStringEnd( VarString * list, int * retlength )
 
     length = ComputeVarStringLen( list );
     /* +1 is for the '\0' */
-    newstring = WRESALLOC( length + 1 );
+    newstring = (char *)WRESALLOC( length + 1 );
 
     if (newstring == NULL) {
         WRES_ERROR( WRS_MALLOC_FAILED )

@@ -30,60 +30,48 @@
 ****************************************************************************/
 
 
-/*
- * MEM2.C - memory allocation/usage routines
- *
- * By:  Craig Eisler
- *      June 4-5,11-12,17 1990
- *      July 16,31 1990
- *      August 1 1990
- *      September 11 1990
- *      October 31 1990
- *      November 4,7,19,22 1990
- *      December 28 1990
- *      January 1 1991
- *      March 30 1991
- *
- * Routines:
- *              ResAddLLItemAtEnd
- *              ResInsertLLItemAfter
- *              ResInsertLLItemBefore
- *              ResDeleteLLItem
- *              ResReplaceLLItem
- */
-
 #include "pch.h"
-#include <stdlib.h>
-#include "mem2.h"
+#include <string.h>
+#include "wresrtns.h"
+#include "read.h"
+#include "reserr.h"
 
-typedef struct ss {
-struct ss *next,*prev;
-} ss;
-
-
-/*
- * ResReplaceLLItem - drop a replacement item into a linked list
- */
-void ResReplaceLLItem( void **headptr, void **tailptr,
-                        void *itemptr, void *newptr )
+WResID * WResReadWResID( WResFileID handle )
+/******************************************/
 {
-    ss          **head;
-    ss          **tail;
-    ss          *item;
-    ss          *new;
+    WResID      newid;
+    WResID *    newidptr;
+    int         numread;
+    int         extrabytes;     /* chars to be read beyond the fixed size */
+    int         error;
 
-    head = (ss **)headptr;
-    tail = (ss **)tailptr;
-    item = (ss *)itemptr;
-    new  = (ss *)newptr;
+    /* read in the fixed part of the record */
+    error = WResReadFixedWResID( &newid, handle );
+    if (error) {
+        return( NULL );
+    }
 
-    if( item == *head ) *head = new;
-    if( item == *tail ) *tail = new;
+    if (newid.IsName) {
+        extrabytes = newid.ID.Name.NumChars - 1;
+    } else {
+        extrabytes = 0;
+    }
 
-    new->prev = item->prev;
-    new->next = item->next;
+    newidptr = (WResID *)WRESALLOC( sizeof(WResID) + extrabytes );
+    if (newidptr == NULL) {
+        WRES_ERROR( WRS_MALLOC_FAILED );
+    } else {
+        memcpy( newidptr, &newid, sizeof(WResID) );
+        if (extrabytes != 0) {
+            numread = (* WRESREAD) ( handle, &(newidptr->ID.Name.Name[1]),
+                                extrabytes );
+            if (numread != extrabytes) {
+                WRES_ERROR( numread == -1 ? WRS_READ_FAILED:WRS_READ_INCOMPLETE );
+                WRESFREE( newidptr );
+                newidptr = NULL;
+            }
+        }
+    }
 
-    if( item->prev != NULL ) item->prev->next = new;
-    if( item->next != NULL ) item->next->prev = new;
-
-} /* ResReplaceLLItem */
+    return( newidptr );
+} /* WResReadWResID */

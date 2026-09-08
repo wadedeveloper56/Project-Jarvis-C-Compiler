@@ -31,53 +31,47 @@
 
 
 #include "pch.h"
-#include <stddef.h>
 #include <string.h>
-#include "layer0.h"
 #include "wresrtns.h"
-#include "util.h"
+#include "read.h"
 #include "reserr.h"
 
-WResID * WResIDFromStr( const char * newstr )
-/*******************************************/
-/* allocate an ID and fill it in */
+WResResInfo * WResReadResRecord( WResFileID handle )
+/****************************************************************/
+/* reads in the fields of a res info record from the current position in */
+/* the file identified by fp */
 {
-    WResID *    newid;
-    unsigned    strsize;
+    WResResInfo     newres;
+    WResResInfo *   newptr;
+    int             numread;
+    int             numcharsleft;
+    int             error;
 
-    strsize = strlen( newstr );
-    /* check the size of the string:  can it fit in two bytes? */
-#if defined( _M_I86 )
-    /* allocate the new ID */
-    // if strsize is non-zero then the memory allocated is larger
-    // than required by 1 byte
-    newid = WRESALLOC( sizeof(WResID) + strsize );
+    error = WResReadFixedResRecord( &newres, handle );
+    if (error) {
+        return( NULL );
+    }
 
-    if (newid == NULL) {
+    if (newres.ResName.IsName) {
+        numcharsleft = newres.ResName.ID.Name.NumChars - 1;
+    } else {
+        numcharsleft = 0;
+    }
+    newptr = (WResResInfo *)WRESALLOC( sizeof(WResResInfo) + numcharsleft );
+    if (newptr == NULL) {
         WRES_ERROR( WRS_MALLOC_FAILED );
     } else {
-        newid->IsName = TRUE;
-        newid->ID.Name.NumChars = strsize;
-        memcpy( newid->ID.Name.Name, newstr, strsize );
-    }
-#else
-    if( strsize <= 0xffff ) {
-        /* allocate the new ID */
-        // if strsize is non-zero then the memory allocated is larger
-        // than required by 1 byte
-        newid = WRESALLOC( sizeof(WResID) + strsize );
-
-        if (newid == NULL) {
-            WRES_ERROR( WRS_MALLOC_FAILED );
-        } else {
-            newid->IsName = TRUE;
-            newid->ID.Name.NumChars = strsize;
-            memcpy( newid->ID.Name.Name, newstr, strsize );
+        memcpy( newptr, &newres, sizeof(WResResInfo) );
+        if (numcharsleft != 0) {
+            numread = (* WRESREAD) ( handle,
+                    &(newptr->ResName.ID.Name.Name[1]), numcharsleft );
+            if (numread != numcharsleft) {
+                WRES_ERROR( numread == -1 ? WRS_READ_FAILED:WRS_READ_INCOMPLETE );
+                WRESFREE( newptr );
+                newptr = NULL;
+            }
         }
-    } else {
-        WRES_ERROR( WRS_BAD_PARAMETER );
-        newid = NULL;
     }
-#endif
-    return( newid );
-} /* WResIDFromStr */
+
+    return( newptr );
+} /* WResReadResRecord */

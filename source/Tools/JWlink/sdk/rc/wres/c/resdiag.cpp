@@ -203,7 +203,7 @@ static int ResWriteDialogHeaderCommon32( DialogBoxHeader32 *head,
     if( add_quotes ) {
         if( head->MenuName != NULL || head->MenuName->name != NULL ) {
             len = strlen( head->MenuName->name );
-            newname = WRESALLOC( (len + 3)*sizeof( char ) );
+            newname = (char *)WRESALLOC( (len + 3)*sizeof( char ) );
             newname[0] = '"';
             strcpy( newname + 1, head->MenuName->name );
             newname[ len + 1 ] = '"';
@@ -576,7 +576,7 @@ static ControlClass * ReadControlClass( WResFileID handle )
 /*********************************************************/
 {
     ControlClass *  newclass;
-    uint_8          class;
+    uint_8          class1;
     int             error;
     int             stringlen;
     char *          restofstring;
@@ -584,9 +584,9 @@ static ControlClass * ReadControlClass( WResFileID handle )
     restofstring = NULL;
 
     /* read in the first byte */
-    error = ResReadUint8( &(class), handle );
+    error = ResReadUint8( &(class1), handle );
     if (!error) {
-        if (class & 0x80 || class == '\0') {
+        if (class1 & 0x80 || class1 == '\0') {
             stringlen = 0;
         } else {
             restofstring = ResReadString( handle, &stringlen );
@@ -599,7 +599,7 @@ static ControlClass * ReadControlClass( WResFileID handle )
     if (error) {
         newclass = NULL;
     } else {
-        newclass = WRESALLOC( sizeof(ControlClass) + stringlen );
+        newclass = (ControlClass *)WRESALLOC( sizeof(ControlClass) + stringlen );
         if( newclass == NULL ) {
             error = TRUE;
             WRES_ERROR( WRS_MALLOC_FAILED );
@@ -608,7 +608,7 @@ static ControlClass * ReadControlClass( WResFileID handle )
 
     /* copy the class or string into the correct place */
     if (!error) {
-        newclass->Class = class;
+        newclass->Class = class1;
         if (stringlen > 0) {
             memcpy( &(newclass->ClassName[1]), restofstring, stringlen );
         }
@@ -626,7 +626,7 @@ static ControlClass * Read32ControlClass( WResFileID handle )
 {
     ControlClass *  newclass;
     uint_16         flags;
-    uint_16         class;
+    uint_16         class1;
     int             error;
     int             stringlen;
     char *          restofstring;
@@ -638,7 +638,7 @@ static ControlClass * Read32ControlClass( WResFileID handle )
     if( !error ) {
         if( flags == 0xffff ) {
             stringlen = 0;
-            error = ResReadUint16( &class, handle );
+            error = ResReadUint16( &class1, handle );
         } else {
             restofstring = ResRead32String( handle, &stringlen );
             stringlen++;    /* for the '\0' */
@@ -650,7 +650,7 @@ static ControlClass * Read32ControlClass( WResFileID handle )
     if( error ) {
         newclass = NULL;
     } else {
-        newclass = WRESALLOC( sizeof(ControlClass) + stringlen );
+        newclass = (ControlClass *)WRESALLOC( sizeof(ControlClass) + stringlen );
         if( newclass == NULL ) {
             error = TRUE;
             WRES_ERROR( WRS_MALLOC_FAILED );
@@ -660,7 +660,7 @@ static ControlClass * Read32ControlClass( WResFileID handle )
     /* copy the class or string into the correct place */
     if( !error ) {
         if( flags == 0xffff ) {
-            newclass->Class = class;
+            newclass->Class = class1;
         } else {
             newclass->ClassName[0] = (char)( flags & 0x00ff );
             memcpy( &(newclass->ClassName[1]), restofstring, stringlen );
@@ -786,59 +786,59 @@ extern ControlClass * ResNameOrOrdToControlClass( const ResNameOrOrdinal * name)
 /******************************************************************************/
 {
     int             stringlen;
-    ControlClass *  class;
+    ControlClass *  class1;
 
     if (name->ord.fFlag == 0xff) {
-        class = ResNumToControlClass( name->ord.wOrdinalID );
+        class1 = ResNumToControlClass( name->ord.wOrdinalID );
     } else {
         if (_stricmp( name->name, "button" ) == 0) {
-            class = ResNumToControlClass( CLASS_BUTTON );
+            class1 = ResNumToControlClass( CLASS_BUTTON );
         } else if (_stricmp( name->name, "edit" ) == 0) {
-            class = ResNumToControlClass( CLASS_EDIT );
+            class1 = ResNumToControlClass( CLASS_EDIT );
         } else if (_stricmp( name->name, "static" ) == 0) {
-            class = ResNumToControlClass( CLASS_STATIC );
+            class1 = ResNumToControlClass( CLASS_STATIC );
         } else if (_stricmp( name->name, "listbox" ) == 0) {
-            class = ResNumToControlClass( CLASS_LISTBOX );
+            class1 = ResNumToControlClass( CLASS_LISTBOX );
         } else if (_stricmp( name->name, "scrollbar" ) == 0) {
-            class = ResNumToControlClass( CLASS_SCROLLBAR );
+            class1 = ResNumToControlClass( CLASS_SCROLLBAR );
         } else if (_stricmp( name->name, "combobox" ) == 0) {
-            class = ResNumToControlClass( CLASS_COMBOBOX );
+            class1 = ResNumToControlClass( CLASS_COMBOBOX );
         } else {
             /* space for the '\0' is reserve in the ControlClass structure */
             stringlen = strlen( name->name );
-            class = WRESALLOC( sizeof(ControlClass) + stringlen );
-            if( class == NULL ) {
+            class1 = (ControlClass *)WRESALLOC( sizeof(ControlClass) + stringlen );
+            if( class1 == NULL ) {
                 WRES_ERROR( WRS_MALLOC_FAILED );
             } else {
                 /* +1 to copy the '\0' */
-                memcpy( &(class->ClassName), name->name, stringlen + 1 );
+                memcpy( &(class1->ClassName), name->name, stringlen + 1 );
             }
         }
     }
-    return( class );
+    return( class1 );
 }
 
 extern ControlClass * ResNumToControlClass( uint_16 classnum )
 /************************************************************/
 {
-    ControlClass *  class;
+    ControlClass *  class1;
 
     if (classnum & 0x80) {
-        class = WRESALLOC( sizeof(ControlClass) );
-        if( class == NULL ) {
+        class1 = (ControlClass *)WRESALLOC( sizeof(ControlClass) );
+        if( class1 == NULL ) {
             WRES_ERROR( WRS_MALLOC_FAILED );
         } else {
-            class->Class = classnum;
+            class1->Class = classnum;
         }
     } else {
-        class = WRESALLOC( sizeof(ControlClass) + 1 );
-        if( class == NULL ) {
+        class1 = (ControlClass *)WRESALLOC( sizeof(ControlClass) + 1 );
+        if( class1 == NULL ) {
             WRES_ERROR( WRS_MALLOC_FAILED );
         } else {
-            class->ClassName[0] = classnum;
-            class->ClassName[1] = '\0';
+            class1->ClassName[0] = classnum;
+            class1->ClassName[1] = '\0';
         }
     }
-    return( class );
+    return( class1 );
 }
 

@@ -117,7 +117,7 @@ static void * MemUprCpy( void * dst, const void * src, size_t length )
     char *          c_dst;
     const char *    c_src;
 
-    for (c_dst = dst, c_src = src; length > 0; c_dst++, c_src++, length--) {
+    for (c_dst = (char *)dst, c_src = (const char *)src; length > 0; c_dst++, c_src++, length--) {
         *c_dst = toupper( *c_src );
     }
 
@@ -130,7 +130,7 @@ static void * MemUprCpyUni( void * dst, const void * src, size_t length )
     uint_16 *       c_dst;
     const char *    c_src;
 
-    for (c_dst = dst, c_src = src; length > 0; c_dst++, c_src++, length--) {
+    for (c_dst = (uint_16 *)dst, c_src = (const char *)src; length > 0; c_dst++, c_src++, length--) {
         *c_dst = toupper( *c_src );
     }
 
@@ -145,16 +145,16 @@ static void CopyString( void **nextstr, WResIDName **name, int use_unicode )
     StringItem32        *name32;
 
     currname = *name;
-    *name = *nextstr;
+    *name = (WResIDName *)*nextstr;
 
     if( use_unicode ) {
-        name32 = *nextstr;
+        name32 = (StringItem32 *)*nextstr;
         name32->NumChars = currname->NumChars;
         MemUprCpyUni( &name32->Name, &currname->Name, currname->NumChars );
         *nextstr = (uint_8 *)(*nextstr) + 2 * ( currname->NumChars - 1 )
                                         + sizeof( StringItem32 );
     } else {
-        name16 = *nextstr;
+        name16 = (StringItem16 *)*nextstr;
         name16->NumChars = currname->NumChars;
         MemUprCpy( &name16->Name, &currname->Name, currname->NumChars );
         *nextstr = (uint_8 *)(*nextstr) + currname->NumChars - 1
@@ -189,7 +189,7 @@ static void ConstructStringBlock( StringBlock * str )
 #else
     cnt = str->StringListLen;
     for( i=0; i < cnt; i++ ) {
-        currname = str->StringList[i];
+        currname = (WResIDName *)str->StringList[i];
         if( str->UseUnicode ) {
             str->StringBlockSize += sizeof( StringItem32 )
                                     + 2 * ((*currname).NumChars - 1);
@@ -204,7 +204,7 @@ static void ConstructStringBlock( StringBlock * str )
     str->StringBlock = RcMemMalloc( str->StringBlockSize );
 
     /* copy the strings into the block */
-    nextstring = str->StringBlock;
+    nextstring = (char *)str->StringBlock;
 #if(0) //may 24 1996 DRW
     for (currname = str->StringList; currname < str->StringList
                 + str->StringListLen; currname++) {
@@ -213,7 +213,7 @@ static void ConstructStringBlock( StringBlock * str )
 #else
     cnt = str->StringListLen;
     for( i=0; i < cnt; i++ ) {
-        currname = str->StringList[i];
+        currname = (WResIDName *)str->StringList[i];
         str->StringList[i] = nextstring;
         CopyString( (void **)&nextstring, &currname, str->UseUnicode );
     }
@@ -223,7 +223,7 @@ static void ConstructStringBlock( StringBlock * str )
 static int CompareWResIDNames( const void ** name1, const void ** name2 )
 /*************************************************************************/
 {
-    return( WResIDNameCmp( *name1, *name2 ) );
+    return( WResIDNameCmp( (WResIDName *)*name1, (WResIDName *)*name2 ) );
 } /* CompareWResIDNames */
 
 extern void StringBlockBuild( StringBlock * str, WResDir dir, int use_unicode )
@@ -239,7 +239,7 @@ extern void StringBlockBuild( StringBlock * str, WResDir dir, int use_unicode )
         /* set the initial list_len to be the max possible */
         list_len = WResGetNumTypes( dir ) + WResGetNumResources( dir );
         str->UseUnicode = use_unicode;
-        str->StringList = RcMemMalloc( list_len * sizeof(void *) );
+        str->StringList = (void **)RcMemMalloc( list_len * sizeof(void *) );
 
         list_len = InitStringList( dir, str->StringList, list_len );
         list_len = SortAndRemoveRedundantStrings( str->StringList,
@@ -252,7 +252,7 @@ extern void StringBlockBuild( StringBlock * str, WResDir dir, int use_unicode )
             str->StringBlock = NULL;
             str->StringBlockSize = 0;
         } else {
-            new_list = RcMemRealloc( str->StringList, list_len * sizeof(void *) );
+            new_list = (void **)RcMemRealloc( str->StringList, list_len * sizeof(void *) );
             if( new_list != NULL ) {
                 str->StringList = new_list;
             }
@@ -376,11 +376,11 @@ extern int_32 StringBlockFind( StringBlock * str, WResIDName * name )
     uint_8 **       location;
 
     if( str->UseUnicode ) {
-        location = bsearch( name, str->StringList, str->StringListLen,
+        location = (uint_8 **)bsearch( name, str->StringList, str->StringListLen,
                     sizeof(void *),
                     ( int (*)(const void *, const void *) )compareStrings32 );
     } else {
-        location = bsearch( name, str->StringList, str->StringListLen,
+        location = (uint_8 **)bsearch( name, str->StringList, str->StringListLen,
                     sizeof(void *),
                     ( int (*)(const void *, const void *) )compareStrings16 );
     }

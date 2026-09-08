@@ -52,7 +52,7 @@ static int readLangInfoList( WResFileID handle, WResResNode *res,
 
     error = FALSE;
     for( i=0; i < res->Info.NumResources; i++ ) {
-        langnode = WRESALLOC( sizeof(WResLangNode) );
+        langnode = (WResLangNode *)WRESALLOC( sizeof(WResLangNode) );
         if( langnode == NULL ) {
             error = TRUE;
             WRES_ERROR( WRS_MALLOC_FAILED );
@@ -112,7 +112,7 @@ static int readResList( WResFileID handle, WResTypeNode * currtype,
         if( !error ) {
             /* allocate a new node */
             extrabytes = WResIDExtraBytes( resid );
-            newnode = WRESALLOC( sizeof(WResResNode) + extrabytes );
+            newnode = (WResResNode *)WRESALLOC( sizeof(WResResNode) + extrabytes );
             if( newnode == NULL ) {
                 error = TRUE;
                 WRES_ERROR( WRS_MALLOC_FAILED );
@@ -139,7 +139,7 @@ static int readResList( WResFileID handle, WResTypeNode * currtype,
             }
 
             if( ver < 2 ) {
-                langnode = WRESALLOC( sizeof(WResLangNode) );
+                langnode = (WResLangNode *)WRESALLOC( sizeof(WResLangNode) );
                 if( langnode == NULL ) {
                     error =  TRUE;
                     WRES_ERROR( WRS_MALLOC_FAILED );
@@ -190,7 +190,7 @@ static int readTypeList( WResFileID handle, WResDirHead * currdir,
         if( !error ) {
             /* allocate a new node */
             extrabytes = WResIDExtraBytes( &(newtype.TypeName) );
-            newnode = WRESALLOC( sizeof(WResTypeNode) + extrabytes );
+            newnode = (WResTypeNode *)WRESALLOC( sizeof(WResTypeNode) + extrabytes );
             if( newnode == NULL ) {
                 error = TRUE;
                 WRES_ERROR( WRS_MALLOC_FAILED );

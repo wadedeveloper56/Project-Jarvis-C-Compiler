@@ -106,17 +106,17 @@ static int QueueIsEmpty( DirEntryQueue * queue )
 static void QueueAdd( DirEntryQueue * queue, PEResDirEntry * entry )
 /******************************************************************/
 {
-    QueueNode *     new;
+    QueueNode *     new1;
 
-    new = RcMemMalloc( sizeof(QueueNode) );
-    new->entry = entry;
-    new->next = NULL;
+    new1 = (QueueNode *)RcMemMalloc( sizeof(QueueNode) );
+    new1->entry = entry;
+    new1->next = NULL;
     if( queue->front == NULL ) {
-        queue->front = new;
-        queue->back = new;
+        queue->front = new1;
+        queue->back = new1;
     } else {
-        queue->back->next = new;
-        queue->back = new;
+        queue->back->next = new1;
+        queue->back = new1;
     }
 } /* QueueAdd */
 
@@ -151,7 +151,7 @@ static void PEResDirEntryInit( PEResDirEntry * entry, int num_entries )
     entry->Head.num_name_entries = 0;
     entry->Head.num_id_entries = 0;
     entry->NumUnused = num_entries;
-    entry->Children = RcMemMalloc( num_entries * sizeof(PEResEntry) );
+    entry->Children = (PEResEntry *)RcMemMalloc( num_entries * sizeof(PEResEntry) );
 }
 
 static void PEResDirAdd( PEResDirEntry * entry, WResID * name,
@@ -365,7 +365,7 @@ static RcStatus SetEntryOffset( PEResEntry * entry, void * _curr_offset )
 /***********************************************************************/
 {
     int     num_entries;
-    uint_32 *curr_offset = _curr_offset;
+    uint_32 *curr_offset = (uint_32 *)_curr_offset;
 
     if( entry->IsDirEntry ) {
         entry->Entry.entry_rva = *curr_offset | PE_RESOURCE_MASK_ON;
@@ -384,7 +384,7 @@ static RcStatus AdjustNameEntry( PEResEntry * entry, void * _dir_size )
 /*********************************************************************/
 {
     uint_32     str_offset;
-    uint_32    *dir_size = _dir_size;
+    uint_32    *dir_size = (uint_32 *)_dir_size;
 
     if( entry->Entry.id_name & PE_RESOURCE_MASK_ON ) {
         /* the id_name contains the offset into the string block */
@@ -400,8 +400,8 @@ static int ComparePEResIdName( const void * _entry1,
                                const void * _entry2 )
 /***********************************************************************/
 {
-    const PEResEntry * entry1 = _entry1;
-    const PEResEntry * entry2 = _entry2;
+    const PEResEntry * entry1 = (const PEResEntry *)_entry1;
+    const PEResEntry * entry2 = (const PEResEntry *)_entry2;
 
     if( entry1->Name == NULL ) {
         if( entry2->Name == NULL ) {
@@ -419,7 +419,7 @@ static int ComparePEResIdName( const void * _entry1,
         if( entry2->Name == NULL ) {
             return( -1 );
         } else {
-            return( CompareStringItems32( entry1->Name, entry2->Name ) );
+            return( CompareStringItems32( (const StringItem32 *)entry1->Name, (const StringItem32 *)entry2->Name ) );
         }
     }
 } /* ComparePEResIdName */
@@ -479,7 +479,7 @@ typedef struct CopyResInfo {
 static RcStatus copyDataEntry( PEResEntry *entry, void *_copy_info )
 /******************************************************************/
 {
-    CopyResInfo         *copy_info = _copy_info;
+    CopyResInfo         *copy_info = (CopyResInfo *)_copy_info;
     WResLangInfo        *res_info;
     long                seek_rc;
     uint_32             diff;
@@ -489,9 +489,9 @@ static RcStatus copyDataEntry( PEResEntry *entry, void *_copy_info )
 
     closefile = FALSE;
     if( !entry->IsDirEntry ) {
-        info = WResGetFileInfo( entry->u.Data.Wind );
+        info = (ResFileInfo *)WResGetFileInfo( entry->u.Data.Wind );
         if( copy_info->curres == NULL || copy_info->curres == info ) {
-            res_info = WResGetLangInfo( entry->u.Data.Wind );
+            res_info = (WResLangInfo *)WResGetLangInfo( entry->u.Data.Wind );
             seek_rc = RcSeek( info->Handle, res_info->Offset, SEEK_SET );
             if( seek_rc == -1 ) return( RS_READ_ERROR );
             status = CopyExeData( info->Handle, copy_info->to_handle,
@@ -632,12 +632,12 @@ static RcStatus setDataEntry( PEResEntry *entry, void *_info )
 {
     WResLangInfo        *langinfo;
     ResFileInfo         *fileinfo;
-    DataEntryCookie     *info = _info;
+    DataEntryCookie     *info = (DataEntryCookie *)_info;
 
     if( !entry->IsDirEntry ) {
-        fileinfo = WResGetFileInfo( entry->u.Data.Wind );
+        fileinfo = (ResFileInfo *)WResGetFileInfo( entry->u.Data.Wind );
         if( info->curfile == NULL || info->curfile == fileinfo ) {
-            langinfo = WResGetLangInfo( entry->u.Data.Wind );
+            langinfo = (WResLangInfo *)WResGetLangInfo( entry->u.Data.Wind );
             entry->u.Data.Entry.data_rva = *info->rva;
             entry->u.Data.Entry.size = langinfo->Length;
             entry->u.Data.Entry.code_page = 0;    /* should this be the UNICODE page*/
@@ -656,12 +656,12 @@ static RcStatus setDataEntry( PEResEntry *entry, void *_info )
 static RcStatus writeEntry( PEResEntry * entry, void * _handle )
 /**************************************************************/
 {
-    int *handle = _handle;
+    int *handle = (int *)_handle;
 
     if( entry->IsDirEntry ) {
         return( writeDirEntry( &entry->u.Dir, *handle ) );
     } else {
-        return( writeDataEntry( &entry->u.Data, *handle ) );
+        return( (RcStatus)writeDataEntry( &entry->u.Data, *handle ) );
     }
 } /* writeEntry */
 
@@ -842,8 +842,8 @@ static void reportDuplicateResources( WResMergeError *errs )
     while( curerr != NULL ) {
         resinfo = WResGetResInfo( curerr->dstres );
         typeinfo = WResGetTypeInfo( curerr->dstres );
-        file1 = WResGetFileInfo( curerr->dstres );
-        file2 = WResGetFileInfo( curerr->srcres );
+        file1 = (ResFileInfo *)WResGetFileInfo( curerr->dstres );
+        file2 = (ResFileInfo *)WResGetFileInfo( curerr->srcres );
         ReportDupResource( &resinfo->ResName, &typeinfo->TypeName,
                            file1->name, file2->name, FALSE );
         curerr = curerr->next;

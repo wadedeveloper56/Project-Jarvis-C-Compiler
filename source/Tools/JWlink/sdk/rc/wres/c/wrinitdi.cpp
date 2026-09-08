@@ -31,48 +31,25 @@
 
 
 #include "pch.h"
-#include <string.h>
-#include "watcom.h"
 #include "wresrtns.h"
-#include "resnamor.h"
+#include "wres.h"
 #include "reserr.h"
 
-extern ResNameOrOrdinal * ResStrToNameOrOrd( char * string )
-/**********************************************************/
+WResDir WResInitDir( void )
+/*************************/
 {
-    ResNameOrOrdinal *  newname;
-    int                 stringlen;
+    WResDirHead *   newdir;
 
-    if( string == NULL || *(unsigned char *)string == 0xff ) {
-        /* the first character of a ResNameOrOrdinal can't be 0xff */
-        /* since this indicated that it is an ordinal, not a name */
-        WRES_ERROR( WRS_BAD_PARAMETER );
-        return( NULL );
-    }
-
-    stringlen = strlen( string );
-
-    newname = WRESALLOC( sizeof(ResNameOrOrdinal) + stringlen );
-    if (newname != NULL) {
-        /* +1 so we get the '\0' as well */
-        memcpy( &(newname->name), string, stringlen + 1 );
-    } else {
+    newdir = (WResDirHead *)WRESALLOC( sizeof(WResDirHead) );
+    if (newdir == NULL) {
         WRES_ERROR( WRS_MALLOC_FAILED );
+    } else {
+        newdir->NumResources = 0;
+        newdir->NumTypes = 0;
+        newdir->TargetOS = WRES_OS_WIN16;
+        newdir->Head = NULL;
+        newdir->Tail = NULL;
     }
 
-    return( newname );
-}
-
-extern ResNameOrOrdinal * ResNumToNameOrOrd( uint_16 num )
-/********************************************************/
-{
-    ResNameOrOrdinal *  newname;
-
-    newname = WRESALLOC( sizeof(ResNameOrOrdinal) );
-    if (newname != NULL) {
-        newname->ord.fFlag = 0xff;
-        newname->ord.wOrdinalID = num;
-    }
-
-    return( newname );
+    return( newdir );
 }

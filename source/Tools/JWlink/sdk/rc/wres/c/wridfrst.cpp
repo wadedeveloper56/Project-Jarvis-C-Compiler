@@ -31,47 +31,53 @@
 
 
 #include "pch.h"
+#include <stddef.h>
 #include <string.h>
+#include "layer0.h"
 #include "wresrtns.h"
-#include "read.h"
+#include "util.h"
 #include "reserr.h"
 
-WResID * WResReadWResID( WResFileID handle )
-/******************************************/
+WResID * WResIDFromStr( const char * newstr )
+/*******************************************/
+/* allocate an ID and fill it in */
 {
-    WResID      newid;
-    WResID *    newidptr;
-    int         numread;
-    int         extrabytes;     /* chars to be read beyond the fixed size */
-    int         error;
+    WResID *    newid;
+    unsigned    strsize;
 
-    /* read in the fixed part of the record */
-    error = WResReadFixedWResID( &newid, handle );
-    if (error) {
-        return( NULL );
-    }
+    strsize = strlen( newstr );
+    /* check the size of the string:  can it fit in two bytes? */
+#if defined( _M_I86 )
+    /* allocate the new ID */
+    // if strsize is non-zero then the memory allocated is larger
+    // than required by 1 byte
+    newid = WRESALLOC( sizeof(WResID) + strsize );
 
-    if (newid.IsName) {
-        extrabytes = newid.ID.Name.NumChars - 1;
-    } else {
-        extrabytes = 0;
-    }
-
-    newidptr = WRESALLOC( sizeof(WResID) + extrabytes );
-    if (newidptr == NULL) {
+    if (newid == NULL) {
         WRES_ERROR( WRS_MALLOC_FAILED );
     } else {
-        memcpy( newidptr, &newid, sizeof(WResID) );
-        if (extrabytes != 0) {
-            numread = (* WRESREAD) ( handle, &(newidptr->ID.Name.Name[1]),
-                                extrabytes );
-            if (numread != extrabytes) {
-                WRES_ERROR( numread == -1 ? WRS_READ_FAILED:WRS_READ_INCOMPLETE );
-                WRESFREE( newidptr );
-                newidptr = NULL;
-            }
-        }
+        newid->IsName = TRUE;
+        newid->ID.Name.NumChars = strsize;
+        memcpy( newid->ID.Name.Name, newstr, strsize );
     }
+#else
+    if( strsize <= 0xffff ) {
+        /* allocate the new ID */
+        // if strsize is non-zero then the memory allocated is larger
+        // than required by 1 byte
+        newid = (WResID *)WRESALLOC( sizeof(WResID) + strsize );
 
-    return( newidptr );
-} /* WResReadWResID */
+        if (newid == NULL) {
+            WRES_ERROR( WRS_MALLOC_FAILED );
+        } else {
+            newid->IsName = TRUE;
+            newid->ID.Name.NumChars = strsize;
+            memcpy( newid->ID.Name.Name, newstr, strsize );
+        }
+    } else {
+        WRES_ERROR( WRS_BAD_PARAMETER );
+        newid = NULL;
+    }
+#endif
+    return( newid );
+} /* WResIDFromStr */
