@@ -122,7 +122,7 @@ struct references_private {
 };
 
 #pragma pack( 4 )
-struct dw_client {
+struct _dw_client {
     jmp_buf             exception_handler;
     dw_funcs            funcs;
     char *              producer_name;

@@ -210,10 +210,10 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="c\dwlngen.c" />
-    <ClCompile Include="c\dwutils.c" />
-    <ClCompile Include="dwarfold.c" />
-    <ClCompile Include="pch.c">
+    <ClCompile Include="c\dwlngen.cpp" />
+    <ClCompile Include="c\dwutils.cpp" />
+    <ClCompile Include="dwarfold.cpp" />
+    <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
