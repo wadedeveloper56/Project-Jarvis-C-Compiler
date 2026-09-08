@@ -268,9 +268,10 @@ static char const _WCI86FAR * const _WCI86FAR assignmentFunction[] = {
 #define num_elements( __a ) (sizeof(__a) / sizeof(__a[0]))
 
 typedef union key_desc {
-    char        str[2];
+    char        str[3];
     short       val;
 } key_desc;
+
 typedef struct assoc_desc {
     key_desc            u;
     char _WCI86FAR      *name;
@@ -863,7 +864,7 @@ static int array( output_desc *data, state_desc *state )
 
 static int function( output_desc *data, state_desc *state )
 {
-    auto state_desc new_state;
+    state_desc new_state;
     size_t          conv_offset = 0;
     int             first_arg = 0;
     char            c;
@@ -1026,7 +1027,7 @@ static int based_encoding( output_desc *data, state_desc *state )
         advanceChar( data );
         c = nextChar( data );
         if( c == TYPE_NAME_PREFIX ) {
-            auto state_desc new_state;
+            state_desc new_state;
             advanceChar( data );
             new_state = *state;
             new_state.prefix = data->index;
@@ -1129,7 +1130,7 @@ static int template_arg( output_desc *data, state_desc *state )
 
 static int template_name( output_desc *data, state_desc *state )
 {
-    auto state_desc new_state;
+    state_desc new_state;
     int             first_arg = 0;
     char            c;
 
@@ -1480,7 +1481,7 @@ static int scope( output_desc *data, state_desc *state, size_t *symbol_length )
             return( recursive_mangled_name( data, state ) );
         }
     } else if( c == TEMPLATE_PREFIX ) {
-        auto state_desc new_state;
+        state_desc new_state;
         advanceChar( data );
         new_state = *state;
         new_state.suffix = data->count - state->prefix - *symbol_length;
@@ -1518,7 +1519,7 @@ static int scoped_name( output_desc *data, state_desc *state )
 
 static int mangled_name( output_desc *data )
 {
-    auto state_desc new_state;
+    state_desc new_state;
 
     _output1( DM_MANGLED_NAME );
     new_state.prefix = 0;
@@ -1668,7 +1669,7 @@ static size_t terminateOutput( output_desc *data )
 static size_t demangle_recursive( char const *input, char *output, size_t size )
 {
     realloc_fn_t save_reallocator;
-    auto output_desc data;
+    output_desc data;
 
     save_reallocator = user_realloc;
     user_realloc = NULL;
@@ -1687,7 +1688,7 @@ static size_t demangle_recursive( char const *input, char *output, size_t size )
 
 static int recursive_mangled_name( output_desc *data, state_desc *state )
 {
-    auto char buff[AUTO_BUFFER_SIZE];
+    char buff[AUTO_BUFFER_SIZE];
 
     _output1( DM_RECURSE_BEGIN );
     data->input += demangle_recursive( data->input, buff, sizeof( buff ) );
@@ -1707,8 +1708,8 @@ size_t __demangle_t(                            // DEMANGLE A C++ TYPE
     size_t size )                               // - size of output buffer
 {
     size_t outlen;
-    auto output_desc data;
-    auto state_desc new_state;
+    output_desc data;
+    state_desc new_state;
 
     init_globals( NULL );
     init_descriptor( &data, &demangleEmit, &data, input, len, output, size );
@@ -1731,7 +1732,7 @@ size_t __demangle_l(                            // DEMANGLE A C++ NAME
 {
     int                 mangled;
     size_t              outlen;
-    auto output_desc    data;
+    output_desc    data;
 
     init_globals( NULL );
     mangled = __is_mangled( input, len );
@@ -1756,7 +1757,7 @@ size_t __demangle_r(                            // DEMANGLE A C++ NAME
     char                *output_buff;
     int                 mangled;
     size_t              outlen;
-    auto output_desc    data;
+    output_desc    data;
 
     init_globals( realloc );
     mangled = __is_mangled( input, len );
@@ -1787,7 +1788,7 @@ int __scope_name(                               // EXTRACT A C++ SCOPE
     size_t *size )                              // - size of output buffer
 {                                               // returns TRUE on success
     int                 mangled;
-    auto output_desc    data;
+    output_desc    data;
 
     init_globals( NULL );
     *scope = NULL;
@@ -1911,7 +1912,7 @@ size_t __demangled_basename(                    // CREATE DEMANGLED BASE NAME
 {                                               // return len of output
     int                 mangled;
     size_t              outlen;
-    auto output_desc    data;
+    output_desc    data;
 
     init_globals( NULL );
     mangled = __is_mangled( input, len );
