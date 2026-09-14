@@ -55,221 +55,230 @@
 #include "wressetr.h"   // from wres project
 #include "wresset2.h"  // from wres project
 
-static ssize_t ResWrite( int dummy, const void *buff, size_t size )
+static ssize_t ResWrite(int dummy, const void* buff, size_t size)
 /*****************************************************************/
 /* redirect wres _write to writeload */
 {
-    dummy = dummy;
-    DbgAssert( dummy == Root->outfile->handle );
-    WriteLoad( (void *) buff, size );
-    return( size );
+	dummy = dummy;
+	DbgAssert(dummy == Root->outfile->handle);
+	WriteLoad((void*)buff, size);
+	return(size);
 }
 
 //extern int WLinkItself;
-static off_t ResSeek( int handle, off_t position, int where )
+static off_t ResSeek(int handle, off_t position, int where)
 /***********************************************************/
 /* Workaround wres bug */
 {
-    if( ( where == SEEK_SET ) && ( handle == WLinkItself ) ) {
-        return( QLSeek( handle, position + FileShift, where, NULL ) - FileShift );
-    } else {
-        return( QLSeek( handle, position, where, NULL ) );
-    }
+	if ((where == SEEK_SET) && (handle == WLinkItself))
+	{
+		return(QLSeek(handle, position + FileShift, where, NULL) - FileShift);
+	}
+	else
+	{
+		return(QLSeek(handle, position, where, NULL));
+	}
 }
 
-static int ResClose( int handle )
+static int ResClose(int handle)
 /*******************************/
 {
-    return( _close( handle ) );
+	return(_close(handle));
 }
 
-static ssize_t ResRead( int handle, void *buffer, size_t len )
+static ssize_t ResRead(int handle, void* buffer, size_t len)
 /************************************************************/
 {
-    return( QRead( handle, buffer, len, NULL ) );
+	return(QRead(handle, buffer, len, NULL));
 }
 
-static off_t ResPos( int handle )
+static off_t ResPos(int handle)
 /*******************************/
 {
-    return( QPos( handle ) );
+	return(QPos(handle));
 }
 
-WResSetRtns( ResOpen, ResClose, ResRead, ResWrite, ResSeek, ResPos, ChkLAlloc, LFree );
+WResSetRtns(ResOpen, ResClose, ResRead, ResWrite, ResSeek, ResPos, ChkLAlloc, LFree);
 
 #if !defined( _DLLHOST )
-void WriteStdOut( char *str )
+void WriteStdOut(char* str)
 /**********************************/
 {
-    QWrite( STDOUT_HANDLE, str, strlen( str ), NULL );
+	QWrite(STDOUT_HANDLE, str, strlen(str), NULL);
 }
 
-void WriteNLStdOut( void )
+void WriteNLStdOut(void)
 /*******************************/
 {
-    QWriteNL( STDOUT_HANDLE, NULL );
+	QWriteNL(STDOUT_HANDLE, NULL);
 }
 
-void WriteInfoStdOut( char *str, unsigned level, char *sym )
+void WriteInfoStdOut(char* str, unsigned level, char* sym)
 /*****************************************************************/
 {
-    level = level;
-    sym = sym;
-    WriteStdOut( str );
-    WriteNLStdOut();
+	level = level;
+	sym = sym;
+	WriteStdOut(str);
+	WriteNLStdOut();
 }
 
-char *GetEnvString( char *envname )
+char* GetEnvString(char* envname)
 /*****************************************/
 {
-    return( getenv( envname ) );
+	return(getenv(envname));
 }
 
-bool GetAddtlCommand( unsigned cmd, char *buf )
+bool GetAddtlCommand(unsigned cmd, char* buf)
 /****************************************************/
 {
-    cmd = cmd;
-    buf = buf;
-    return( FALSE );
+	cmd = cmd;
+	buf = buf;
+	return(FALSE);
 }
 
-bool IsStdOutConsole( void )
+bool IsStdOutConsole(void)
 /*********************************/
 {
-    return( QIsDevice( STDOUT_HANDLE ) );
+	return(QIsDevice(STDOUT_HANDLE));
 }
 #endif
 
-void WriteNulls( f_handle file, unsigned_32 len, char *name )
+void WriteNulls(f_handle file, unsigned_32 len, char* name)
 /*******************************************************************/
 /* copy nulls for uninitialized data */
 {
-    static unsigned NullArray[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+	static unsigned NullArray[16] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
 
-    for( ; len > sizeof( NullArray ); len -= sizeof( NullArray ) ) {
-        QWrite( file, NullArray, sizeof( NullArray ), name );
-    }
-    if( len > 0 ) {
-        QWrite( file, NullArray, len, name );
-    }
+	for (; len > sizeof(NullArray); len -= sizeof(NullArray))
+	{
+		QWrite(file, NullArray, sizeof(NullArray), name);
+	}
+	if (len > 0)
+	{
+		QWrite(file, NullArray, len, name);
+	}
 }
 
-void CheckErr( void )
+void CheckErr(void)
 /**************************/
 {
-    if( LinkState & ( LINK_ERROR | STOP_WORKING ) ) {
-        WriteLibsUsed();
-        Suicide();
-    }
+	if (LinkState & (LINK_ERROR | STOP_WORKING))
+	{
+		WriteLibsUsed();
+		Suicide();
+	}
 }
 
-void CheckStop( void )
+void CheckStop(void)
 /***************************/
 {
-    if( LinkState & STOP_WORKING ) {
-        Suicide();
-    }
+	if (LinkState & STOP_WORKING)
+	{
+		Suicide();
+	}
 }
 
-void LnkFatal( char *msg )
+void LnkFatal(char* msg)
 /********************************/
 {
-    LnkMsg( FTL+MSG_INTERNAL, "s", msg );
+	LnkMsg(FTL + MSG_INTERNAL, "s", msg);
 }
 
-bool TestBit( byte *array, unsigned num )
+bool TestBit(byte* array, unsigned num)
 /***********************************************/
 /* return TRUE if the specified bit is on */
 {
-    byte        mask;
+	byte        mask;
 
-    mask = 1 << ( num % 8 );
-    num /= 8;
-    return( *( array + num ) & mask );
+	mask = 1 << (num % 8);
+	num /= 8;
+	return(*(array + num) & mask);
 }
 
-void ClearBit( byte *array, unsigned num )
+void ClearBit(byte* array, unsigned num)
 /************************************************/
 /* make sure a bit is turned off */
 {
-    byte        mask;
+	byte        mask;
 
-    mask = 1 << ( num % 8 );
-    num /= 8;
-    array += num;
-    *array &= ~mask;
+	mask = 1 << (num % 8);
+	num /= 8;
+	array += num;
+	*array &= ~mask;
 }
 
-char *ChkStrDup( char *str )
+char* ChkStrDup(char* str)
 /**************************/
 {
-    size_t      len;
-    char        *copy;
+	size_t      len;
+	char* copy;
 
-    len = strlen( str ) + 1;
-    _ChkAlloc( copy, len  );
-    memcpy( copy, str, len );
-    return( copy );
+	len = strlen(str) + 1;
+	_ChkAlloc(char*, copy, len);
+	memcpy(copy, str, len);
+	return(copy);
 }
 
-char *ChkToString( void *mem, unsigned len )
+char* ChkToString(void* mem, unsigned len)
 /******************************************/
 {
-    char        *str;
+	char* str;
 
-    _ChkAlloc( str, len + 1 );
-    memcpy( str, mem, len );
-    str[ len ] = '\0';
-    return( str );
+	_ChkAlloc(char*, str, len + 1);
+	memcpy(str, mem, len);
+	str[len] = '\0';
+	return(str);
 }
 
-static void WalkList( node *list, void (*fn)( void * ) )
+static void WalkList(node* list, void (*fn)(void*))
 /******************************************************/
 {
-    for( ; list != NULL; list = list->next ) {
-        fn( list );
-    }
+	for (; list != NULL; list = (node*)list->next)
+	{
+		fn(list);
+	}
 }
 
-static void WalkModList( section *sect, void *rtn )
+static void WalkModList(section* sect, void* rtn)
 /*************************************************/
 {
-    CurrSect = sect;
-    WalkList( (node *) sect->mods, rtn );
+	CurrSect = sect;
+	WalkList((node*)sect->mods, (void (*)(void*))rtn);
 }
 
-void WalkMods( void (*rtn)( mod_entry * ) )
+void WalkMods(void (*rtn)(mod_entry*))
 /************************************************/
 {
-    ParmWalkAllSects( WalkModList, rtn );
-    CurrSect = Root;
-    WalkList( (node *)LibModules, (void (*)(void *))rtn );
+	ParmWalkAllSects(WalkModList, rtn);
+	CurrSect = Root;
+	WalkList((node*)LibModules, (void (*)(void*))rtn);
 }
 
-static void WalkClass( class_entry *class, void (*rtn)( seg_leader * ) )
+static void WalkClass(class_entry* class1, void (*rtn)(seg_leader*))
 /********************************************************************/
 {
-    RingWalk( class->segs, (void (*)(void *))rtn );
+	RingWalk(class1->segs, (void (*)(void*))rtn);
 }
 
-void SectWalkClass( section *sect, void *rtn )
+void SectWalkClass(section* sect, void* rtn)
 /***************************************************/
 {
-    class_entry         *class;
+	class_entry* class1;
 
-    CurrSect = sect;
-    for( class = sect->classlist; class != NULL; class = class->next_class ) {
-        WalkClass( class, rtn );
-    }
+	CurrSect = sect;
+	for (class1 = sect->classlist; class1 != NULL; class1 = class1->next_class)
+	{
+		WalkClass(class1, (void (*)(seg_leader*))rtn);
+	}
 }
 
-void WalkLeaders( void (*rtn)( seg_leader * ) )
+void WalkLeaders(void (*rtn)(seg_leader*))
 /****************************************************/
 {
-    ParmWalkAllSects( SectWalkClass, rtn );
+	ParmWalkAllSects(SectWalkClass, rtn);
 }
 
-seg_leader *FindSegment( section *sect, char *name )
+seg_leader* FindSegment(section* sect, char* name)
 /***************************************************/
 /* NOTE: this doesn't work for overlays!
  *
@@ -278,336 +287,380 @@ seg_leader *FindSegment( section *sect, char *name )
  *
  */
 {
-static seg_leader   *seg = NULL;
-static class_entry  *class = NULL;
+	static seg_leader* seg = NULL;
+	static class_entry* class1 = NULL;
 
-    if( sect != NULL ) {
-        class = sect->classlist;
-        seg = NULL;
-    }
-    for( ; class != NULL; class = class->next_class ) {
-        while( (seg = RingStep( class->segs, seg )) != NULL ) {
-            if( _stricmp( seg->segname, name ) == 0 ) {
-                return( seg );
-            }
-        }
-    }
-    return( seg );
+	if (sect != NULL)
+	{
+		class1 = sect->classlist;
+		seg = NULL;
+	}
+	for (; class1 != NULL; class1 = class1->next_class)
+	{
+		while ((seg = (seg_leader*)RingStep(class1->segs, seg)) != NULL)
+		{
+			if (_stricmp(seg->segname, name) == 0)
+			{
+				return(seg);
+			}
+		}
+	}
+	return(seg);
 }
 
-void LinkList( void *in_head, void *newnode )
+void LinkList(void* in_head, void* newnode)
 /*******************************************/
 /* Link a new node into a linked list (new node goes at the end of the list) */
 {
-    node    **owner;
+	node** owner;
 
-    owner = in_head;
-    ((node *)newnode)->next = NULL;
-    while( *owner != NULL ) {
-        owner = (node **)&(*owner)->next;
-    }
-    *owner = newnode;
+	owner = (node**)in_head;
+	((node*)newnode)->next = NULL;
+	while (*owner != NULL)
+	{
+		owner = (node**)&(*owner)->next;
+	}
+	*owner = (node*)newnode;
 }
 
-void FreeList( void *_curr )
+void FreeList(void* _curr)
 /*********************************/
 /* Free a list of nodes. */
 {
-    node        *curr = _curr;
-    node        *next_node;
+	node* curr = (node*)_curr;
+	node* next_node;
 
-    while( curr ) {
-        next_node = curr->next;
-        _LnkFree( curr );
-        curr = next_node;
-    }
+	while (curr)
+	{
+		next_node = (node*)curr->next;
+		_LnkFree(curr);
+		curr = next_node;
+	}
 }
 
-name_list *AddNameTable( char *name, unsigned len, bool is_mod, name_list **owner )
+name_list* AddNameTable(char* name, unsigned len, bool is_mod, name_list** owner)
 /*********************************************************************************/
 {
-    name_list   *imp;
-    unsigned_32 off;
-    unsigned_16 index;
+	name_list* imp;
+	unsigned_32 off;
+	unsigned_16 index;
 
-    index = 1;
-    off = 1;
-    for( imp = *owner; imp != NULL; imp = imp->next ) {
-        if( len == imp->len && memcmp( imp->name, name, len ) == 0 )
-            break;
-        off += imp->len + 1;
-        ++index;
-        owner = &imp->next;
-    }
-    if( imp == NULL ) {
-        _PermAlloc( imp, sizeof( name_list ) );
-        imp->next = NULL;
-        imp->len = len;
-        imp->name = AddSymbolStringTable( &PermStrings, name, len );
-        imp->num = is_mod ? index : off;
-        *owner = imp;
-    }
-    return( imp );
+	index = 1;
+	off = 1;
+	for (imp = *owner; imp != NULL; imp = imp->next)
+	{
+		if (len == imp->len && memcmp(imp->name, name, len) == 0)
+			break;
+		off += imp->len + 1;
+		++index;
+		owner = &imp->next;
+	}
+	if (imp == NULL)
+	{
+		_PermAlloc(name_list*, imp, sizeof(name_list));
+		imp->next = NULL;
+		imp->len = len;
+		imp->name = AddSymbolStringTable(&PermStrings, name, len);
+		imp->num = is_mod ? index : off;
+		*owner = imp;
+	}
+	return(imp);
 }
 
-unsigned_16 binary_log( unsigned_16 value )
+unsigned_16 binary_log(unsigned_16 value)
 /************************************************/
 // This calculates the binary log of value, truncating decimals.
 {
-    unsigned_16 log;
+	unsigned_16 log;
 
-    if( value == 0 ) {
-        return( 0 );
-    }
-    log = 15;
-    for( ; ; ) {
-        if( value & 0x8000 ) {  // done if high bit on
-            break;
-        }
-        value <<= 1;            // shift left and decrease possible log.
-        log--;
-    }
-    return( log );
+	if (value == 0)
+	{
+		return(0);
+	}
+	log = 15;
+	for (; ; )
+	{
+		if (value & 0x8000)
+		{  // done if high bit on
+			break;
+		}
+		value <<= 1;            // shift left and decrease possible log.
+		log--;
+	}
+	return(log);
 }
 
-unsigned_16 blog_32( unsigned_32 value )
+unsigned_16 blog_32(unsigned_32 value)
 /*********************************************/
 // This calculates the binary log of a 32-bit value, truncating decimals.
 {
-    unsigned_16 log;
+	unsigned_16 log;
 
-    if( value == 0 ) {
-        return( 0 );
-    }
-    log = 31;
-    for( ; ; ) {
-        if( value & 0x80000000 ) {  // done if high bit on
-            break;
-        }
-        value <<= 1;            // shift left and decrease possible log.
-        log--;
-    }
-    return( log );
+	if (value == 0)
+	{
+		return(0);
+	}
+	log = 31;
+	for (; ; )
+	{
+		if (value & 0x80000000)
+		{  // done if high bit on
+			break;
+		}
+		value <<= 1;            // shift left and decrease possible log.
+		log--;
+	}
+	return(log);
 }
 
-char *RemovePath( char *name, unsigned *len )
+char* RemovePath(char* name, unsigned* len)
 /**********************************************/
 /* parse name as a filename, "removing" the path and the extension */
 /* returns a pointer to the "base" of the filename, and a length without
  * the extension */
 {
-    char    *dotpoint;
-    char    *namestart;
-    char    *string;
-    char    ch;
+	char* dotpoint;
+	char* namestart;
+	char* string;
+	char    ch;
 
-    dotpoint = NULL;
-    string = namestart = name;
-    while( *string != '\0' ) {    // ignore path & extension in module name.
-        ch = *string;
-        if( ch == '.' ) {
-            dotpoint = string;
-        }
-        if( IS_PATH_SEP( ch ) ) {
-            namestart = string + 1;
-            dotpoint = NULL;
-        }
-        string++;
-    }
-    if( dotpoint != NULL ) {
-        *len = dotpoint - namestart;
-    } else {
-        *len = string - namestart;
-    }
-    return( namestart );
+	dotpoint = NULL;
+	string = namestart = name;
+	while (*string != '\0')
+	{    // ignore path & extension in module name.
+		ch = *string;
+		if (ch == '.')
+		{
+			dotpoint = string;
+		}
+		if (IS_PATH_SEP(ch))
+		{
+			namestart = string + 1;
+			dotpoint = NULL;
+		}
+		string++;
+	}
+	if (dotpoint != NULL)
+	{
+		*len = dotpoint - namestart;
+	}
+	else
+	{
+		*len = string - namestart;
+	}
+	return(namestart);
 }
 
 #define MAXDEPTH        ( sizeof( unsigned ) * 8 )
 
-void VMemQSort( virt_mem base, unsigned n, unsigned width,
-                        void (*swapfn)( virt_mem, virt_mem ),
-                        int (*cmpfn)( virt_mem, virt_mem ) )
-/***************************************************************/
-// qsort stolen from clib, and suitably modified since we need to be able
-// to swap parallel arrays.
+void VMemQSort(virt_mem base, unsigned n, unsigned width,
+	void (*swapfn)(virt_mem, virt_mem),
+	int (*cmpfn)(virt_mem, virt_mem))
+	/***************************************************************/
+	// qsort stolen from clib, and suitably modified since we need to be able
+	// to swap parallel arrays.
 {
-    virt_mem    p1;
-    virt_mem    p2;
-    virt_mem    mid;
-    int         comparison;
-    int         last_non_equal_count;
-    unsigned    i;
-    unsigned    count;
-    unsigned    sp;
-    auto virt_mem base_stack[MAXDEPTH];
-    auto unsigned n_stack[MAXDEPTH];
+	virt_mem    p1;
+	virt_mem    p2;
+	virt_mem    mid;
+	int         comparison;
+	int         last_non_equal_count;
+	unsigned    i;
+	unsigned    count;
+	unsigned    sp;
+	virt_mem base_stack[MAXDEPTH];
+	unsigned n_stack[MAXDEPTH];
 
-    sp = 0;
-    for( ; ; ) {
-        while( n > 1 ) {
-            p1 = base + width;
-            if( n == 2 ) {
-                if( cmpfn( base, p1 ) > 0 ) {
-                    swapfn( base, p1 );
-                }
-                break;
-            } else {
-                /* store mid element at base for pivot */
-                /* this will speed up sorting of a sorted list */
-                mid = base + ( n >> 1 ) * width;
-                swapfn( base, mid );
-                p2 = base;
-                count = 0;
-                last_non_equal_count = 0;
-                for( i = 1; i < n; ++i ) {
-                    comparison = cmpfn( p1, base );
-                    if( comparison <= 0 ) {
-                        p2 += width;
-                        count++;
-                        if( i != count ) {              /* p1 != p2 */
-                            swapfn( p1, p2 );
-                        }
-                    }
-                    if( comparison != 0 )
-                        last_non_equal_count = count;
-                    p1 += width;
-                }
-                /* special check to see if all values compared are equal */
-                if( ( count == n-1 ) && ( last_non_equal_count == 0 ) )
-                    break;
-                if( count != 0 ) {  /* store pivot in right spot */
-                    swapfn( base, p2 );
-                }
+	sp = 0;
+	for (; ; )
+	{
+		while (n > 1)
+		{
+			p1 = base + width;
+			if (n == 2)
+			{
+				if (cmpfn(base, p1) > 0)
+				{
+					swapfn(base, p1);
+				}
+				break;
+			}
+			else
+			{
+				/* store mid element at base for pivot */
+				/* this will speed up sorting of a sorted list */
+				mid = base + (n >> 1) * width;
+				swapfn(base, mid);
+				p2 = base;
+				count = 0;
+				last_non_equal_count = 0;
+				for (i = 1; i < n; ++i)
+				{
+					comparison = cmpfn(p1, base);
+					if (comparison <= 0)
+					{
+						p2 += width;
+						count++;
+						if (i != count)
+						{              /* p1 != p2 */
+							swapfn(p1, p2);
+						}
+					}
+					if (comparison != 0)
+						last_non_equal_count = count;
+					p1 += width;
+				}
+				/* special check to see if all values compared are equal */
+				if ((count == n - 1) && (last_non_equal_count == 0))
+					break;
+				if (count != 0)
+				{  /* store pivot in right spot */
+					swapfn(base, p2);
+				}
 #if 0
-                qsort( base, count, size, cmp );
-                qsort( p2 + size, n - count - 1, size, cmp );
+				qsort(base, count, size, cmp);
+				qsort(p2 + size, n - count - 1, size, cmp);
 #endif
-                n = n - count - 1;          /* calc. size of right part */
+				n = n - count - 1;          /* calc. size of right part */
 
-                /* The pivot is at p2. It is in its final position.
-                   There are count items to the left of the pivot.
-                   There are n items to the right of the pivot.
-                */
+				/* The pivot is at p2. It is in its final position.
+				   There are count items to the left of the pivot.
+				   There are n items to the right of the pivot.
+				*/
 
-                if( count != last_non_equal_count ) {   /* 18-jul-90 */
-                    /*
-                       There are last_non_equal_count+1 items to the left
-                       of the pivot that still need to be checked.
-                       There are (count - (last_non_equal_count+1)) items
-                       immediately to the left of the pivot that are
-                       equal to the pivot. They are in their final position.
-                    */
-                    count = last_non_equal_count + 1;
-                }
-                if( count < n ) {           /* if left part is shorter */
-                    base_stack[sp] = p2 + width;  /* - stack right part */
-                    n_stack[sp] = n;
-                    n = count;
-                } else {                    /* right part is shorter */
-                    base_stack[sp] = base;  /* - stack left part */
-                    n_stack[sp] = count;
-                    base = p2 + width;
-                }
-                ++sp;
-            }
-        }
-        if( sp == 0 )
-            break;
-        --sp;
-        base = base_stack[sp];
-        n    = n_stack[sp];
-    }
+				if (count != last_non_equal_count)
+				{   /* 18-jul-90 */
+/*
+   There are last_non_equal_count+1 items to the left
+   of the pivot that still need to be checked.
+   There are (count - (last_non_equal_count+1)) items
+   immediately to the left of the pivot that are
+   equal to the pivot. They are in their final position.
+*/
+					count = last_non_equal_count + 1;
+				}
+				if (count < n)
+				{           /* if left part is shorter */
+					base_stack[sp] = p2 + width;  /* - stack right part */
+					n_stack[sp] = n;
+					n = count;
+				}
+				else
+				{                    /* right part is shorter */
+					base_stack[sp] = base;  /* - stack left part */
+					n_stack[sp] = count;
+					base = p2 + width;
+				}
+				++sp;
+			}
+		}
+		if (sp == 0)
+			break;
+		--sp;
+		base = base_stack[sp];
+		n = n_stack[sp];
+	}
 }
 
-static void *SpawnStack;
+static void* SpawnStack;
 
-int Spawn( void (*fn)( void ) )
+int Spawn(void (*fn)(void))
 /******************************/
 {
-    void    *save_env;
-    jmp_buf env;
-    int     status;
+	void* save_env;
+	jmp_buf env;
+	int     status;
 
-    save_env = SpawnStack;
-    SpawnStack = env;
-    status = setjmp( env );
-    if( status == 0 ) {
-        (*fn)();
-    }
-    SpawnStack = save_env;  /* unwind */
-    return( status );
+	save_env = SpawnStack;
+	SpawnStack = env;
+	status = setjmp(env);
+	if (status == 0)
+	{
+		(*fn)();
+	}
+	SpawnStack = save_env;  /* unwind */
+	return(status);
 }
 
-void Suicide( void )
+void Suicide(void)
 /*************************/
 {
-    if( SpawnStack != NULL ) {
-        longjmp( SpawnStack, 1 );
-    }
+	if (SpawnStack != NULL)
+	{
+		longjmp((SETJMP_FLOAT128*)SpawnStack, 1);
+	}
 }
 
-f_handle SearchPath( char *name )
+f_handle SearchPath(char* name)
 /**************************************/
 {
-    char        *path;
-    f_handle    file;
-    char        fullpath[PATH_MAX];
+	char* path;
+	f_handle    file;
+	char        fullpath[PATH_MAX];
 
-    file = QObjOpen( name );
-    if( file != NIL_HANDLE ) {
-        return( file );
-    }
+	file = QObjOpen(name);
+	if (file != NIL_HANDLE)
+	{
+		return(file);
+	}
 #if defined( __QNX__ )
-    path = "/usr/watcom";
+	path = "/usr/watcom";
 #else
-    path = GetEnvString( "PATH" );
+	path = GetEnvString("PATH");
 #endif
-    if( path != NULL ) {
-        while( QMakeFileName( &path, name, fullpath ) ) {
-            file = QObjOpen( fullpath );
-            if( file != NIL_HANDLE ) {
-                DEBUG(( DBG_OLD, "SearchPath: %s found in %s", name, fullpath ));
-                return( file );
-            }
-        }
-    }
-    DEBUG(( DBG_OLD, "SearchPath: %s not found", name ));
-    return( NIL_HANDLE );
+	if (path != NULL)
+	{
+		while (QMakeFileName(&path, name, fullpath))
+		{
+			file = QObjOpen(fullpath);
+			if (file != NIL_HANDLE)
+			{
+				DEBUG((DBG_OLD, "SearchPath: %s found in %s", name, fullpath));
+				return(file);
+			}
+		}
+	}
+	DEBUG((DBG_OLD, "SearchPath: %s not found", name));
+	return(NIL_HANDLE);
 }
 
-group_entry *FindGroup( segment seg )
+group_entry* FindGroup(segment seg)
 /******************************************/
 {
-    group_entry *group;
+	group_entry* group;
 
-    for( group = Groups; group != NULL; group = group->next_group ) {
-        if( group->grp_addr.seg == seg ) {
-            break;
-        }
-    }
-    return( group );
+	for (group = Groups; group != NULL; group = group->next_group)
+	{
+		if (group->grp_addr.seg == seg)
+		{
+			break;
+		}
+	}
+	return(group);
 }
 
-offset FindLinearAddr( targ_addr *addr )
+offset FindLinearAddr(targ_addr* addr)
 /*********************************************/
 {
-    group_entry *group;
+	group_entry* group;
 
-    group = FindGroup( addr->seg );
-    if( group != NULL ) {
-        return( addr->off + ( group->linear - group->grp_addr.off ) );
-    }
-    return( addr->off );
+	group = FindGroup(addr->seg);
+	if (group != NULL)
+	{
+		return(addr->off + (group->linear - group->grp_addr.off));
+	}
+	return(addr->off);
 }
 
-offset FindLinearAddr2( targ_addr *addr )
+offset FindLinearAddr2(targ_addr* addr)
 /*********************************************/
 {
-    group_entry *group;
+	group_entry* group;
 
-    group = FindGroup( addr->seg );
-    if( group != NULL ) {
-        return( addr->off + group->linear + FmtData.base );
-    }
-    return( addr->off );
+	group = FindGroup(addr->seg);
+	if (group != NULL)
+	{
+		return(addr->off + group->linear + FmtData.base);
+	}
+	return(addr->off);
 }
