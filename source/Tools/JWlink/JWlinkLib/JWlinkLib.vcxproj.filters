@@ -278,229 +278,235 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="JWlinkLibOld.c">
+    <ClCompile Include="c\autogrp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="pch.c">
+    <ClCompile Include="c\carve.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\autogrp.c">
+    <ClCompile Include="c\cmd16m.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\carve.c">
+    <ClCompile Include="c\cmdall.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\cmd16m.c">
+    <ClCompile Include="c\cmddos.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\cmdall.c">
+    <ClCompile Include="c\cmdelf.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\cmddos.c">
+    <ClCompile Include="c\cmdline.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\cmdelf.c">
+    <ClCompile Include="c\cmdnov.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\cmdline.c">
+    <ClCompile Include="c\cmdos2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\cmdnov.c">
+    <ClCompile Include="c\cmdphar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\cmdos2.c">
+    <ClCompile Include="c\cmdqnx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\cmdphar.c">
+    <ClCompile Include="c\cmdraw.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\cmdqnx.c">
+    <ClCompile Include="c\cmdtable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\cmdraw.c">
+    <ClCompile Include="c\cmdutils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\cmdtable.c">
+    <ClCompile Include="c\dbgall.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\cmdutils.c">
+    <ClCompile Include="c\dbgcv.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\dbgall.c">
+    <ClCompile Include="c\dbgdwarf.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\dbgcv.c">
+    <ClCompile Include="c\dbginfo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\dbgdwarf.c">
+    <ClCompile Include="c\debug.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\dbginfo.c">
+    <ClCompile Include="c\distrib.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\debug.c">
+    <ClCompile Include="c\global.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\distrib.c">
+    <ClCompile Include="c\hash.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\global.c">
+    <ClCompile Include="c\impexp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\hash.c">
+    <ClCompile Include="JWlinkLibOld.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\impexp.c">
+    <ClCompile Include="c\libr.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\libr.c">
+    <ClCompile Include="c\libsupp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\libsupp.c">
+    <ClCompile Include="c\linkutil.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\linkutil.c">
+    <ClCompile Include="c\load16m.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\load16m.c">
+    <ClCompile Include="c\loaddos.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\loaddos.c">
+    <ClCompile Include="c\loadelf.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\loadelf.c">
+    <ClCompile Include="c\loadelf2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\loadelf2.c">
+    <ClCompile Include="c\loadfile.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\loadfile.c">
+    <ClCompile Include="c\loadflat.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\loadflat.c">
+    <ClCompile Include="c\loadnov.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\loadnov.c">
+    <ClCompile Include="c\loados2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\loados2.c">
+    <ClCompile Include="c\loadpe.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\loadpe.c">
+    <ClCompile Include="c\loadphar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\loadphar.c">
+    <ClCompile Include="c\loadqnx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\loadqnx.c">
+    <ClCompile Include="c\loadraw.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\loadraw.c">
+    <ClCompile Include="c\lsymtab.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\lsymtab.c">
+    <ClCompile Include="c\mapio.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\mapio.c">
+    <ClCompile Include="c\mem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\mem.c">
+    <ClCompile Include="c\mixcache.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\msg.c">
+    <ClCompile Include="c\msg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\ntio.c">
+    <ClCompile Include="c\ntio.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\obj2supp.c">
+    <ClCompile Include="c\obj2supp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\objcalc.c">
+    <ClCompile Include="c\objcalc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\objfree.c">
+    <ClCompile Include="c\objfree.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\objio.c">
+    <ClCompile Include="c\objio.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\objnode.c">
+    <ClCompile Include="c\objnode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\objomf.c">
+    <ClCompile Include="c\objomf.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\objorl.c">
+    <ClCompile Include="c\objorl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\objpass1.c">
+    <ClCompile Include="c\objpass1.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\objpass2.c">
+    <ClCompile Include="c\objpass2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\objstrip.c">
+    <ClCompile Include="c\objstrip.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\omfreloc.c">
+    <ClCompile Include="c\omfreloc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\overlays.c">
+    <ClCompile Include="c\overlays.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\ovlsupp.c">
+    <ClCompile Include="c\ovlsupp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\permdata.c">
+    <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\procfile.c">
+    <ClCompile Include="c\permdata.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\reloc.c">
+    <ClCompile Include="c\procfile.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\ring.c">
+    <ClCompile Include="c\reloc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\ring2.c">
+    <ClCompile Include="c\ring.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\salloc.c">
+    <ClCompile Include="c\ring2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\spillio.c">
+    <ClCompile Include="c\salloc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\strtab.c">
+    <ClCompile Include="c\spillio.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\symmem.c">
+    <ClCompile Include="c\strtab.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\symtrace.c">
+    <ClCompile Include="c\symmem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\toc.c">
+    <ClCompile Include="c\symtrace.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\virtpage.c">
+    <ClCompile Include="c\toc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\wcomdef.c">
+    <ClCompile Include="c\virtpage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\wlnkmsg.c">
+    <ClCompile Include="c\wcomdef.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\mixcache.c">
+    <ClCompile Include="c\wlnkmsg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="h\lnkerror.msg" />
-    <None Include="h\rcmsg.gh" />
-    <None Include="h\wlink.msg" />
+    <None Include="h\lnkerror.msg">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="h\rcmsg.gh">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="h\wlink.msg">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -115,31 +115,31 @@ static seg_leader *GetNextSeg( section *sec, seg_leader *seg )
  * it should be replaced by sorted segment list
  */
 {
-    class_entry *class;
+    class_entry *class1;
 
     if( seg == NULL ) {
-        for( class = sec->classlist; class != NULL; class = class->next_class ) {
-            if( !( class->flags & CLASS_DEBUG_INFO ) ) {
+        for( class1 = sec->classlist; class1 != NULL; class1 = class1->next_class ) {
+            if( !( class1->flags & CLASS_DEBUG_INFO ) ) {
                  break;
             }
         }
-        if( class == NULL ) {
+        if( class1 == NULL ) {
             return( NULL );
         }
     } else {
-        class = seg->class;
+        class1 = seg->class1;
     }
-    seg = RingStep( class->segs, seg );
+    seg = (seg_leader *)RingStep( class1->segs, seg );
     while( seg == NULL ) {
-        for( class = class->next_class; class != NULL; class = class->next_class ) {
-            if( !( class->flags & CLASS_DEBUG_INFO ) ) {
+        for( class1 = class1->next_class; class1 != NULL; class1 = class1->next_class ) {
+            if( !( class1->flags & CLASS_DEBUG_INFO ) ) {
                  break;
             }
         }
-        if( class == NULL ) {
+        if( class1 == NULL ) {
             return( NULL );
         }
-        seg = RingStep( class->segs, seg );
+        seg = (seg_leader *)RingStep( class1->segs, seg );
     }
     return( seg );
 }
@@ -189,7 +189,7 @@ static void AutoGroupSect( section *sec )
         DEBUG((DBG_OLD,"AutoGroupSect(): seg=%h (%s) cls=\"%s\" info=%h", seg, seg->segname, seg->class->name, seg->info ));
         if( seg->info & SEG_ABSOLUTE ) {
             PackSegs( seg, 1 );
-		} else if( *seg->class->name == 0 ) { /* jwlink: added */
+		} else if( *seg->class1->name == 0 ) { /* jwlink: added */
             PackSegs( seg, 1 );
         } else {
             if( packstart == NULL ) {
@@ -238,16 +238,16 @@ static void PackSegs( seg_leader *seg, unsigned num_segs )
         group = GetAutoGroup( seg->info & SEG_ABSOLUTE );
     }
     DEBUG((DBG_OLD,"PackSegs(%s,%d) group=%h", seg->segname, num_segs, &group ));
-    group->section = seg->class->section;
+    group->section = seg->class1->section;
     while( num_segs != 0 ) {
         if( seg->group == NULL || seg->group == group ) {
             if( !( seg->info & SEG_CODE ) ) {
                 group->segflags |= SEG_DATA;
             }
-            if( !( seg->class->flags & CLASS_READ_ONLY ) ) {
+            if( !( seg->class1->flags & CLASS_READ_ONLY ) ) {
                 group->segflags &= ~SEG_READ_ONLY;
             }
-            if( seg->class->flags & CLASS_COPY ) {  // If class is copied, mark group accordingly
+            if( seg->class1->flags & CLASS_COPY ) {  // If class is copied, mark group accordingly
                 group->isdup = TRUE;
             }
             if( seg->group == NULL ) {              // if its not in a group add it to this one
@@ -283,14 +283,14 @@ group_entry *AllocGroup( char *name, group_entry ** grp_list )
     symbol      *sym;
 
     DEBUG((DBG_OLD,"AllocGroup(%s) enter, NumGroups=%d", name, NumGroups ));
-    group = CarveAlloc( CarveGroup );
+    group = (group_entry *)CarveAlloc( CarveGroup );
     group->leaders = NULL;
-    _PermAlloc( sym, sizeof *sym  ); // second class slave citizen
+    _PermAlloc( symbol*, sym, sizeof *sym  ); // second class slave citizen
     BasicInitSym( sym );
     sym->namelen_cmp = strlen( name );
     sym->name = AddBufferStringTable( &PermStrings, name, sym->namelen_cmp + 1 );
-    SET_SYM_TYPE( sym, SYM_GROUP );
-    sym->info |= SYM_STATIC;
+    SET_SYM_TYPE( sym_info, sym, SYM_GROUP );
+    DO_OR_EQ(sym_info,sym->info, |=, SYM_STATIC);
     group->next_group = NULL;
     InitGroup( group );
     DEBUG((DBG_OLD,"AllocGroup(%s), after InitGroup flags=%x", name, group->segflags ));
@@ -380,7 +380,7 @@ static void SortGroup( seg_leader *seg )
 static bool CheckGroupSplit( void *leader, void *sect )
 /*****************************************************/
 {
-    return( ((seg_leader *)leader)->class->section != (section *)sect );
+    return( ((seg_leader *)leader)->class1->section != (section *)sect );
 }
 
 static void FindSplitGroups( void )

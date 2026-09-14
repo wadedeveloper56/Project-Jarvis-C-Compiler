@@ -78,7 +78,7 @@ static blk_t * newBlk( cv_t *cv )
     blk_t *     newblk;
     blk_t **    blklist;
 
-    _ChkAlloc( newblk, sizeof( blk_t ) - 1 + cv->blk_size );
+    _ChkAlloc( blk_t *, newblk, sizeof( blk_t ) - 1 + cv->blk_size );
     blklist = &cv->blk_list;
     while( *blklist > newblk ) {        // keep list sorted by memory address
         blklist = &(*blklist)->next;    // biggest first.
@@ -121,7 +121,7 @@ carve_t CarveCreate( size_t elm_size, size_t blk_size )
     if( elm_size < sizeof( free_t ) ) {
         elm_size = sizeof( free_t );
     }
-    _ChkAlloc( cv, sizeof( *cv ) );
+    _ChkAlloc( cv_t *, cv, sizeof( *cv ) );
     cv->elm_size = elm_size;
     cv->blk_size = blk_size;
     cv->elm_count = cv->blk_size / cv->elm_size;
@@ -217,7 +217,7 @@ void *CarveZeroAlloc( carve_t cv )
         MakeFreeList( cv, newBlk( cv ), 0 );
     }
     _REMOVE_FROM_FREE( cv, v );
-    p = v;
+    p = (unsigned *)v;
 #if 0//def _INT_DEBUG
     if ( (cv->elm_size / sizeof(*p)) > 16 )
         DEBUG(( DBG_OLD, "CarveZeroAlloc: elm_size=%h sizeof(*p)=%h", cv->elm_size, sizeof(*p) ));
@@ -439,7 +439,7 @@ void CarveRestart( carve_t cv, unsigned num )
     for( index = 0; index < numblks; index++ ) {
         newBlk( cv );
     }
-    _ChkAlloc( cv->blk_map, numblks * sizeof( blk_t * ) );
+    _ChkAlloc( blk_t **, cv->blk_map, numblks * sizeof( blk_t * ) );
     index = numblks - 1;
     for( block = cv->blk_list; block != NULL; block = block->next ) {
         cv->blk_map[ index ] = block;
@@ -456,7 +456,7 @@ static void CarveZapBlock( carve_t cv, void *blk, void *dummy )
 /*************************************************************/
 {
     dummy = dummy;
-    MakeFreeList( cv, blk, 0 );
+    MakeFreeList( cv, (blk_t *)blk, 0 );
 }
 
 void CarvePurge( carve_t cv )
@@ -472,7 +472,7 @@ void CarveInsertFree( carve_t cv, void *data )
 {
     free_t *    freeblk;
 
-    freeblk = data;
+    freeblk = (free_t *)data;
     if( cv->insert == NULL ) {
         freeblk->next_free = cv->free_list;
         cv->free_list = freeblk;

@@ -59,7 +59,7 @@ void SetPharFmt( void )
 {
     Extension = E_PROTECT;
     LinkState &= ~MAKE_RELOCS;     // do not generate relocations.
-    _ChkAlloc( FmtData.u.phar.params, sizeof( *FmtData.u.phar.params ) );
+    _ChkAlloc( rtpblock*, FmtData.u.phar.params, sizeof( *FmtData.u.phar.params ) );
     FmtData.u.phar.mindata = 0;
     FmtData.u.phar.maxdata = 0xFFFFFFFF;
     FmtData.u.phar.breaksym = NULL;

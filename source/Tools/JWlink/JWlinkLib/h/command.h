@@ -76,7 +76,7 @@ typedef struct tok {
     char        *buff;
     unsigned    len;
     char        *next;
-    char        *this;
+    char        *this1;
     unsigned_16 line;
     char        quoted;     /* if token parsed as a quoted string*/
     unsigned_8  where : 2;

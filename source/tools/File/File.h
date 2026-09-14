@@ -4,7 +4,7 @@
 extern "C" {
 #endif
 
-typedef int f_handle;
+typedef unsigned f_handle;
 #define NIL_HANDLE -1
 
 enum perms {// names for permissions

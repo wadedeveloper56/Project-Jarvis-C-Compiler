@@ -154,8 +154,8 @@ void AddToExportList( entry_export *exp )
     if( IS_SYM_VF_REF( exp->sym ) ) {
         ClearRefInfo( exp->sym );
     }
-    exp->sym->e.export = exp;
-    exp->sym->info |= SYM_EXPORTED;
+    exp->sym->e.export1 = exp;
+    DO_OR_EQ(sym_info,exp->sym->info, |=, SYM_EXPORTED);
     if( place == NULL ) place = owner;
     DEBUG(( DBG_NEW, "%s", exp->name ));
     exp->next = *place;
@@ -194,7 +194,7 @@ entry_export * AllocExport( char *name, unsigned len )
     entry_export *  exp;
     unsigned        chop;
 
-    exp = CarveAlloc( CarveExportInfo );
+    exp = (entry_export *)CarveAlloc( CarveExportInfo );
     exp->isexported = TRUE;
     exp->isprivate = FALSE;
     exp->ismovable = FALSE;

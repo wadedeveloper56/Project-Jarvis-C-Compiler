@@ -81,7 +81,7 @@ typedef enum exe_format {       // there is a corresp. table in MSG.C
 #define MK_SPLIT_DATA (MK_ELF | MK_PE)
 #define MK_LINEARIZE (MK_ELF | MK_PE)
 #define MK_END_PAD   (MK_DOS)
-#define MK_ALL       (0x000FFFFF)
+#define MK_ALL       ((exe_format)(0x000FFFFF))
 
 #define IS_PPC_PE   ( LinkState & HAVE_PPC_CODE && FmtData.type & MK_PE )
 #define IS_PPC_OS2   0//( LinkState & HAVE_PPC_CODE && FmtData.type & MK_OS2 )
@@ -175,7 +175,7 @@ struct fmt_d16m_data {
 // stuff common to some file formats which have the concept of an export
 
 struct exp_common {
-    name_list   *export;
+    name_list   *export1;
     name_list   *module;
 };
 

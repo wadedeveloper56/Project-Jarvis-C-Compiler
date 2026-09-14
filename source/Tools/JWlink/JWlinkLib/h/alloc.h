@@ -50,14 +50,14 @@ extern symbol * AddSym( void );
 extern void     ReleasePass1( void );
 extern void     RelSymBlock( void );
 
-#define _ChkAlloc( dest, size ) dest = ChkLAlloc( size )
-#define _LnkAlloc( dest, size ) dest = LAlloc( size )
-#define _TryAlloc( dest, size ) dest = TryAlloc( size )
-#define _PermAlloc( dest, size ) dest = PermAlloc( size );
+#define _ChkAlloc( t, dest, size ) dest = (t)ChkLAlloc( size )
+#define _LnkAlloc( t, dest, size ) dest = (t)LAlloc( size )
+#define _TryAlloc( t, dest, size ) dest = (t)TryAlloc( size )
+#define _PermAlloc( t, dest, size ) dest = (t)PermAlloc( size );
 #define _LnkReAlloc( dest, src, size ) dest = LnkReAlloc( src, size );
 #define _LnkFree( ptr )         LFree( ptr )
 #define _PermFree( ptr )        /* nothing to do */
-#define _Pass1Alloc( dest, size ) dest = Pass1Alloc( size );
+#define _Pass1Alloc( t, dest, size ) dest = (t)Pass1Alloc( size );
 #define _LnkExpand( dest, src, size ) dest = LnkExpand( src, size );
 
 extern int      ValidateMem( void );    // just for debugging

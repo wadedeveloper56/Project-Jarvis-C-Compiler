@@ -314,7 +314,7 @@ typedef struct group_entry {
     offset              linear;         // preferred base address
     union {
         void            *grp_relocs;    // OS2/ELF only.
-        class_entry     *class;         // CV (during addr calc )
+        class_entry     *class1;         // CV (during addr calc )
     } g;
     union {
         unsigned        qnxflags;       // QNX
@@ -347,7 +347,7 @@ typedef struct seg_leader {
     char            *segname;
     SEGDATA         *pieces;
     group_entry     *group;
-    class_entry     *class;
+    class_entry     *class1;
     offset          size;               // total size of segment
     SEG_LEADER      *DupSeg;            // Segment to get data from for output
     unsigned_16     info;
