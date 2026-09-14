@@ -85,7 +85,7 @@ static unsigned_32 WritePharRelocs( void )
 {
     RELOC_INFO  *temp;
 
-    temp = Root->reloclist;             // don't want to modify original
+    temp = (RELOC_INFO *)Root->reloclist;             // don't want to modify original
     return DumpMaxRelocList( &temp, 0 );
 }
 
