@@ -62,21 +62,21 @@
 #define STATIC_TABALLOC (256 * sizeof(symbol *))  // 1st power of 128 > TABSIZE
 #define GLOBAL_TABALLOC (1792 * sizeof(symbol *)) // 1st power of 128 > TABSIZE
 
-int             (*CmpRtn)( const void *, const void *, size_t );
+int             (*CmpRtn)(const void*, const void*, size_t);
 /* this var holds the value of the NAMELEN option */
 unsigned        NameLen;
-symbol          *LastSym;
+symbol* LastSym;
 
-static  symbol  *SymList = NULL;
+static  symbol* SymList = NULL;
 
 // not a static array to save space for watfor
 
-static symbol   **GlobalSymPtrs;
-static symbol   **StaticSymPtrs;
+static symbol** GlobalSymPtrs;
+static symbol** StaticSymPtrs;
 
-static unsigned GlobalHashFn( char *, unsigned );
-static unsigned StaticHashFn( char *, unsigned );
-void     SetSymAlias( symbol *sym, char *target, unsigned targetlen );
+static unsigned GlobalHashFn(char*, unsigned);
+static unsigned StaticHashFn(char*, unsigned);
+void     SetSymAlias(symbol* sym, char* target, unsigned targetlen);
 
 static const unsigned ScatterTable[] = {
 #ifdef __386__
@@ -596,387 +596,436 @@ static const unsigned ScatterTable[] = {
 #endif
 };
 
-void ResetSym( void )
+void ResetSym(void)
 /**************************/
 {
-    NameLen = 0;
-    SymList = NULL;
-    HeadSym = NULL;
-    LastSym = NULL;
+	NameLen = 0;
+	SymList = NULL;
+	HeadSym = NULL;
+	LastSym = NULL;
 #ifdef LONG_IS_64BITS
-    CmpRtn = (int (*)( const void *, const void *, size_t ))_memicmp;
+	CmpRtn = (int (*)(const void*, const void*, size_t))_memicmp;
 #else
-    CmpRtn = _memicmp;
+	CmpRtn = _memicmp;
 #endif
-    GetSymBlock();
-    ClearHashPointers();
+	GetSymBlock();
+	ClearHashPointers();
 }
 
-void InitSym( void )
+void InitSym(void)
 /*************************/
 {
-    _ChkAlloc( GlobalSymPtrs, GLOBAL_TABALLOC );
-    _ChkAlloc( StaticSymPtrs, STATIC_TABALLOC );
+	_ChkAlloc(symbol**, GlobalSymPtrs, GLOBAL_TABALLOC);
+	_ChkAlloc(symbol**, StaticSymPtrs, STATIC_TABALLOC);
 }
 
 #ifdef _INT_DEBUG
 
-static void DumpTable( symbol **table, unsigned tabsize )
+static void DumpTable(symbol** table, unsigned tabsize)
 /*******************************************************/
 {
-    unsigned    mask;
-    unsigned    min;
-    unsigned    max;
-    unsigned    val;
-    unsigned_32 numsyms;
-    unsigned    index;
-    symbol      *sym;
+	unsigned    mask;
+	unsigned    min;
+	unsigned    max;
+	unsigned    val;
+	unsigned_32 numsyms;
+	unsigned    index;
+	symbol* sym;
 
-    numsyms = 0;
-    min = 0xFFFF;
-    max = 0;
-    for( index = 0; index < tabsize; index++ ) {
-        mask = DBG_ALWAYS;
-        if( index % 15 != 14 ) {
-            mask |= DBG_NOCRLF;
-        }
-        val = 0;
-        for( sym = table[ index ]; sym != NULL; sym = sym->hash ) {
-            val++;
-        }
-        DEBUG(( mask, "%x ", val ));
-        if( val > max ) {
-            max = val;
-        }
-        if( val < min ) {
-            min = val;
-        }
-        numsyms += val;
-    }
-    DEBUG(( DBG_ALWAYS, "" ));  // put out a blank line.
-    DEBUG(( DBG_ALWAYS, "# of syms: %l, max height %d, min height %d",
-            numsyms, max, min ));
+	numsyms = 0;
+	min = 0xFFFF;
+	max = 0;
+	for (index = 0; index < tabsize; index++)
+	{
+		mask = DBG_ALWAYS;
+		if (index % 15 != 14)
+		{
+			mask |= DBG_NOCRLF;
+		}
+		val = 0;
+		for (sym = table[index]; sym != NULL; sym = sym->hash)
+		{
+			val++;
+		}
+		DEBUG((mask, "%x ", val));
+		if (val > max)
+		{
+			max = val;
+		}
+		if (val < min)
+		{
+			min = val;
+		}
+		numsyms += val;
+	}
+	DEBUG((DBG_ALWAYS, ""));  // put out a blank line.
+	DEBUG((DBG_ALWAYS, "# of syms: %l, max height %d, min height %d",
+		numsyms, max, min));
 }
 
-static void DumpHashTable( void )
+static void DumpHashTable(void)
 /*******************************/
 {
-    if( LinkState & INTERNAL_DEBUG ) {
-        DEBUG(( DBG_ALWAYS, "symbol table load" ));
-        DumpTable( GlobalSymPtrs, GLOBAL_TABSIZE );
-        DumpTable( StaticSymPtrs, STATIC_TABSIZE );
-    }
+	if (LinkState & INTERNAL_DEBUG)
+	{
+		DEBUG((DBG_ALWAYS, "symbol table load"));
+		DumpTable(GlobalSymPtrs, GLOBAL_TABSIZE);
+		DumpTable(StaticSymPtrs, STATIC_TABSIZE);
+	}
 }
 #endif
 
-static void WipeSym( symbol *sym )
+static void WipeSym(symbol* sym)
 /********************************/
 {
-    if( IS_SYM_IMPORTED(sym) && !(FmtData.type & MK_ELF) ) {
-        if( FmtData.type & MK_NOVELL ) {
-            if( sym->p.import != DUMMY_IMPORT_PTR ) {
-                _LnkFree( sym->p.import );
-            }
-        } else {
-            FreeImport( sym->p.import );
-        }
-        sym->p.import = NULL;
-    } else if( IS_SYM_ALIAS(sym) ) {
-        if( sym->info & SYM_FREE_ALIAS ) {
-            _LnkFree( sym->p.alias );
-        }
-        sym->u.aliaslen = 0;    // make sure this is nulled again
-    }
+	if (IS_SYM_IMPORTED(sym) && !(FmtData.type & MK_ELF))
+	{
+		if (FmtData.type & MK_NOVELL)
+		{
+			if (sym->p.import != DUMMY_IMPORT_PTR)
+			{
+				_LnkFree(sym->p.import);
+			}
+		}
+		else
+		{
+			FreeImport((dll_sym_info*)sym->p.import);
+		}
+		sym->p.import = NULL;
+	}
+	else if (IS_SYM_ALIAS(sym))
+	{
+		if (sym->info & SYM_FREE_ALIAS)
+		{
+			_LnkFree(sym->p.alias);
+		}
+		sym->u.aliaslen = 0;    // make sure this is nulled again
+	}
 }
 
-static void FreeSymbol( symbol *sym )
+static void FreeSymbol(symbol* sym)
 /***********************************/
 {
-    WipeSym( sym );
-    CarveFree( CarveSymbol, sym );
+	WipeSym(sym);
+	CarveFree(CarveSymbol, sym);
 }
 
-void CleanSym( void )
+void CleanSym(void)
 /*************************/
 {
-    symbol *    sym;
-    symbol *    next;
+	symbol* sym;
+	symbol* next;
 
 #ifdef _INT_DEBUG
-    DumpHashTable();
+	DumpHashTable();
 #endif
-    if( !(LinkFlags & INC_LINK_FLAG) ) {
-        for( sym = HeadSym; sym != NULL; sym = next ) {
-            next = sym->link;
-            FreeSymbol( sym );
-        }
-    }
-    RelSymBlock();
-    ReleasePass1();
+	if (!(LinkFlags & INC_LINK_FLAG))
+	{
+		for (sym = HeadSym; sym != NULL; sym = next)
+		{
+			next = sym->link;
+			FreeSymbol(sym);
+		}
+	}
+	RelSymBlock();
+	ReleasePass1();
 }
 
-void FiniSym( void )
+void FiniSym(void)
 /*************************/
 {
-    _LnkFree( GlobalSymPtrs );
-    _LnkFree( StaticSymPtrs );
+	_LnkFree(GlobalSymPtrs);
+	_LnkFree(StaticSymPtrs);
 }
 
-static void PrepHashTable( symbol **table, unsigned size )
+static void PrepHashTable(symbol** table, unsigned size)
 /********************************************************/
 {
-    while( size > 0 ) {
-        *table = CarveGetIndex( CarveSymbol, *table );
-        table++;
-        size--;
-    }
+	while (size > 0)
+	{
+		*table = (symbol*)_ChkAlloc(symbol*, *table, sizeof(symbol));
+		table++;
+		size--;
+	}
 }
 
-void WriteHashPointers( void *cookie )
+void WriteHashPointers(void* cookie)
 /*******************************************/
 {
-    PrepHashTable( StaticSymPtrs, STATIC_TABSIZE );
-    WritePermFile( cookie, StaticSymPtrs, STATIC_TABALLOC );
-    PrepHashTable( GlobalSymPtrs, GLOBAL_TABSIZE );
-    WritePermFile( cookie, GlobalSymPtrs, GLOBAL_TABALLOC );
+	PrepHashTable(StaticSymPtrs, STATIC_TABSIZE);
+	WritePermFile((perm_write_info*)cookie, StaticSymPtrs, STATIC_TABALLOC);
+	PrepHashTable(GlobalSymPtrs, GLOBAL_TABSIZE);
+	WritePermFile((perm_write_info*)cookie, GlobalSymPtrs, GLOBAL_TABALLOC);
 }
 
-static void RebuildHashTable( symbol **table, unsigned size )
+static void RebuildHashTable(symbol** table, unsigned size)
 /***********************************************************/
 {
-    while( size > 0 ) {
-        *table = CarveMapIndex( CarveSymbol, *table );
-        table++;
-        size--;
-    }
+	while (size > 0)
+	{
+		*table = (symbol*)CarveMapIndex(CarveSymbol, *table);
+		table++;
+		size--;
+	}
 }
 
-void ReadHashPointers( void *cookie )
+void ReadHashPointers(void* cookie)
 /******************************************/
 {
-    ReadPermFile( cookie, StaticSymPtrs, STATIC_TABALLOC );
-    ReadPermFile( cookie, GlobalSymPtrs, GLOBAL_TABALLOC );
-    RebuildHashTable( StaticSymPtrs, STATIC_TABSIZE );
-    RebuildHashTable( GlobalSymPtrs, GLOBAL_TABSIZE );
+	ReadPermFile((perm_read_info*)cookie, StaticSymPtrs, STATIC_TABALLOC);
+	ReadPermFile((perm_read_info*)cookie, GlobalSymPtrs, GLOBAL_TABALLOC);
+	RebuildHashTable(StaticSymPtrs, STATIC_TABSIZE);
+	RebuildHashTable(GlobalSymPtrs, GLOBAL_TABSIZE);
 }
 
-void ClearHashPointers( void )
+void ClearHashPointers(void)
 /***********************************/
 {
-    memset( GlobalSymPtrs, 0, GLOBAL_TABSIZE * sizeof(symbol *) );
-    memset( StaticSymPtrs, 0, STATIC_TABSIZE * sizeof(symbol *) );
+	memset(GlobalSymPtrs, 0, GLOBAL_TABSIZE * sizeof(symbol*));
+	memset(StaticSymPtrs, 0, STATIC_TABSIZE * sizeof(symbol*));
 }
 
-void SetSymCase( void )
+void SetSymCase(void)
 /****************************/
 {
-    if( LinkFlags & CASE_FLAG ) {
-        CmpRtn = memcmp;
-    } else {
+	if (LinkFlags & CASE_FLAG)
+	{
+		CmpRtn = memcmp;
+	}
+	else
+	{
 #ifdef LONG_IS_64BITS
-        CmpRtn = (int (*)( const void *, const void *, size_t ))_memicmp;
+		CmpRtn = (int (*)(const void*, const void*, size_t))_memicmp;
 #else
-        CmpRtn = _memicmp;
+		CmpRtn = _memicmp;
 #endif
-    }
+	}
 }
 
-void SymModStart( void )
+void SymModStart(void)
 /*****************************/
 /* do necessary symbol table processing before the start of a module in pass1 */
 {
-    SymList = LastSym;
+	SymList = LastSym;
 }
 
-void SymModEnd( void )
+void SymModEnd(void)
 /***************************/
 /* go through the list of symbols generated in this module, and find all
  * references to symbols which are in this module only. */
 {
-    symbol *    sym;
+	symbol* sym;
 
-    if( SymList == NULL ) {
-        sym = HeadSym;
-    } else {
-        sym = SymList;
-        if( sym != NULL ) {     // symlist points to previous one
-            sym = sym->link;
-        }
-    }
-    DEBUG((DBG_OLD, "SymModEnd(%s): scan symbols", CurrMod->name ));
-    for( ; sym != NULL; sym = sym->link ) {
-        sym->info &= ~SYM_IN_CURRENT;
-        sym->info |= SYM_OLDHAT;
-        if( sym->info & SYM_REFERENCED && sym->info & SYM_DEFINED ) {
-            DEBUG((DBG_OLD, "SymModEnd: SYM_REFERENCED reset for %s", sym->name ));
-            sym->info &= ~SYM_REFERENCED;
-            sym->info |= SYM_LOCAL_REF;
-        }
-    }
-    SymList = NULL;
+	if (SymList == NULL)
+	{
+		sym = HeadSym;
+	}
+	else
+	{
+		sym = SymList;
+		if (sym != NULL)
+		{     // symlist points to previous one
+			sym = sym->link;
+		}
+	}
+	DEBUG((DBG_OLD, "SymModEnd(%s): scan symbols", CurrMod->name));
+	for (; sym != NULL; sym = sym->link)
+	{
+		DO_OR_EQ(sym_info, sym->info, &=, ~SYM_IN_CURRENT);
+		DO_OR_EQ(sym_info, sym->info, |=, SYM_OLDHAT);
+		if (sym->info & SYM_REFERENCED && sym->info & SYM_DEFINED)
+		{
+			DEBUG((DBG_OLD, "SymModEnd: SYM_REFERENCED reset for %s", sym->name));
+			DO_AND_EQ(sym_info, sym->info, &=, ~SYM_REFERENCED);
+			DO_OR_EQ(sym_info, sym->info, |=, SYM_LOCAL_REF);
+		}
+	}
+	SymList = NULL;
 }
 
-void ClearRefInfo( symbol *sym )
+void ClearRefInfo(symbol* sym)
 /*************************************/
 {
-    symbol *    save;
+	symbol* save;
 
-    if( !(sym->info & SYM_EXPORTED) ) {
-        save = *(sym->e.vfdata);
-        _LnkFree( sym->e.vfdata );
-        sym->e.def = save;
-    }
+	if (!(sym->info & SYM_EXPORTED))
+	{
+		save = *(sym->e.vfdata);
+		_LnkFree(sym->e.vfdata);
+		sym->e.def = save;
+	}
 }
 
-void ClearSymUnion( symbol * sym )
+void ClearSymUnion(symbol* sym)
 /***************************************/
 /* clear the symbol unions of any possible allocated data */
 {
-    sym->info &= ~SYM_LINK_GEN;
-    if( IS_SYM_VF_REF(sym) ) {
-        ClearRefInfo( sym );
-    } else {
-        WipeSym( sym );
-    }
+	DO_AND_EQ(sym_info, sym->info, &=, ~SYM_LINK_GEN);
+	if (IS_SYM_VF_REF(sym))
+	{
+		ClearRefInfo(sym);
+	}
+	else
+	{
+		WipeSym(sym);
+	}
 }
 
-symbol *RefISymbol( char *name )
+symbol* RefISymbol(char* name)
 /******************************/
 {
-    return( SymOp( ST_CREATE | ST_REFERENCE, name, strlen( name ) ) );
+	return(SymOp((sym_flags)(ST_CREATE | ST_REFERENCE), name, strlen(name)));
 }
 
-symbol *DefISymbol( char * name )
+symbol* DefISymbol(char* name)
 /*******************************/
 {
-    symbol * sym;
+	symbol* sym;
 
-    sym = RefISymbol( name );
-    if( sym->info & SYM_DEFINED && !(sym->info & SYM_LINK_GEN) ) {
-        LnkMsg( ERR+MSG_RESERVED_SYM_DEFINED, "s", name );
-    }
-    sym->info |= SYM_DEFINED | SYM_LINK_GEN;
-    return sym;
+	sym = RefISymbol(name);
+	if (sym->info & SYM_DEFINED && !(sym->info & SYM_LINK_GEN))
+	{
+		LnkMsg(ERR + MSG_RESERVED_SYM_DEFINED, "s", name);
+	}
+	DO_OR_EQ(sym_info, sym->info, |=, SYM_DEFINED | SYM_LINK_GEN);
+	return sym;
 }
 
-symbol *FindISymbol( char *name )
+symbol* FindISymbol(char* name)
 /*******************************/
 {
-    return( SymOp( ST_FIND | ST_REFERENCE, name, strlen( name ) ) );
+	return(SymOp((sym_flags)(ST_FIND | ST_REFERENCE), name, strlen(name)));
 }
 
-symbol *SymOpNWPfx( sym_flags op, char *name, unsigned length, char * prefix, unsigned prefixLen )
+symbol* SymOpNWPfx(sym_flags op, char* name, unsigned length, char* prefix, unsigned prefixLen)
 /************************************************************************************************/
 {
-    symbol  *retsym = SymOp( op, name, length );
+	symbol* retsym = SymOp(op, name, length);
 
-    if( NULL == retsym )
-        return( NULL );
+	if (NULL == retsym)
+		return(NULL);
 
-    if( ( NULL != prefix ) && ( 0 != prefixLen ) || ( NULL != CmdFile->symprefix ) ) {
-        char    *pfxname = malloc( 255 + 1 );   /* max len of PString - used to be prefixLen+1 */
+	if ((NULL != prefix) && (0 != prefixLen) || (NULL != CmdFile->symprefix))
+	{
+		char* pfxname = (char*)malloc(255 + 1);   /* max len of PString - used to be prefixLen+1 */
 
-        if( NULL == pfxname ) {
-            LnkMsg( ERR+MSG_SYMBOL_NAME_TOO_LONG, "s", prefix );
-            return( NULL );
-        }
+		if (NULL == pfxname)
+		{
+			LnkMsg(ERR + MSG_SYMBOL_NAME_TOO_LONG, "s", prefix);
+			return(NULL);
+		}
 
-        if( prefix ) {
-            memcpy( pfxname, prefix, prefixLen );
-            pfxname[ prefixLen] = '\0';
-        } else {
-            strcpy( pfxname, CmdFile->symprefix );
-        }
+		if (prefix)
+		{
+			memcpy(pfxname, prefix, prefixLen);
+			pfxname[prefixLen] = '\0';
+		}
+		else
+		{
+			strcpy(pfxname, CmdFile->symprefix);
+		}
 
-        if( NULL == (retsym->prefix = AddStringStringTable( &PrefixStrings, pfxname )) ) {
-            LnkMsg( ERR+MSG_INTERNAL, "s", "no memory for prefix symbol");
-            return( NULL );
-        }
-    }
-    return( retsym );
+		if (NULL == (retsym->prefix = AddStringStringTable(&PrefixStrings, pfxname)))
+		{
+			LnkMsg(ERR + MSG_INTERNAL, "s", "no memory for prefix symbol");
+			return(NULL);
+		}
+	}
+	return(retsym);
 }
 
-void MakeSymAlias( char *name, unsigned namelen, char *target, unsigned targetlen )
+void MakeSymAlias(char* name, unsigned namelen, char* target, unsigned targetlen)
 /*********************************************************************************/
 /* make a symbol table alias */
 {
-    symbol      *sym;
-    symbol      *targ;
+	symbol* sym;
+	symbol* targ;
 
-    if( namelen == targetlen && (*CmpRtn)( name, target, namelen ) == 0 ) {
-        char    *buff;
+	if (namelen == targetlen && (*CmpRtn)(name, target, namelen) == 0)
+	{
+		char* buff;
 
-        buff = malloc( targetlen + 1 );
-        memcpy( buff, target, targetlen );
-        buff[ targetlen ] = '\0';
-        LnkMsg( WRN+MSG_CIRCULAR_ALIAS_FOUND, "s", buff );
-        return;                 // <--------- NOTE: premature return!!!!
-    }
-    sym = SymOp( ST_CREATE | ST_NOALIAS, name, namelen );
-    if( IS_SYM_ALIAS( sym ) ) {
-        LnkMsg( WRN+MSG_MULTIPLE_ALIASES, "S", sym );
-        if( sym->info & SYM_FREE_ALIAS ) {
-            _LnkFree( sym->p.alias );
-        }
-    } else if( sym->info & SYM_DEFINED ) {
-        return;                 // <--------- NOTE: premature return!!!!
-    }
-    sym->info |= SYM_FREE_ALIAS;
-/*
- * need to defined aliased symbol as well, so aliases in .obj files can be
- * hauled in from libraries
-*/
-    targ = SymOp( ST_CREATE, target, targetlen );
-    SetSymAlias( sym, targ->name, targetlen );
+		buff = (char*)malloc(targetlen + 1);
+		memcpy(buff, target, targetlen);
+		buff[targetlen] = '\0';
+		LnkMsg(WRN + MSG_CIRCULAR_ALIAS_FOUND, "s", buff);
+		return;                 // <--------- NOTE: premature return!!!!
+	}
+	sym = SymOp((sym_flags)(ST_CREATE | ST_NOALIAS), name, namelen);
+	if (IS_SYM_ALIAS(sym))
+	{
+		LnkMsg(WRN + MSG_MULTIPLE_ALIASES, "S", sym);
+		if (sym->info & SYM_FREE_ALIAS)
+		{
+			_LnkFree(sym->p.alias);
+		}
+	}
+	else if (sym->info & SYM_DEFINED)
+	{
+		return;                 // <--------- NOTE: premature return!!!!
+	}
+	DO_OR_EQ(sym_info, sym->info, |=, SYM_FREE_ALIAS);
+	/*
+	 * need to defined aliased symbol as well, so aliases in .obj files can be
+	 * hauled in from libraries
+	*/
+	targ = SymOp((sym_flags)(ST_CREATE), target, targetlen);
+	SetSymAlias(sym, targ->name, targetlen);
 }
 
-void WeldSyms( symbol *src, symbol *targ )
+void WeldSyms(symbol* src, symbol* targ)
 /****************************************/
 /* make all references to src refer to targ. (alias src to targ) */
 {
-    if( targ != NULL ) {
-        SetSymAlias( src, targ->name, strlen( targ->name ) );
-    }
+	if (targ != NULL)
+	{
+		SetSymAlias(src, targ->name, strlen(targ->name));
+	}
 }
 
-void SetSymAlias( symbol *sym, char *target, unsigned targetlen )
+void SetSymAlias(symbol* sym, char* target, unsigned targetlen)
 /**********************************************************************/
 {
-    SET_SYM_TYPE( sym, SYM_ALIAS );
-    sym->p.alias = ChkToString( target, targetlen );
-    sym->u.aliaslen = targetlen;
-    sym->info |= SYM_DEFINED;           /* an alias can't be undefined */
-    sym->info &= ~SYM_WAS_LAZY;
+	SET_SYM_TYPE(sym_info, sym, SYM_ALIAS);
+	sym->p.alias = ChkToString(target, targetlen);
+	sym->u.aliaslen = targetlen;
+	DO_OR_EQ(sym_info, sym->info, |=, SYM_DEFINED);           /* an alias can't be undefined */
+	DO_AND_EQ(sym_info, sym->info, &=, ~SYM_WAS_LAZY);
 }
 
-static symbol *GlobalSearchSym( char *symname, unsigned hash, unsigned len )
+static symbol* GlobalSearchSym(char* symname, unsigned hash, unsigned len)
 /**************************************************************************/
 /* search through the given chain for the given name */
 {
-    symbol      *sym;
+	symbol* sym;
 
-    for( sym = GlobalSymPtrs[ hash ]; sym != NULL; sym = sym->hash ) {
-        if( len == sym->namelen_cmp && (*CmpRtn)( symname, sym->name, len ) == 0 ) {
-            break;
-        }
-    }
-    return( sym );
+	for (sym = GlobalSymPtrs[hash]; sym != NULL; sym = sym->hash)
+	{
+		if (len == sym->namelen_cmp && (*CmpRtn)(symname, sym->name, len) == 0)
+		{
+			break;
+		}
+	}
+	return(sym);
 }
 
-static symbol *StaticSearchSym( char *symname, unsigned hash, unsigned len )
+static symbol* StaticSearchSym(char* symname, unsigned hash, unsigned len)
 /**************************************************************************/
 /* search through the given chain for the given name */
 {
-    symbol      *sym;
+	symbol* sym;
 
-    for( sym = StaticSymPtrs[ hash ]; sym != NULL; sym = sym->hash ) {
-        if( sym->info & SYM_IN_CURRENT ) {
-            if( len == sym->namelen_cmp && memcmp( symname, sym->name, len ) == 0 ) {
-                break;
-            }
-        }
-    }
-    return( sym );
+	for (sym = StaticSymPtrs[hash]; sym != NULL; sym = sym->hash)
+	{
+		if (sym->info & SYM_IN_CURRENT)
+		{
+			if (len == sym->namelen_cmp && memcmp(symname, sym->name, len) == 0)
+			{
+				break;
+			}
+		}
+	}
+	return(sym);
 }
 
 /* ST_STATIC = 0x1
@@ -985,463 +1034,551 @@ static symbol *StaticSearchSym( char *symname, unsigned hash, unsigned len )
  * ST_DUPLICATE = 0x40
  */
 
-static symbol *DoSymOp( sym_flags op, char *symname, unsigned length )
+static symbol* DoSymOp(sym_flags op, char* symname, unsigned length)
 /********************************************************************/
 {
-    unsigned    hash;
-    symbol      *sym;
-    unsigned    searchlen;
+	unsigned    hash;
+	symbol* sym;
+	unsigned    searchlen;
 #ifdef _INT_DEBUG
-    char        *symname_dbg;
+	char* symname_dbg;
 
-    symname_dbg = malloc( length + 1 );
-    memcpy( symname_dbg, symname, length );
-    symname_dbg[ length ] = '\0';
+	symname_dbg = malloc(length + 1);
+	memcpy(symname_dbg, symname, length);
+	symname_dbg[length] = '\0';
 #endif
-    if( NameLen != 0 && NameLen < length ) {
-        searchlen = NameLen;
-    } else {
-        searchlen = length;
-    }
-    if( op & ST_STATIC ) {
-        hash = StaticHashFn( symname, searchlen );
-        /* jwlink: allow duplicate static symbols */
-        //sym = StaticSearchSym( symname, hash, searchlen );
-        if ( ( op & ( ST_CREATE|ST_STATIC|ST_DUPLICATE ) ) == ( ST_CREATE|ST_STATIC|ST_DUPLICATE) )
-            sym = NULL;
-        else {
-            sym = StaticSearchSym( symname, hash, searchlen );
-            DEBUG(( DBG_OLD, "DoSymOp(): StaticSearchSym(hash %d) returned sym = %h", hash, sym ));
-        }
-    } else {
-        hash = GlobalHashFn( symname, searchlen );
-        sym = GlobalSearchSym( symname, hash, searchlen );
-    }
-    DEBUG(( DBG_OLD, "DoSymOp( 0x%h, %s, %d ) - hash %d - sym = %h", op, symname_dbg, length, hash, sym ));
-    if( sym != NULL ) {
-        //DEBUG(( DBG_OLD, "found symbol %s", symname_dbg ));
-        //DEBUG(( DBG_OLD, " - handle = %h", sym ));
-        return( sym );
-    }
-    if( !(op & ST_FIND) ) {
-        sym = AddSym();
-        sym->name = AddSymbolStringTable( &PermStrings, symname, length );
-        sym->namelen_cmp = searchlen;
+	if (NameLen != 0 && NameLen < length)
+	{
+		searchlen = NameLen;
+	}
+	else
+	{
+		searchlen = length;
+	}
+	if (op & ST_STATIC)
+	{
+		hash = StaticHashFn(symname, searchlen);
+		/* jwlink: allow duplicate static symbols */
+		//sym = StaticSearchSym( symname, hash, searchlen );
+		if ((op & (ST_CREATE | ST_STATIC | ST_DUPLICATE)) == (ST_CREATE | ST_STATIC | ST_DUPLICATE))
+			sym = NULL;
+		else
+		{
+			sym = StaticSearchSym(symname, hash, searchlen);
+			DEBUG((DBG_OLD, "DoSymOp(): StaticSearchSym(hash %d) returned sym = %h", hash, sym));
+		}
+	}
+	else
+	{
+		hash = GlobalHashFn(symname, searchlen);
+		sym = GlobalSearchSym(symname, hash, searchlen);
+	}
+	DEBUG((DBG_OLD, "DoSymOp( 0x%h, %s, %d ) - hash %d - sym = %h", op, symname_dbg, length, hash, sym));
+	if (sym != NULL)
+	{
+		//DEBUG(( DBG_OLD, "found symbol %s", symname_dbg ));
+		//DEBUG(( DBG_OLD, " - handle = %h", sym ));
+		return(sym);
+	}
+	if (!(op & ST_FIND))
+	{
+		sym = AddSym();
+		sym->name = AddSymbolStringTable(&PermStrings, symname, length);
+		sym->namelen_cmp = searchlen;
 
-        if( op & ST_STATIC ) {
-            sym->info |= SYM_STATIC;
-            sym->hash = StaticSymPtrs[hash];
-            StaticSymPtrs[hash] = sym;
-        } else {
-            sym->hash = GlobalSymPtrs[hash];
-            GlobalSymPtrs[hash] = sym;
-        }
-        DEBUG((DBG_OLD, "DoSymOp: added symbol %s hdl=%h info=%h", symname_dbg, sym, sym->info ));
-    }
-    return( sym );
+		if (op & ST_STATIC)
+		{
+			DO_OR_EQ(sym_info, sym->info, |=, SYM_STATIC);
+			sym->hash = StaticSymPtrs[hash];
+			StaticSymPtrs[hash] = sym;
+		}
+		else
+		{
+			sym->hash = GlobalSymPtrs[hash];
+			GlobalSymPtrs[hash] = sym;
+		}
+		DEBUG((DBG_OLD, "DoSymOp: added symbol %s hdl=%h info=%h", symname_dbg, sym, sym->info));
+	}
+	return(sym);
 }
 
-symbol *UnaliasSym( sym_flags op, symbol *sym )
+symbol* UnaliasSym(sym_flags op, symbol* sym)
 /*****************************************************/
 {
-    symbol *orig_sym = sym;
-    while( sym != NULL && IS_SYM_ALIAS(sym) ) {
-        sym = DoSymOp( op, sym->p.alias, sym->u.aliaslen );
-        /* circular ref, may be a weak symbol ! */
-        if( sym == orig_sym ) {
-            break;
-        }
-    }
-    return( sym );
+	symbol* orig_sym = sym;
+	while (sym != NULL && IS_SYM_ALIAS(sym))
+	{
+		sym = DoSymOp(op, sym->p.alias, sym->u.aliaslen);
+		/* circular ref, may be a weak symbol ! */
+		if (sym == orig_sym)
+		{
+			break;
+		}
+	}
+	return(sym);
 }
 
-symbol *SymOp( sym_flags op, char *symname, unsigned length )
+symbol* SymOp(sym_flags op, char* symname, unsigned length)
 /**************************************************************/
 /* search for symbols, handling aliases */
 {
-    symbol *    sym;
+	symbol* sym;
 
-    sym = DoSymOp( op, symname, length );
-    if( !(op & ST_NOALIAS) ) {
-        sym = UnaliasSym( op, sym );
-    }
-    if( sym != NULL ) {
-        if( op & ST_DEFINE ) {
-            if( IS_SYM_ALIAS( sym ) && sym->info & SYM_FREE_ALIAS ) {
-                _LnkFree( sym->p.alias );
-                sym->info &= ~SYM_FREE_ALIAS;
-            }
-            sym->info |= SYM_DEFINED;
-        }
-        if( op & ST_REFERENCE ) {
-            sym->info |= SYM_REFERENCED;
-        }
-    }
-    return( sym );
+	sym = DoSymOp(op, symname, length);
+	if (!(op & ST_NOALIAS))
+	{
+		sym = UnaliasSym(op, sym);
+	}
+	if (sym != NULL)
+	{
+		if (op & ST_DEFINE)
+		{
+			if (IS_SYM_ALIAS(sym) && sym->info & SYM_FREE_ALIAS)
+			{
+				_LnkFree(sym->p.alias);
+				DO_AND_EQ(sym_info, sym->info, &=, ~SYM_FREE_ALIAS);
+			}
+			DO_OR_EQ(sym_info, sym->info, |=, SYM_DEFINED);
+		}
+		if (op & ST_REFERENCE)
+		{
+			DO_OR_EQ(sym_info, sym->info, |=, SYM_REFERENCED);
+		}
+	}
+	return(sym);
 }
 
-static unsigned StaticHashFn( char *name, unsigned len )
+static unsigned StaticHashFn(char* name, unsigned len)
 /******************************************************/
 {
-    unsigned    value;
-    unsigned    modval;
+	unsigned    value;
+	unsigned    modval;
 
-    modval = CurrMod->modtime;
-    value = ScatterTable[ modval & 0xff ];
-    modval >>= 8;
-    value = value ^ ScatterTable[ modval & 0xff ];
-    while( len > 0 ) {
-        value = (value << 1) ^ ScatterTable[ *(unsigned char *)name ];
-        ++name;
-        len--;
-    }
-    return( value % STATIC_TABSIZE );
+	modval = CurrMod->modtime;
+	value = ScatterTable[modval & 0xff];
+	modval >>= 8;
+	value = value ^ ScatterTable[modval & 0xff];
+	while (len > 0)
+	{
+		value = (value << 1) ^ ScatterTable[*(unsigned char*)name];
+		++name;
+		len--;
+	}
+	return(value % STATIC_TABSIZE);
 }
 
-static unsigned GlobalHashFn( char *name, unsigned len )
+static unsigned GlobalHashFn(char* name, unsigned len)
 /******************************************************/
 {
-    unsigned    value;
+	unsigned    value;
 
-    value = 0;
-    while( len > 0 ) {
-        value = (value << 1) ^ ScatterTable[ *(unsigned char *)name | 0x20 ];
-        ++name;
-        len--;
-    }
-    return( value % GLOBAL_TABSIZE );
+	value = 0;
+	while (len > 0)
+	{
+		value = (value << 1) ^ ScatterTable[*(unsigned char*)name | 0x20];
+		++name;
+		len--;
+	}
+	return(value % GLOBAL_TABSIZE);
 }
 
-void ReportMultiple( symbol *sym, char *name, unsigned len )
+void ReportMultiple(symbol* sym, char* name, unsigned len)
 /*****************************************************************/
 /* report a multiply-defined symbol */
 {
-    unsigned    lev;
+	unsigned    lev;
 
-    if( LinkFlags & REDEFS_OK ) {
-        lev = WRN;
-    } else {
-        lev = ERR;
-    }
+	if (LinkFlags & REDEFS_OK)
+	{
+		lev = WRN;
+	}
+	else
+	{
+		lev = ERR;
+	}
 
-    if( CmpRtn( sym->name, name, len + 1 ) == 0 ) {
-        LnkMsg( LOC+lev+MSG_MULT_DEF, "S", sym );
-    } else {
-        LnkMsg( LOC+lev+MSG_MULT_DEF_BY, "12", sym->name, name );
-    }
+	if (CmpRtn(sym->name, name, len + 1) == 0)
+	{
+		LnkMsg(LOC + lev + MSG_MULT_DEF, "S", sym);
+	}
+	else
+	{
+		LnkMsg(LOC + lev + MSG_MULT_DEF_BY, "12", sym->name, name);
+	}
 }
 
-void ReportUndefined( void )
+void ReportUndefined(void)
 /*********************************/
 /* tell user about any undefined symbols */
 {
-    symbol *    sym;
-    unsigned    level;
+	symbol* sym;
+	unsigned    level;
 
-    DEBUG(( DBG_OLD, "ReportUndefined enter" ));
-    for( sym = HeadSym; sym != NULL; sym = sym->link ) {
-        sym->info &= ~SYM_CLEAR_ON_P2;
-        if( !(sym->info & (SYM_DEFINED | SYM_IS_ALTDEF)) )  {
+	DEBUG((DBG_OLD, "ReportUndefined enter"));
+	for (sym = HeadSym; sym != NULL; sym = sym->link)
+	{
+		DO_AND_EQ(sym_info, sym->info, &=, ~SYM_CLEAR_ON_P2);
+		if (!(sym->info & (SYM_DEFINED | SYM_IS_ALTDEF)))
+		{
 
-            DEBUG(( DBG_OLD, "ReportUndefined: %s, info=%h", sym->name, sym->info ));
-            if( LinkFlags & UNDEFS_ARE_OK ) {
-                level = WRN;
-            } else {
-                level = MILD_ERR;
-                LinkState |= UNDEFED_SYM_ERROR;
-            }
-            LnkMsg( level+MSG_UNDEF_REF, "S", sym );
-        }
-    }
+			DEBUG((DBG_OLD, "ReportUndefined: %s, info=%h", sym->name, sym->info));
+			if (LinkFlags & UNDEFS_ARE_OK)
+			{
+				level = WRN;
+			}
+			else
+			{
+				level = MILD_ERR;
+				LinkState |= UNDEFED_SYM_ERROR;
+			}
+			LnkMsg(level + MSG_UNDEF_REF, "S", sym);
+		}
+	}
 }
 
-void ClearFloatBits( void )
+void ClearFloatBits(void)
 /********************************/
 /* set all symbols to be not floating point */
 {
-    symbol *    sym;
+	symbol* sym;
 
-    for( sym = HeadSym; sym != NULL; sym = sym->link ) {
-        SET_FFIX_VALUE( sym, FFIX_NOT_A_FLOAT );
-    }
+	for (sym = HeadSym; sym != NULL; sym = sym->link)
+	{
+		SET_FFIX_VALUE(sym_info, sym, FFIX_NOT_A_FLOAT);
+	}
 }
 
-void XDefSymAddr( symbol *sym, offset off, unsigned_16 frame )
+void XDefSymAddr(symbol* sym, offset off, unsigned_16 frame)
 /*******************************************************************/
 /* set symbol adddress in symbol table */
 {
-    sym->addr.seg = frame;
-    sym->addr.off = off;
+	sym->addr.seg = frame;
+	sym->addr.off = off;
 }
 
-static void WriteSym( symbol * sym, char star )
+static void WriteSym(symbol* sym, char star)
 /*********************************************/
 {
-    if( sym->info & SYM_STATIC ) {
-        star = 's';
-    }
-    if( (FmtData.type & MK_286) && ( sym->p.seg != NULL ) && sym->p.seg->is32bit ) {
-        WriteFormat( 0, "%A%c", &sym->addr, star );
-    } else {
-        WriteFormat( 0, "%a%c", &sym->addr, star );
-    }
-    WriteFormat( 15, "%S", sym );
+	if (sym->info & SYM_STATIC)
+	{
+		star = 's';
+	}
+	if ((FmtData.type & MK_286) && (sym->p.seg != NULL) && sym->p.seg->is32bit)
+	{
+		WriteFormat(0, "%A%c", &sym->addr, star);
+	}
+	else
+	{
+		WriteFormat(0, "%a%c", &sym->addr, star);
+	}
+	WriteFormat(15, "%S", sym);
 }
 
-void XReportSymAddr( symbol *sym )
+void XReportSymAddr(symbol* sym)
 /***************************************/
 {
-    char                star;
+	char                star;
 
-    if( sym->info & SYM_REFERENCED ) {
-        if( IS_SYM_IMPORTED(sym) || (FmtData.type & MK_ELF && IsSymElfImported(sym)) ) {
-            star = 'i';
-        } else {
-            star = ' ';
-        }
-    } else if( sym->info & SYM_LOCAL_REF ) {
-        star = '+';
-    } else {
-        star = '*';
-    }
-    WriteSym( sym, star );
-    WriteMapNL( 1 );
+	if (sym->info & SYM_REFERENCED)
+	{
+		if (IS_SYM_IMPORTED(sym) || (FmtData.type & MK_ELF && IsSymElfImported(sym)))
+		{
+			star = 'i';
+		}
+		else
+		{
+			star = ' ';
+		}
+	}
+	else if (sym->info & SYM_LOCAL_REF)
+	{
+		star = '+';
+	}
+	else
+	{
+		star = '*';
+	}
+	WriteSym(sym, star);
+	WriteMapNL(1);
 }
 
-void XWriteImports( void )
+void XWriteImports(void)
 /*******************************/
 {
-    symbol *    sym;
+	symbol* sym;
 
-    for( sym = HeadSym; sym != NULL; sym = sym->link ) {
-        if( IS_SYM_IMPORTED(sym) && sym->p.import != NULL ) {
-            if( !(FmtData.type & MK_NOVELL)
-                   || sym->p.import != DUMMY_IMPORT_PTR  )
-            {
-                if(sym->prefix && (strlen(sym->prefix) > 0))
-                    WriteFormat( 0, "%s@%s", sym->prefix, sym->name);
-                else
-                    WriteFormat( 0, "%s", sym->name );
+	for (sym = HeadSym; sym != NULL; sym = sym->link)
+	{
+		if (IS_SYM_IMPORTED(sym) && sym->p.import != NULL)
+		{
+			if (!(FmtData.type & MK_NOVELL)
+				|| sym->p.import != DUMMY_IMPORT_PTR)
+			{
+				if (sym->prefix && (strlen(sym->prefix) > 0))
+					WriteFormat(0, "%s@%s", sym->prefix, sym->name);
+				else
+					WriteFormat(0, "%s", sym->name);
 
 #ifdef _OS2
-                if( FmtData.type & (MK_OS2|MK_PE|MK_WIN_VXD) ) {
-                    WriteFormat( 36, "%s", ImpModuleName( sym->p.import ) );
-                }
+				if (FmtData.type & (MK_OS2 | MK_PE | MK_WIN_VXD))
+				{
+					WriteFormat(36, "%s", ImpModuleName((dll_sym_info*)sym->p.import));
+				}
 #endif
-                WriteMapNL( 1 );
-            }
-        }
-    }
+				WriteMapNL(1);
+			}
+		}
+	}
 }
 
-symbol * AddAltDef( symbol *sym, sym_info sym_type )
+symbol* AddAltDef(symbol* sym, sym_info sym_type)
 /*********************************************************/
 {
-    symbol *    altsym;
+	symbol* altsym;
 
-    if( !(LinkFlags & INC_LINK_FLAG) )
-        return sym;
-    altsym = AddSym();
-    SET_SYM_TYPE( altsym, sym_type );
-    altsym->info |= SYM_DEAD | SYM_IS_ALTDEF;
-    altsym->mod = CurrMod;
-    altsym->name = sym->name;
-    altsym->e.mainsym = sym;
-    Ring2Append( &CurrMod->publist, altsym );
-    RingAppend( &sym->u.altdefs, altsym );
-    return altsym;
+	if (!(LinkFlags & INC_LINK_FLAG))
+		return sym;
+	altsym = AddSym();
+	SET_SYM_TYPE(sym_info, altsym, sym_type);
+	DO_OR_EQ(sym_info, altsym->info, |=, SYM_DEAD | SYM_IS_ALTDEF);
+	altsym->mod = CurrMod;
+	altsym->name = sym->name;
+	altsym->e.mainsym = sym;
+	Ring2Append(&CurrMod->publist, altsym);
+	RingAppend(&sym->u.altdefs, altsym);
+	return altsym;
 }
 
-symbol * HashReplace( symbol *sym )
+symbol* HashReplace(symbol* sym)
 /****************************************/
 {
-    symbol *    newsym;
+	symbol* newsym;
 
-    if( sym->mod == NULL )
-        return sym;
-    Ring2Prune( &sym->mod->publist, sym );
-    if( IS_SYM_COMMUNAL(sym) ) {
-        sym->p.seg->isdead = TRUE;
-    }
-    if( !(LinkFlags & INC_LINK_FLAG) )
-        return sym;
-    newsym = AddSym();
-    newsym->e.mainsym = sym;
-    newsym->name = sym->name;
-    newsym->namelen_cmp = sym->namelen_cmp;
-    newsym->info = sym->info | SYM_DEAD | SYM_IS_ALTDEF;
-    Ring2Append( &sym->mod->publist, newsym );
-    RingAppend( &sym->u.altdefs, newsym );
-    if( IS_SYM_NICOMDEF(sym) ) {
-        sym->p.cdefsize = sym->p.seg->length;
-    }
-    return sym;
+	if (sym->mod == NULL)
+		return sym;
+	Ring2Prune(&sym->mod->publist, sym);
+	if (IS_SYM_COMMUNAL(sym))
+	{
+		sym->p.seg->isdead = TRUE;
+	}
+	if (!(LinkFlags & INC_LINK_FLAG))
+		return sym;
+	newsym = AddSym();
+	newsym->e.mainsym = sym;
+	newsym->name = sym->name;
+	newsym->namelen_cmp = sym->namelen_cmp;
+	newsym->info = (sym_info)(sym->info | SYM_DEAD | SYM_IS_ALTDEF);
+	Ring2Append(&sym->mod->publist, newsym);
+	RingAppend(&sym->u.altdefs, newsym);
+	if (IS_SYM_NICOMDEF(sym))
+	{
+		sym->p.cdefsize = sym->p.seg->length;
+	}
+	return sym;
 }
 
-static void SetDataSymInfo( symbol *sym, symbol *old )
+static void SetDataSymInfo(symbol* sym, symbol* old)
 /****************************************************/
 {
-    sym->u.datasym = NULL;
-    sym->p.seg->data = old->p.seg->data;
-    sym->info |= SYM_HAS_DATA;
-    old->info &= ~SYM_HAS_DATA;
-    old->u.datasym = sym;
+	sym->u.datasym = NULL;
+	sym->p.seg->data = old->p.seg->data;
+	DO_OR_EQ(sym_info, sym->info, |=, SYM_HAS_DATA);
+	DO_AND_EQ(sym_info, old->info, &=, ~SYM_HAS_DATA);
+	old->u.datasym = sym;
 }
 
-static bool SetNewDataSym( void *_dead, void *_sym )
+static bool SetNewDataSym(void* _dead, void* _sym)
 /**************************************************/
 {
-    symbol *dead = _dead;
-    symbol *sym = _sym;
+	symbol* dead = (symbol*)_dead;
+	symbol* sym = (symbol*)_sym;
 
-    if( dead == sym->u.datasym ) {
-        if( dead->u.datasym == NULL ) {
-            SetDataSymInfo( sym, dead );
-        } else {
-            sym->u.datasym = dead->u.datasym;
-        }
-        return TRUE;
-    }
-    return FALSE;
+	if (dead == sym->u.datasym)
+	{
+		if (dead->u.datasym == NULL)
+		{
+			SetDataSymInfo(sym, dead);
+		}
+		else
+		{
+			sym->u.datasym = dead->u.datasym;
+		}
+		return TRUE;
+	}
+	return FALSE;
 }
 
-static void CleanAltDefs( symbol *sym )
+static void CleanAltDefs(symbol* sym)
 /*************************************/
 {
-    symbol *    testring;
-    symbol *    altsym;
+	symbol* testring;
+	symbol* altsym;
 
-    if( IS_SYM_ALIAS( sym ) || sym->info & SYM_DEAD || sym->u.altdefs == NULL )
-        return;
-    testring = NULL;
-    while( (altsym = RingPop( &sym->u.altdefs)) != NULL ) {
-        if( altsym->info & SYM_KILL ) {
-            if( altsym->info & SYM_HAS_DATA ) {
-                altsym->u.datasym = NULL;
-                RingAppend( &testring, altsym );
-            }
-        } else if( !(altsym->info & SYM_HAS_DATA) ) {
-            RingLookup( testring, SetNewDataSym, altsym );
-        }
-    }
+	if (IS_SYM_ALIAS(sym) || sym->info & SYM_DEAD || sym->u.altdefs == NULL)
+		return;
+	testring = NULL;
+	while ((altsym = (symbol*)RingPop(&sym->u.altdefs)) != NULL)
+	{
+		if (altsym->info & SYM_KILL)
+		{
+			if (altsym->info & SYM_HAS_DATA)
+			{
+				altsym->u.datasym = NULL;
+				RingAppend(&testring, altsym);
+			}
+		}
+		else if (!(altsym->info & SYM_HAS_DATA))
+		{
+			RingLookup(testring, SetNewDataSym, altsym);
+		}
+	}
 }
 
-static void UndefSymbol( symbol *sym )
+static void UndefSymbol(symbol* sym)
 /************************************/
 {
-    ClearSymUnion( sym );
-    sym->addr.seg = UNDEFINED;
-    sym->addr.off = 0;
-    if( !(sym->info & SYM_EXPORTED) && sym->e.def != NULL ) {
-        sym->info = SYM_LAZY_REF | SYM_REFERENCED;
-    } else {
-        sym->info = SYM_REGULAR | SYM_REFERENCED;
-    }
-    sym->mod = NULL;
+	ClearSymUnion(sym);
+	sym->addr.seg = UNDEFINED;
+	sym->addr.off = 0;
+	if (!(sym->info & SYM_EXPORTED) && sym->e.def != NULL)
+	{
+		sym->info = (sym_info)(sym->info | SYM_LAZY_REF | SYM_REFERENCED);
+	}
+	else
+	{
+		sym->info = (sym_info)(sym->info | SYM_REGULAR | SYM_REFERENCED);
+	}
+	sym->mod = NULL;
 }
 
-static void PurgeHashTable( symbol **curr )
+static void PurgeHashTable(symbol** curr)
 /*****************************************/
 {
-    while( *curr != NULL ) {
-        CleanAltDefs( *curr );
-        if( (*curr)->info & SYM_KILL ) {
-            if( (*curr)->info & SYM_RELOC_REFD ) {
-                UndefSymbol( *curr );
-                curr = &(*curr)->hash;
-            } else {
-                *curr = (*curr)->hash;
-            }
-        } else {
-            curr = &(*curr)->hash;
-        }
-    }
+	while (*curr != NULL)
+	{
+		CleanAltDefs(*curr);
+		if ((*curr)->info & SYM_KILL)
+		{
+			if ((*curr)->info & SYM_RELOC_REFD)
+			{
+				UndefSymbol(*curr);
+				curr = &(*curr)->hash;
+			}
+			else
+			{
+				*curr = (*curr)->hash;
+			}
+		}
+		else
+		{
+			curr = &(*curr)->hash;
+		}
+	}
 }
 
-static void CleanupOldAltdefs( symbol **curr )
+static void CleanupOldAltdefs(symbol** curr)
 /********************************************/
 /* some symbols may have been marked SYM_KILL during PurgeHashTable. Make
  * sure these are gone */
 {
-    while( *curr != NULL ) {
-        if( (*curr)->info & SYM_KILL ) {
-            *curr = (*curr)->hash;
-        } else {
-            curr = &(*curr)->hash;
-        }
-    }
+	while (*curr != NULL)
+	{
+		if ((*curr)->info & SYM_KILL)
+		{
+			*curr = (*curr)->hash;
+		}
+		else
+		{
+			curr = &(*curr)->hash;
+		}
+	}
 }
 
-static void WalkAHashTable( void (*fn)(symbol **), symbol **symtab,
-                                unsigned size )
-/*****************************************************************/
+static void WalkAHashTable(void (*fn)(symbol**), symbol** symtab,
+	unsigned size)
+	/*****************************************************************/
 {
-    while( size > 0 ) {
-        fn( symtab );
-        symtab++;
-        size--;
-    }
+	while (size > 0)
+	{
+		fn(symtab);
+		symtab++;
+		size--;
+	}
 }
 
-static void WalkHashTables( void (*fn)(symbol **) )
+static void WalkHashTables(void (*fn)(symbol**))
 /***************************************************/
 {
-    WalkAHashTable( fn, GlobalSymPtrs, GLOBAL_TABSIZE );
-    WalkAHashTable( fn, StaticSymPtrs, STATIC_TABSIZE );
+	WalkAHashTable(fn, GlobalSymPtrs, GLOBAL_TABSIZE);
+	WalkAHashTable(fn, StaticSymPtrs, STATIC_TABSIZE);
 }
 
-void PurgeSymbols( void )
+void PurgeSymbols(void)
 /******************************/
 {
-    symbol **   list;
-    symbol *    sym;
+	symbol** list;
+	symbol* sym;
 
-    WalkHashTables( PurgeHashTable );
-    WalkHashTables( CleanupOldAltdefs );
-    list = &HeadSym;
-    while( *list != NULL ) {
-        sym = *list;
-        if( sym->info & SYM_KILL ) {
-            *list = sym->link;
-            FreeSymbol( sym );
-        } else if( sym->info & SYM_IS_ALTDEF ) {
-            *list = sym->link;          // gonna get rid of these later
-        } else {
-            if( IS_SYM_ALIAS(sym) && sym->info & SYM_WAS_LAZY ) {
-                WipeSym( sym );
-                sym->info = SYM_WEAK_REF | SYM_REFERENCED;
-            }
-            LastSym = sym;
-            list = &(*list)->link;
-        }
-    }
+	WalkHashTables(PurgeHashTable);
+	WalkHashTables(CleanupOldAltdefs);
+	list = &HeadSym;
+	while (*list != NULL)
+	{
+		sym = *list;
+		if (sym->info & SYM_KILL)
+		{
+			*list = sym->link;
+			FreeSymbol(sym);
+		}
+		else if (sym->info & SYM_IS_ALTDEF)
+		{
+			*list = sym->link;          // gonna get rid of these later
+		}
+		else
+		{
+			if (IS_SYM_ALIAS(sym) && sym->info & SYM_WAS_LAZY)
+			{
+				WipeSym(sym);
+				sym->info = (sym_info)(sym->info | SYM_WEAK_REF | SYM_REFERENCED);
+			}
+			LastSym = sym;
+			list = &(*list)->link;
+		}
+	}
 }
 
-void ConvertLazyRefs( void )
+void ConvertLazyRefs(void)
 /*********************************/
 /* go through all symbols, & turn lazy refs to aliases to default sym. */
 {
-    symbol *    defsym;
-    symbol *    sym;
+	symbol* defsym;
+	symbol* sym;
 
-    for( sym = HeadSym; sym != NULL; sym = sym->link ) {
-        if( IS_SYM_A_REF(sym) ) {
-            if( IS_SYM_VF_REF(sym) ) {
-                defsym = *(sym->e.vfdata);
-                _LnkFree( sym->e.vfdata );
-            } else {
-                defsym = sym->e.def;
-                if( sym->info & SYM_VF_MARKED ) {
-                    DefStripSym( sym, AllocSegData() ); // see note 1 below.
-                }
-            }
-            WeldSyms( sym, defsym );
-            sym->info |= SYM_WAS_LAZY;
-            if( LinkFlags & SHOW_DEAD ) {
-                LnkMsg( MAP+MSG_SYMBOL_DEAD, "S", sym );
-            }
-        }
-    }
+	for (sym = HeadSym; sym != NULL; sym = sym->link)
+	{
+		if (IS_SYM_A_REF(sym))
+		{
+			if (IS_SYM_VF_REF(sym))
+			{
+				defsym = *(sym->e.vfdata);
+				_LnkFree(sym->e.vfdata);
+			}
+			else
+			{
+				defsym = sym->e.def;
+				if (sym->info & SYM_VF_MARKED)
+				{
+					DefStripSym(sym, AllocSegData()); // see note 1 below.
+				}
+			}
+			WeldSyms(sym, defsym);
+			sym->info = (sym_info)(sym->info | SYM_WAS_LAZY);
+			if (LinkFlags & SHOW_DEAD)
+			{
+				LnkMsg(MAP + MSG_SYMBOL_DEAD, "S", sym);
+			}
+		}
+	}
 }
 
 /*
@@ -1454,127 +1591,145 @@ void ConvertLazyRefs( void )
  * the effects of this references
 */
 
-static void MarkSymTraced( void *sym )
+static void MarkSymTraced(void* sym)
 /************************************/
 {
-    ((symbol *)sym)->info |= SYM_TRACE;
+	((symbol*)sym)->info = (sym_info)(((symbol*)sym)->info | SYM_TRACE);
 }
 
-void TraceSymList( symbol * sym )
+void TraceSymList(symbol* sym)
 /**************************************/
 {
-    Ring2Walk( sym, MarkSymTraced );
+	Ring2Walk(sym, MarkSymTraced);
 }
 
-symbol * MakeWeakExtdef( char *name, symbol *def )
+symbol* MakeWeakExtdef(char* name, symbol* def)
 /*******************************************************/
 /* make a weak extdef */
 {
-    symbol * sym;
+	symbol* sym;
 
-    sym = SymOp( ST_CREATE, name, strlen( name ) );
-    sym->e.def = def;
-    SET_SYM_TYPE( sym, SYM_LINK_WEAK_REF );
-    return sym;
+	sym = SymOp(ST_CREATE, name, strlen(name));
+	sym->e.def = def;
+	SET_SYM_TYPE(sym_info, sym, SYM_LINK_WEAK_REF);
+	return sym;
 }
 
-void ConvertVFSym( symbol * sym )
+void ConvertVFSym(symbol* sym)
 /**************************************/
 /* convert the symbol from a virtual function def. record to either a extdef
  * or a lazy reference*/
 {
-    symbol *    defsym;
+	symbol* defsym;
 
-    defsym = *(sym->e.vfdata);
-    _LnkFree( sym->e.vfdata );
-    sym->e.def = defsym;
-    if( IS_SYM_PURE_REF( sym ) ) {
-        SET_SYM_TYPE( sym, SYM_LAZY_REF );
-    } else {
-        SET_SYM_TYPE( sym, SYM_REGULAR );
-    }
-    sym->info &= ~SYM_CHECKED;
+	defsym = *(sym->e.vfdata);
+	_LnkFree(sym->e.vfdata);
+	sym->e.def = defsym;
+	if (IS_SYM_PURE_REF(sym))
+	{
+		SET_SYM_TYPE(sym_info, sym, SYM_LAZY_REF);
+	}
+	else
+	{
+		SET_SYM_TYPE(sym_info, sym, SYM_REGULAR);
+	}
+	sym->info = (sym_info)(sym->info & ~SYM_CHECKED);
 }
 
-offset SymbolAbsAddr( symbol *sym )
+offset SymbolAbsAddr(symbol* sym)
 /****************************************/
 {
-    offset      addr;
-    group_entry *gr;
+	offset      addr;
+	group_entry* gr;
 
-    gr = SymbolGroup( sym );
-    addr = sym->addr.off;
-    if( gr != NULL ) {
-        addr += gr->linear + FmtData.base;
-    } else {
-        // it is an imported symbol; addr is already absolute
-    }
-    return addr;
+	gr = SymbolGroup(sym);
+	addr = sym->addr.off;
+	if (gr != NULL)
+	{
+		addr += gr->linear + FmtData.base;
+	}
+	else
+	{
+		// it is an imported symbol; addr is already absolute
+	}
+	return addr;
 }
 
-group_entry *SymbolGroup( symbol *sym )
+group_entry* SymbolGroup(symbol* sym)
 /********************************************/
 {
-    group_entry *group;
+	group_entry* group;
 
-    if( IS_SYM_ALIAS(sym) ) {
-        group = NULL;
-    } else if( IS_SYM_GROUP(sym) ) {
-        for( group = Groups; group != NULL; group = group->next_group ) {
-            if( sym == group->sym ) {
-                break;
-            }
-        }
-    } else {
-        if( sym->p.seg != NULL ) {
-            group = sym->p.seg->u.leader->group;
-        } else {
-            group = NULL;
-        }
-    }
-    return group;
+	if (IS_SYM_ALIAS(sym))
+	{
+		group = NULL;
+	}
+	else if (IS_SYM_GROUP(sym))
+	{
+		for (group = Groups; group != NULL; group = group->next_group)
+		{
+			if (sym == group->sym)
+			{
+				break;
+			}
+		}
+	}
+	else
+	{
+		if (sym->p.seg != NULL)
+		{
+			group = sym->p.seg->u.leader->group;
+		}
+		else
+		{
+			group = NULL;
+		}
+	}
+	return group;
 }
 
 #define IS_WHITESPACE(ptr) (*(ptr) == ' ' || *(ptr) =='\t' || *(ptr) == '\r')
 
-bool SetCurrentPrefix(const char * pszPrefix, unsigned nLen)
+bool SetCurrentPrefix(const char* pszPrefix, unsigned nLen)
 {
-    const char *    pStart = pszPrefix;
-    char *          pFix;
-    unsigned        nIntLen = nLen;
-    char            *newbuff = NULL;
+	const char* pStart = pszPrefix;
+	char* pFix;
+	unsigned        nIntLen = nLen;
+	char* newbuff = NULL;
 
-    /*
-    //  Always delete
-    */
-    if( CmdFile->symprefix ) {
-        _LnkFree( CmdFile->symprefix );
-        CmdFile->symprefix = NULL;
-    }
+	/*
+	//  Always delete
+	*/
+	if (CmdFile->symprefix)
+	{
+		_LnkFree(CmdFile->symprefix);
+		CmdFile->symprefix = NULL;
+	}
 
-    if( (NULL == pStart) || (nLen == 0) ) {
-        return TRUE;
-    }
+	if ((NULL == pStart) || (nLen == 0))
+	{
+		return TRUE;
+	}
 
-    pStart++;   /* skip opening parentheses */
-    nIntLen--;  /* and record that */
+	pStart++;   /* skip opening parentheses */
+	nIntLen--;  /* and record that */
 
-    while( (0 != *pStart) && IS_WHITESPACE(pStart) )
-        pStart++, nIntLen--;
+	while ((0 != *pStart) && IS_WHITESPACE(pStart))
+		pStart++, nIntLen--;
 
-    if( (0 == *pStart) || (0 == nLen) )
-        return FALSE;
+	if ((0 == *pStart) || (0 == nLen))
+		return FALSE;
 
-    /* convert to C string */
-    _LnkAlloc( newbuff, nIntLen + 1 );
-    memcpy( newbuff, pStart, nIntLen - 1 );
-    newbuff[nIntLen-1] = '\0';
-    CmdFile->symprefix = newbuff;
+	/* convert to C string */
+	_LnkAlloc(char*, newbuff, nIntLen + 1);
+	memcpy(newbuff, pStart, nIntLen - 1);
+	newbuff[nIntLen - 1] = '\0';
+	CmdFile->symprefix = newbuff;
 
-    pFix = newbuff;
-    while( (0 != *pFix) && !IS_WHITESPACE(pFix) )
-        pFix++;
-    *pFix = '\0';
+	pFix = newbuff;
+	while ((0 != *pFix) && !IS_WHITESPACE(pFix))
+		pFix++;
+	*pFix = '\0';
 
-    return( 0 != strlen( newbuff ));
+	return(0 != strlen(newbuff));
 }

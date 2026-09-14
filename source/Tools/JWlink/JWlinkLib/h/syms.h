@@ -174,8 +174,7 @@ enum {
 
 #define FFIX_SHIFT 29
 #define GET_FFIX_VALUE(sym)       ((sym)->info >> FFIX_SHIFT)
-#define SET_FFIX_VALUE(sym,value) ((sym)->info = ((sym)->info & ~FFIX_MASK)\
-                                                | ((value) << FFIX_SHIFT))
+#define SET_FFIX_VALUE(t,sym,value) ((sym)->info = (t)(((sym)->info & ~FFIX_MASK) | ((value) << FFIX_SHIFT)))
 
 typedef struct {
     unsigned_16 modnum;         // DOS: idx of module which defines this sym
