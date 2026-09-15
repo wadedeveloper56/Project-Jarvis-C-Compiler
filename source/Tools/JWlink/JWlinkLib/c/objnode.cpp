@@ -55,292 +55,306 @@
 #define ARRAY_NUM( x )      ((x) >> 8 )
 #define ELEMENT_NUM( x )    ((x) & 0xFF)
 
-typedef struct nodearray {
-    unsigned    num;            // number of nodes inserted
-    unsigned    elsize;         // size of individual element in array.
-    unsigned    arraymax;       // the number of node arrays allocated - 1
-    char *      array[MAX_NUM_NODES];   // the array.
+typedef struct nodearray
+{
+	unsigned    num;            // number of nodes inserted
+	unsigned    elsize;         // size of individual element in array.
+	unsigned    arraymax;       // the number of node arrays allocated - 1
+	char* array[MAX_NUM_NODES];   // the array.
 } nodearray;
 
-nodearray *     ExtNodes;           // ptr to obj file import list
-nodearray *     SegNodes;           // ptr to obj file segment list
-nodearray *     GrpNodes;           // ptr to obj file group list
-nodearray *     NameNodes;          // ptr to obj file lname list
+nodearray* ExtNodes;           // ptr to obj file import list
+nodearray* SegNodes;           // ptr to obj file segment list
+nodearray* GrpNodes;           // ptr to obj file group list
+nodearray* NameNodes;          // ptr to obj file lname list
 
-static void * MakeArray( unsigned size )
+static void* MakeArray(unsigned size)
 /**************************************/
 {
-    nodearray * nodes;
+	nodearray* nodes;
 
-    _ChkAlloc( nodes, sizeof( nodearray ) );
-    nodes->num = 0;
-    nodes->elsize = size;
-    nodes->arraymax = 0;
-    size *= NODE_ARRAY_SIZE;
-    _ChkAlloc( nodes->array[0], size );
-    memset( nodes->array[0], 0, size );
-    return( nodes );
+	_ChkAlloc(nodearray*, nodes, sizeof(nodearray));
+	nodes->num = 0;
+	nodes->elsize = size;
+	nodes->arraymax = 0;
+	size *= NODE_ARRAY_SIZE;
+	_ChkAlloc(char*, nodes->array[0], size);
+	memset(nodes->array[0], 0, size);
+	return(nodes);
 }
 
-void InitNodes( void )
+void InitNodes(void)
 /***************************/
 // initialize the node array structures.
 {
-    GrpNodes = MakeArray( sizeof( grpnode ) );
-    SegNodes = MakeArray( sizeof( segnode ) );
-    ExtNodes = MakeArray( sizeof( extnode ) );
-    NameNodes = MakeArray( sizeof( list_of_names * ) );
+	GrpNodes = (nodearray*)MakeArray(sizeof(grpnode));
+	SegNodes = (nodearray*)MakeArray(sizeof(segnode));
+	ExtNodes = (nodearray*)MakeArray(sizeof(extnode));
+	NameNodes = (nodearray*)MakeArray(sizeof(list_of_names*));
 }
 
-static void BurnNodeArray( nodearray *list )
+static void BurnNodeArray(nodearray* list)
 /******************************************/
 {
-    int index;
+	int index;
 
-    for( index = 0; index <= list->arraymax; index++ ) {
-        _LnkFree( list->array[index] );
-    }
-    _LnkFree( list );
+	for (index = 0; index <= list->arraymax; index++)
+	{
+		_LnkFree(list->array[index]);
+	}
+	_LnkFree(list);
 }
 
-void BurnNodes( void )
+void BurnNodes(void)
 /***************************/
 {
-    BurnNodeArray( GrpNodes );
-    BurnNodeArray( SegNodes );
-    BurnNodeArray( ExtNodes );
-    BurnNodeArray( NameNodes );
+	BurnNodeArray(GrpNodes);
+	BurnNodeArray(SegNodes);
+	BurnNodeArray(ExtNodes);
+	BurnNodeArray(NameNodes);
 }
 
-void * FindNode( nodearray *list, unsigned index )
+void* FindNode(nodearray* list, unsigned index)
 /*******************************************************/
 {
-    index--;            // index is base 1
-//#ifdef _INT_DEBUG
-    if ( index > list->num ) {
-		LnkMsg( ERR+MSG_INVALID_INDEX_IN_RELOC, "d", index+1 );
-        DEBUG(( DBG_OLD, "objnode.FindNode(): index %d exceeds max index %d\n", index, list->num ));
-        return( NULL );
-    }
-//#endif
-    return list->array[ARRAY_NUM(index)] + ELEMENT_NUM(index) * list->elsize;
+	index--;            // index is base 1
+	//#ifdef _INT_DEBUG
+	if (index > list->num)
+	{
+		LnkMsg(ERR + MSG_INVALID_INDEX_IN_RELOC, "d", index + 1);
+		DEBUG((DBG_OLD, "objnode.FindNode(): index %d exceeds max index %d\n", index, list->num));
+		return(NULL);
+	}
+	//#endif
+	return list->array[ARRAY_NUM(index)] + ELEMENT_NUM(index) * list->elsize;
 }
 
 /* jwlink: get nodes to avaid error if FindNode() fails */
 
-unsigned GetNumNodes( nodearray *list )
+unsigned GetNumNodes(nodearray* list)
 /*************************************/
 {
-    return list->num;
+	return list->num;
 }
 
-static void AllocNewArray( nodearray *list )
+static void AllocNewArray(nodearray* list)
 /******************************************/
 {
-    unsigned    size;
+	unsigned    size;
 
-    list->arraymax++;
-    size = list->elsize * NODE_ARRAY_SIZE;
-    _ChkAlloc( list->array[list->arraymax], size );
-    memset( list->array[list->arraymax], 0, size );
+	list->arraymax++;
+	size = list->elsize * NODE_ARRAY_SIZE;
+	_ChkAlloc(char*, list->array[list->arraymax], size);
+	memset(list->array[list->arraymax], 0, size);
 }
 
-void * AllocNode( nodearray * list )
+void* AllocNode(nodearray* list)
 /*****************************************/
 {
-    if( ARRAY_NUM(list->num) > list->arraymax ) {
-        AllocNewArray( list );
-    }
-    list->num++;
-    return FindNode( list, list->num );
+	if (ARRAY_NUM(list->num) > list->arraymax)
+	{
+		AllocNewArray(list);
+	}
+	list->num++;
+	return FindNode(list, list->num);
 }
 
-void * AllocNodeIdx( nodearray *list, unsigned index )
+void* AllocNodeIdx(nodearray* list, unsigned index)
 /***********************************************************/
 {
-    if( list->num < index ) {
-        list->num = index;
-        while( ARRAY_NUM(index - 1) > list->arraymax ) {
-            AllocNewArray( list );
-        }
-    }
-    return FindNode( list, index );
+	if (list->num < index)
+	{
+		list->num = index;
+		while (ARRAY_NUM(index - 1) > list->arraymax)
+		{
+			AllocNewArray(list);
+		}
+	}
+	return FindNode(list, index);
 }
 
-mod_entry * NewModEntry( void )
+mod_entry* NewModEntry(void)
 /************************************/
 /* Allocate a new object file entry structure and initialize it */
 {
-    mod_entry           *entry;
+	mod_entry* entry;
 
-    entry = CarveZeroAlloc( CarveModEntry );
-    if( LinkFlags & STRIP_CODE ) {
-        InitArcBuffer( entry );
-    }
-    return( entry );
+	entry = (mod_entry*)CarveZeroAlloc(CarveModEntry);
+	if (LinkFlags & STRIP_CODE)
+	{
+		InitArcBuffer(entry);
+	}
+	return(entry);
 }
 
-void FreeModEntry( mod_entry *mod )
+void FreeModEntry(mod_entry* mod)
 /****************************************/
 {
-    CarveFree( CarveModEntry, mod );
+	CarveFree(CarveModEntry, mod);
 }
 
-void FreeNodes( nodearray *nodes )
+void FreeNodes(nodearray* nodes)
 /***************************************/
 {
-    unsigned    index;
+	unsigned    index;
 
-    for( index = 0; index <= nodes->arraymax; index++ ) {
-        memset( nodes->array[index], 0, nodes->elsize * NODE_ARRAY_SIZE );
-    }
-    nodes->num = 0;
+	for (index = 0; index <= nodes->arraymax; index++)
+	{
+		memset(nodes->array[index], 0, nodes->elsize * NODE_ARRAY_SIZE);
+	}
+	nodes->num = 0;
 }
 
-static void ReleaseNamelist( void *node, void *dummy )
+static void ReleaseNamelist(void* node, void* dummy)
 /****************************************************/
 {
-    dummy = dummy;
-    _LnkFree( *((void **)node) );
+	dummy = dummy;
+	_LnkFree(*((void**)node));
 }
 
-static void IterateNodeArray( char *narray, void (*fn)(void *, void *),
-                              unsigned elsize, int limit, void *cookie )
-/**********************************************************************/
+static void IterateNodeArray(char* narray, void (*fn)(void*, void*),
+	unsigned elsize, int limit, void* cookie)
+	/**********************************************************************/
 {
-    int index;
+	int index;
 
-    for( index = 0; index < limit; index++ ) {
-        fn( narray, cookie );
-        narray += elsize;
-    }
+	for (index = 0; index < limit; index++)
+	{
+		fn(narray, cookie);
+		narray += elsize;
+	}
 }
 
-void IterateNodelist( nodearray *list, void (*fn)(void *, void *),
-                             void *cookie )
-/***********************************************************************/
+void IterateNodelist(nodearray* list, void (*fn)(void*, void*),
+	void* cookie)
+	/***********************************************************************/
 {
-    int index;
-    int limit;
+	int index;
+	int limit;
 
-    if( list->num == 0 ) return;
-    limit = ARRAY_NUM( list->num );
-    for( index = 0; index < limit; index++ ) {
-        IterateNodeArray( list->array[index], fn, list->elsize,
-                                                  NODE_ARRAY_SIZE, cookie );
-    }
-    IterateNodeArray( list->array[limit], fn, list->elsize,
-                                              ELEMENT_NUM(list->num), cookie );
+	if (list->num == 0) return;
+	limit = ARRAY_NUM(list->num);
+	for (index = 0; index < limit; index++)
+	{
+		IterateNodeArray(list->array[index], fn, list->elsize,
+			NODE_ARRAY_SIZE, cookie);
+	}
+	IterateNodeArray(list->array[limit], fn, list->elsize,
+		ELEMENT_NUM(list->num), cookie);
 }
 
-void ReleaseNames( void )
+void ReleaseNames(void)
 /******************************/
 /* Free list of names. */
 {
-    IterateNodelist( NameNodes, ReleaseNamelist, NULL );
-    FreeNodes( NameNodes );
+	IterateNodelist(NameNodes, ReleaseNamelist, NULL);
+	FreeNodes(NameNodes);
 }
 
-static void CollapseLazy( void *node, void *dummy )
+static void CollapseLazy(void* node, void* dummy)
 /*************************************************/
 {
-    extnode *   curr;
+	extnode* curr;
 
-    dummy = dummy;
-    curr = node;
-    if( IS_SYM_A_REF( curr->entry ) && !curr->isweak ) {
-        ClearSymUnion( curr->entry );
-        SET_SYM_TYPE( curr->entry, SYM_REGULAR );
-        if( LinkState & SEARCHING_LIBRARIES ) {
-            curr->entry->info &= ~SYM_CHECKED;
-            LinkState |= LIBRARIES_ADDED;       // force another pass thru libs
-        }
-    }
+	dummy = dummy;
+	curr = (extnode*)node;
+	if (IS_SYM_A_REF(curr->entry) && !curr->isweak)
+	{
+		ClearSymUnion(curr->entry);
+		SET_SYM_TYPE(sym_info, curr->entry, SYM_REGULAR);
+		if (LinkState & SEARCHING_LIBRARIES)
+		{
+			DO_AND_EQ(sym_info, curr->entry->info, &=, ~SYM_CHECKED);
+			LinkState |= LIBRARIES_ADDED;       // force another pass thru libs
+		}
+	}
 }
 
-void CollapseLazyExtdefs( void )
+void CollapseLazyExtdefs(void)
 /*************************************/
 {
-    IterateNodelist( ExtNodes, CollapseLazy, NULL );
+	IterateNodelist(ExtNodes, CollapseLazy, NULL);
 }
 
-static void * ListFindValue( char *node, unsigned limit, unsigned elsize,
-                             void *target, bool (*compare_fn)(void *, void *) )
-/*****************************************************************************/
+static void* ListFindValue(char* node, unsigned limit, unsigned elsize,
+	void* target, bool (*compare_fn)(void*, void*))
+	/*****************************************************************************/
 {
-    unsigned            index;
+	unsigned            index;
 
-    for( index = 0; index < limit; index++ ) {
-        if( compare_fn( node, target ) ) return node;
-        node += elsize;
-    }
-    return NULL;
+	for (index = 0; index < limit; index++)
+	{
+		if (compare_fn(node, target)) return node;
+		node += elsize;
+	}
+	return NULL;
 }
 
-static void * IterateFindValue( nodearray *list, void *target,
-                                   bool (*fn)(void *, void *) )
-/***************************************************************/
+static void* IterateFindValue(nodearray* list, void* target,
+	bool (*fn)(void*, void*))
+	/***************************************************************/
 {
-    unsigned    index;
-    void *      retval;
-    unsigned    limit;
+	unsigned    index;
+	void* retval;
+	unsigned    limit;
 
-    if( list->num == 0 ) return NULL;
-    limit = ARRAY_NUM( list->num );
-    for( index = 0; index < limit; index++ ) {
-        retval = ListFindValue( list->array[index], NODE_ARRAY_SIZE,
-                                list->elsize, target, fn);
-        if( retval ) return retval;
-    }
-    return ListFindValue( list->array[limit], ELEMENT_NUM(list->num),
-                          list->elsize, target, fn );
+	if (list->num == 0) return NULL;
+	limit = ARRAY_NUM(list->num);
+	for (index = 0; index < limit; index++)
+	{
+		retval = ListFindValue(list->array[index], NODE_ARRAY_SIZE,
+			list->elsize, target, fn);
+		if (retval) return retval;
+	}
+	return ListFindValue(list->array[limit], ELEMENT_NUM(list->num),
+		list->elsize, target, fn);
 }
 
-static bool DoesExtHandleMatch( void *curr, void *target )
+static bool DoesExtHandleMatch(void* curr, void* target)
 /********************************************************/
 {
-    return ((extnode *)curr)->handle == target;
+	return ((extnode*)curr)->handle == target;
 }
 
-extnode * FindExtHandle( void *handle )
+extnode* FindExtHandle(void* handle)
 /********************************************/
 {
-    return (extnode *) IterateFindValue( ExtNodes, handle, DoesExtHandleMatch );
+	return (extnode*)IterateFindValue(ExtNodes, handle, DoesExtHandleMatch);
 }
 
-segdata * AllocSegData( void )
+segdata* AllocSegData(void)
 /***********************************/
 {
-    segdata *sdata;
+	segdata* sdata;
 
-    sdata = CarveZeroAlloc( CarveSegData );
-    sdata->o.mod = CurrMod;
-    return sdata;
+	sdata = (segdata*)CarveZeroAlloc(CarveSegData);
+	sdata->o.mod = CurrMod;
+	return sdata;
 }
 
-void FreeSegData( void * sdata )
+void FreeSegData(void* sdata)
 /*************************************/
 /* put a segdata on the list of free segdatas */
 {
-    CarveFree( CarveSegData, sdata );
+	CarveFree(CarveSegData, sdata);
 }
 
-list_of_names * MakeListName( char *name, size_t len )
+list_of_names* MakeListName(char* name, size_t len)
 /***********************************************************/
 {
-    list_of_names *     new;
+	list_of_names* new1;
 
-    _ChkAlloc( new, sizeof( list_of_names ) + len );
-    new->next_name = NULL;
-    memcpy( new->name, name, len );
-    new->name[ len ] = '\0';
-    return new;
+	_ChkAlloc(list_of_names*, new1, sizeof(list_of_names) + len);
+	new1->next_name = NULL;
+	memcpy(new1->name, name, len);
+	new1->name[len] = '\0';
+	return new1;
 }
 
-unsigned long BadObjFormat( void )
+unsigned long BadObjFormat(void)
 /***************************************/
 {
-    LnkMsg( FTL+MSG_BAD_OBJECT, "s", CurrMod->f.source->file->name );
-    return 0;
+	LnkMsg(FTL + MSG_BAD_OBJECT, "s", CurrMod->f.source->file->name);
+	return 0;
 }
 

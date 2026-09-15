@@ -52,210 +52,229 @@
 #include "objpass2.h"
 #include "objfree.h"
 
-static void FreeAreas( OVL_AREA *area );
-static void FreeClasses( class_entry * list );
-static void FreeFiles( file_list *list );
-static void FreeMods( mod_entry *head );
+static void FreeAreas(OVL_AREA* area);
+static void FreeClasses(class_entry* list);
+static void FreeFiles(file_list* list);
+static void FreeMods(mod_entry* head);
 
-void FiniLinkStruct( void )
+void FiniLinkStruct(void)
 /********************************/
 /* Free object processing data structures. */
 {
-    DEBUG(( DBG_OLD, "FiniLinkStruct()" ));
-    BurnNodes();
-    FreeTokBuffs();
-    CacheFini();
-    ObjORLFini();
+	DEBUG((DBG_OLD, "FiniLinkStruct()"));
+	BurnNodes();
+	FreeTokBuffs();
+	CacheFini();
+	ObjORLFini();
 }
 
 
-static void FreeSections( section *sec )
+static void FreeSections(section* sec)
 /**************************************/
 /* Free sections & classes. */
 {
-    section             *next;
-    ORDER_CLASS         *Class, *NextClass;
-    ORDER_SEGMENT       *Seg, *NextSeg;
+	section* next;
+	ORDER_CLASS* Class, * NextClass;
+	ORDER_SEGMENT* Seg, * NextSeg;
 
-    while( sec != NULL ) {
-        FreeFiles( sec->files );
-        if( !(LinkFlags & INC_LINK_FLAG) ) {
-            FreeMods( sec->mods );
-            FreeClasses( sec->classlist );
-        }
-        DBISectCleanup( sec );
-        FreeAreas( sec->areas );
-        ZapHTable(sec->modFilesHashed, LFree);
-        Class = sec->orderlist;
-        while( Class != NULL ) {   // Free up any Order Class entries
-            if( Class->Name != NULL ) {   // Including members and sucessors
-                _LnkFree ( Class->Name );
-            }
-            if( Class->Copy ) {
-                _LnkFree ( Class->SrcName );
-            }
-            Seg = Class->SegList;
-            while ( Seg != NULL ) {  // Order Seg emtries can also have members and sucessors
-                if ( Seg->Name != NULL ) {
-                    _LnkFree( Seg->Name );
-                }
-                NextSeg = Seg->NextSeg;
-                _LnkFree ( Seg );
-                Seg = NextSeg;
-            }
-            NextClass = Class->NextClass;
-            _LnkFree ( Class );
-            Class = NextClass;
-        }
-        next = sec->next_sect;
-        _LnkFree( sec );
-        sec = next;
-    }
+	while (sec != NULL)
+	{
+		FreeFiles(sec->files);
+		if (!(LinkFlags & INC_LINK_FLAG))
+		{
+			FreeMods(sec->mods);
+			FreeClasses(sec->classlist);
+		}
+		DBISectCleanup(sec);
+		FreeAreas(sec->areas);
+		ZapHTable(sec->modFilesHashed, LFree);
+		Class = sec->orderlist;
+		while (Class != NULL)
+		{   // Free up any Order Class entries
+			if (Class->Name != NULL)
+			{   // Including members and sucessors
+				_LnkFree(Class->Name);
+			}
+			if (Class->Copy)
+			{
+				_LnkFree(Class->SrcName);
+			}
+			Seg = Class->SegList;
+			while (Seg != NULL)
+			{  // Order Seg emtries can also have members and sucessors
+				if (Seg->Name != NULL)
+				{
+					_LnkFree(Seg->Name);
+				}
+				NextSeg = Seg->NextSeg;
+				_LnkFree(Seg);
+				Seg = NextSeg;
+			}
+			NextClass = Class->NextClass;
+			_LnkFree(Class);
+			Class = NextClass;
+		}
+		next = sec->next_sect;
+		_LnkFree(sec);
+		sec = next;
+	}
 }
 
-static void FreeAreas( OVL_AREA *area )
+static void FreeAreas(OVL_AREA* area)
 /*************************************/
 {
-    OVL_AREA    *next;
+	OVL_AREA* next;
 
-    while( area != NULL ) {
-        next = area->next_area;
-        FreeSections( area->sections );
-        area = next;
-    }
+	while (area != NULL)
+	{
+		next = area->next_area;
+		FreeSections(area->sections);
+		area = next;
+	}
 }
 
-static void FreeClasses( class_entry * list )
+static void FreeClasses(class_entry* list)
 /*******************************************/
 {
-    class_entry *       next;
+	class_entry* next;
 
-    while( list != NULL ) {
-        next = list->next_class;
-        RingWalk( list->segs, FreeLeader );
-        CarveFree( CarveClass, list );
-        list = next;
-    }
+	while (list != NULL)
+	{
+		next = list->next_class;
+		RingWalk(list->segs, FreeLeader);
+		CarveFree(CarveClass, list);
+		list = next;
+	}
 }
 
-void FreeAMod( mod_entry *mod )
+void FreeAMod(mod_entry* mod)
 /************************************/
 {
-    FreeObjCache( mod->f.source );
-    FreeModEntry( mod );
+	FreeObjCache(mod->f.source);
+	FreeModEntry(mod);
 }
 
-static void FreeMods( mod_entry *head )
+static void FreeMods(mod_entry* head)
 /*************************************/
 {
-    void *      temp;
+	void* temp;
 
-    while( head != NULL ) {
-        temp = head->n.next_mod;
-        FreeAMod( head );
-        head = temp;
-    }
+	while (head != NULL)
+	{
+		temp = head->n.next_mod;
+		FreeAMod(head);
+		head = (mod_entry*)temp;
+	}
 }
 
-static void FreeFiles( file_list *list )
+static void FreeFiles(file_list* list)
 /**************************************/
 {
-    void *      temp;
+	void* temp;
 
-    while( list != NULL ) {
-        temp = list->next_file;
-        CacheClose( list, 3 );
-        if( list->status & STAT_HAS_MEMBER && list->u.member != NULL ) {
-            FreeList( list->u.member );
-        }
-        _PermFree( list );
-        list = temp;
-    }
+	while (list != NULL)
+	{
+		temp = list->next_file;
+		CacheClose(list, 3);
+		if (list->status & STAT_HAS_MEMBER && list->u.member != NULL)
+		{
+			FreeList(list->u.member);
+		}
+		_PermFree(list);
+		list = (file_list*)temp;
+	}
 }
 
 
-void CleanLinkStruct( void )
+void CleanLinkStruct(void)
 /*********************************/
 /* free all structures */
 {
-    if( Root == NULL ) return;  /* haven't finished initializing */
-    DEBUG(( DBG_OLD, "CleanLinkStruct() enter" ));
-    BurnLibs();
-    DEBUG(( DBG_OLD, "CleanLinkStruct(): calling 1. FreeFiles()" ));
-    FreeFiles( ObjLibFiles );
-    DEBUG(( DBG_OLD, "CleanLinkStruct(): calling 2. FreeFiles()" ));
-    FreeFiles( Root->files );
-    ObjLibFiles = NULL;
-    Root->files = NULL;
-    if( !(LinkFlags & INC_LINK_FLAG) ) {
-        DEBUG(( DBG_OLD, "CleanLinkStruct(): calling FreeMods()" ));
-        FreeMods( LibModules );
-    }
-    if( SymFileName != NULL ) {
-        _LnkFree( SymFileName );
-    }
+	if (Root == NULL) return;  /* haven't finished initializing */
+	DEBUG((DBG_OLD, "CleanLinkStruct() enter"));
+	BurnLibs();
+	DEBUG((DBG_OLD, "CleanLinkStruct(): calling 1. FreeFiles()"));
+	FreeFiles(ObjLibFiles);
+	DEBUG((DBG_OLD, "CleanLinkStruct(): calling 2. FreeFiles()"));
+	FreeFiles(Root->files);
+	ObjLibFiles = NULL;
+	Root->files = NULL;
+	if (!(LinkFlags & INC_LINK_FLAG))
+	{
+		DEBUG((DBG_OLD, "CleanLinkStruct(): calling FreeMods()"));
+		FreeMods(LibModules);
+	}
+	if (SymFileName != NULL)
+	{
+		_LnkFree(SymFileName);
+	}
 #if 0 /* osname is just a (const) string, not dynamically allocated */
-    if( FmtData.osname != NULL ) {
-        _LnkFree( FmtData.osname );
-    }
+	if (FmtData.osname != NULL)
+	{
+		_LnkFree(FmtData.osname);
+	}
 #endif
-    if (FmtData.resource != NULL) {
-        _LnkFree( FmtData.resource );
-    }
-    DEBUG(( DBG_OLD, "CleanLinkStruct(): calling FreeRelocInfo()" ));
-    FreeRelocInfo();
-    DEBUG(( DBG_OLD, "CleanLinkStruct(): calling FreeGroups()" ));
-    FreeGroups( Groups );
-    FreeGroups( AbsGroups );
-    DEBUG(( DBG_OLD, "CleanLinkStruct(): calling FreeSections()" ));
-    Groups = NULL;
-    AbsGroups = NULL;
-    FreeSections( Root );
-    DBICleanup();
-    Root = NULL;
-    if( FmtData.type & MK_REAL_MODE ) {
-        FreeOvlStruct();
-    }
+	if (FmtData.resource != NULL)
+	{
+		_LnkFree(FmtData.resource);
+	}
+	DEBUG((DBG_OLD, "CleanLinkStruct(): calling FreeRelocInfo()"));
+	FreeRelocInfo();
+	DEBUG((DBG_OLD, "CleanLinkStruct(): calling FreeGroups()"));
+	FreeGroups(Groups);
+	FreeGroups(AbsGroups);
+	DEBUG((DBG_OLD, "CleanLinkStruct(): calling FreeSections()"));
+	Groups = NULL;
+	AbsGroups = NULL;
+	FreeSections(Root);
+	DBICleanup();
+	Root = NULL;
+	if (FmtData.type & MK_REAL_MODE)
+	{
+		FreeOvlStruct();
+	}
 }
 
 #if defined(_OS2) || defined( _QNXLOAD )
-void FreeSegFlags( seg_flags * curr )
+void FreeSegFlags(seg_flags* curr)
 /******************************************/
 {
-    seg_flags * next;
+	seg_flags* next;
 
-    while( curr != NULL ) {
-        next = curr->next;
-        _LnkFree( curr->name );
-        _LnkFree( curr );
-        curr = next;
-    }
+	while (curr != NULL)
+	{
+		next = curr->next;
+		_LnkFree(curr->name);
+		_LnkFree(curr);
+		curr = next;
+	}
 }
 #endif
 
-void FreeObjInfo( void )
+void FreeObjInfo(void)
 /*****************************/
 {
-    FreeNodes( ExtNodes );
-    FreeNodes( SegNodes );
-    FreeNodes( GrpNodes );
+	FreeNodes(ExtNodes);
+	FreeNodes(SegNodes);
+	FreeNodes(GrpNodes);
 }
 
-static void FreeAGroup( group_entry *group )
+static void FreeAGroup(group_entry* group)
 /******************************************/
 /* free all memory associated with group */
 {
-    CarveFree( CarveGroup, group );
+	CarveFree(CarveGroup, group);
 }
 
-void FreeGroups( group_entry *head )
+void FreeGroups(group_entry* head)
 /*****************************************/
 {
-    group_entry *next;
+	group_entry* next;
 
-    while( head != NULL ) {
-        next = head->next_group;
-        FreeAGroup( head );
-        head = next;
-    }
+	while (head != NULL)
+	{
+		next = head->next_group;
+		FreeAGroup(head);
+		head = next;
+	}
 }

@@ -103,7 +103,7 @@ void ObjORLFini( void )
 static long ORLSeek( void *_list, long pos, int where )
 /*****************************************************/
 {
-    file_list *list = _list;
+    file_list *list = (file_list *)_list;
 
     if( where == SEEK_SET ) {
         ORLFilePos = pos;
@@ -118,13 +118,13 @@ static long ORLSeek( void *_list, long pos, int where )
 static void *ORLRead( void *_list, size_t len )
 /**********************************************/
 {
-    file_list   *list = _list;
+    file_list   *list = (file_list *)_list;
     void        *result;
     readcache   *cache;
 
     result = CachePermRead( list, ORLFilePos, len );
     ORLFilePos += len;
-    _ChkAlloc( cache, sizeof( readcache ) );
+    _ChkAlloc(readcache* ,cache, sizeof( readcache ) );
     cache->next = ReadCacheList;
     ReadCacheList = cache;
     cache->data = result;

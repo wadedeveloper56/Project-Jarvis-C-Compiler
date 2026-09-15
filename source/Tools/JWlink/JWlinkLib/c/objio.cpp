@@ -52,213 +52,238 @@
 #include "objio.h"
 
 
-typedef struct {
-    void *              buffer;
-    unsigned long       pos;
-    infilelist *        currfile;
+typedef struct
+{
+	void* buffer;
+	unsigned long       pos;
+	infilelist* currfile;
 } bufferedfile;
 
-infilelist *    CachedLibFiles;
-infilelist *    CachedFiles;
+infilelist* CachedLibFiles;
+infilelist* CachedFiles;
 
-void ResetObjIO( void )
+void ResetObjIO(void)
 /****************************/
 {
-    CachedFiles = NULL;
-    CachedLibFiles = NULL;
+	CachedFiles = NULL;
+	CachedLibFiles = NULL;
 }
 
-static infilelist * AllocEntry( char *name, path_entry *path )
+static infilelist* AllocEntry(char* name, path_entry* path)
 /************************************************************/
 {
-    infilelist *        entry;
+	infilelist* entry;
 
-    _PermAlloc( entry, sizeof(infilelist) );
-    entry->name = AddStringStringTable( &PermStrings, name );
-    entry->path_list = path;
-    entry->prefix = NULL;
-    entry->handle = NIL_HANDLE;
-    entry->cache = NULL;
-    entry->len = 0;
-    entry->flags = 0;
-    return entry;
+	_PermAlloc(infilelist*, entry, sizeof(infilelist));
+	entry->name = AddStringStringTable(&PermStrings, name);
+	entry->path_list = path;
+	entry->prefix = NULL;
+	entry->handle = NIL_HANDLE;
+	entry->cache = NULL;
+	entry->len = 0;
+	entry->flags = (infile_flags)0;
+	return entry;
 }
 
-infilelist * AllocFileEntry( char *name, path_entry * path )
+infilelist* AllocFileEntry(char* name, path_entry* path)
 /*****************************************************************/
 {
-    infilelist *        entry;
+	infilelist* entry;
 
-    entry = AllocEntry( name, path );
-    entry->next = CachedFiles;
-    CachedFiles = entry;
-    return entry;
+	entry = AllocEntry(name, path);
+	entry->next = CachedFiles;
+	CachedFiles = entry;
+	return entry;
 }
 
-infilelist * AllocUniqueFileEntry( char *name, path_entry *path )
+infilelist* AllocUniqueFileEntry(char* name, path_entry* path)
 /**********************************************************************/
 {
-    infilelist *        entry;
+	infilelist* entry;
 
-    for( entry = CachedLibFiles; entry != NULL; entry = entry->next ) {
-        if( FNAMECMPSTR( entry->name, name ) == 0 ) {
-            return entry;       // we found 1 with the same name.
-        }
-    }
-    entry = AllocEntry( name, path );   // didn't find one, so allocate a new 1
-    if( CachedLibFiles == NULL ) {      // add libraries to the end of the
-        CachedLibFiles = entry;         // regular cached files list.
-        LinkList( &CachedFiles, entry );
-    } else {
-        LinkList( &CachedLibFiles, entry );
-    }
-    return entry;
+	for (entry = CachedLibFiles; entry != NULL; entry = entry->next)
+	{
+		if (FNAMECMPSTR(entry->name, name) == 0)
+		{
+			return entry;       // we found 1 with the same name.
+		}
+	}
+	entry = AllocEntry(name, path);   // didn't find one, so allocate a new 1
+	if (CachedLibFiles == NULL)
+	{      // add libraries to the end of the
+		CachedLibFiles = entry;         // regular cached files list.
+		LinkList(&CachedFiles, entry);
+	}
+	else
+	{
+		LinkList(&CachedLibFiles, entry);
+	}
+	return entry;
 }
 
-bool CleanCachedHandles( void )
+bool CleanCachedHandles(void)
 /************************************/
 {
-    infilelist *list;
+	infilelist* list;
 
-    for( list = CachedFiles; list != NULL; list = list->next ) {
-        if( !(list->flags & INSTAT_IN_USE) && list->handle != NIL_HANDLE )break;
-    }
-    if( list == NULL ) return( FALSE );
-    QClose( list->handle, list->name );
-    list->handle = NIL_HANDLE;
-    return( TRUE );
+	for (list = CachedFiles; list != NULL; list = list->next)
+	{
+		if (!(list->flags & INSTAT_IN_USE) && list->handle != NIL_HANDLE)break;
+	}
+	if (list == NULL) return(FALSE);
+	QClose(list->handle, list->name);
+	list->handle = NIL_HANDLE;
+	return(TRUE);
 }
 
 #define LIB_SEARCH (INSTAT_USE_LIBPATH | INSTAT_LIBRARY)
 
-static f_handle PathObjOpen( char * path_ptr, char *name, char *new_name,
-                             infilelist *list )
-/************************************************************************/
+static f_handle PathObjOpen(char* path_ptr, char* name, char* new_name,
+	infilelist* list)
+	/************************************************************************/
 {
-    f_handle    fp;
+	f_handle    fp;
 
-    fp = NIL_HANDLE;
-    for(;;) {
-        list->prefix = path_ptr;
-        if( !QMakeFileName( &path_ptr, name, new_name ) ) break;
-        fp = QObjOpen( new_name );
-        if( fp != NIL_HANDLE ) break;
-    }
-    return fp;
+	fp = NIL_HANDLE;
+	for (;;)
+	{
+		list->prefix = path_ptr;
+		if (!QMakeFileName(&path_ptr, name, new_name)) break;
+		fp = QObjOpen(new_name);
+		if (fp != NIL_HANDLE) break;
+	}
+	return fp;
 }
 
-static f_handle TrySearchingLib( char *name, char *new_name, infilelist *list )
+static f_handle TrySearchingLib(char* name, char* new_name, infilelist* list)
 /*****************************************************************************/
 {
-    f_handle            fp;
+	f_handle            fp;
 
-    fp = NIL_HANDLE;
-    if( list->flags & INSTAT_USE_LIBPATH ) {
-        fp = PathObjOpen( GetEnvString("LIB"), name, new_name, list );
-    }
-    return fp;
+	fp = NIL_HANDLE;
+	if (list->flags & INSTAT_USE_LIBPATH)
+	{
+		fp = PathObjOpen(GetEnvString("LIB"), name, new_name, list);
+	}
+	return fp;
 }
 
-bool DoObjOpen( infilelist *list )
+bool DoObjOpen(infilelist* list)
 /***************************************/
 {
-    char *      name;
-    f_handle    fp;
-    unsigned    err;
-    char *      path_ptr;
-    char        new_name[ PATH_MAX ];
-    path_entry *searchpath;
-    bool        haspath;
+	char* name;
+	f_handle    fp;
+	unsigned    err;
+	char* path_ptr;
+	char        new_name[PATH_MAX];
+	path_entry* searchpath;
+	bool        haspath;
 
-    name = list->name;
-    if( list->handle != NIL_HANDLE ) return( TRUE );
-    list->currpos = 0;
-    haspath = QHavePath( name );
-    if( list->path_list == NULL || haspath ) {
-        list->path_list = NULL;
-        fp = QObjOpen( name );
-        if( fp == NIL_HANDLE && !haspath ) {
-            fp = TrySearchingLib( name, new_name, list );
-        }
-    } else if( list->prefix != NULL ) {
-        path_ptr = list->prefix;
-        QMakeFileName( &path_ptr, name, new_name );
-        fp = QObjOpen( new_name );
-    } else {
-        fp = NIL_HANDLE;
-        if( list->flags & LIB_SEARCH ) {
-            /* try libraries in current directory */
-            fp = QObjOpen( name );
-        }
-        if( fp == NIL_HANDLE ) {
-            searchpath = list->path_list;
-            for(;;) {
-                fp = PathObjOpen( searchpath->name, name, new_name, list );
-                if( fp != NIL_HANDLE || !(list->flags & LIB_SEARCH) ) break;
-                searchpath = searchpath->next;
-                if( searchpath == NULL ) {
-                    fp = TrySearchingLib( name, new_name, list );
-                    break;
-                }
-            }
-        }
-    }
-    if( fp != NIL_HANDLE ) {
-        if( !(list->flags & INSTAT_GOT_MODTIME) ) {
-            list->modtime = QFModTime( fp );
-        }
-        list->handle = fp;
-        return TRUE;
-    } else if( !(list->flags & INSTAT_NO_WARNING) ) {
-        err = ( list->flags & INSTAT_OPEN_WARNING ) ?
-                                        WRN+MSG_CANT_OPEN : ERR+MSG_CANT_OPEN;
-        PrintIOError( err, "12", name );
-        list->prefix = NULL;
-        list->handle = NIL_HANDLE;
-    }
-    return FALSE;
+	name = list->name;
+	if (list->handle != NIL_HANDLE) return(TRUE);
+	list->currpos = 0;
+	haspath = QHavePath(name);
+	if (list->path_list == NULL || haspath)
+	{
+		list->path_list = NULL;
+		fp = QObjOpen(name);
+		if (fp == NIL_HANDLE && !haspath)
+		{
+			fp = TrySearchingLib(name, new_name, list);
+		}
+	}
+	else if (list->prefix != NULL)
+	{
+		path_ptr = list->prefix;
+		QMakeFileName(&path_ptr, name, new_name);
+		fp = QObjOpen(new_name);
+	}
+	else
+	{
+		fp = NIL_HANDLE;
+		if (list->flags & LIB_SEARCH)
+		{
+			/* try libraries in current directory */
+			fp = QObjOpen(name);
+		}
+		if (fp == NIL_HANDLE)
+		{
+			searchpath = list->path_list;
+			for (;;)
+			{
+				fp = PathObjOpen(searchpath->name, name, new_name, list);
+				if (fp != NIL_HANDLE || !(list->flags & LIB_SEARCH)) break;
+				searchpath = searchpath->next;
+				if (searchpath == NULL)
+				{
+					fp = TrySearchingLib(name, new_name, list);
+					break;
+				}
+			}
+		}
+	}
+	if (fp != NIL_HANDLE)
+	{
+		if (!(list->flags & INSTAT_GOT_MODTIME))
+		{
+			list->modtime = QFModTime(fp);
+		}
+		list->handle = fp;
+		return TRUE;
+	}
+	else if (!(list->flags & INSTAT_NO_WARNING))
+	{
+		err = (list->flags & INSTAT_OPEN_WARNING) ?
+			WRN + MSG_CANT_OPEN : ERR + MSG_CANT_OPEN;
+		PrintIOError(err, "12", name);
+		list->prefix = NULL;
+		list->handle = NIL_HANDLE;
+	}
+	return FALSE;
 }
 
-unsigned_16 CalcAlign( unsigned_32 pos, unsigned_16 align )
+unsigned_16 CalcAlign(unsigned_32 pos, unsigned_16 align)
 /****************************************************************/
 /* align file */
 {
-    unsigned_16 modulus;
+	unsigned_16 modulus;
 
-    modulus = pos % align;
-    if( modulus != 0 ) {
-        modulus = align - modulus;  // go to boundary.
-    }
-    return( modulus );
+	modulus = pos % align;
+	if (modulus != 0)
+	{
+		modulus = align - modulus;  // go to boundary.
+	}
+	return(modulus);
 }
 
-void InitTokBuff( void )
+void InitTokBuff(void)
 /*****************************/
 {
-    TokSize = MAX_HEADROOM;
-    _ChkAlloc( TokBuff, MAX_HEADROOM );
+	TokSize = MAX_HEADROOM;
+	_ChkAlloc(char*, TokBuff, MAX_HEADROOM);
 }
 
-void FreeTokBuffs( void )
+void FreeTokBuffs(void)
 /******************************/
 {
-    if( TokBuff != NULL ) {
-        _LnkFree( TokBuff );
-        TokBuff = NULL;
-    }
+	if (TokBuff != NULL)
+	{
+		_LnkFree(TokBuff);
+		TokBuff = NULL;
+	}
 }
 
-void BadObject( void )
+void BadObject(void)
 /***************************/
 {
-    CurrMod->f.source->file->flags |= INSTAT_IOERR;
-    LnkMsg( LOC+ERR+MSG_OBJ_FILE_ATTR, NULL );
+	DO_OR_EQ(infile_flags, CurrMod->f.source->file->flags, |=, INSTAT_IOERR);
+	LnkMsg(LOC + ERR + MSG_OBJ_FILE_ATTR, NULL);
 }
 
-void EarlyEOF( void )
+void EarlyEOF(void)
 /**************************/
 {
-    CurrMod->f.source->file->flags |= INSTAT_IOERR;
-    Locator( CurrMod->f.source->file->name, NULL, 0 );
-    LnkMsg( ERR+MSG_EARLY_EOF, NULL );
+	DO_OR_EQ(infile_flags, CurrMod->f.source->file->flags, |=, INSTAT_IOERR);
+	Locator(CurrMod->f.source->file->name, NULL, 0);
+	LnkMsg(ERR + MSG_EARLY_EOF, NULL);
 }
