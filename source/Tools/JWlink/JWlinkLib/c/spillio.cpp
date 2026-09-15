@@ -47,121 +47,129 @@
 #include "fileio.h"
 #include "spillio.h"
 
-static char *           TFileName;
+static char* TFileName;
 static unsigned long    TmpFSize;
 
-void InitSpillFile( void )
+void InitSpillFile(void)
 /*******************************/
 {
-    TempFile = NIL_HANDLE;
-    TFileName = NULL;
-    TmpFSize = 0;
-    SetBreak();
+	TempFile = NIL_HANDLE;
+	TFileName = NULL;
+	TmpFSize = 0;
+	SetBreak();
 }
 
 #define TEMPFNAME "WLK02112.xx`"        // "'" will be an "a" when processed.
 #define TEMPFNAME_SIZE 13
 
-static char * MakeTempName( char *name )
+static char* MakeTempName(char* name)
 /**************************************/
 {
-    memcpy( name, TEMPFNAME, sizeof(TEMPFNAME) );   // includes nullchar
-    return( name + sizeof(TEMPFNAME) - 2 );         // pointer to "a"
+	memcpy(name, TEMPFNAME, sizeof(TEMPFNAME));   // includes nullchar
+	return(name + sizeof(TEMPFNAME) - 2);         // pointer to "a"
 }
 
-f_handle OpenTempFile( char **fname )
+f_handle OpenTempFile(char** fname)
 /******************************************/
 {
-    char *      ptr;
-    unsigned    tlen;
-    char *      tptr;
-    f_handle    fhdl;
+	char* ptr;
+	unsigned    tlen;
+	char* tptr;
+	f_handle    fhdl;
 
-    ptr = GetEnvString( "WLINKTMP" );
-    if( ptr == NULL ) ptr = GetEnvString( "TMP" );
-    if( ptr == NULL ) ptr = GetEnvString( "TMPDIR" );
-    if( ptr == NULL ) {
-        _ChkAlloc( *fname, TEMPFNAME_SIZE );
-        tptr = *fname;
-    } else {
-        tlen = strlen( ptr );
-        _ChkAlloc( *fname, tlen + 1 + TEMPFNAME_SIZE );
-        memcpy( *fname, ptr, tlen );
-        switch( (*fname)[tlen-1] ) {
-        CASE_PATH_SEP:
-            break;
-        default:
-            (*fname)[tlen++] = PATH_SEP;
-            break;
-        }
-        tptr = *fname + tlen;
-    }
-    ptr = MakeTempName( tptr );
-    tlen = 0;
-    for( ;; ) {
-        if( tlen >= 26 ) {
-            LnkMsg( FTL+MSG_CANT_OPEN_SPILL, NULL );
-        }
-        *ptr += 1;                          // change temp file extension
-        fhdl = TempFileOpen( *fname );
-        if( fhdl == NIL_HANDLE ) break;
-        QClose( fhdl, *fname );
-        ++tlen;
-    }
-    return QOpenRW( *fname );
+	ptr = GetEnvString("WLINKTMP");
+	if (ptr == NULL) ptr = GetEnvString("TMP");
+	if (ptr == NULL) ptr = GetEnvString("TMPDIR");
+	if (ptr == NULL)
+	{
+		_ChkAlloc(char*, *fname, TEMPFNAME_SIZE);
+		tptr = *fname;
+	}
+	else
+	{
+		tlen = strlen(ptr);
+		_ChkAlloc(char*, *fname, tlen + 1 + TEMPFNAME_SIZE);
+		memcpy(*fname, ptr, tlen);
+		switch ((*fname)[tlen - 1])
+		{
+		CASE_PATH_SEP:
+			break;
+			default:
+				(*fname)[tlen++] = PATH_SEP;
+				break;
+		}
+		tptr = *fname + tlen;
+	}
+	ptr = MakeTempName(tptr);
+	tlen = 0;
+	for (;; )
+	{
+		if (tlen >= 26)
+		{
+			LnkMsg(FTL + MSG_CANT_OPEN_SPILL, NULL);
+		}
+		*ptr += 1;                          // change temp file extension
+		fhdl = TempFileOpen(*fname);
+		if (fhdl == NIL_HANDLE) break;
+		QClose(fhdl, *fname);
+		++tlen;
+	}
+	return QOpenRW(*fname);
 }
 
-unsigned long SpillAlloc( unsigned amt )
+unsigned long SpillAlloc(unsigned amt)
 /*********************************************/
 {
-    unsigned long           stg;
+	unsigned long           stg;
 
-    if( TempFile == NIL_HANDLE ) {
-        TempFile = OpenTempFile( &TFileName );
-        LnkMsg( INF+MSG_USING_SPILL, NULL );
-    }
-    /* round up storage start to a disk sector boundry -- assumed power of 2 */
-    TmpFSize += SECTOR_SIZE-1;
-    TmpFSize &= ~(SECTOR_SIZE-1);
-    stg = TmpFSize;
-    TmpFSize += amt;
-    return( stg + 1 );  /* add 1 to prevent a NULL handle */
+	if (TempFile == NIL_HANDLE)
+	{
+		TempFile = OpenTempFile(&TFileName);
+		LnkMsg(INF + MSG_USING_SPILL, NULL);
+	}
+	/* round up storage start to a disk sector boundry -- assumed power of 2 */
+	TmpFSize += SECTOR_SIZE - 1;
+	TmpFSize &= ~(SECTOR_SIZE - 1);
+	stg = TmpFSize;
+	TmpFSize += amt;
+	return(stg + 1);  /* add 1 to prevent a NULL handle */
 }
 
-void SpillNull( unsigned long base, unsigned off, unsigned size )
+void SpillNull(unsigned long base, unsigned off, unsigned size)
 /**********************************************************************/
 {
-    QSeek( TempFile, base + off - 1, TFileName );
-    WriteNulls( TempFile, size, TFileName );
+	QSeek(TempFile, base + off - 1, TFileName);
+	WriteNulls(TempFile, size, TFileName);
 }
 
-void SpillWrite( unsigned long base, unsigned off, void *mem,
-                                                          unsigned size )
-/***********************************************************************/
+void SpillWrite(unsigned long base, unsigned off, void* mem,
+	unsigned size)
+	/***********************************************************************/
 {
-    QSeek( TempFile, base + off - 1, TFileName );
-    QWrite( TempFile, mem, size, TFileName );
+	QSeek(TempFile, base + off - 1, TFileName);
+	QWrite(TempFile, mem, size, TFileName);
 }
 
-void SpillRead( unsigned long base, unsigned off, void *mem,
-                                                         unsigned size )
-/**********************************************************************/
+void SpillRead(unsigned long base, unsigned off, void* mem,
+	unsigned size)
+	/**********************************************************************/
 {
-    QSeek( TempFile, base + off - 1, TFileName );
-    QRead( TempFile, mem, size, TFileName );
+	QSeek(TempFile, base + off - 1, TFileName);
+	QRead(TempFile, mem, size, TFileName);
 }
 
-void CloseSpillFile( void )
+void CloseSpillFile(void)
 /********************************/
 /*  Close temporary file.  */
 {
-    if( TempFile != NIL_HANDLE ) {
-        RestoreBreak();
-        QClose( TempFile, TFileName );
-        QDelete( TFileName );
-        _LnkFree( TFileName );
-        TFileName = NULL;
-        TempFile = NIL_HANDLE;
-    }
+	if (TempFile != NIL_HANDLE)
+	{
+		RestoreBreak();
+		QClose(TempFile, TFileName);
+		QDelete(TFileName);
+		_LnkFree(TFileName);
+		TFileName = NULL;
+		TempFile = NIL_HANDLE;
+	}
 }
 

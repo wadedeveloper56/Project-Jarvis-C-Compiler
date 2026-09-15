@@ -50,151 +50,166 @@
 #define BOGUS  0xa5a5a5a5
 
 static pHTable  Toc;
-static char *   TocName;
-static symbol * TocSym;
+static char* TocName;
+static symbol* TocSym;
 
 offset TocSize;
 offset TocShift;
 
-typedef struct {
-    segdata *sdata;    // If sdata == NULL, use sym to get address
-                       // else use off and sdata->addr get address
-    union {
-        offset off;  // relative to sdata->addr
-        symbol *sym;
-    } u;
+typedef struct
+{
+	segdata* sdata;    // If sdata == NULL, use sym to get address
+	// else use off and sdata->addr get address
+	union
+	{
+		offset off;  // relative to sdata->addr
+		symbol* sym;
+	} u;
 } TocEntryId;
 
-typedef struct {
-    TocEntryId e;
-    int pos;
+typedef struct
+{
+	TocEntryId e;
+	int pos;
 } TocEntry;
 
 
-void ResetToc( void )
+void ResetToc(void)
 /**************************/
 {
-    Toc = NULL;
-    TocSize = 0;
-    TocName = NULL;
-    TocSym = NULL;
+	Toc = NULL;
+	TocSize = 0;
+	TocName = NULL;
+	TocSym = NULL;
 }
 
-void CleanToc( void )
+void CleanToc(void)
 /**************************/
 {
-    ZapHTable(Toc, LFree);
+	ZapHTable(Toc, LFree);
 }
 
-static unsigned TocEntryHashFunc( void *_e, unsigned size )
+static unsigned TocEntryHashFunc(void* _e, unsigned size)
 /*********************************************************/
 {
-    TocEntry *e = _e;
-    return DataHashFunc(&e->e, sizeof e->e, size);
+	TocEntry* e = (TocEntry*)_e;
+	return DataHashFunc(&e->e, sizeof e->e, size);
 }
 
-static int TocEntryCmp( const void *_e1, const void *_e2 )
+static int TocEntryCmp(const void* _e1, const void* _e2)
 /********************************************************/
 {
-    const TocEntry *e1 = _e1;
-    const TocEntry *e2 = _e2;
-    return memcmp(&e1->e, &e2->e, sizeof e1->e);
+	const TocEntry* e1 = (const TocEntry*)_e1;
+	const TocEntry* e2 = (const TocEntry*)_e2;
+	return memcmp(&e1->e, &e2->e, sizeof e1->e);
 }
 
 void InitToc(void)
 /***********************/
 {
-    Toc = CreateHTable( 1024, TocEntryHashFunc, TocEntryCmp, ChkLAlloc, LFree );
-    TocSize = 0;
-    if( IS_PPC_PE ) {
-        TocName = TocSymName;
-        TocShift = 0x8000;
-    } else {
-        TocName = GotSymName;
-        TocShift = BOGUS;
-            // It is an error to use TocShift until PrepareToc is called
-    }
+	Toc = CreateHTable(1024, TocEntryHashFunc, TocEntryCmp, ChkLAlloc, LFree);
+	TocSize = 0;
+	if (IS_PPC_PE)
+	{
+		TocName = TocSymName;
+		TocShift = 0x8000;
+	}
+	else
+	{
+		TocName = GotSymName;
+		TocShift = BOGUS;
+		// It is an error to use TocShift until PrepareToc is called
+	}
 }
 
-void CheckIfTocSym( symbol *sym )
+void CheckIfTocSym(symbol* sym)
 /**************************************/
 {
-    if( TocName != NULL && TocSym == NULL ) {
-        if( strcmp(sym->name, TocName) == 0 ) {
-            TocSym = sym;
-        }
-    }
+	if (TocName != NULL && TocSym == NULL)
+	{
+		if (strcmp(sym->name, TocName) == 0)
+		{
+			TocSym = sym;
+		}
+	}
 }
 
-bool IsTocSym( symbol *sym )
+bool IsTocSym(symbol* sym)
 /*********************************/
 {
-    return TocSym == sym;
+	return TocSym == sym;
 }
 
-static void AddToToc( TocEntryId *e )
+static void AddToToc(TocEntryId* e)
 /***********************************/
 {
-    TocEntry    searchEntry;
-    TocEntry *  entry;
+	TocEntry    searchEntry;
+	TocEntry* entry;
 
-    searchEntry.e = *e;
+	searchEntry.e = *e;
 
-    if( FindHTableElem(Toc, &searchEntry) == NULL ) {
-        entry = ChkLAlloc(sizeof *entry);
-        entry->e = *e;
-        entry->pos = TocSize;
-        TocSize += sizeof(offset);
-        AddHTableElem(Toc, entry);
-    }
+	if (FindHTableElem(Toc, &searchEntry) == NULL)
+	{
+		entry = (TocEntry*)ChkLAlloc(sizeof * entry);
+		entry->e = *e;
+		entry->pos = TocSize;
+		TocSize += sizeof(offset);
+		AddHTableElem(Toc, entry);
+	}
 }
 
-void AddSymToToc( symbol *sym )
+void AddSymToToc(symbol* sym)
 /************************************/
 {
-    TocEntryId e;
+	TocEntryId e;
 
-    e.sdata = NULL;
-    e.u.sym = sym;
-    AddToToc(&e);
+	e.sdata = NULL;
+	e.u.sym = sym;
+	AddToToc(&e);
 }
 
-void AddSdataOffToToc( segdata *sdata, offset off )
+void AddSdataOffToToc(segdata* sdata, offset off)
 /********************************************************/
 {
-    TocEntryId e;
+	TocEntryId e;
 
-    DbgAssert( sdata != NULL );
-    e.sdata = sdata;
-    e.u.off = off;
-    AddToToc(&e);
+	DbgAssert(sdata != NULL);
+	e.sdata = sdata;
+	e.u.off = off;
+	AddToToc(&e);
 }
 
 
-static void ConvertTocEntryId( TocEntryId *e )
+static void ConvertTocEntryId(TocEntryId* e)
 /********************************************/
 {
-    if( e->sdata != NULL ) {
-        // do nothing: already in sdata/offset form
-    } else {
-        symbol *sym = e->u.sym;
-        segdata *seg = sym->p.seg;
+	if (e->sdata != NULL)
+	{
+		// do nothing: already in sdata/offset form
+	}
+	else
+	{
+		symbol* sym = e->u.sym;
+		segdata* seg = sym->p.seg;
 
-        if( IS_SYM_IMPORTED(sym) || seg == NULL ) {
-            // do not convert; keep symbol around
-        } else {
-            e->sdata = seg;
-            e->u.off = sym->addr.off - seg->a.delta -
-                       seg->u.leader->seg_addr.off;
-        }
-    }
-    return;
+		if (IS_SYM_IMPORTED(sym) || seg == NULL)
+		{
+			// do not convert; keep symbol around
+		}
+		else
+		{
+			e->sdata = seg;
+			e->u.off = sym->addr.off - seg->a.delta -
+				seg->u.leader->seg_addr.off;
+		}
+	}
+	return;
 }
 
-static void ConvertTocEntry( void *e)
+static void ConvertTocEntry(void* e)
 /***********************************/
 {
-    ConvertTocEntryId(&((TocEntry *)e)->e);
+	ConvertTocEntryId(&((TocEntry*)e)->e);
 }
 
 #define GOT_RESERVED_NEG_SIZE (2* sizeof(long))
@@ -202,133 +217,147 @@ static void ConvertTocEntry( void *e)
 #define GOT_RESERVED_SIZE (GOT_RESERVED_NEG_SIZE+GOT_RESERVED_POS0_SIZE)
 
 #if 0 // OS/2 PPC development temporarly on hold
-static void AdjustGotEntry( TocEntry *e, offset *middle) {
-    if( e->pos < *middle) {
-        e->pos -= GOT_RESERVED_NEG_SIZE;
-    } else {
-        e->pos += GOT_RESERVED_POS0_SIZE;
-    }
+static void AdjustGotEntry(TocEntry* e, offset* middle) {
+	if (e->pos < *middle)
+	{
+		e->pos -= GOT_RESERVED_NEG_SIZE;
+	}
+	else
+	{
+		e->pos += GOT_RESERVED_POS0_SIZE;
+	}
 }
 #endif
 
-void PrepareToc( void )
+void PrepareToc(void)
 /****************************/
 {
-    if( Toc == NULL ) return;
-    WalkHTable(Toc, ConvertTocEntry);
-    RehashHTable(Toc);
-    if( IS_PPC_OS2 ) {
-        // Development temporarly on hold
-        #if 0
-        offset middle = (TocSize/2) & ~0x3;
-        WalkHTableCookie(Toc, AdjustGotEntry, &middle);
-        TocShift = middle+GOT_RESERVED_NEG_SIZE;
-        TocSize += GOT_RESERVED_SIZE;
-        #endif
-    }
-    if( TocSym != NULL)  {
-        TocSym->info |= SYM_DCE_REF | SYM_DEFINED;
-        SetAddPubSym( TocSym, SYM_REGULAR, FakeModule, 0, 0 );
-        if( LinkFlags & STRIP_CODE ) {
-            CleanStripInfo( TocSym );
-        }
-    }
+	if (Toc == NULL) return;
+	WalkHTable(Toc, ConvertTocEntry);
+	RehashHTable(Toc);
+	if (IS_PPC_OS2)
+	{
+		// Development temporarly on hold
+#if 0
+		offset middle = (TocSize / 2) & ~0x3;
+		WalkHTableCookie(Toc, AdjustGotEntry, &middle);
+		TocShift = middle + GOT_RESERVED_NEG_SIZE;
+		TocSize += GOT_RESERVED_SIZE;
+#endif
+	}
+	if (TocSym != NULL)
+	{
+		DO_OR_EQ(sym_info, TocSym->info, |=, SYM_DCE_REF | SYM_DEFINED);
+		SetAddPubSym(TocSym, SYM_REGULAR, FakeModule, 0, 0);
+		if (LinkFlags & STRIP_CODE)
+		{
+			CleanStripInfo(TocSym);
+		}
+	}
 }
 
-void SetTocAddr( offset off, group_entry *group )
+void SetTocAddr(offset off, group_entry* group)
 /******************************************************/
 {
-    if( Toc == NULL || TocSym == NULL ) return;
-    XDefSymAddr( TocSym, off + TocShift, group->grp_addr.seg );
+	if (Toc == NULL || TocSym == NULL) return;
+	XDefSymAddr(TocSym, off + TocShift, group->grp_addr.seg);
 }
 
-static signed_32 OffFromToc( offset off )
+static signed_32 OffFromToc(offset off)
 /***************************************/
 {
-    offset toff;
+	offset toff;
 
-    toff = off - TocShift;
-    if( ((signed_16) toff) != (signed_32) toff ) {
-        LnkMsg( ERR+MSG_TOC_TOO_BIG, NULL );
-    }
-    return toff;
+	toff = off - TocShift;
+	if (((signed_16)toff) != (signed_32)toff)
+	{
+		LnkMsg(ERR + MSG_TOC_TOO_BIG, NULL);
+	}
+	return toff;
 }
 
-signed_32 FindEntryPosInToc( TocEntryId *e )
+signed_32 FindEntryPosInToc(TocEntryId* e)
 /*************************************************/
 {
-    TocEntry    searchEntry;
-    TocEntry *  entry;
+	TocEntry    searchEntry;
+	TocEntry* entry;
 
-    searchEntry.e = *e;
-    entry = FindHTableElem(Toc, &searchEntry);
-    if (entry != NULL) {
-        return OffFromToc(entry->pos);
-    } else {
-        return BOGUS; // return bogus position; likely to cause alignment exception
-    }
+	searchEntry.e = *e;
+	entry = (TocEntry*)FindHTableElem(Toc, &searchEntry);
+	if (entry != NULL)
+	{
+		return OffFromToc(entry->pos);
+	}
+	else
+	{
+		return BOGUS; // return bogus position; likely to cause alignment exception
+	}
 
 }
 
-signed_32 FindSdataOffPosInToc( segdata *sdata, offset off )
+signed_32 FindSdataOffPosInToc(segdata* sdata, offset off)
 /*****************************************************************/
 {
-    TocEntryId e;
+	TocEntryId e;
 
-    DbgAssert( sdata != NULL );
-    e.sdata = sdata;
-    e.u.off = off;
-    return FindEntryPosInToc(&e);
+	DbgAssert(sdata != NULL);
+	e.sdata = sdata;
+	e.u.off = off;
+	return FindEntryPosInToc(&e);
 }
 
-signed_32 FindSymPosInToc( symbol * sym )
+signed_32 FindSymPosInToc(symbol* sym)
 /**********************************************/
 {
-    TocEntryId e;
+	TocEntryId e;
 
-    e.sdata = NULL;
-    e.u.sym = sym;
-    ConvertTocEntryId(&e);
-    return FindEntryPosInToc(&e);
+	e.sdata = NULL;
+	e.u.sym = sym;
+	ConvertTocEntryId(&e);
+	return FindEntryPosInToc(&e);
 }
 
-static void WriteOutTokElem( void *_elem, void *buf )
+static void WriteOutTokElem(void* _elem, void* buf)
 /***************************************************/
 {
-    TocEntry   *elem = _elem;
-    offset      addr;
-    segdata *   sdata;
-    seg_leader *leader;
+	TocEntry* elem = (TocEntry*)_elem;
+	offset      addr;
+	segdata* sdata;
+	seg_leader* leader;
 
-    if( elem->e.sdata ) {
-        sdata = elem->e.sdata;
-        leader = sdata->u.leader;
-        addr = elem->e.u.off + sdata->a.delta + leader->group->linear
-                        + leader->seg_addr.off +  FmtData.base;
-    } else {
-        addr = SymbolAbsAddr(elem->e.u.sym);
-    }
-    DbgAssert(elem->pos >= 0);
-    PutInfo((*((virt_mem *)buf)) + elem->pos, &(addr), sizeof addr);
+	if (elem->e.sdata)
+	{
+		sdata = elem->e.sdata;
+		leader = sdata->u.leader;
+		addr = elem->e.u.off + sdata->a.delta + leader->group->linear
+			+ leader->seg_addr.off + FmtData.base;
+	}
+	else
+	{
+		addr = SymbolAbsAddr(elem->e.u.sym);
+	}
+	DbgAssert(elem->pos >= 0);
+	PutInfo((*((virt_mem*)buf)) + elem->pos, &(addr), sizeof addr);
 }
 
-void WriteToc( virt_mem buf )
+void WriteToc(virt_mem buf)
 /**********************************/
 {
-    if( Toc == NULL ) return;
-    WalkHTableCookie( Toc, WriteOutTokElem, &buf );
-    if( IS_PPC_OS2 ) {
-        // Development temporarly on hold
-        #if 0
-        offset res[GOT_RESERVED_SIZE/sizeof(offset)] = { 0 };
-        enum { zero = GOT_RESERVED_NEG_SIZE/sizeof(offset) };
-        enum { blrl_opcode = 0x4E800021 };
+	if (Toc == NULL) return;
+	WalkHTableCookie(Toc, WriteOutTokElem, &buf);
+	if (IS_PPC_OS2)
+	{
+		// Development temporarly on hold
+#if 0
+		offset res[GOT_RESERVED_SIZE / sizeof(offset)] = { 0 };
+		enum { zero = GOT_RESERVED_NEG_SIZE / sizeof(offset) };
+		enum { blrl_opcode = 0x4E800021 };
 
-        DbgAssert(TocShift >= GOT_RESERVED_NEG_SIZE);
+		DbgAssert(TocShift >= GOT_RESERVED_NEG_SIZE);
 
-        res[zero-1] = blrl_opcode;
-        res[zero] = IDataGroup->linear + FmtData.base;
-        PutInfo(buf+TocShift-GOT_RESERVED_NEG_SIZE, res, GOT_RESERVED_SIZE);
-        #endif
-    }
+		res[zero - 1] = blrl_opcode;
+		res[zero] = IDataGroup->linear + FmtData.base;
+		PutInfo(buf + TocShift - GOT_RESERVED_NEG_SIZE, res, GOT_RESERVED_SIZE);
+#endif
+	}
 }

@@ -36,75 +36,85 @@
 #include "alloc.h"
 #include "virtmem.h"
 
-typedef struct vmemblock {
-    struct vmemblock *  next;
-    struct vmemblock *  prev;
-    char                mem[1];
+typedef struct vmemblock
+{
+	struct vmemblock* next;
+	struct vmemblock* prev;
+	char                mem[1];
 } vmemblock;
 
-static vmemblock *      VMemBlocks;
+static vmemblock* VMemBlocks;
 
 #define TINY_ALLOC_CUTOFF (2*1024)
 
-void VirtMemInit( void )
+void VirtMemInit(void)
 /*****************************/
 {
-    VMemBlocks = NULL;
+	VMemBlocks = NULL;
 }
 
-virt_mem AllocStg( unsigned long size )
+virt_mem AllocStg(unsigned long size)
 /********************************************/
 {
-    vmemblock * ptr;
+	vmemblock* ptr;
 
-    if( size == 0 ) return 0;
-    if( size < TINY_ALLOC_CUTOFF ) {
-        _PermAlloc( ptr, size + sizeof(vmemblock) - 1 );
-        ptr->next = ptr;
-    } else {
-        _ChkAlloc( ptr, size + sizeof(vmemblock) - 1 );
-        ptr->prev = NULL;
-        ptr->next = VMemBlocks;
-        if( VMemBlocks != NULL ) {
-            VMemBlocks->prev = ptr;
-        }
-        VMemBlocks = ptr;
-    }
-    return (virt_mem) ptr->mem;
+	if (size == 0) return 0;
+	if (size < TINY_ALLOC_CUTOFF)
+	{
+		_PermAlloc(vmemblock*, ptr, size + sizeof(vmemblock) - 1);
+		ptr->next = ptr;
+	}
+	else
+	{
+		_ChkAlloc(vmemblock*, ptr, size + sizeof(vmemblock) - 1);
+		ptr->prev = NULL;
+		ptr->next = VMemBlocks;
+		if (VMemBlocks != NULL)
+		{
+			VMemBlocks->prev = ptr;
+		}
+		VMemBlocks = ptr;
+	}
+	return (virt_mem)ptr->mem;
 }
 
-void ReleaseInfo( virt_mem v )
+void ReleaseInfo(virt_mem v)
 /**********************************/
 {
-    vmemblock * ptr;
+	vmemblock* ptr;
 
-    if( v == 0 ) return;
-    if( VMemBlocks == NULL ) return;
-    ptr = (vmemblock *) (v - sizeof(vmemblock *) * 2);
-    if( ptr->next == ptr ) return;
-    if( ptr->prev == NULL ) {
-        VMemBlocks = ptr->next;
-        if( VMemBlocks != NULL ) {
-            VMemBlocks->prev = NULL;
-        }
-    } else {
-        ptr->prev->next = ptr->next;
-        if( ptr->next != NULL ) {
-            ptr->next->prev = ptr->prev;
-        }
-    }
-    _LnkFree( ptr );
+	if (v == 0) return;
+	if (VMemBlocks == NULL) return;
+	ptr = (vmemblock*)(v - sizeof(vmemblock*) * 2);
+	if (ptr->next == ptr) return;
+	if (ptr->prev == NULL)
+	{
+		VMemBlocks = ptr->next;
+		if (VMemBlocks != NULL)
+		{
+			VMemBlocks->prev = NULL;
+		}
+	}
+	else
+	{
+		ptr->prev->next = ptr->next;
+		if (ptr->next != NULL)
+		{
+			ptr->next->prev = ptr->prev;
+		}
+	}
+	_LnkFree(ptr);
 }
 
-bool SwapOutVirt( void )
+bool SwapOutVirt(void)
 /*****************************/
 {
-    return( FALSE );
+	return(FALSE);
 }
 
-void FreeVirtMem( void )
+void FreeVirtMem(void)
 /*****************************/
 {
-    FreeList( VMemBlocks );
-    VMemBlocks = NULL;
+	FreeList(VMemBlocks);
+	VMemBlocks = NULL;
 }

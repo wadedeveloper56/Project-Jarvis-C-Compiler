@@ -45,9 +45,9 @@ typedef struct ring RING;
 struct ring                     // model of a ring
 {
 #ifdef PARAM2
-        void *filler;
+	void* filler;
 #endif
-        RING *next;                 // - points to next
+	RING* next;                 // - points to next
 };
 
 // following assume that ring will not be modified
@@ -77,15 +77,16 @@ struct ring                     // model of a ring
     }
 
 #ifndef NDEBUG
-static void verifyNotInRing( RING *ring, RING *elt )
+static void verifyNotInRing(RING* ring, RING* elt)
 {
-    RING *curr;
+	RING* curr;
 
-    RingIterBeg( ring, curr ) {
-        if( curr == elt ) {
-            LnkFatal( "trying to insert element twice into a ring" );
-        }
-    } RingIterEnd( curr )
+	RingIterBeg(ring, curr) {
+		if (curr == elt)
+		{
+			LnkFatal("trying to insert element twice into a ring");
+		}
+	} RingIterEnd(curr)
 }
 #else
 #define verifyNotInRing( h, r )
@@ -93,312 +94,349 @@ static void verifyNotInRing( RING *ring, RING *elt )
 
 
 void RINGNAME(Append) (         // APPEND ELEMENT TO RING
-    void *hdr,                  // - addr( ring header )
-    void *element )             // - element to be appended
+	void* hdr,                  // - addr( ring header )
+	void* element)             // - element to be appended
 {
-    RING **rhdr;                // - ring header
-    RING *relement;             // - ring element
-    RING *lelement;             // - last ring element, before appending
+	RING** rhdr;                // - ring header
+	RING* relement;             // - ring element
+	RING* lelement;             // - last ring element, before appending
 
-    rhdr = hdr;
-    relement = element;
-    verifyNotInRing( *rhdr, relement );
-    lelement = *rhdr;
-    if( lelement == NULL ) {
-        relement->next = relement;
-    } else {
-        relement->next = lelement->next;
-        lelement->next = relement;
-    }
-    *rhdr = relement;
+	rhdr = (RING**)hdr;
+	relement = (RING*)element;
+	verifyNotInRing(*rhdr, relement);
+	lelement = *rhdr;
+	if (lelement == NULL)
+	{
+		relement->next = relement;
+	}
+	else
+	{
+		relement->next = lelement->next;
+		lelement->next = relement;
+	}
+	*rhdr = relement;
 }
 
 
 void* RINGNAME(Promote) (       // PROMOTE ELEMENT TO START OF RING
-    void *hdr,                  // - addr( ring header )
-    void *elt,                  // - element to be promoted
-    void *prv )                 // - element just before element
+	void* hdr,                  // - addr( ring header )
+	void* elt,                  // - element to be promoted
+	void* prv)                 // - element just before element
 {
-    RING **rhdr;
-    RING *last;
-    RING *prev;
-    RING *element;
+	RING** rhdr;
+	RING* last;
+	RING* prev;
+	RING* element;
 
-    rhdr = hdr;
-    prev = prv;
-    element = elt;
-    last = *rhdr;
-    if( prev == NULL || last == prev ) {
-        /* already at front */
-        return element;
-    }
-    if( last != element ) {
-        /* delete */
-        prev->next = element->next;
-        /* insert at front */
-        element->next = last->next;
-        last->next = element;
-    } else {
-        /* last element in ring; rotate */
-        last = prev;
-    }
-    *(RING **)hdr = last;
-    return element;
+	rhdr = (RING**)hdr;
+	prev = (RING*)prv;
+	element = (RING*)elt;
+	last = *rhdr;
+	if (prev == NULL || last == prev)
+	{
+		/* already at front */
+		return element;
+	}
+	if (last != element)
+	{
+		/* delete */
+		prev->next = element->next;
+		/* insert at front */
+		element->next = last->next;
+		last->next = element;
+	}
+	else
+	{
+		/* last element in ring; rotate */
+		last = prev;
+	}
+	*(RING**)hdr = last;
+	return element;
 }
 
 
 void RINGNAME(Insert) (         // INSERT ELEMENT INTO RING
-    void *hdr,                  // - addr( ring header )
-    void *element,              // - element to be inserted
-    void *insert )              // - insertion point (or NULL for start)
+	void* hdr,                  // - addr( ring header )
+	void* element,              // - element to be inserted
+	void* insert)              // - insertion point (or NULL for start)
 {
-    RING **rhdr;                // - ring header
-    RING *relement;             // - ring element, to be inserted
-    RING *ielement;             // - ring element, insertion point
-    RING *lelement;             // - last ring element, before appending
+	RING** rhdr;                // - ring header
+	RING* relement;             // - ring element, to be inserted
+	RING* ielement;             // - ring element, insertion point
+	RING* lelement;             // - last ring element, before appending
 
-    rhdr = hdr;
-    relement = element;
-    verifyNotInRing( *rhdr, relement );
-    ielement = insert;
-    lelement = *rhdr;
-    if( ( lelement == NULL ) || ( lelement == ielement ) ) {
-        RINGNAME(Append)( hdr, element );
-    } else if( ielement == NULL ) {  // insert at start of ring
-        relement->next = lelement->next;
-        lelement->next = relement;
-    } else {
-        relement->next = ielement->next;
-        ielement->next = relement;
-    }
+	rhdr = (RING**)hdr;
+	relement = (RING*)element;
+	verifyNotInRing(*rhdr, relement);
+	ielement = (RING*)insert;
+	lelement = *rhdr;
+	if ((lelement == NULL) || (lelement == ielement))
+	{
+		RINGNAME(Append)(hdr, element);
+	}
+	else if (ielement == NULL)
+	{  // insert at start of ring
+		relement->next = lelement->next;
+		lelement->next = relement;
+	}
+	else
+	{
+		relement->next = ielement->next;
+		ielement->next = relement;
+	}
 }
 
 
 void RINGNAME(Walk) (           // TRAVERSE RING
-    void *hdr,                  // - ring header
-    void (*rtn)                 // - traversal routine
-        (void * curr) )          // - - passed current element
+	void* hdr,                  // - ring header
+	void (*rtn)                 // - traversal routine
+	(void* curr))          // - - passed current element
 {
 #if 0
-    RING *rhdr;                 // - ring header
-    RING *relement;             // - ring element
-    RING *nelement;             // - next ring element
+	RING* rhdr;                 // - ring header
+	RING* relement;             // - ring element
+	RING* nelement;             // - next ring element
 
-    if( hdr != NULL ) {
-        rhdr = hdr;
-        nelement = rhdr->next;
-        do {
-            relement = nelement;
-            nelement = nelement->next;
-            (*rtn)( relement ) );
-        } while( relement != rhdr );
-    }
+	if (hdr != NULL)
+	{
+		rhdr = hdr;
+		nelement = rhdr->next;
+		do
+		{
+			relement = nelement;
+			nelement = nelement->next;
+			(*rtn)(relement) );
+		} while (relement != rhdr);
+	}
 #else
-    RING *relement;             // - ring element
-    RingIterBegSafe( hdr, relement ) {
-            (*rtn)( relement );
-    } RingIterEndSafe( relement )
+	RING* relement;             // - ring element
+	RingIterBegSafe((RING*)hdr, relement) {
+		(*rtn)(relement);
+	} RingIterEndSafe(relement)
 #endif
 }
 
 
-void * RINGNAME(Pred)(          // FIND PREVIOUS ELEMENT IN A RING
-    void *hdr,                  // - ring header
-    void *element )             // - element
+void* RINGNAME(Pred)(          // FIND PREVIOUS ELEMENT IN A RING
+	void* hdr,                  // - ring header
+	void* element)             // - element
 {
-    RING *rhdr;                 // - ring header
-    RING *pred;                 // - previous element
-    RING *next;                 // - next element
+	RING* rhdr;                 // - ring header
+	RING* pred;                 // - previous element
+	RING* next;                 // - next element
 
-    rhdr = hdr;
-    if( rhdr == NULL ) {
-        pred = NULL;
-    } else {
-        for( pred = rhdr; ; ) {
-            next = pred->next;
-            if( element == next ) break;
-            pred = next;
-            if( pred == rhdr ) {
-                pred = NULL;
-                break;
-            }
-        }
-    }
-    return( pred );
+	rhdr = (RING*)hdr;
+	if (rhdr == NULL)
+	{
+		pred = NULL;
+	}
+	else
+	{
+		for (pred = rhdr; ; )
+		{
+			next = pred->next;
+			if (element == next) break;
+			pred = next;
+			if (pred == rhdr)
+			{
+				pred = NULL;
+				break;
+			}
+		}
+	}
+	return(pred);
 }
 
-void *RINGNAME(PruneWithPrev) ( // PRUNE ELEMENT FROM A RING (PREV ELT AVAILABLE)
-    void *hdr,                  // - addr( ring header )
-    void *element,              // - element to be pruned
-    void *prv )                 // - element just before element
+void* RINGNAME(PruneWithPrev) ( // PRUNE ELEMENT FROM A RING (PREV ELT AVAILABLE)
+	void* hdr,                  // - addr( ring header )
+	void* element,              // - element to be pruned
+	void* prv)                 // - element just before element
 {
-    RING **rhdr;                // - addr( ring header )
-    RING *relement;             // - element to be pruned
-    RING *prev;                 // - previous element
+	RING** rhdr;                // - addr( ring header )
+	RING* relement;             // - element to be pruned
+	RING* prev;                 // - previous element
 
-    rhdr = hdr;
-    relement = element;
-    prev = prv;
-    if( prev == NULL ) {
-        prev = *rhdr;
-    }
-    prev->next = relement->next;
-    if( prev == relement ) {
-        *rhdr = NULL;
-    } else {
-        if( *rhdr == relement ) {
-            *rhdr = prev;
-        }
-    }
-    relement->next = NULL;
-    return( relement );
+	rhdr = (RING**)hdr;
+	relement = (RING*)element;
+	prev = (RING*)prv;
+	if (prev == NULL)
+	{
+		prev = *rhdr;
+	}
+	prev->next = relement->next;
+	if (prev == relement)
+	{
+		*rhdr = NULL;
+	}
+	else
+	{
+		if (*rhdr == relement)
+		{
+			*rhdr = prev;
+		}
+	}
+	relement->next = NULL;
+	return(relement);
 }
 
 
-void *RINGNAME(Prune) (         // PRUNE ELEMENT FROM A RING
-    void *hdr,                  // - addr( ring header )
-    void *element )             // - element to be pruned
+void* RINGNAME(Prune) (         // PRUNE ELEMENT FROM A RING
+	void* hdr,                  // - addr( ring header )
+	void* element)             // - element to be pruned
 {
-    RING **rhdr;                // - addr( ring header )
-    RING *relement;             // - element to be pruned
-    RING *prev;                 // - previous element
+	RING** rhdr;                // - addr( ring header )
+	RING* relement;             // - element to be pruned
+	RING* prev;                 // - previous element
 
-    rhdr = hdr;
-    relement = element;
-    prev = RINGNAME(Pred)( *rhdr, relement );
-    return( RINGNAME(PruneWithPrev)( hdr, element, prev ) );
+	rhdr = (RING**)hdr;
+	relement = (RING*)element;
+	prev = (RING*)RINGNAME(Pred)(*rhdr, relement);
+	return(RINGNAME(PruneWithPrev)(hdr, element, prev));
 }
 
 
 void* RINGNAME(Push) (          // INSERT ELEMENT AT START OF RING
-    void *hdr,                  // - addr( ring header )
-    void *element )             // - element to be pushed
+	void* hdr,                  // - addr( ring header )
+	void* element)             // - element to be pushed
 {
-    RING **rhdr;                // - addr( ring header )
-    RING *last;                 // - last element
-    RING *relement;             // - element to be pruned
+	RING** rhdr;                // - addr( ring header )
+	RING* last;                 // - last element
+	RING* relement;             // - element to be pruned
 
-    rhdr = hdr;
-    last = *rhdr;
-    relement = element;
-    verifyNotInRing( last, relement );
-    if( last == NULL ) {
-        relement->next = relement;
-        *rhdr = relement;
-    } else {
-        relement->next = last->next;
-        last->next = relement;
-    }
-    return relement;
+	rhdr = (RING**)hdr;
+	last = *rhdr;
+	relement = (RING*)element;
+	verifyNotInRing(last, relement);
+	if (last == NULL)
+	{
+		relement->next = relement;
+		*rhdr = relement;
+	}
+	else
+	{
+		relement->next = last->next;
+		last->next = relement;
+	}
+	return relement;
 }
 
-void * RINGNAME(Last) (         // RETURN LAST ELEMENT IN THE RING
-    void *hdr )                 // - ring header
+void* RINGNAME(Last) (         // RETURN LAST ELEMENT IN THE RING
+	void* hdr)                 // - ring header
 {
-    return hdr;
+	return hdr;
 }
 
-void * RINGNAME(First) (        // RETURN FIRST ELEMENT IN THE RING
-    void *hdr )                 // - ring header
+void* RINGNAME(First) (        // RETURN FIRST ELEMENT IN THE RING
+	void* hdr)                 // - ring header
 {
-    return ((RING *)hdr)->next;
+	return ((RING*)hdr)->next;
 }
 
-void * RINGNAME(Pop) (          // PRUNE FIRST ELEMENT IN THE RING
-    void *hdr )                 // - addr( ring header )
+void* RINGNAME(Pop) (          // PRUNE FIRST ELEMENT IN THE RING
+	void* hdr)                 // - addr( ring header )
 {
-    RING **rhdr;                // - addr( ring header )
-    RING *last;                 // - last element
-    RING *first;                // - first element
+	RING** rhdr;                // - addr( ring header )
+	RING* last;                 // - last element
+	RING* first;                // - first element
 
-    rhdr = hdr;
-    first = NULL;
-    last = *rhdr;
-    if( last != NULL ) {
-        first = last->next;
-        if( first == last ) {
-            *rhdr = NULL;
-        } else {
-            last->next = first->next;
-        }
-    }
-    return( first );
+	rhdr = (RING**)hdr;
+	first = NULL;
+	last = *rhdr;
+	if (last != NULL)
+	{
+		first = last->next;
+		if (first == last)
+		{
+			*rhdr = NULL;
+		}
+		else
+		{
+			last->next = first->next;
+		}
+	}
+	return(first);
 }
 
 
-void * RINGNAME(Lookup) (       // LOOKUP IN A RING
-    void *hdr,                  // - ring hdr
-    bool (*compare_rtn)         // - comparison routine
-        ( void *element,        // - - element
-          void *comparand ),    // - - comparand
-    void *comparand )       // - comparand
+void* RINGNAME(Lookup) (       // LOOKUP IN A RING
+	void* hdr,                  // - ring hdr
+	bool (*compare_rtn)         // - comparison routine
+	(void* element,        // - - element
+		void* comparand),    // - - comparand
+	void* comparand)       // - comparand
 {
-    RING *rhdr;                 // - ring hdr
-    RING *curr;                 // - current element
+	RING* rhdr;                 // - ring hdr
+	RING* curr;                 // - current element
 
-    if( hdr == NULL ) {
-        curr = NULL;
-    } else {
-        rhdr = hdr;
-        curr = rhdr;
-        for( ; ; ) {
-            curr = curr->next;
-            if( (*compare_rtn)( curr, comparand ) ) break;
-            if( curr == rhdr ) {
-                curr = NULL;
-                break;
-            }
-        };
-    }
-    return( curr );
+	if (hdr == NULL)
+	{
+		curr = NULL;
+	}
+	else
+	{
+		rhdr = (RING*)hdr;
+		curr = rhdr;
+		for (; ; )
+		{
+			curr = curr->next;
+			if ((*compare_rtn)(curr, comparand)) break;
+			if (curr == rhdr)
+			{
+				curr = NULL;
+				break;
+			}
+		};
+	}
+	return(curr);
 }
 
 
 int RINGNAME(Count) (           // COUNT ELEMENTS IN A RING
-    void *hdr )                 // - ring hdr
+	void* hdr)                 // - ring hdr
 {
-    int count;                  // - number elements
-    RING *curr;                 // - current element
+	int count;                  // - number elements
+	RING* curr;                 // - current element
 
-    count = 0;
-    RingIterBeg( hdr, curr ) {
-        ++ count;
-    } RingIterEnd( curr )
-    return count;
+	count = 0;
+	RingIterBeg((RING*)hdr, curr) {
+		++count;
+	} RingIterEnd(curr)
+		return count;
 }
 
-void *RINGNAME(Alloc) (         // ALLOCATE AND APPEND NEW ELEMENT
-    void *hdr,                  // - addr( ring header )
-    size_t size )               // - size of entry to be allocated
+void* RINGNAME(Alloc) (         // ALLOCATE AND APPEND NEW ELEMENT
+	void* hdr,                  // - addr( ring header )
+	size_t size)               // - size of entry to be allocated
 {
-    void *new_element;          // - allocated element
+	void* new_element;          // - allocated element
 
-    _ChkAlloc( new_element, size );
-    RINGNAME(Append)( hdr, new_element );
-    return( new_element );
+	_ChkAlloc(void*, new_element, size);
+	RINGNAME(Append)(hdr, new_element);
+	return(new_element);
 }
 
 
 void RINGNAME(Dealloc) (        // DE-ALLOCATE A RING ELEMENT
-    void *hdr,                  // - addr( ring header )
-    void *element )             // - element to be de-allocated
+	void* hdr,                  // - addr( ring header )
+	void* element)             // - element to be de-allocated
 {
-    RINGNAME(Prune)( hdr, element );
-    _LnkFree( element );
+	RINGNAME(Prune)(hdr, element);
+	_LnkFree(element);
 }
 
 
 void RINGNAME(Free) (           // FREE ALL ELEMENTS IN A RING
-    void *hdr )                 // - addr( ring header )
+	void* hdr)                 // - addr( ring header )
 {
-    void *elt;
+	void* elt;
 
-    for(;;) {
-        /* modify ring in an atomic manner */
-        elt = RINGNAME(Pop)( hdr );
-        if( elt == NULL ) break;
-        _LnkFree( elt );
-    }
+	for (;;)
+	{
+		/* modify ring in an atomic manner */
+		elt = RINGNAME(Pop)(hdr);
+		if (elt == NULL) break;
+		_LnkFree(elt);
+	}
 }
 
 
@@ -411,51 +449,59 @@ void RINGNAME(Free) (           // FREE ALL ELEMENTS IN A RING
 
 
 void* RINGNAME(CarveAlloc) (    // CARVER ALLOC AND APPEND AN ENTRY
-    carve_t carver,             // - carving control
-    void *hdr )                 // - addr( ring header )
+	carve_t carver,             // - carving control
+	void* hdr)                 // - addr( ring header )
 {
-    void *elt;
+	void* elt;
 
-    elt = CarveAlloc( carver );
-    RINGNAME(Append)( hdr, elt );
-    return elt;
+	elt = CarveAlloc(carver);
+	RINGNAME(Append)(hdr, elt);
+	return elt;
 }
 
 
 void RINGNAME(CarveFree) (      // CARVER FREE ALL ELEMENTS IN A RING
-    carve_t carver,             // - carving control
-    void *hdr )                 // - addr( ring header )
+	carve_t carver,             // - carving control
+	void* hdr)                 // - addr( ring header )
 {
-    void *elt;
+	void* elt;
 
-    for(;;) {
-        elt = RINGNAME(Pop)( hdr );
-        if( elt == NULL ) break;
-        CarveFree( carver, elt );
-    }
+	for (;;)
+	{
+		elt = RINGNAME(Pop)(hdr);
+		if (elt == NULL) break;
+		CarveFree(carver, elt);
+	}
 }
 
 
-void *RINGNAME(Step) (  // STEP ALONG ELEMENTS (NULL -> e1 -> e2 -> NULL)
-    void *hdr,          // - ring header
-    void *elt )         // - curr element (NULL to start)
+void* RINGNAME(Step) (  // STEP ALONG ELEMENTS (NULL -> e1 -> e2 -> NULL)
+	void* hdr,          // - ring header
+	void* elt)         // - curr element (NULL to start)
 {
-    RING *rhdr;         // - ring hdr
-    RING *relt;         // - ring element
+	RING* rhdr;         // - ring hdr
+	RING* relt;         // - ring element
 
-    rhdr = hdr;
-    if( elt == NULL ) {
-        /* start traversal */
-        if( rhdr != NULL ) {
-            elt = rhdr->next;
-        }
-    } else {
-        relt = elt;
-        if( relt != rhdr ) {
-            elt = relt->next;
-        } else {
-            elt = NULL;
-        }
-    }
-    return( elt );
+	rhdr = (RING*)hdr;
+	if (elt == NULL)
+	{
+		/* start traversal */
+		if (rhdr != NULL)
+		{
+			elt = rhdr->next;
+		}
+	}
+	else
+	{
+		relt = (RING*)elt;
+		if (relt != rhdr)
+		{
+			elt = relt->next;
+		}
+		else
+		{
+			elt = NULL;
+		}
+	}
+	return(elt);
 }

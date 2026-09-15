@@ -39,139 +39,160 @@
 #include "overlays.h"
 #include "symtrace.h"
 
-static trace_info       *CurrTrace;
+static trace_info* CurrTrace;
 
-trace_info       *TraceList;
+trace_info* TraceList;
 
-void ResetSymTrace( void )
+void ResetSymTrace(void)
 /************************/
 {
-    TraceList = NULL;
+	TraceList = NULL;
 }
 
-static void CheckFileTrace( section * );
+static void CheckFileTrace(section*);
 
-void CheckTraces( void )
+void CheckTraces(void)
 /*****************************/
 // first check for .obj files being traced, then check libraries
 {
-    trace_info      *info;
-    trace_info      *next;
-    file_list       *lib;
-    trace_info **   prev;
+	trace_info* info;
+	trace_info* next;
+	file_list* lib;
+	trace_info** prev;
 
-    prev = &TraceList;
-    for( info = TraceList; info != NULL; info = next ) {
-        next = info->next;
-        if( info->member == NULL ) {
-            CurrTrace = info;
-            WalkAllSects( CheckFileTrace );
-            if( !info->found ) {
-                LnkMsg( WRN+MSG_TRACE_OBJ_NOT_FOUND, "s", info->u.name );
-                _LnkFree( info->u.name );
-            }
-            _LnkFree( info );
-        } else {
-            for( lib = ObjLibFiles; lib != NULL; lib = lib->next_file ) {
-                if( FNAMECMPSTR( lib->file->name, info->u.name ) == 0 ) {
-                    info->found = TRUE;
-                    _LnkFree( info->u.name );
-                    info->u.lib = lib;
-                    break;
-                }
-            }
-            *prev = info;
-            prev = &info->next;
-        } /* if */
-    } /* for */
-    *prev = NULL;
+	prev = &TraceList;
+	for (info = TraceList; info != NULL; info = next)
+	{
+		next = info->next;
+		if (info->member == NULL)
+		{
+			CurrTrace = info;
+			WalkAllSects(CheckFileTrace);
+			if (!info->found)
+			{
+				LnkMsg(WRN + MSG_TRACE_OBJ_NOT_FOUND, "s", info->u.name);
+				_LnkFree(info->u.name);
+			}
+			_LnkFree(info);
+		}
+		else
+		{
+			for (lib = ObjLibFiles; lib != NULL; lib = lib->next_file)
+			{
+				if (FNAMECMPSTR(lib->file->name, info->u.name) == 0)
+				{
+					info->found = TRUE;
+					_LnkFree(info->u.name);
+					info->u.lib = lib;
+					break;
+				}
+			}
+			*prev = info;
+			prev = &info->next;
+		} /* if */
+	} /* for */
+	*prev = NULL;
 }
 
-static void CheckFileTrace( section *sect )
+static void CheckFileTrace(section* sect)
 /******************************************/
 {
-    file_list       *list;
+	file_list* list;
 
-    if( CurrTrace->found )
-        return;
-    for( list = sect->files; list != NULL; list = list->next_file ) {
-        if( FNAMECMPSTR( list->file->name, CurrTrace->u.name ) == 0 ) {
-            CurrTrace->found = TRUE;
-            _LnkFree( CurrTrace->u.name );
-            list->status |= STAT_TRACE_SYMS;
-            return;
-        }
-    }
+	if (CurrTrace->found)
+		return;
+	for (list = sect->files; list != NULL; list = list->next_file)
+	{
+		if (FNAMECMPSTR(list->file->name, CurrTrace->u.name) == 0)
+		{
+			CurrTrace->found = TRUE;
+			_LnkFree(CurrTrace->u.name);
+			DO_OR_EQ(file_status, list->status, |=, STAT_TRACE_SYMS);
+			return;
+		}
+	}
 }
 
-void CheckLibTrace( file_list *lib )
+void CheckLibTrace(file_list* lib)
 /******************************************/
 {
-    trace_info      *info;
+	trace_info* info;
 
-    for( info = TraceList; info != NULL; info = info->next ) {
-        if( !info->found ) {
-            if( FNAMECMPSTR( info->u.name, lib->file->name ) == 0 ) {
-                info->found = TRUE;
-                _LnkFree( info->u.name );
-                info->u.lib = lib;
-                break;
-            }
-        }
-    }
+	for (info = TraceList; info != NULL; info = info->next)
+	{
+		if (!info->found)
+		{
+			if (FNAMECMPSTR(info->u.name, lib->file->name) == 0)
+			{
+				info->found = TRUE;
+				_LnkFree(info->u.name);
+				info->u.lib = lib;
+				break;
+			}
+		}
+	}
 }
 
-bool FindLibTrace( mod_entry *mod )
+bool FindLibTrace(mod_entry* mod)
 /****************************************/
 {
-    trace_info **   prev;
-    trace_info      *info;
+	trace_info** prev;
+	trace_info* info;
 
-    prev = &TraceList;
-    for( info = TraceList; info != NULL; info = info->next ) {
-        if( info->found && info->u.lib == mod->f.source ) {
-            if( ModNameCompare( mod->name, info->member ) ) {
-                *prev = info->next;
-                _LnkFree( info->member );
-                _LnkFree( info );
-                return( TRUE );
-            }
-        }
-        prev = &info->next;
-    }
-    return( FALSE );
+	prev = &TraceList;
+	for (info = TraceList; info != NULL; info = info->next)
+	{
+		if (info->found && info->u.lib == mod->f.source)
+		{
+			if (ModNameCompare(mod->name, info->member))
+			{
+				*prev = info->next;
+				_LnkFree(info->member);
+				_LnkFree(info);
+				return(TRUE);
+			}
+		}
+		prev = &info->next;
+	}
+	return(FALSE);
 }
 
-void PrintBadTraces( void )
+void PrintBadTraces(void)
 /********************************/
 {
-    trace_info      *info;
+	trace_info* info;
 
-    for( info = TraceList; info != NULL; info = info->next ) {
-        if( info->found ) {
-            LnkMsg( WRN+MSG_TRACE_LIB_NOT_FOUND, "12", info->u.lib->file->name,
-                                                        info->member );
-        } else {
-            LnkMsg( WRN+MSG_TRACE_LIB_NOT_FOUND, "12", info->u.name,
-                                                        info->member );
-        }
-    }
-    CleanTraces();
+	for (info = TraceList; info != NULL; info = info->next)
+	{
+		if (info->found)
+		{
+			LnkMsg(WRN + MSG_TRACE_LIB_NOT_FOUND, "12", info->u.lib->file->name,
+				info->member);
+		}
+		else
+		{
+			LnkMsg(WRN + MSG_TRACE_LIB_NOT_FOUND, "12", info->u.name,
+				info->member);
+		}
+	}
+	CleanTraces();
 }
 
-void CleanTraces( void )
+void CleanTraces(void)
 /*****************************/
 {
-    trace_info *next;
+	trace_info* next;
 
-    while( TraceList != NULL ) {
-        next = TraceList->next;
-        if( !TraceList->found ) {
-            _LnkFree( TraceList->u.name );
-        }
-        _LnkFree( TraceList->member );
-        _LnkFree( TraceList );
-        TraceList = next;
-    }
-    TraceList = NULL;
+	while (TraceList != NULL)
+	{
+		next = TraceList->next;
+		if (!TraceList->found)
+		{
+			_LnkFree(TraceList->u.name);
+		}
+		_LnkFree(TraceList->member);
+		_LnkFree(TraceList);
+		TraceList = next;
+	}
+	TraceList = NULL;
 }

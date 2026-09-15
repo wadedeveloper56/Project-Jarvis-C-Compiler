@@ -31,5 +31,5 @@
 
 #include "pch.h"
 #define PARAM2
-#include "ring.c"
+#include "ring.cpp"
 
