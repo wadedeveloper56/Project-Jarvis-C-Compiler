@@ -33,7 +33,7 @@
 #ifndef DWCARVE_H_INCLUDED
 #define DWCARVE_H_INCLUDED
 
-typedef struct carve_t *carve_t;
+typedef struct _carve_t *carve_t;
 
 #define CarveCreate             DW_CarveCreate
 #define CarveDestroy            DW_CarveDestroy

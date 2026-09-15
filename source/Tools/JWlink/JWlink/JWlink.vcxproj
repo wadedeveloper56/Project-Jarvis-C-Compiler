@@ -192,37 +192,22 @@ xcopy /y "$(OutputPath)$(ProjectName).exe" "..\..\..\..\build\$(Configuration)\$
     <ProjectReference Include="..\..\File\File.vcxproj">
       <Project>{07c330d8-c0c2-42b5-a94e-ae87dab6420d}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\dwarfold\dwarfold.vcxproj">
-      <Project>{5439c1db-6b09-4c18-8b38-47d1f6b59f0f}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\dwarf\dwarf.vcxproj">
       <Project>{73818a1c-652e-4a47-aefe-c425c8b29501}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\JWlinkLibOld\JWlinkLibOld.vcxproj">
-      <Project>{cb9ca97a-1473-47a6-ad13-fd455b4d179e}</Project>
     </ProjectReference>
     <ProjectReference Include="..\JWlinkLib\JWlinkLib.vcxproj">
       <Project>{41c84af9-e8ae-4348-98eb-29fdf38dfe26}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\libmiscold\libmiscold.vcxproj">
-      <Project>{0fec3b50-a29e-42ec-8a7d-d184b5c7b713}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\orlold\orlold.vcxproj">
-      <Project>{4e4c4e0f-eb52-40d5-bbc1-0409f738dd9c}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\orl\orl.vcxproj">
       <Project>{5bb2662c-8e52-42eb-8ebc-8e01e0f5b72b}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\sdkold\sdkold.vcxproj">
-      <Project>{5d41d6d5-43e4-4f34-8ea9-cbf828afbc87}</Project>
     </ProjectReference>
     <ProjectReference Include="..\sdk\sdk.vcxproj">
       <Project>{14a9bd07-c441-45b8-aedc-332fbe2a88c1}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\JWlinkLib\c\wlink.c" />
-    <ClCompile Include="pch.c">
+    <ClCompile Include="..\JWlinkLib\c\wlink.cpp" />
+    <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

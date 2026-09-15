@@ -33,7 +33,7 @@
 #include "pass2.h"
 #include "param.h"
 
-void ReportDupResource( WResID *nameid, WResID *typeid, char *file1,
+void ReportDupResource( WResID *nameid, WResID *typeid1, char *file1,
                            char *file2, int warn );
 int OpenResFiles( struct ExtraRes *resnames, struct ResFileInfo **resinfo,
                   int *allopen, ExeType type, char *exename );

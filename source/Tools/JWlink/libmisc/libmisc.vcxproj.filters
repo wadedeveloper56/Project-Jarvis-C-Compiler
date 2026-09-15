@@ -29,13 +29,13 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="libmiscold.c">
+    <ClCompile Include="libmiscold.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="pch.c">
+    <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\demangle.c">
+    <ClCompile Include="c\demangle.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -141,8 +141,7 @@ typedef enum {
 #define IS_SYM_WEAK_REF(sym) (((sym)->info & SYM_TYPE_MASK) >= SYM_WEAK_REF)
 #define IS_SYM_LINK_WEAK(sym)(((sym)->info & SYM_TYPE_MASK) ==SYM_LINK_WEAK_REF)
 #define IS_SYM_COMM32(sym)   (((sym)->info & SYM_TYPE_MASK) == SYM_COMMUNAL_32)
-#define SET_SYM_TYPE(sym,type) ((sym)->info = ((sym)->info & ~SYM_TYPE_MASK)\
-                                                            | (type))
+#define SET_SYM_TYPE(t,sym,type) ((sym)->info = (t)(((sym)->info & ~SYM_TYPE_MASK) | (type)))
 /* note that OVL_VECTOR && OVL_FORCE can be thought of as a two-bit field.
  * OVL_NO_VECTOR == 0 && OVL_FORCE == 0 means undecided.
  * OVL_NO_VECTOR == 1 && OVL_FORCE == 0 means tenatively no vector generated.
@@ -175,8 +174,7 @@ enum {
 
 #define FFIX_SHIFT 29
 #define GET_FFIX_VALUE(sym)       ((sym)->info >> FFIX_SHIFT)
-#define SET_FFIX_VALUE(sym,value) ((sym)->info = ((sym)->info & ~FFIX_MASK)\
-                                                | ((value) << FFIX_SHIFT))
+#define SET_FFIX_VALUE(t,sym,value) ((sym)->info = (t)(((sym)->info & ~FFIX_MASK) | ((value) << FFIX_SHIFT)))
 
 typedef struct {
     unsigned_16 modnum;         // DOS: idx of module which defines this sym
@@ -209,7 +207,7 @@ typedef struct symbol {
         struct symbol   *mainsym;   // altdefs: main symbol definition
         struct symbol   *def;       // for lazy externs
         struct symbol   **vfdata;   // for virtual function lazy externs.
-        void            *export;    // OS/2 & PE only: exported sym info.
+        void            *export1;    // OS/2 & PE only: exported sym info.
     } e;
     char                *name;
     char                *prefix;    // primarily for netware, though could be

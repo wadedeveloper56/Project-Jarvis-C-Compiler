@@ -58,10 +58,10 @@ struct WResRoutines {                                       /* defaults */
 
 #define WResSetRtns( open, close, read, write, seek, tell, alloc, free ) \
                 struct WResRoutines WResRtns = {    \
-                    open,                           \
-                    close,                          \
-                    write,                          \
-                    read,                           \
+                    (WResFileID (*)(const char *, int, ...))open,                           \
+                    (int (*)(WResFileID))close,                          \
+                    (ssize_t (*)(WResFileID, const void *, size_t))write,                          \
+                    (ssize_t (*)(WResFileID, void *, size_t))read,                           \
                     seek,                           \
                     tell,                           \
                     alloc,                          \

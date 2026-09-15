@@ -73,22 +73,22 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>..\..\..\..\bin\tools\$(Configuration)\$(Platform)\</OutDir>
     <IntDir>..\..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
-    <IncludePath>..\libmisc\h;..\sdk\rc\rc\h;..\sdk\rc\wres\h;..\dwarf\h;..\orl\h;..\orl\coff\h;..\orl\elf\h;..\orl\omf\h;.\h;..\watcom\h;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>.\;..\libmisc\h;..\sdk\rc\rc\h;..\sdk\rc\wres\h;..\dwarf\h;..\orl\h;..\orl\coff\h;..\orl\elf\h;..\orl\omf\h;.\h;..\watcom\h;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>..\..\..\..\bin\tools\$(Configuration)\$(Platform)\</OutDir>
     <IntDir>..\..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
-    <IncludePath>..\libmisc\h;..\sdk\rc\rc\h;..\sdk\rc\wres\h;..\dwarf\h;..\orl\h;..\orl\coff\h;..\orl\elf\h;..\orl\omf\h;.\h;..\watcom\h;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>.\;..\libmisc\h;..\sdk\rc\rc\h;..\sdk\rc\wres\h;..\dwarf\h;..\orl\h;..\orl\coff\h;..\orl\elf\h;..\orl\omf\h;.\h;..\watcom\h;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>..\..\..\..\bin\tools\$(Configuration)\$(Platform)\</OutDir>
     <IntDir>..\..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
-    <IncludePath>..\libmisc\h;..\sdk\rc\rc\h;..\sdk\rc\wres\h;..\dwarf\h;..\orl\h;..\orl\coff\h;..\orl\elf\h;..\orl\omf\h;.\h;..\watcom\h;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>.\;..\libmisc\h;..\sdk\rc\rc\h;..\sdk\rc\wres\h;..\dwarf\h;..\orl\h;..\orl\coff\h;..\orl\elf\h;..\orl\omf\h;.\h;..\watcom\h;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>..\..\..\..\bin\tools\$(Configuration)\$(Platform)\</OutDir>
     <IntDir>..\..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
-    <IncludePath>..\libmisc\h;..\sdk\rc\rc\h;..\sdk\rc\wres\h;..\dwarf\h;..\orl\h;..\orl\coff\h;..\orl\elf\h;..\orl\omf\h;.\h;..\watcom\h;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>.\;..\libmisc\h;..\sdk\rc\rc\h;..\sdk\rc\wres\h;..\dwarf\h;..\orl\h;..\orl\coff\h;..\orl\elf\h;..\orl\omf\h;.\h;..\watcom\h;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -226,8 +226,8 @@ xcopy /y "$(OutputPath)$(ProjectName).exe" "..\..\..\..\build\$(Configuration)\$
     <None Include="h\wlib.msg" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="c\maindrv.c" />
-    <ClCompile Include="pch.c">
+    <ClCompile Include="c\maindrv.cpp" />
+    <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -240,6 +240,9 @@ xcopy /y "$(OutputPath)$(ProjectName).exe" "..\..\..\..\build\$(Configuration)\$
     </ProjectReference>
     <ProjectReference Include="..\JWlibLib\JWlibLib.vcxproj">
       <Project>{73be6226-1bb7-45bc-8fbf-975ec090418b}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\JWlinkLib\JWlinkLib.vcxproj">
+      <Project>{41c84af9-e8ae-4348-98eb-29fdf38dfe26}</Project>
     </ProjectReference>
     <ProjectReference Include="..\libmisc\libmisc.vcxproj">
       <Project>{409ee3c3-03f6-474e-b45f-36e9f1fd3a91}</Project>

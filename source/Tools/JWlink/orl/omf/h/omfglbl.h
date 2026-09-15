@@ -50,7 +50,7 @@
 #define ORL_FILE_WORD_SIZE_MASK         ( ORL_FILE_FLAG_16BIT_MACHINE | \
                                           ORL_FILE_FLAG_32BIT_MACHINE | \
                                           ORL_FILE_FLAG_64BIT_MACHINE )
-#define _SetWordSize( a, b )            (a=(a & ~ORL_FILE_WORD_SIZE_MASK) | b)
+#define _SetWordSize( t, a, b )            (a=(t)((a & ~ORL_FILE_WORD_SIZE_MASK) | b))
 
 #define _Is32BitRec( a )                (a & 1)
 

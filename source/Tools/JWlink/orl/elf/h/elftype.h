@@ -135,7 +135,7 @@ struct elf_sec_handle_struct {
         struct elf_reloc_assoc_struct   reloc;
         struct elf_sym_assoc_struct     sym;
         struct elf_import_assoc_struct  import;
-        struct elf_export_assoc_struct  export;
+        struct elf_export_assoc_struct  export1;
     } assoc;
 };
 

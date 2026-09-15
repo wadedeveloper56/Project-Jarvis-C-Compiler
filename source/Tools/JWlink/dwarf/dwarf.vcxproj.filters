@@ -89,16 +89,16 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="dwarfold.c">
+    <ClCompile Include="dwarfold.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="pch.c">
+    <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\dwlngen.c">
+    <ClCompile Include="c\dwlngen.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="c\dwutils.c">
+    <ClCompile Include="c\dwutils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

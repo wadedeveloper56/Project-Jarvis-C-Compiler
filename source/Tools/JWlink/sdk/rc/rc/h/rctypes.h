@@ -37,12 +37,12 @@
 
 #ifndef BOOL_DEFINED
 #define BOOL_DEFINED
-typedef int bool;
+//typedef int bool;
 #endif
 
 enum {
-    false,
-    true
+  //  false,
+  //  true
 };
 
 typedef enum {
