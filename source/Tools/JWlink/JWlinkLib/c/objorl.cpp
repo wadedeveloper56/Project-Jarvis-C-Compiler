@@ -602,7 +602,7 @@ static void AllocSeg(void* _snode, void* dummy)
 		snode->entry->u.leader->info |= SEG_LXDATA_SEEN;
 		if (!sdata->isdead)
 		{
-			ORLSecGetContents((orl_sec_handle)snode->handle, &snode->contents);
+			ORLSecGetContents((orl_sec_handle)snode->handle, (char**)&snode->contents);
 			if (!sdata->iscdat && (snode->contents != NULL))
 			{
 				PutInfo(sdata->data, snode->contents, sdata->length);
@@ -664,13 +664,13 @@ static orl_return DeclareSegment(orl_sec_handle sec)
 		/* .idata$4, .idata$5 (IAT) and .idata$6 */
 		if (name[len + 1] == '6')
 		{    /* .idata$6 - is to contain the import's name */
-			ORLSecGetContents((orl_sec_handle)sec, (unsigned_8**)&ImpExternalName);
+			ORLSecGetContents((orl_sec_handle)sec, (char**)&ImpExternalName);
 			ImpExternalName += 2;
 		}
 		else if (name[len + 1] == '4')
 		{     /* .idata$4 - is to contain imports by ordinal */
 /* jwlink v19b9: check for error */
-			if (ORLSecGetContents((orl_sec_handle)sec, (unsigned_8**)&contents) == ORL_ERROR)
+			if (ORLSecGetContents((orl_sec_handle)sec, (char**)&contents) == ORL_ERROR)
 			{
 				DEBUG((DBG_OLD, "objorl.DeclareSegment(%s): ORLSecGetContents() returned with error ", name));
 			}

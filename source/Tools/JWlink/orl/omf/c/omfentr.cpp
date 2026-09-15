@@ -333,7 +333,7 @@ omf_sec_handle OMFENTRY OmfSecGetRelocTable( omf_sec_handle sh )
 }
 
 
-orl_return OMFENTRY OmfSecGetContents( omf_sec_handle sh, unsigned_8 **buffer )
+orl_return OMFENTRY OmfSecGetContents( omf_sec_handle sh, char **buffer )
 {
     orl_return  err;
 
@@ -342,7 +342,7 @@ orl_return OMFENTRY OmfSecGetContents( omf_sec_handle sh, unsigned_8 **buffer )
     if( ( sh->contents != NULL ) || ( sh->type == ORL_SEC_TYPE_PROG_BITS ) ) {
         err = OmfExportSegmentContents( sh );
         if( err != ORL_OKAY ) return( err );
-        *buffer = sh->contents;
+        *buffer = (char*)sh->contents;
         return( ORL_OKAY );
     }
     return( ORL_ERROR );

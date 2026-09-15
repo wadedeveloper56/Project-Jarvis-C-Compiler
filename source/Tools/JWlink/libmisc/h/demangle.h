@@ -32,9 +32,9 @@
 
 #ifndef _DEMANGLE_H
 #define _DEMANGLE_H
-#ifdef __cplusplus
-extern "C" {
-#endif
+//#ifdef __cplusplus
+//extern "C" {
+//#endif
 #include <stddef.h>
 #include "dm_pts.h"
 
@@ -130,7 +130,7 @@ void __parse_mangled_name(                      // PARSE MANGLED NAME
 
 #endif //!__LIB__
 
-#ifdef __cplusplus
-};
-#endif
+//#ifdef __cplusplus
+//};
+//#endif
 #endif
