@@ -33,67 +33,74 @@
 #include "pch.h"
 #include "wlib.h"
 
-static input_lib *InputLibs;
+static input_lib* InputLibs;
 
-void AddInputLib( libfile io, char *name )
+void AddInputLib(libfile io, char* name)
 {
-    input_lib   *new;
+	input_lib* new1;
 
-    new = MemAllocGlobal( sizeof( *new ) + strlen( name ) );
-    new->next = InputLibs;
-    InputLibs = new;
-    new->io = io;
-    strcpy( new->name, name );
+	new1 = (input_lib*)MemAllocGlobal(sizeof(*new1) + strlen(name));
+	new1->next = InputLibs;
+	InputLibs = new1;
+	new1->io = io;
+	strcpy(new1->name, name);
 }
 
 void CloseOneInputLib()
 {
-    input_lib   *curr;
+	input_lib* curr;
 
-    for( curr = InputLibs; curr != NULL; curr = curr->next ) {
-        if( curr->io != NULL ) {
-            LibClose( curr->io );
-            curr->io = NULL;
-            return;
-        }
-    }
+	for (curr = InputLibs; curr != NULL; curr = curr->next)
+	{
+		if (curr->io != NULL)
+		{
+			LibClose(curr->io);
+			curr->io = NULL;
+			return;
+		}
+	}
 }
 
 void InitInputLibs()
 {
-    InputLibs = NULL;
+	InputLibs = NULL;
 }
 
 void ResetInputLibs()
 {
-    input_lib   *curr,*next;
+	input_lib* curr, * next;
 
-    for( curr = InputLibs; curr != NULL; curr = next ) {
-        next = curr->next;
-        if( curr->io != NULL ) {
-            LibClose( curr->io );
-        }
-        MemFreeGlobal( curr );
-    }
-    InputLibs = NULL;
+	for (curr = InputLibs; curr != NULL; curr = next)
+	{
+		next = curr->next;
+		if (curr->io != NULL)
+		{
+			LibClose(curr->io);
+		}
+		MemFreeGlobal(curr);
+	}
+	InputLibs = NULL;
 }
 
-input_lib *FindInLib( libfile io )
+input_lib* FindInLib(libfile io)
 {
-    input_lib   *curr;
+	input_lib* curr;
 
-    for( curr = InputLibs; curr != NULL; curr = curr->next ) {
-        if( curr->io == io ) {
-            return( curr );
-        }
-    }
-    return( NULL );
+	for (curr = InputLibs; curr != NULL; curr = curr->next)
+	{
+		if (curr->io == io)
+		{
+			return(curr);
+		}
+	}
+	return(NULL);
 }
 
-libfile InLibHandle( input_lib *curr )
+libfile InLibHandle(input_lib* curr)
 {
-    if( curr->io == NULL ) {
-        curr->io = LibOpen( curr->name, LIBOPEN_BINARY_READ );
-    }
-    return( curr->io );
+	if (curr->io == NULL)
+	{
+		curr->io = LibOpen(curr->name, LIBOPEN_BINARY_READ);
+	}
+	return(curr->io);
 }

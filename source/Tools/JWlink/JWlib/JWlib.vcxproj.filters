@@ -112,10 +112,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="c\maindrv.c">
+    <ClCompile Include="c\maindrv.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="pch.c">
+    <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

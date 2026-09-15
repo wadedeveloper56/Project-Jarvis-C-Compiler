@@ -47,7 +47,7 @@ typedef struct {
     unsigned_8  type;
     unsigned_16 len;
     unsigned_8  attribute;
-    unsigned_8  class;
+    unsigned_8  class1;
     unsigned_8  subclass;
     unsigned_32 stamp;
     unsigned_8  chksum;

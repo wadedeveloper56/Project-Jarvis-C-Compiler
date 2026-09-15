@@ -73,22 +73,22 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>..\..\..\..\bin\libraries\$(Configuration)\$(Platform)\</OutDir>
     <IntDir>..\..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
-    <IncludePath>..\libmisc\h;..\sdk\rc\rc\h;..\sdk\rc\wres\h;..\dwarf\h;..\orl\h;..\orl\coff\h;..\orl\elf\h;..\orl\omf\h;..\jwlib\h;..\watcom\h;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>.\;..\libmisc\h;..\sdk\rc\rc\h;..\sdk\rc\wres\h;..\dwarf\h;..\orl\h;..\orl\coff\h;..\orl\elf\h;..\orl\omf\h;..\jwlib\h;..\watcom\h;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>..\..\..\..\bin\libraries\$(Configuration)\$(Platform)\</OutDir>
     <IntDir>..\..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
-    <IncludePath>..\libmisc\h;..\sdk\rc\rc\h;..\sdk\rc\wres\h;..\dwarf\h;..\orl\h;..\orl\coff\h;..\orl\elf\h;..\orl\omf\h;..\jwlib\h;..\watcom\h;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>.\;..\libmisc\h;..\sdk\rc\rc\h;..\sdk\rc\wres\h;..\dwarf\h;..\orl\h;..\orl\coff\h;..\orl\elf\h;..\orl\omf\h;..\jwlib\h;..\watcom\h;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>..\..\..\..\bin\libraries\$(Configuration)\$(Platform)\</OutDir>
     <IntDir>..\..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
-    <IncludePath>..\libmisc\h;..\sdk\rc\rc\h;..\sdk\rc\wres\h;..\dwarf\h;..\orl\h;..\orl\coff\h;..\orl\elf\h;..\orl\omf\h;..\jwlib\h;..\watcom\h;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>.\;..\libmisc\h;..\sdk\rc\rc\h;..\sdk\rc\wres\h;..\dwarf\h;..\orl\h;..\orl\coff\h;..\orl\elf\h;..\orl\omf\h;..\jwlib\h;..\watcom\h;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>..\..\..\..\bin\libraries\$(Configuration)\$(Platform)\</OutDir>
     <IntDir>..\..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
-    <IncludePath>..\libmisc\h;..\sdk\rc\rc\h;..\sdk\rc\wres\h;..\dwarf\h;..\orl\h;..\orl\coff\h;..\orl\elf\h;..\orl\omf\h;..\jwlib\h;..\watcom\h;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>.\;..\libmisc\h;..\sdk\rc\rc\h;..\sdk\rc\wres\h;..\dwarf\h;..\orl\h;..\orl\coff\h;..\orl\elf\h;..\orl\omf\h;..\jwlib\h;..\watcom\h;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -187,31 +187,31 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\JWlib\c\cmdline.c" />
-    <ClCompile Include="..\JWlib\c\coffwrt.c" />
-    <ClCompile Include="..\JWlib\c\convert.c" />
-    <ClCompile Include="..\JWlib\c\debug.c" />
-    <ClCompile Include="..\JWlib\c\elfobjs.c" />
-    <ClCompile Include="..\JWlib\c\error.c" />
-    <ClCompile Include="..\JWlib\c\idedrv.c" />
-    <ClCompile Include="..\JWlib\c\ideentry.c" />
-    <ClCompile Include="..\JWlib\c\idemsgfm.c" />
-    <ClCompile Include="..\JWlib\c\idemsgpr.c" />
-    <ClCompile Include="..\JWlib\c\implib.c" />
-    <ClCompile Include="..\JWlib\c\inlib.c" />
-    <ClCompile Include="..\JWlib\c\libio.c" />
-    <ClCompile Include="..\JWlib\c\libwalk.c" />
-    <ClCompile Include="..\JWlib\c\memfuncs.c" />
-    <ClCompile Include="..\JWlib\c\omfproc.c" />
-    <ClCompile Include="..\JWlib\c\omfutil.c" />
-    <ClCompile Include="..\JWlib\c\orlrtns.c" />
-    <ClCompile Include="..\JWlib\c\proclib.c" />
-    <ClCompile Include="..\JWlib\c\symlist.c" />
-    <ClCompile Include="..\JWlib\c\symtable.c" />
-    <ClCompile Include="..\JWlib\c\wlib.c" />
-    <ClCompile Include="..\JWlib\c\wlibutil.c" />
-    <ClCompile Include="..\JWlib\c\writelib.c" />
-    <ClCompile Include="pch.c">
+    <ClCompile Include="..\JWlib\c\cmdline.cpp" />
+    <ClCompile Include="..\JWlib\c\coffwrt.cpp" />
+    <ClCompile Include="..\JWlib\c\convert.cpp" />
+    <ClCompile Include="..\JWlib\c\debug.cpp" />
+    <ClCompile Include="..\JWlib\c\elfobjs.cpp" />
+    <ClCompile Include="..\JWlib\c\error.cpp" />
+    <ClCompile Include="..\JWlib\c\idedrv.cpp" />
+    <ClCompile Include="..\JWlib\c\ideentry.cpp" />
+    <ClCompile Include="..\JWlib\c\idemsgfm.cpp" />
+    <ClCompile Include="..\JWlib\c\idemsgpr.cpp" />
+    <ClCompile Include="..\JWlib\c\implib.cpp" />
+    <ClCompile Include="..\JWlib\c\inlib.cpp" />
+    <ClCompile Include="..\JWlib\c\libio.cpp" />
+    <ClCompile Include="..\JWlib\c\libwalk.cpp" />
+    <ClCompile Include="..\JWlib\c\memfuncs.cpp" />
+    <ClCompile Include="..\JWlib\c\omfproc.cpp" />
+    <ClCompile Include="..\JWlib\c\omfutil.cpp" />
+    <ClCompile Include="..\JWlib\c\orlrtns.cpp" />
+    <ClCompile Include="..\JWlib\c\proclib.cpp" />
+    <ClCompile Include="..\JWlib\c\symlist.cpp" />
+    <ClCompile Include="..\JWlib\c\symtable.cpp" />
+    <ClCompile Include="..\JWlib\c\wlib.cpp" />
+    <ClCompile Include="..\JWlib\c\wlibutil.cpp" />
+    <ClCompile Include="..\JWlib\c\writelib.cpp" />
+    <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>

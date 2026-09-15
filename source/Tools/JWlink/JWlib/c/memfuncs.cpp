@@ -39,139 +39,150 @@
 #define TRMemFree    free
 #define TRMemRealloc realloc
 #endif
-static MemPtr   *memPtr;
-void InitMem( void )
+static MemPtr* memPtr;
+void InitMem(void)
 {
 #ifdef TRMEM
-    TRMemOpen();
+	TRMemOpen();
 #endif
-    memPtr= NULL;
+	memPtr = NULL;
 }
 
 
-void *MemAlloc( size_t size )
+void* MemAlloc(size_t size)
 {
-    MemPtr *ptr;
-    if( size == 0 ) {
-        return( NULL );
-    }
-    ptr = TRMemAlloc( sizeof( MemPtr ) + size );
-    if( ptr == NULL )
-        FatalError( ERR_NO_MEMORY );
-    ptr->next = memPtr;
-    ptr->prev = NULL;
-    if( memPtr ) {
-        memPtr->prev = ptr;
-    }
-    memPtr = ptr;
-    return( ptr + 1 );
+	MemPtr* ptr;
+	if (size == 0)
+	{
+		return(NULL);
+	}
+	ptr = (MemPtr*)TRMemAlloc(sizeof(MemPtr) + size);
+	if (ptr == NULL)
+		FatalError(ERR_NO_MEMORY);
+	ptr->next = memPtr;
+	ptr->prev = NULL;
+	if (memPtr)
+	{
+		memPtr->prev = ptr;
+	}
+	memPtr = ptr;
+	return(ptr + 1);
 }
 
-void *MemRealloc( void *ptr, size_t size )
+void* MemRealloc(void* ptr, size_t size)
 {
-    MemPtr  *mptr;
-    if( ptr ) {
-        mptr = ptr;
-        mptr--;
-        if( mptr == memPtr ) {
-            memPtr = mptr->next;
-        }
-        if( mptr->prev ) {
-            mptr->prev->next = mptr->next;
-        }
-        if( mptr->next ) {
-            mptr->next->prev = mptr->prev;
-        }
-        ptr = mptr;
-    }
-    mptr = TRMemRealloc( ptr, size + sizeof( MemPtr ) );
-    if( mptr == NULL )
-        FatalError( ERR_NO_MEMORY );
-    mptr->next = memPtr;
-    mptr->prev = NULL;
-    if( memPtr ) {
-        memPtr->prev = mptr;
-    }
-    memPtr = mptr;
+	MemPtr* mptr;
+	if (ptr)
+	{
+		mptr = (MemPtr*)ptr;
+		mptr--;
+		if (mptr == memPtr)
+		{
+			memPtr = mptr->next;
+		}
+		if (mptr->prev)
+		{
+			mptr->prev->next = mptr->next;
+		}
+		if (mptr->next)
+		{
+			mptr->next->prev = mptr->prev;
+		}
+		ptr = mptr;
+	}
+	mptr = (MemPtr*)TRMemRealloc(ptr, size + sizeof(MemPtr));
+	if (mptr == NULL)
+		FatalError(ERR_NO_MEMORY);
+	mptr->next = memPtr;
+	mptr->prev = NULL;
+	if (memPtr)
+	{
+		memPtr->prev = mptr;
+	}
+	memPtr = mptr;
 
-    return( mptr + 1 );
+	return(mptr + 1);
 }
 
-void MemFree( void *ptr )
+void MemFree(void* ptr)
 {
-    MemPtr  *mptr;
-    if( ptr == NULL )
-        return;
-    mptr = ptr;
-    mptr--;
-    if( mptr == memPtr ) {
-        memPtr = mptr->next;
-    }
-    if( mptr->prev ) {
-        mptr->prev->next = mptr->next;
-    }
-    if( mptr->next ) {
-        mptr->next->prev = mptr->prev;
-    }
-    TRMemFree( mptr );
+	MemPtr* mptr;
+	if (ptr == NULL)
+		return;
+	mptr = (MemPtr*)ptr;
+	mptr--;
+	if (mptr == memPtr)
+	{
+		memPtr = mptr->next;
+	}
+	if (mptr->prev)
+	{
+		mptr->prev->next = mptr->next;
+	}
+	if (mptr->next)
+	{
+		mptr->next->prev = mptr->prev;
+	}
+	TRMemFree(mptr);
 }
 
-void *MemAllocGlobal( size_t size )
+void* MemAllocGlobal(size_t size)
 {
-    void *ptr;
-    ptr = TRMemAlloc( size );
-    if( ptr == NULL && size != 0 )
-        FatalError( ERR_NO_MEMORY );
-    return( ptr );
+	void* ptr;
+	ptr = TRMemAlloc(size);
+	if (ptr == NULL && size != 0)
+		FatalError(ERR_NO_MEMORY);
+	return(ptr);
 }
 
-void *MemReallocGlobal( void *ptr, size_t size )
+void* MemReallocGlobal(void* ptr, size_t size)
 {
-    ptr = TRMemRealloc( ptr, size );
-    if( ptr == NULL && size != 0 )
-        FatalError( ERR_NO_MEMORY );
-    return( ptr );
+	ptr = TRMemRealloc(ptr, size);
+	if (ptr == NULL && size != 0)
+		FatalError(ERR_NO_MEMORY);
+	return(ptr);
 }
 
-void MemFreeGlobal( void *ptr )
+void MemFreeGlobal(void* ptr)
 {
-    if( ptr == NULL )
-        return;
-    TRMemFree( ptr );
+	if (ptr == NULL)
+		return;
+	TRMemFree(ptr);
 }
 
-void ResetMem( void )
+void ResetMem(void)
 {
-    MemPtr  *mptr;
-    while( memPtr ) {
-        mptr = memPtr;
-        memPtr = memPtr->next;
-        TRMemFree( mptr );
-    }
+	MemPtr* mptr;
+	while (memPtr)
+	{
+		mptr = memPtr;
+		memPtr = memPtr->next;
+		TRMemFree(mptr);
+	}
 }
 
-void FiniMem( void )
+void FiniMem(void)
 {
 #ifdef TRMEM
-    TRMemPrtUsage();
-    TRMemClose();
+	TRMemPrtUsage();
+	TRMemClose();
 #endif
 }
 
-char *DupStr( char *str )
+char* DupStr(char* str)
 {
-    char *ptr;
+	char* ptr;
 
-    ptr = MemAlloc( strlen( str ) +1 );
-    strcpy( ptr, str );
-    return( ptr );
+	ptr = (char*)MemAlloc(strlen(str) + 1);
+	strcpy(ptr, str);
+	return(ptr);
 }
 
-char *DupStrGlobal( char *str )
+char* DupStrGlobal(char* str)
 {
-    char *ptr;
+	char* ptr;
 
-    ptr = MemAllocGlobal( strlen( str ) +1 );
-    strcpy( ptr, str );
-    return( ptr );
+	ptr = (char*)MemAllocGlobal(strlen(str) + 1);
+	strcpy(ptr, str);
+	return(ptr);
 }

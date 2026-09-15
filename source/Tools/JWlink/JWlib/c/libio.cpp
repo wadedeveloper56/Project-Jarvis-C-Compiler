@@ -80,9 +80,9 @@ libfile LibOpen( char *name, int access )
         FatalError( ERR_CANT_OPEN, name, strerror( errno ) );
     }
     if( access & O_WRONLY ) {
-        lio = MemAllocGlobal( sizeof( *lio ) + WRITE_FILE_BUFFER_SIZE - 1);
+        lio = (libfile)MemAllocGlobal( sizeof( *lio ) + WRITE_FILE_BUFFER_SIZE - 1);
     } else {
-        lio = MemAllocGlobal( sizeof( *lio ) + READ_FILE_BUFFER_SIZE - 1);
+        lio = (libfile)MemAllocGlobal( sizeof( *lio ) + READ_FILE_BUFFER_SIZE - 1);
     }
     lio->next = fileList;
     lio->prev = NULL;

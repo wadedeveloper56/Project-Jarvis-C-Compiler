@@ -32,207 +32,230 @@
 #include "pch.h"
 #include "wlib.h"
 
-int SymbolNameCmp( const char *s1, const char *s2)
+int SymbolNameCmp(const char* s1, const char* s2)
 {
-    if( Options.respect_case ) {
-        return( strcmp( s1, s2 ) );
-    } else {
-        return( _stricmp( s1, s2 ) );
-    }
+	if (Options.respect_case)
+	{
+		return(strcmp(s1, s2));
+	}
+	else
+	{
+		return(_stricmp(s1, s2));
+	}
 }
 
 
-void GetFileContents( char *name, libfile io, arch_header *arch, char **contents )
+void GetFileContents(char* name, libfile io, arch_header* arch, char** contents)
 {
-    file_offset     size;
-    file_offset     bytes_read;
+	file_offset     size;
+	file_offset     bytes_read;
 
-    size = arch->size;
-    if( size == 0 ) {
-        *contents = NULL;
-        return;
-    }
+	size = arch->size;
+	if (size == 0)
+	{
+		*contents = NULL;
+		return;
+	}
 
-    if( size % 2 == 1 ) {
-        size++;
-    }
-    *contents = (char *)MemAlloc( size );
-    bytes_read = LibRead( io, *contents, size );
-    if( bytes_read != size ) {
-        BadLibrary( name );
-    }
+	if (size % 2 == 1)
+	{
+		size++;
+	}
+	*contents = (char*)MemAlloc(size);
+	bytes_read = LibRead(io, *contents, size);
+	if (bytes_read != size)
+	{
+		BadLibrary(name);
+	}
 }
 
-void NewArchHeader( arch_header *arch, char *name )
+void NewArchHeader(arch_header* arch, char* name)
 {
-    struct stat         buf;
+	struct stat         buf;
 
-    if( stat( name, &buf ) == -1 ) {
-        FatalError( ERR_CANT_FIND, name );
-    }
-    arch->name = name;
-    arch->ffname = NULL;
-    arch->date = buf.st_mtime;
-    arch->uid = buf.st_uid;
-    arch->gid = buf.st_gid;
-    arch->mode = buf.st_mode;
-    arch->size = buf.st_size;
+	if (stat(name, &buf) == -1)
+	{
+		FatalError(ERR_CANT_FIND, name);
+	}
+	arch->name = name;
+	arch->ffname = NULL;
+	arch->date = buf.st_mtime;
+	arch->uid = buf.st_uid;
+	arch->gid = buf.st_gid;
+	arch->mode = buf.st_mode;
+	arch->size = buf.st_size;
 }
-static void CopyBytes( char *buffer, libfile source, libfile dest, file_offset len )
+static void CopyBytes(char* buffer, libfile source, libfile dest, file_offset len)
 {
-    file_offset bytes;
+	file_offset bytes;
 
-    bytes = LibRead( source, buffer, len );
-    if( bytes == len ) {
-        LibWrite( dest, buffer, len );
-    } else {
-        LibReadError( source );
-    }
-}
-
-void Copy( libfile source, libfile dest, file_offset size )
-{
-    char        buffer[ 4096 ];
-
-
-    while( size > sizeof( buffer ) ) {
-        CopyBytes( buffer, source, dest, sizeof( buffer ) );
-        size -= sizeof( buffer );
-    }
-    if( size != 0 ) {
-        CopyBytes( buffer, source, dest, size );
-    }
+	bytes = LibRead(source, buffer, len);
+	if (bytes == len)
+	{
+		LibWrite(dest, buffer, len);
+	}
+	else
+	{
+		LibReadError(source);
+	}
 }
 
-static char     path[ _MAX_PATH ];
-
-static char     drive[ _MAX_DRIVE ];
-static char     dir[ _MAX_DIR ];
-static char     fname[ _MAX_FNAME ];
-static char     fext[ _MAX_EXT ];
-
-bool SameFile( char *a, char *b )
+void Copy(libfile source, libfile dest, file_offset size)
 {
-    char fulla[ _MAX_PATH ];
+	char        buffer[4096];
 
-    _fullpath( fulla, a, sizeof( fulla ) );
-    _fullpath( path, b, sizeof( path ) );
-    return( FNCMP( fulla, path ) == 0 );
+
+	while (size > sizeof(buffer))
+	{
+		CopyBytes(buffer, source, dest, sizeof(buffer));
+		size -= sizeof(buffer);
+	}
+	if (size != 0)
+	{
+		CopyBytes(buffer, source, dest, size);
+	}
 }
 
-bool SameName( char *a, char *b )
+static char     path[_MAX_PATH];
+
+static char     drive[_MAX_DRIVE];
+static char     dir[_MAX_DIR];
+static char     fname[_MAX_FNAME];
+static char     fext[_MAX_EXT];
+
+bool SameFile(char* a, char* b)
 {
-    _splitpath( a, NULL, NULL, path, fext );
-    _splitpath( b, NULL, NULL, fname, fext );
-    return( FNCMP( path, fname ) == 0 );
+	char fulla[_MAX_PATH];
+
+	_fullpath(fulla, a, sizeof(fulla));
+	_fullpath(path, b, sizeof(path));
+	return(FNCMP(fulla, path) == 0);
 }
 
-char *MakeFName( const char *a )
+bool SameName(char* a, char* b)
 {
-    _splitpath( a, NULL, NULL, fname, fext );
-    return( fname );
+	_splitpath(a, NULL, NULL, path, fext);
+	_splitpath(b, NULL, NULL, fname, fext);
+	return(FNCMP(path, fname) == 0);
 }
 
-bool IsExt( char *a, char *b )
+char* MakeFName(const char* a)
 {
-    _splitpath( a, NULL, NULL, NULL, fext );
-    return( FNCMP( fext, b ) == 0 );
+	_splitpath(a, NULL, NULL, fname, fext);
+	return(fname);
 }
 
-void DefaultExtension( char *name, char *def_ext )
+bool IsExt(char* a, char* b)
 {
-    _splitpath( name, drive, dir, fname, fext );
-    if( fext[ 0 ] == '\0' ) {
-        _makepath( name, drive, dir, fname, def_ext );
-    }
+	_splitpath(a, NULL, NULL, NULL, fext);
+	return(FNCMP(fext, b) == 0);
 }
 
-char *MakeObjOutputName( char *src, char *new )
+void DefaultExtension(char* name, char* def_ext)
 {
-    if( new != NULL ) {
-        _splitpath( new, NULL, NULL, fname, fext );
-        if( *fname == 0 )
-            _splitpath( src, NULL, NULL, fname, NULL );
-        _makepath( path, NULL, Options.output_directory, fname, fext );
-    } else {
-        _splitpath( src, NULL, NULL, fname, fext );
-        _makepath( path, NULL, Options.output_directory, fname, EXT_OBJ );
-    }
-    return( path );
+	_splitpath(name, drive, dir, fname, fext);
+	if (fext[0] == '\0')
+	{
+		_makepath(name, drive, dir, fname, def_ext);
+	}
 }
 
-char *MakeListName( void )
+char* MakeObjOutputName(char* src, char* new1)
 {
-    _splitpath( Options.input_name, NULL, NULL, fname, fext );
-    _makepath( path, NULL, NULL, fname, EXT_LST );
-    return( path );
+	if (new1 != NULL)
+	{
+		_splitpath(new1, NULL, NULL, fname, fext);
+		if (*fname == 0)
+			_splitpath(src, NULL, NULL, fname, NULL);
+		_makepath(path, NULL, Options.output_directory, fname, fext);
+	}
+	else
+	{
+		_splitpath(src, NULL, NULL, fname, fext);
+		_makepath(path, NULL, Options.output_directory, fname, EXT_OBJ);
+	}
+	return(path);
 }
 
-char *MakeBakName( void )
+char* MakeListName(void)
 {
-    _splitpath( Options.input_name, drive, dir, fname, fext );
-    _makepath( path, drive, dir, fname, EXT_BAK );
-    return( path );
+	_splitpath(Options.input_name, NULL, NULL, fname, fext);
+	_makepath(path, NULL, NULL, fname, EXT_LST);
+	return(path);
 }
 
-char *MakeTmpName( char *buffer )
+char* MakeBakName(void)
 {
-    char name[ 9 ];
-    long initial = time( NULL ) % 1000L;
-    long count   = ( initial + 1L ) % 1000L;
-
-    _splitpath( Options.input_name, drive, dir, fname, fext );
-
-    /*
-     * For whatever it's worth, we'll only check 9999 files before
-     * quitting ;-)
-     */
-    for( ; count != initial; count = ( count + 1L ) % 1000L ) {
-        sprintf( name, "_wlib%03ld", count );
-        _makepath( buffer, drive, dir, name, "$$$" );
-
-        if( _access( buffer, 0 ) != 0 ) {
-            break;
-        }
-    }
-
-    if( count == initial ) {
-        FatalError( ERR_CANT_WRITE, "temporary file", strerror( errno ) );
-    }
-
-    return( buffer );
+	_splitpath(Options.input_name, drive, dir, fname, fext);
+	_makepath(path, drive, dir, fname, EXT_BAK);
+	return(path);
 }
 
-char *TrimPath( char *name )
+char* MakeTmpName(char* buffer)
 {
-    _splitpath( name, NULL, NULL, fname, fext );
-    _makepath( name, NULL, NULL, fname, fext );
-    return( name );
+	char name[9];
+	long initial = time(NULL) % 1000L;
+	long count = (initial + 1L) % 1000L;
+
+	_splitpath(Options.input_name, drive, dir, fname, fext);
+
+	/*
+	 * For whatever it's worth, we'll only check 9999 files before
+	 * quitting ;-)
+	 */
+	for (; count != initial; count = (count + 1L) % 1000L)
+	{
+		sprintf(name, "_wlib%03ld", count);
+		_makepath(buffer, drive, dir, name, "$$$");
+
+		if (_access(buffer, 0) != 0)
+		{
+			break;
+		}
+	}
+
+	if (count == initial)
+	{
+		FatalError(ERR_CANT_WRITE, "temporary file", strerror(errno));
+	}
+
+	return(buffer);
+}
+
+char* TrimPath(char* name)
+{
+	_splitpath(name, NULL, NULL, fname, fext);
+	_makepath(name, NULL, NULL, fname, fext);
+	return(name);
 }
 
 
-char    *FormSym( char *name )
+char* FormSym(char* name)
 {
-    static      char    buff[ 128 ];
+	static      char    buff[128];
 
-    if( Options.mangled ) {
-        strcpy( buff, name );
-    } else {
-        __demangle_l( name, 0, buff, sizeof( buff ) );
-    }
-    return( buff );
+	if (Options.mangled)
+	{
+		strcpy(buff, name);
+	}
+	else
+	{
+		__demangle_l(name, 0, buff, sizeof(buff));
+	}
+	return(buff);
 }
 
-char *LibFormat( void )
+char* LibFormat(void)
 {
-    switch( Options.libtype ) {
-    case WL_LTYPE_AR:
-        return( "AR" );
-    case WL_LTYPE_MLIB:
-        return( "MLIB" );
-    case WL_LTYPE_OMF:
-        return( "LIB" );
-    default:
-        return( "unknown format" );
-    }
+	switch (Options.libtype)
+	{
+		case WL_LTYPE_AR:
+			return("AR");
+		case WL_LTYPE_MLIB:
+			return("MLIB");
+		case WL_LTYPE_OMF:
+			return("LIB");
+		default:
+			return("unknown format");
+	}
 }

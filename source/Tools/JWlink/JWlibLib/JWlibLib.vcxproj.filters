@@ -23,79 +23,79 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="pch.c">
+    <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\JWlib\c\writelib.c">
+    <ClCompile Include="..\JWlib\c\writelib.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\JWlib\c\wlibutil.c">
+    <ClCompile Include="..\JWlib\c\wlibutil.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\JWlib\c\wlib.c">
+    <ClCompile Include="..\JWlib\c\wlib.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\JWlib\c\symtable.c">
+    <ClCompile Include="..\JWlib\c\symtable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\JWlib\c\symlist.c">
+    <ClCompile Include="..\JWlib\c\symlist.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\JWlib\c\proclib.c">
+    <ClCompile Include="..\JWlib\c\proclib.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\JWlib\c\orlrtns.c">
+    <ClCompile Include="..\JWlib\c\orlrtns.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\JWlib\c\omfutil.c">
+    <ClCompile Include="..\JWlib\c\omfutil.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\JWlib\c\omfproc.c">
+    <ClCompile Include="..\JWlib\c\omfproc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\JWlib\c\memfuncs.c">
+    <ClCompile Include="..\JWlib\c\memfuncs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\JWlib\c\libwalk.c">
+    <ClCompile Include="..\JWlib\c\libwalk.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\JWlib\c\cmdline.c">
+    <ClCompile Include="..\JWlib\c\cmdline.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\JWlib\c\coffwrt.c">
+    <ClCompile Include="..\JWlib\c\coffwrt.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\JWlib\c\convert.c">
+    <ClCompile Include="..\JWlib\c\convert.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\JWlib\c\debug.c">
+    <ClCompile Include="..\JWlib\c\debug.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\JWlib\c\elfobjs.c">
+    <ClCompile Include="..\JWlib\c\elfobjs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\JWlib\c\error.c">
+    <ClCompile Include="..\JWlib\c\error.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\JWlib\c\idedrv.c">
+    <ClCompile Include="..\JWlib\c\idedrv.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\JWlib\c\ideentry.c">
+    <ClCompile Include="..\JWlib\c\ideentry.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\JWlib\c\idemsgfm.c">
+    <ClCompile Include="..\JWlib\c\idemsgfm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\JWlib\c\idemsgpr.c">
+    <ClCompile Include="..\JWlib\c\idemsgpr.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\JWlib\c\implib.c">
+    <ClCompile Include="..\JWlib\c\implib.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\JWlib\c\inlib.c">
+    <ClCompile Include="..\JWlib\c\inlib.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\JWlib\c\libio.c">
+    <ClCompile Include="..\JWlib\c\libio.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
