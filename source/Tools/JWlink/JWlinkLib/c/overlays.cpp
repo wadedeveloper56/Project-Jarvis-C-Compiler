@@ -88,7 +88,7 @@ void NumberSections( void )
 /********************************/
 {
     if( ( FmtData.type & MK_OVERLAYS ) && FmtData.u.dos.distribute ) {
-        _ChkAlloc( SectOvlTab, sizeof( section * ) * ( OvlNum + 1 ) );
+        _ChkAlloc(section**, SectOvlTab, sizeof( section * ) * ( OvlNum + 1 ) );
         SectOvlTab[0] = Root;
     }
     OvlNum = 1;
