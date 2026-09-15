@@ -32,7 +32,7 @@
 
 /*
   MIXCACHE - object file caching routines which do both full file caching
-                and paged caching.
+				and paged caching.
 */
 
 #include "pch.h"
@@ -47,283 +47,337 @@
 #include "objio.h"
 #include "objcache.h"
 
-static bool             DumpFileCache( infilelist *, bool );
+static bool             DumpFileCache(infilelist*, bool);
 
 static bool     Multipage;
 
 #define CACHE_PAGE_SIZE         (8*1024)
 
-static unsigned NumCacheBlocks( unsigned long len )
+static unsigned NumCacheBlocks(unsigned long len)
 /*************************************************/
 // figure out the number of cache blocks necessary
 {
-    unsigned    numblocks;
+	unsigned    numblocks;
 
-    numblocks = len / CACHE_PAGE_SIZE;
-    if( len % CACHE_PAGE_SIZE != 0 ) {
-        numblocks++;
-    }
-    return numblocks;
+	numblocks = len / CACHE_PAGE_SIZE;
+	if (len % CACHE_PAGE_SIZE != 0)
+	{
+		numblocks++;
+	}
+	return numblocks;
 }
 
-bool CacheOpen( file_list *list )
+bool CacheOpen(file_list* list)
 /**************************************/
 {
-    infilelist *file;
-    unsigned    numblocks;
-    char **     cache;
+	infilelist* file;
+	unsigned    numblocks;
+	char** cache;
 
-    if( list == NULL ) return TRUE;
-    file = list->file;
-    if( file->flags & INSTAT_IOERR ) return( FALSE );
-    if( DoObjOpen( file ) ) {
-        file->flags |= INSTAT_IN_USE;
-    } else {
-        file->flags |= INSTAT_IOERR;
-        return( FALSE );
-    }
-    if( file->len == 0 ) {
-        file->len = QFileSize( file->handle );
-        if( file->len == 0 ) {
-            LnkMsg( ERR+MSG_BAD_OBJECT, "s", file->name );
-            file->flags |= INSTAT_IOERR;
-            return( FALSE );
-        }
-    }
-    if( !(file->flags & INSTAT_SET_CACHE) ) {
-        if( LinkFlags & CACHE_FLAG ) {
-            file->flags |= INSTAT_FULL_CACHE;
-        } else if( LinkFlags & NOCACHE_FLAG ) {
-            file->flags |= INSTAT_PAGE_CACHE;
-        } else {
-            if( file->flags & INSTAT_LIBRARY ) {
-                file->flags |= INSTAT_PAGE_CACHE;
-            } else {
-                file->flags |= INSTAT_FULL_CACHE;
-            }
-        }
-    }
-    if( file->cache == NULL ) {
-        if( file->flags & INSTAT_FULL_CACHE ) {
-            _ChkAlloc( file->cache, file->len );
-            if( file->currpos != 0 ) {
-                QLSeek( file->handle, 0, SEEK_SET, file->name );
-            }
-            QRead( file->handle, file->cache, file->len, file->name );
-            file->currpos = file->len;
-        } else {
-            numblocks = NumCacheBlocks( file->len );
-            _Pass1Alloc( file->cache, numblocks * sizeof(char *) );
-            cache = file->cache;
-            while( numblocks > 0 ) {
-                *cache = NULL;
-                cache++;
-                numblocks--;
-            }
-        }
-    }
-    return TRUE;
+	if (list == NULL) return TRUE;
+	file = list->file;
+	if (file->flags & INSTAT_IOERR) return(FALSE);
+	if (DoObjOpen(file))
+	{
+		DO_OR_EQ(infile_flags, file->flags, |=, INSTAT_IN_USE);
+	}
+	else
+	{
+		DO_OR_EQ(infile_flags, file->flags, |=, INSTAT_IOERR);
+		return(FALSE);
+	}
+	if (file->len == 0)
+	{
+		file->len = QFileSize(file->handle);
+		if (file->len == 0)
+		{
+			LnkMsg(ERR + MSG_BAD_OBJECT, "s", file->name);
+			DO_OR_EQ(infile_flags, file->flags, |=, INSTAT_IOERR);
+			return(FALSE);
+		}
+	}
+	if (!(file->flags & INSTAT_SET_CACHE))
+	{
+		if (LinkFlags & CACHE_FLAG)
+		{
+			DO_OR_EQ(infile_flags, file->flags, |=, INSTAT_FULL_CACHE);
+		}
+		else if (LinkFlags & NOCACHE_FLAG)
+		{
+			DO_OR_EQ(infile_flags, file->flags, |=, INSTAT_PAGE_CACHE);
+		}
+		else
+		{
+			if (file->flags & INSTAT_LIBRARY)
+			{
+				DO_OR_EQ(infile_flags, file->flags, |=, INSTAT_PAGE_CACHE);
+			}
+			else
+			{
+				DO_OR_EQ(infile_flags, file->flags, |=, INSTAT_FULL_CACHE);
+			}
+		}
+	}
+	if (file->cache == NULL)
+	{
+		if (file->flags & INSTAT_FULL_CACHE)
+		{
+			_ChkAlloc(void*, file->cache, file->len);
+			if (file->currpos != 0)
+			{
+				QLSeek(file->handle, 0, SEEK_SET, file->name);
+			}
+			QRead(file->handle, file->cache, file->len, file->name);
+			file->currpos = file->len;
+		}
+		else
+		{
+			numblocks = NumCacheBlocks(file->len);
+			_Pass1Alloc(void*, file->cache, numblocks * sizeof(char*));
+			cache = (char**)file->cache;
+			while (numblocks > 0)
+			{
+				*cache = NULL;
+				cache++;
+				numblocks--;
+			}
+		}
+	}
+	return TRUE;
 }
 
-void CacheClose( file_list *list, unsigned pass )
+void CacheClose(file_list* list, unsigned pass)
 /******************************************************/
 {
-    infilelist *file;
-    bool        nukecache;
+	infilelist* file;
+	bool        nukecache;
 
-    if( list == NULL ) return;
-    file = list->file;
-//    if( file->handle == NIL_HANDLE ) return;
-    file->flags &= ~INSTAT_IN_USE;
-    switch( pass ) {
-    case 1: /* first pass */
-        nukecache = !(file->flags & INSTAT_LIBRARY);
-        if( file->flags & INSTAT_FULL_CACHE ) {
-            if( nukecache ) {
-                FreeObjCache( list );
-            }
-        } else {
-            DumpFileCache( file, nukecache );   // don't cache .obj's
-        }
-        break;
-    case 3: /* freeing structure */
-        FreeObjCache( list );
-        if( file->handle != NIL_HANDLE ) {
-            QClose( file->handle, file->name );
-            file->handle = NIL_HANDLE;
-        }
-        break;
-    }
+	if (list == NULL) return;
+	file = list->file;
+	//    if( file->handle == NIL_HANDLE ) return;
+	DO_AND_EQ(infile_flags, file->flags, &=, ~INSTAT_IN_USE);
+	switch (pass)
+	{
+		case 1: /* first pass */
+			nukecache = !(file->flags & INSTAT_LIBRARY);
+			if (file->flags & INSTAT_FULL_CACHE)
+			{
+				if (nukecache)
+				{
+					FreeObjCache(list);
+				}
+			}
+			else
+			{
+				DumpFileCache(file, nukecache);   // don't cache .obj's
+			}
+			break;
+		case 3: /* freeing structure */
+			FreeObjCache(list);
+			if (file->handle != NIL_HANDLE)
+			{
+				QClose(file->handle, file->name);
+				file->handle = NIL_HANDLE;
+			}
+			break;
+	}
 }
 
-void * CachePermRead( file_list *list, unsigned long pos, unsigned len )
+void* CachePermRead(file_list* list, unsigned long pos, unsigned len)
 /*****************************************************************************/
 {
-    char *      buf;
-    char *      result;
+	char* buf;
+	char* result;
 
-    buf = CacheRead( list, pos, len );
-    if( list->file->flags & INSTAT_FULL_CACHE ) return buf;
-    if( Multipage ) {
-        _LnkReAlloc( result, buf, len );
-        _ChkAlloc( TokBuff, TokSize );
-        Multipage = FALSE;              // indicate that last _read is permanent.
-    } else {
-        _ChkAlloc( result, len );
-        memcpy( result, buf, len );
-    }
-    return result;
+	buf = (char*)CacheRead(list, pos, len);
+	if (list->file->flags & INSTAT_FULL_CACHE) return buf;
+	if (Multipage)
+	{
+		_LnkReAlloc(char*, result, buf, len);
+		_ChkAlloc(char*, TokBuff, TokSize);
+		Multipage = FALSE;              // indicate that last _read is permanent.
+	}
+	else
+	{
+		_ChkAlloc(char*, result, len);
+		memcpy(result, buf, len);
+	}
+	return result;
 }
 
-void * CacheRead( file_list * list, unsigned long pos, unsigned len )
+void* CacheRead(file_list* list, unsigned long pos, unsigned len)
 /**************************************************************************/
 /* _read len bytes out of the cache. */
 {
-    unsigned    bufnum;
-    unsigned    startnum;
-    unsigned    offset;
-    unsigned    amtread;
-    char *      result;
-    char **     cache;
-    unsigned long newpos;
-    infilelist *file;
+	unsigned    bufnum;
+	unsigned    startnum;
+	unsigned    offset;
+	unsigned    amtread;
+	char* result;
+	char** cache;
+	unsigned long newpos;
+	infilelist* file;
 
-    if( list->file->flags & INSTAT_FULL_CACHE ) {
-        if( pos + len > list->file->len ) return NULL;
-        return (char *)list->file->cache + pos;
-    }
-    Multipage = FALSE;
-    file = list->file;
-    offset = pos % CACHE_PAGE_SIZE;
-    amtread = CACHE_PAGE_SIZE - offset;
-    startnum = pos / CACHE_PAGE_SIZE;
-    bufnum = startnum;
-    cache = file->cache;
-    for(;;) {
-        if( cache[bufnum] == NULL ) {   // make sure page is in.
-            _ChkAlloc( cache[bufnum], CACHE_PAGE_SIZE );
-            newpos = (unsigned long) bufnum * CACHE_PAGE_SIZE;
-            if( file->currpos != newpos ) {
-                QSeek( file->handle, newpos, file->name );
-            }
-            file->currpos = newpos + CACHE_PAGE_SIZE;
-            QRead( file->handle, cache[bufnum], CACHE_PAGE_SIZE, file->name );
-        }
-        if( amtread >= len ) break;
-        amtread += CACHE_PAGE_SIZE;     // it spans pages.
-        bufnum++;
-        Multipage = TRUE;
-    }
-    if( !Multipage ) {
-        result = cache[startnum] + offset;
-    } else {
-        if( len > TokSize ) {
-            TokSize = ROUND_UP( len, SECTOR_SIZE );
-            _LnkReAlloc( TokBuff, TokBuff, TokSize );
-        }
-        amtread = CACHE_PAGE_SIZE - offset;
-        memcpy( TokBuff, cache[startnum] + offset, amtread );
-        len -= amtread;
-        result = TokBuff + amtread;
-        for(;;) {
-            startnum++;
-            if( len <= CACHE_PAGE_SIZE ) {
-                memcpy( result, cache[startnum], len );
-                break;
-            } else {
-                memcpy( result, cache[startnum], CACHE_PAGE_SIZE );
-                len -= CACHE_PAGE_SIZE;
-                result += CACHE_PAGE_SIZE;
-            }
-        }
-        result = TokBuff;
-    }
-    return result;
+	if (list->file->flags & INSTAT_FULL_CACHE)
+	{
+		if (pos + len > list->file->len) return NULL;
+		return (char*)list->file->cache + pos;
+	}
+	Multipage = FALSE;
+	file = list->file;
+	offset = pos % CACHE_PAGE_SIZE;
+	amtread = CACHE_PAGE_SIZE - offset;
+	startnum = pos / CACHE_PAGE_SIZE;
+	bufnum = startnum;
+	cache = (char**)file->cache;
+	for (;;)
+	{
+		if (cache[bufnum] == NULL)
+		{   // make sure page is in.
+			_ChkAlloc(char*, cache[bufnum], CACHE_PAGE_SIZE);
+			newpos = (unsigned long)bufnum * CACHE_PAGE_SIZE;
+			if (file->currpos != newpos)
+			{
+				QSeek(file->handle, newpos, file->name);
+			}
+			file->currpos = newpos + CACHE_PAGE_SIZE;
+			QRead(file->handle, cache[bufnum], CACHE_PAGE_SIZE, file->name);
+		}
+		if (amtread >= len) break;
+		amtread += CACHE_PAGE_SIZE;     // it spans pages.
+		bufnum++;
+		Multipage = TRUE;
+	}
+	if (!Multipage)
+	{
+		result = cache[startnum] + offset;
+	}
+	else
+	{
+		if (len > TokSize)
+		{
+			TokSize = ROUND_UP(len, SECTOR_SIZE);
+			_LnkReAlloc(char*, TokBuff, TokBuff, TokSize);
+		}
+		amtread = CACHE_PAGE_SIZE - offset;
+		memcpy(TokBuff, cache[startnum] + offset, amtread);
+		len -= amtread;
+		result = TokBuff + amtread;
+		for (;;)
+		{
+			startnum++;
+			if (len <= CACHE_PAGE_SIZE)
+			{
+				memcpy(result, cache[startnum], len);
+				break;
+			}
+			else
+			{
+				memcpy(result, cache[startnum], CACHE_PAGE_SIZE);
+				len -= CACHE_PAGE_SIZE;
+				result += CACHE_PAGE_SIZE;
+			}
+		}
+		result = TokBuff;
+	}
+	return result;
 }
 
-bool CacheIsPerm( void )
+bool CacheIsPerm(void)
 /*****************************/
 {
-    return !Multipage;
+	return !Multipage;
 }
 
-bool CacheEnd( file_list * list, unsigned long pos )
+bool CacheEnd(file_list* list, unsigned long pos)
 /*********************************************************/
 {
-    return pos >= list->file->len;
+	return pos >= list->file->len;
 }
 
-void CacheFini( void )
+void CacheFini(void)
 /***************************/
-{
-}
+{}
 
-void CacheFree( file_list *list, void *mem )
+void CacheFree(file_list* list, void* mem)
 /*************************************************/
 // used for disposing things allocated by CachePermRead
 {
-    if( list->file->flags & INSTAT_PAGE_CACHE ) {
-        _LnkFree( mem );
-    }
+	if (list->file->flags & INSTAT_PAGE_CACHE)
+	{
+		_LnkFree(mem);
+	}
 }
 
-static bool DumpFileCache( infilelist *file, bool nuke )
+static bool DumpFileCache(infilelist* file, bool nuke)
 /******************************************************/
 {
-    unsigned    num;
-    unsigned    savenum;
-    unsigned    index;
-    char **     blocklist;
-    bool        blockfreed;
+	unsigned    num;
+	unsigned    savenum;
+	unsigned    index;
+	char** blocklist;
+	bool        blockfreed;
 
-    blockfreed = FALSE;
-    if( nuke ) {
-        savenum = UINT_MAX;
-    } else {
-        savenum = file->currpos / CACHE_PAGE_SIZE;
-    }
-    if( file->cache != NULL ) {
-        num = NumCacheBlocks( file->len );
-        blocklist = file->cache;
-        for( index = 0; index < num; index++ ) {
-            if( index != savenum && *blocklist != NULL ) {
-                _LnkFree( *blocklist );
-                *blocklist = NULL;
-                blockfreed = TRUE;
-            }
-            blocklist++;
-        }
-    }
-    return blockfreed;
+	blockfreed = FALSE;
+	if (nuke)
+	{
+		savenum = UINT_MAX;
+	}
+	else
+	{
+		savenum = file->currpos / CACHE_PAGE_SIZE;
+	}
+	if (file->cache != NULL)
+	{
+		num = NumCacheBlocks(file->len);
+		blocklist = (char**)file->cache;
+		for (index = 0; index < num; index++)
+		{
+			if (index != savenum && *blocklist != NULL)
+			{
+				_LnkFree(*blocklist);
+				*blocklist = NULL;
+				blockfreed = TRUE;
+			}
+			blocklist++;
+		}
+	}
+	return blockfreed;
 }
 
-void FreeObjCache( file_list *list )
+void FreeObjCache(file_list* list)
 /*****************************************/
 {
-    if( list == NULL ) return;
-    if( list->file->flags & INSTAT_FULL_CACHE ) {
-        _LnkFree( list->file->cache );
-    } else {
-        DumpFileCache( list->file, TRUE );
-    }
-    list->file->cache = NULL;
+	if (list == NULL) return;
+	if (list->file->flags & INSTAT_FULL_CACHE)
+	{
+		_LnkFree(list->file->cache);
+	}
+	else
+	{
+		DumpFileCache(list->file, TRUE);
+	}
+	list->file->cache = NULL;
 }
 
-bool DumpObjCache( void )
+bool DumpObjCache(void)
 /******************************/
 // find and dump an object file cache.
 {
-    infilelist *file;
+	infilelist* file;
 
-    file = CachedFiles;
-    while( file != NULL ) {
-        if( file->flags & INSTAT_PAGE_CACHE ) {
-            if( CurrMod == NULL || CurrMod->f.source == NULL
-                                || CurrMod->f.source->file != file ) {
-                if( DumpFileCache( file, TRUE ) ) return TRUE;
-            }
-        }
-        file = file->next;
-    }
-    return FALSE;
+	file = CachedFiles;
+	while (file != NULL)
+	{
+		if (file->flags & INSTAT_PAGE_CACHE)
+		{
+			if (CurrMod == NULL || CurrMod->f.source == NULL
+				|| CurrMod->f.source->file != file)
+			{
+				if (DumpFileCache(file, TRUE)) return TRUE;
+			}
+		}
+		file = file->next;
+	}
+	return FALSE;
 }

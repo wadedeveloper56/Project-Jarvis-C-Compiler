@@ -97,7 +97,7 @@ void ResetObj2Supp( void )
 /*******************************/
 {
     FixupOverflow = 0;
-    LastOptType   = 0;
+    LastOptType   = (fix_type)0;
     LastOptimized = 0xFFFFFFFF;
 }
 
@@ -288,9 +288,9 @@ static segdata * GetFrameSegData( frame_spec *targ )
          sdata = targ->u.sdata;
         break;
     case FIX_FRAME_GRP:
-        leader = Ring2First( targ->u.group->leaders );
+        leader = (seg_leader *)Ring2First( targ->u.group->leaders );
         if( leader != NULL ) {
-            sdata = Ring2First( leader->pieces );
+            sdata = (segdata *)Ring2First( leader->pieces );
         }
         break;
     case FIX_FRAME_EXT:
@@ -347,7 +347,7 @@ static void BuildReloc( save_fixup *save, frame_spec *targ, frame_spec *frame )
     memset( &fix, 0, sizeof( fix_data ) );        // to get all bitfields 0
     GetFrameAddr( targ, &fix.tgt_addr, NULL, save->off );
     GetFrameAddr( frame, &faddr, &fix.tgt_addr, save->off );
-    fix.type = save->flags;
+    fix.type = (fix_type)save->flags;
     fix.loc_addr = CurrRec.addr;
     fix.loc_addr.off += save->off;
 
@@ -399,7 +399,7 @@ static void BuildReloc( save_fixup *save, frame_spec *targ, frame_spec *frame )
         fix.tgt_addr.off += FixupOverflow << 16;
     }
     if( IsTargAbsolute( targ ) ) {
-        fix.type |= FIX_ABS;
+        DO_OR_EQ(fix_type,fix.type, |=, FIX_ABS);
     }
     if( FmtData.type & MK_OVERLAYS ) {
         if( ( targ->type == FIX_FRAME_EXT )

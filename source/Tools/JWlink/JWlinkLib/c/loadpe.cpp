@@ -1008,7 +1008,7 @@ void* RcMemMalloc(size_t size)
 
 void* RcMemRealloc(void* old_ptr, size_t newsize)
 {
-	_LnkReAlloc(old_ptr, old_ptr, newsize);
+	_LnkReAlloc(void*,old_ptr, old_ptr, newsize);
 	return(old_ptr);
 }
 

@@ -54,7 +54,7 @@ extern void     RelSymBlock( void );
 #define _LnkAlloc( t, dest, size ) dest = (t)LAlloc( size )
 #define _TryAlloc( t, dest, size ) dest = (t)TryAlloc( size )
 #define _PermAlloc( t, dest, size ) dest = (t)PermAlloc( size );
-#define _LnkReAlloc( dest, src, size ) dest = LnkReAlloc( src, size );
+#define _LnkReAlloc( t, dest, src, size ) dest = (t)LnkReAlloc( src, size );
 #define _LnkFree( ptr )         LFree( ptr )
 #define _PermFree( ptr )        /* nothing to do */
 #define _Pass1Alloc( t, dest, size ) dest = (t)Pass1Alloc( size );

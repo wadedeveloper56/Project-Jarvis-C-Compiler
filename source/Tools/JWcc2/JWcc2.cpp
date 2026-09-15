@@ -1,20 +1,29 @@
-// JWcc2.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
-
 #include <iostream>
+#include <vector>
+#include "Lexer.h"
+#include "Parser.h"
 
-int main()
-{
-    std::cout << "Hello World!\n";
+using namespace std;
+
+int main() {
+    string source_code = "int main() { return 42; }";
+
+    // 1. Run the Lexer
+    Lexer lexer(source_code);
+    vector<Token> tokens = lexer.tokenize();
+
+    // 2. Run the Parser
+    Parser parser(tokens);
+    try
+    {
+        unique_ptr<ProgramNode> ast = parser.parse_program();
+        cout << "Successfully parsed the source into an AST!" << endl;
+        // The AST root is ready for optimization or LLVM/ASM code generation.
+    }
+    catch (const exception& e)
+    {
+        cerr << e.what() << endl;
+    }
+
+    return 0;
 }
-
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
