@@ -17,9 +17,9 @@
 
 //---------------------------------------------------------------
 
-int Debug = 1;
+extern int Debug;// = 1;
 
-void _Debug( const char *format, ... )
+void _Debug(char *format, ... )
 /****************************************/
 {
     va_list args;

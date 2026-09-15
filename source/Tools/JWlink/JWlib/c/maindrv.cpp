@@ -49,7 +49,7 @@ const char  *ImageName;
 #define AR_MODE_ENV "WLIB$AR"
 
 //#ifdef __UNIX__
-char **_argv;
+extern char **_argv;
 //#endif
 
 static IDEDRV info =

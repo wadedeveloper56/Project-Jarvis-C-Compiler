@@ -1043,7 +1043,7 @@ static symbol* DoSymOp(sym_flags op, char* symname, unsigned length)
 #ifdef _INT_DEBUG
 	char* symname_dbg;
 
-	symname_dbg = malloc(length + 1);
+	symname_dbg = (char*)malloc(length + 1);
 	memcpy(symname_dbg, symname, length);
 	symname_dbg[length] = '\0';
 #endif

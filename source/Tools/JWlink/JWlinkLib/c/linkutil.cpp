@@ -589,7 +589,11 @@ void Suicide(void)
 {
 	if (SpawnStack != NULL)
 	{
+#ifdef WIN32
+		longjmp((int*)SpawnStack, 1);
+#else
 		longjmp((SETJMP_FLOAT128*)SpawnStack, 1);
+#endif
 	}
 }
 

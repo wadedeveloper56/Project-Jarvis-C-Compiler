@@ -745,7 +745,7 @@ static void CheckGrpFlags(void* _leader)
 	unsigned_16     sflags;
 
 	DEBUG((DBG_OLD, "CheckGrpFlags(%s): enter, grp=%s grp.segflags=%h leader.segflags=%h info=%x class=%h[flags=%h]",
-		leader->segname, leader->group->sym->name, leader->group->segflags, leader->segflags, leader->info, leader->class, leader->class->flags));
+		leader->segname, leader->group->sym->name, leader->group->segflags, leader->segflags, leader->info, leader->class1, leader->class1->flags));
 	sflags = leader->segflags;
 	/* jwlink: special branch for Win16 added */
 	if (FmtData.type & MK_WIN_NE)

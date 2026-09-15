@@ -1203,7 +1203,7 @@ bool ProcXDbg(void)
 		}
 		else
 		{
-			memcpy(value, Token.this, Token.len);
+			memcpy(value, Token.this1, Token.len);
 			value[Token.len] = '\0';
 			Debug = strtoul(value, NULL, 0);
 			DEBUG((DBG_BASE, "debugging info type = %x", Debug));
