@@ -389,11 +389,11 @@ static void DoDefaultSystem( void )
 {
     if( !(LinkState & FMT_DECIDED) ) {
         if( LinkState & FMT_SEEN_32_BIT ) {
-            HintFormat( MK_386 );
+            HintFormat( (exe_format)MK_386 );
         } else if ( LinkState & FMT_SEEN_64_BIT ) {
-            HintFormat( MK_PE );
+            HintFormat( (exe_format)MK_PE );
         } else {
-            HintFormat( MK_286 | MK_QNX );
+            HintFormat( (exe_format)(MK_286 | MK_QNX) );
         }
         if( !(LinkState & FMT_DECIDED) ) {
             if( LinkState & FMT_SPECIFIED ) {
@@ -420,7 +420,7 @@ static void FindLibPaths( void )
             If we haven't seen a 386 object file by this time, we're
             not going to.
         */
-        HintFormat( MK_286 );
+        HintFormat( (exe_format) MK_286 );
     }
     AddEnvPaths( "LIB" );
 }

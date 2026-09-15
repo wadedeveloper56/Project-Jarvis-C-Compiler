@@ -55,6 +55,8 @@
 #include "wressetr.h"   // from wres project
 #include "wresset2.h"  // from wres project
 
+long                    FileShift = 0;
+
 static ssize_t ResWrite(int dummy, const void* buff, size_t size)
 /*****************************************************************/
 /* redirect wres _write to writeload */
