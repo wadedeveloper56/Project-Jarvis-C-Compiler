@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "AST.h"
 #include <ostream>
@@ -7,8 +7,7 @@
 
 struct JWasmGenerator : ASTVisitor {
 	// bits: 16,32,64
-	// isWindows: when bits==64 choose Windows x64 calling convention if true, otherwise SysV
-	JWasmGenerator(std::ostream& os, int bits = 32, bool isWindows = true) : out(os), indent(0), bits(bits), inFunction(false), isWindows(isWindows) {}
+	JWasmGenerator(std::ostream& os, int bits = 32) : out(os), indent(0), bits(bits), inFunction(false) {}
 
 	void generate(Program& p) { p.accept(*this); }
 
@@ -32,18 +31,11 @@ private:
 	void ind() { for (int i = 0; i < indent; ++i) out << "  "; }
 
 	// per-function state
-	std::unordered_map<std::string,int> paramIndex; // param name -> index
-	std::unordered_map<std::string,int> localIndex; // local name -> slot (0..)
+	std::unordered_map<std::string,int> localIndex; // maps name to local index (includes params)
 	bool inFunction;
 	int nextLocalIndex();
 	std::string wasmType(const std::string& ty) const;
 	std::vector<std::string> currentParams;
 	std::vector<std::string> currentLocals;
 	std::string wordForBits() const;
-	bool isWindows;
-	std::string regA() const;
-	std::string regB() const;
-	int wordBytes() const { return bits / 8; }
-	void emitPrologue(int localBytes);
-	void emitEpilogue();
 };

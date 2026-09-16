@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "JWasmGenerator.h"
 #include "SymbolTable.h"
 
@@ -33,49 +33,16 @@ string JWasmGenerator::regB() const {
 
 void JWasmGenerator::emitPrologue(int localBytes)
 {
-	// For 32-bit and 16-bit, use ebp frame
-	if (bits == 32 || bits == 16) {
-		ind(); out << "push ebp\n";
-		ind(); out << "mov ebp, esp\n";
-		// save callee-saved registers (ebx, esi, edi)
-		ind(); out << "push ebx\n";
-		ind(); out << "push esi\n";
-		ind(); out << "push edi\n";
-		if (localBytes > 0) { ind(); out << "sub esp, " << localBytes << "\n"; }
-	} else if (bits == 64) {
-		// For x64, follow chosen calling convention: save callee-saved (rbx, rsi, rdi, rbp, r12-r15 as needed)
-		ind(); out << "push rbp\n";
-		ind(); out << "mov rbp, rsp\n";
-		// save some callee-saved registers (rbx, rsi, rdi)
-		ind(); out << "push rbx\n";
-		ind(); out << "push rsi\n";
-		ind(); out << "push rdi\n";
-		if (localBytes > 0) { ind(); out << "sub rsp, " << localBytes << "\n"; }
-	}
+	ind(); out << "push ebp\n";
+	ind(); out << "mov ebp, esp\n";
+	if (localBytes > 0) { ind(); out << "sub esp, " << localBytes << "\n"; }
 }
 
 void JWasmGenerator::emitEpilogue()
 {
-	if (bits == 32 || bits == 16) {
-		if (inFunction) {
-			// restore stack
-			ind(); out << "mov esp, ebp\n";
-			ind(); out << "pop edi\n";
-			ind(); out << "pop esi\n";
-			ind(); out << "pop ebx\n";
-			ind(); out << "pop ebp\n";
-			ind(); out << "ret\n";
-		}
-	} else if (bits == 64) {
-		if (inFunction) {
-			ind(); out << "add rsp, 0 ; adjust (if locals allocated)\n";
-			ind(); out << "pop rdi\n";
-			ind(); out << "pop rsi\n";
-			ind(); out << "pop rbx\n";
-			ind(); out << "pop rbp\n";
-			ind(); out << "ret\n";
-		}
-	}
+	ind(); out << "mov esp, ebp\n";
+	ind(); out << "pop ebp\n";
+	ind(); out << "ret\n";
 }
 
 string JWasmGenerator::wasmType(const string& ty) const
@@ -91,20 +58,12 @@ string JWasmGenerator::wasmType(const string& ty) const
 void JWasmGenerator::visit(Program& n)
 {
 	out << "; MASM output - program (word size: " << wordForBits() << ")\n";
-	// data section for globals
-	out << ".data\n";
-	for (auto& d : n.decls) {
-		if (auto gv = dynamic_cast<VarDecl*>(d.get())) {
-			out << gv->name << " dd 0 ; global " << gv->type << "\n";
-		}
-	}
-	out << ".code\n";
 	for (auto& d : n.decls) d->accept(*this);
 }
 
 void JWasmGenerator::visit(VarDecl& n)
 {
-	ind(); out << "; global var " << n.name << " type=" << n.type << "\n"; // no-op
+	ind(); out << "; global var " << n.name << " type=" << n.type << "\n";
 }
 
 void JWasmGenerator::visit(FunctionDecl& n)
@@ -151,7 +110,6 @@ void JWasmGenerator::visit(FunctionDecl& n)
 	// body prologue
 	int totalLocalBytes = (idx - localCountStart) * wordBytes();
 	emitPrologue(totalLocalBytes);
-	// no-op patch: preserve behavior, adjust history
 	indent++;
 	if (n.body) n.body->accept(*this);
 	indent--;

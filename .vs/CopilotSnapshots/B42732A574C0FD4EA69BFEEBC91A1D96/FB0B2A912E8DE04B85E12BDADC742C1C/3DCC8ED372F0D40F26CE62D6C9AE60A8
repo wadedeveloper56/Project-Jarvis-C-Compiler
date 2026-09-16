@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "JWasmGenerator.h"
 #include "SymbolTable.h"
 
@@ -91,20 +91,12 @@ string JWasmGenerator::wasmType(const string& ty) const
 void JWasmGenerator::visit(Program& n)
 {
 	out << "; MASM output - program (word size: " << wordForBits() << ")\n";
-	// data section for globals
-	out << ".data\n";
-	for (auto& d : n.decls) {
-		if (auto gv = dynamic_cast<VarDecl*>(d.get())) {
-			out << gv->name << " dd 0 ; global " << gv->type << "\n";
-		}
-	}
-	out << ".code\n";
 	for (auto& d : n.decls) d->accept(*this);
 }
 
 void JWasmGenerator::visit(VarDecl& n)
 {
-	ind(); out << "; global var " << n.name << " type=" << n.type << "\n"; // no-op
+	ind(); out << "; global var " << n.name << " type=" << n.type << "\n";
 }
 
 void JWasmGenerator::visit(FunctionDecl& n)
