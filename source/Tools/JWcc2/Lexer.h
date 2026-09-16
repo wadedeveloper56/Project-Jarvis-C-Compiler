@@ -12,6 +12,7 @@ enum class TokenType
     Identifier, Number,
     OpenParen, CloseParen, OpenBrace, CloseBrace,
     Semicolon, Equal, Comma,
+    Plus, Minus, Star, Slash,
     Eof, Unknown
 };
 

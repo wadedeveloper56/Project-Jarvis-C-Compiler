@@ -14,6 +14,32 @@ public:
     virtual ~ASTNode() = default;
     virtual void accept(ASTVisitor* visitor) = 0;
 };
+using ASTPtr = unique_ptr<ASTNode>;
+
+struct Expr : ASTNode {}; 
+using ExprPtr = unique_ptr<Expr>;
+
+struct IntegerLiteral : Expr 
+{ 
+    int value; 
+    IntegerLiteral(int v) : value(v) {} 
+    void accept(ASTVisitor* visitor) override;
+};
+
+struct IdentifierExpr : Expr 
+{ 
+    string name; 
+    IdentifierExpr(string n) : name(move(n)) {} 
+    void accept(ASTVisitor* visitor) override;
+};
+
+struct BinaryExpr : Expr 
+{ 
+    string op; 
+    ExprPtr lhs, rhs; 
+    BinaryExpr(string op, ExprPtr l, ExprPtr r) : op(move(op)), lhs(move(l)), rhs(move(r)) {} 
+    void accept(ASTVisitor* visitor) override; 
+};
 
 class VarDeclNode : public ASTNode
 {
@@ -62,5 +88,8 @@ public:
     virtual void visit(VarDeclNode* node) = 0;
     virtual void visit(FunctionDeclNode* node) = 0;
     virtual void visit(ReturnStmtNode* node) = 0;
+	virtual void visit(IntegerLiteral* node) = 0;
+	virtual void visit(IdentifierExpr* node) = 0;
+	virtual void visit(BinaryExpr* node) = 0;
 };
 

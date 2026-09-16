@@ -1,6 +1,19 @@
 #include "pch.h"
 #include "ASTPrinter.h"
 
+void ASTPrinter::visit(IntegerLiteral* node) { cout << "[IntegerLiteral] " << node->value << "\n"; }
+
+void ASTPrinter::visit(IdentifierExpr* node) { cout << "[IdentifierExpr] " << node->name << "\n"; }
+
+void ASTPrinter::visit(BinaryExpr* node)
+{
+	cout << "[BinaryExpr] " << node->op << "\n";
+	cout << "  LHS: ";
+	node->lhs->accept(this);
+	cout << "  RHS: ";
+	node->rhs->accept(this);
+}
+
 void ASTPrinter::visit(ProgramNode* node)
 {
 	cout << "--- AST PROGRAM START ---\n";

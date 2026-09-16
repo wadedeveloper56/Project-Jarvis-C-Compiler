@@ -42,6 +42,10 @@ vector<Token> Lexer::tokenize()
 			case ';': index_++; tokens.push_back({ TokenType::Semicolon, ";" }); break;
 			case '=': index_++; tokens.push_back({ TokenType::Equal, "=" }); break;
 			case ',': index_++; tokens.push_back({ TokenType::Comma, "," }); break;
+			case '+': index_++; tokens.push_back({ TokenType::Plus, "+" }); break;
+			case '-': index_++; tokens.push_back({ TokenType::Minus, "-" }); break;
+			case '*': index_++; tokens.push_back({ TokenType::Star, "*" }); break;
+			case '/': index_++; tokens.push_back({ TokenType::Slash, "/" }); break;
 			default:
 				index_++;
 				tokens.push_back({ TokenType::Unknown, string(1, current) });

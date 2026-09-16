@@ -10,4 +10,7 @@ public:
 	void visit(VarDeclNode* node) override;
 	void visit(FunctionDeclNode* node) override;
 	void visit(ReturnStmtNode* node) override;
+	void visit(IntegerLiteral* node) override;
+	void visit(IdentifierExpr* node) override;
+	void visit(BinaryExpr* node) override;
 };

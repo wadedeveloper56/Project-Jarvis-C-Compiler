@@ -79,15 +79,15 @@ int main(int argc, char* argv[])
 	if (infiles->count == 0)
 	{
 		printf("No input file specified.\n");
-		exitcode = 1;
-		goto exit;
+		//exitcode = 1;
+		//goto exit;
 	}
 
 	if (outfile->count == 0)
 	{
 		printf("No output file specified.\n");
-		exitcode = 1;
-		goto exit;
+		//exitcode = 1;
+		//goto exit;
 	}
 	try
 	{
