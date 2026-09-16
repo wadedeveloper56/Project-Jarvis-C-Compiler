@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "SemanticAnalyzer.h"
 
 SemanticAnalyzer::SemanticAnalyzer()
@@ -131,7 +131,7 @@ void SemanticAnalyzer::visit(BinaryExpr& n)
 {
 	string l = evalExprType(n.lhs.get());
 	string r = evalExprType(n.rhs.get());
-	if (l != "int" || r != "int") error("Binary operator applied to non-int types.", n.loc);
+	if (l != "int" || r != "int") error("Binary operator applied to non-int types", n.loc);
 }
 
 void SemanticAnalyzer::visit(AssignExpr& n)
@@ -176,27 +176,26 @@ string SemanticAnalyzer::evalExprType(Expr* e)
 	if (auto ae = dynamic_cast<AssignExpr*>(e))
 	{
 		const SymbolInfo* si = symbols.lookup(ae->name);
-		if (!si) { error("Assignment to undeclared variable '" + ae->name + "'", ae->loc); return string(); }
+		if (!si) { error("Assignment to undeclared variable '" + ae->name + "'"); return string(); }
 		string rt = evalExprType(ae->value.get());
-		if (si->type != rt) { error("Assignment type mismatch for '" + ae->name + "'", ae->loc); return string(); }
+		if (si->type != rt) { error("Assignment type mismatch for '" + ae->name + "'"); return string(); }
 		return si->type;
 	}
 	if (auto ce = dynamic_cast<CallExpr*>(e))
 	{
 		const SymbolInfo* si = symbols.lookup(ce->callee);
-		if (!si) { error("Call to undeclared function '" + ce->callee + "'", ce->loc); return string(); }
-		if (si->kind != SymbolKind::Function) { error("'" + ce->callee + "' is not a function", ce->loc); return string(); }
-		if (ce->args.size() != si->paramTypes.size()) { error("Wrong number of arguments in call to '" + ce->callee + "'", ce->loc); return string(); }
+		if (!si) { error("Call to undeclared function '" + ce->callee + "'"); return string(); }
+		if (si->kind != SymbolKind::Function) { error("'" + ce->callee + "' is not a function"); return string(); }
+		if (ce->args.size() != si->paramTypes.size()) { error("Wrong number of arguments in call to '" + ce->callee + "'"); return string(); }
 		for (size_t i = 0; i < ce->args.size(); ++i)
 		{
 			string t = evalExprType(ce->args[i].get());
-			if (t != si->paramTypes[i]) { error("Argument type mismatch in call to '" + ce->callee + "'", ce->loc); return string(); }
+			if (t != si->paramTypes[i]) { error("Argument type mismatch in call to '" + ce->callee + "'"); return string(); }
 		}
 		return si->type;
 	}
 	// unknown expr
-	if (e) error("Unknown expression type encountered", static_cast<Node*>(e)->loc);
-	else error("Unknown expression type encountered");
+	error("Unknown expression type encountered");
 	return string();
 }
 
@@ -208,11 +207,6 @@ void SemanticAnalyzer::error(const string& msg)
 void SemanticAnalyzer::error(const string& msg, const Node::SourceLoc& loc)
 {
 	ostringstream os;
-	if (loc.startLine == loc.endLine && loc.startColumn == loc.endColumn) {
-		os << "line " << loc.startLine << ", col " << loc.startColumn << ": " << msg;
-	} else {
-		os << "line " << loc.startLine << ", col " << loc.startColumn
-		   << " - line " << loc.endLine << ", col " << loc.endColumn << ": " << msg;
-	}
+	os << "line " << loc.startLine << ", col " << loc.startColumn << ": " << msg;
 	errs.push_back(os.str());
 }

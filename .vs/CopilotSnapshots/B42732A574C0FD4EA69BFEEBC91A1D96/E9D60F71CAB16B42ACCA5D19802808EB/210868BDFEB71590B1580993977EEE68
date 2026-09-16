@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <vector>
 #include <memory>
@@ -73,17 +73,10 @@ public:
 				while (true)
 				{
 					string ptype = parseType();
-					// allow 'void' as the sole parameter to indicate no parameters: int f(void)
-					if (ptype == "void" && cur.kind == TokenKind::RParen)
-					{
-						// consume ')' and treat as no-parameter list
-						expect(TokenKind::RParen);
-						break;
-					}
-					if (cur.kind != TokenKind::Identifier) {
-						ostringstream os; os << "Parse error at line " << cur.line << ", col " << cur.column << ": expected parameter name";
-						throw runtime_error(os.str());
-					}
+				if (cur.kind != TokenKind::Identifier) {
+					ostringstream os; os << "Parse error at line " << cur.line << ", col " << cur.column << ": expected parameter name";
+					throw runtime_error(os.str());
+				}
 					string pname = cur.text; Token pTok = cur; next();
 					fn->params.emplace_back(ptype, pname);
 					if (accept(TokenKind::Comma)) continue;
@@ -240,6 +233,8 @@ public:
 			bin->loc.endPos = minusTok.endPos; bin->loc.endLine = minusTok.endLine; bin->loc.endColumn = minusTok.endColumn;
 			return bin;
 		}
+			return bin;
+		}
 		return parsePrimary();
 	}
 
@@ -286,10 +281,7 @@ public:
 			expect(TokenKind::RParen);
 			return e;
 		}
-		{
-			ostringstream os; os << "Parse error at line " << cur.line << ", col " << cur.column << ": unexpected token in primary (got '" << cur.text << "')";
-			throw runtime_error(os.str());
-		}
+		throw runtime_error("Unexpected token in primary");
 	}
 
 	string parseType() 

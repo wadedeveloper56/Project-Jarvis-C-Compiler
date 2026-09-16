@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <vector>
 #include <memory>
@@ -25,10 +25,8 @@ class Parser
 	{
 		if (cur.kind != k)
 		{
-			ostringstream os;
-			os << "Parse error at line " << cur.line << ", col " << cur.column << " expected token";
+			ostringstream os; os << "Parse error at pos " << cur.pos << " expected token";
 			if (*msg) os << " (" << msg << ")";
-			os << " (got '" << cur.text << "')";
 			throw runtime_error(os.str());
 		}
 		next();
@@ -51,10 +49,7 @@ public:
 	{
 		// Only support 'int' and 'void' return types
 		string type = parseType();
-		if (cur.kind != TokenKind::Identifier) {
-			ostringstream os; os << "Parse error at line " << cur.line << ", col " << cur.column << ": expected identifier after type";
-			throw runtime_error(os.str());
-		}
+		if (cur.kind != TokenKind::Identifier) throw runtime_error("Expected identifier after type");
 		Token idTok = cur;
 		string name = cur.text;
 		next();
@@ -73,17 +68,7 @@ public:
 				while (true)
 				{
 					string ptype = parseType();
-					// allow 'void' as the sole parameter to indicate no parameters: int f(void)
-					if (ptype == "void" && cur.kind == TokenKind::RParen)
-					{
-						// consume ')' and treat as no-parameter list
-						expect(TokenKind::RParen);
-						break;
-					}
-					if (cur.kind != TokenKind::Identifier) {
-						ostringstream os; os << "Parse error at line " << cur.line << ", col " << cur.column << ": expected parameter name";
-						throw runtime_error(os.str());
-					}
+					if (cur.kind != TokenKind::Identifier) throw runtime_error("expected param name");
 					string pname = cur.text; Token pTok = cur; next();
 					fn->params.emplace_back(ptype, pname);
 					if (accept(TokenKind::Comma)) continue;
@@ -125,10 +110,7 @@ public:
 			{
 				// for simplicity only accept 'int' local decls (void params only as function param)
 				string t = parseType();
-			if (cur.kind != TokenKind::Identifier) {
-				ostringstream os; os << "Parse error at line " << cur.line << ", col " << cur.column << ": expected identifier in local declaration";
-				throw runtime_error(os.str());
-			}
+				if (cur.kind != TokenKind::Identifier) throw runtime_error("expected identifier in local decl");
 				Token idTok = cur;
 				string n = cur.text; next();
 				auto vd = make_unique<VarDecl>();
@@ -286,20 +268,14 @@ public:
 			expect(TokenKind::RParen);
 			return e;
 		}
-		{
-			ostringstream os; os << "Parse error at line " << cur.line << ", col " << cur.column << ": unexpected token in primary (got '" << cur.text << "')";
-			throw runtime_error(os.str());
-		}
+		throw runtime_error("Unexpected token in primary");
 	}
 
 	string parseType() 
 	{
 		if (accept(TokenKind::Int)) return "int";
 		if (accept(TokenKind::Void)) return "void";
-		{
-			ostringstream os; os << "Parse error at line " << cur.line << ", col " << cur.column << ": unknown type '" << cur.text << "'";
-			throw runtime_error(os.str());
-		}
+		throw runtime_error("Unknown type");
 	}
 };
 

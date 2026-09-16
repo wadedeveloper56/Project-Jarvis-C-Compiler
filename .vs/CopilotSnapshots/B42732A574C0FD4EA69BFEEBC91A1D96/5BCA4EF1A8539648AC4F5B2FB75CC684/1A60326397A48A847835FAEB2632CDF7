@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "SemanticAnalyzer.h"
 
 SemanticAnalyzer::SemanticAnalyzer()
@@ -98,15 +98,15 @@ void SemanticAnalyzer::visit(ReturnStmt& n)
 	}
 	if (currentFunctionRetType == "void")
 	{
-		if (n.expr) error("Returning value from void function", n.loc);
+		if (n.expr) error("Returning value from void function");
 	}
 	else
 	{
-		if (!n.expr) error("Non-void function must return a value", n.loc);
+		if (!n.expr) error("Non-void function must return a value");
 		else
 		{
 			string t = evalExprType(n.expr.get());
-			if (t != currentFunctionRetType) error("Return type mismatch: expected '" + currentFunctionRetType + "' got '" + t + "'", n.loc);
+			if (t != currentFunctionRetType) error("Return type mismatch: expected '" + currentFunctionRetType + "' got '" + t + "'");
 		}
 	}
 }
@@ -124,34 +124,34 @@ void SemanticAnalyzer::visit(NumberExpr& n)
 void SemanticAnalyzer::visit(VarExpr& n)
 {
 	const SymbolInfo* si = symbols.lookup(n.name);
-	if (!si) error("Use of undeclared identifier '" + n.name + "'", n.loc);
+	if (!si) error("Use of undeclared identifier '" + n.name + "'");
 }
 
 void SemanticAnalyzer::visit(BinaryExpr& n)
 {
 	string l = evalExprType(n.lhs.get());
 	string r = evalExprType(n.rhs.get());
-	if (l != "int" || r != "int") error("Binary operator applied to non-int types.", n.loc);
+	if (l != "int" || r != "int") error("Binary operator applied to non-int types", n.loc);
 }
 
 void SemanticAnalyzer::visit(AssignExpr& n)
 {
 	const SymbolInfo* si = symbols.lookup(n.name);
-	if (!si) { error("Assignment to undeclared variable '" + n.name + "'", n.loc); return; }
+	if (!si) { error("Assignment to undeclared variable '" + n.name + "'"); return; }
 	string rt = evalExprType(n.value.get());
-	if (si->type != rt) error("Assignment type mismatch for '" + n.name + "': expected '" + si->type + "' got '" + rt + "'", n.loc);
+	if (si->type != rt) error("Assignment type mismatch for '" + n.name + "': expected '" + si->type + "' got '" + rt + "'");
 }
 
 void SemanticAnalyzer::visit(CallExpr& n)
 {
 	const SymbolInfo* si = symbols.lookup(n.callee);
-	if (!si) { error("Call to undeclared function '" + n.callee + "'", n.loc); return; }
-	if (si->kind != SymbolKind::Function) { error("'" + n.callee + "' is not a function", n.loc); return; }
-	if (n.args.size() != si->paramTypes.size()) { error("Wrong number of arguments in call to '" + n.callee + "'", n.loc); return; }
+	if (!si) { error("Call to undeclared function '" + n.callee + "'"); return; }
+	if (si->kind != SymbolKind::Function) { error("'" + n.callee + "' is not a function"); return; }
+	if (n.args.size() != si->paramTypes.size()) { error("Wrong number of arguments in call to '" + n.callee + "'"); return; }
 	for (size_t i = 0; i < n.args.size(); ++i)
 	{
 		string t = evalExprType(n.args[i].get());
-		if (t != si->paramTypes[i]) error("Argument type mismatch in call to '" + n.callee + "'", n.loc);
+		if (t != si->paramTypes[i]) error("Argument type mismatch in call to '" + n.callee + "'");
 	}
 }
 
@@ -163,7 +163,7 @@ string SemanticAnalyzer::evalExprType(Expr* e)
 	if (auto ve = dynamic_cast<VarExpr*>(e))
 	{
 		const SymbolInfo* si = symbols.lookup(ve->name);
-		if (!si) { error("Use of undeclared identifier '" + ve->name + "'", ve->loc); return string(); }
+		if (!si) { error("Use of undeclared identifier '" + ve->name + "'"); return string(); }
 		return si->type;
 	}
 	if (auto be = dynamic_cast<BinaryExpr*>(e))
@@ -176,27 +176,26 @@ string SemanticAnalyzer::evalExprType(Expr* e)
 	if (auto ae = dynamic_cast<AssignExpr*>(e))
 	{
 		const SymbolInfo* si = symbols.lookup(ae->name);
-		if (!si) { error("Assignment to undeclared variable '" + ae->name + "'", ae->loc); return string(); }
+		if (!si) { error("Assignment to undeclared variable '" + ae->name + "'"); return string(); }
 		string rt = evalExprType(ae->value.get());
-		if (si->type != rt) { error("Assignment type mismatch for '" + ae->name + "'", ae->loc); return string(); }
+		if (si->type != rt) { error("Assignment type mismatch for '" + ae->name + "'"); return string(); }
 		return si->type;
 	}
 	if (auto ce = dynamic_cast<CallExpr*>(e))
 	{
 		const SymbolInfo* si = symbols.lookup(ce->callee);
-		if (!si) { error("Call to undeclared function '" + ce->callee + "'", ce->loc); return string(); }
-		if (si->kind != SymbolKind::Function) { error("'" + ce->callee + "' is not a function", ce->loc); return string(); }
-		if (ce->args.size() != si->paramTypes.size()) { error("Wrong number of arguments in call to '" + ce->callee + "'", ce->loc); return string(); }
+		if (!si) { error("Call to undeclared function '" + ce->callee + "'"); return string(); }
+		if (si->kind != SymbolKind::Function) { error("'" + ce->callee + "' is not a function"); return string(); }
+		if (ce->args.size() != si->paramTypes.size()) { error("Wrong number of arguments in call to '" + ce->callee + "'"); return string(); }
 		for (size_t i = 0; i < ce->args.size(); ++i)
 		{
 			string t = evalExprType(ce->args[i].get());
-			if (t != si->paramTypes[i]) { error("Argument type mismatch in call to '" + ce->callee + "'", ce->loc); return string(); }
+			if (t != si->paramTypes[i]) { error("Argument type mismatch in call to '" + ce->callee + "'"); return string(); }
 		}
 		return si->type;
 	}
 	// unknown expr
-	if (e) error("Unknown expression type encountered", static_cast<Node*>(e)->loc);
-	else error("Unknown expression type encountered");
+	error("Unknown expression type encountered");
 	return string();
 }
 
@@ -208,11 +207,6 @@ void SemanticAnalyzer::error(const string& msg)
 void SemanticAnalyzer::error(const string& msg, const Node::SourceLoc& loc)
 {
 	ostringstream os;
-	if (loc.startLine == loc.endLine && loc.startColumn == loc.endColumn) {
-		os << "line " << loc.startLine << ", col " << loc.startColumn << ": " << msg;
-	} else {
-		os << "line " << loc.startLine << ", col " << loc.startColumn
-		   << " - line " << loc.endLine << ", col " << loc.endColumn << ": " << msg;
-	}
+	os << "line " << loc.startLine << ", col " << loc.startColumn << ": " << msg;
 	errs.push_back(os.str());
 }

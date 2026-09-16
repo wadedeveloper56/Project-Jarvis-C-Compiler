@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "Lexer.h"
 
 using namespace std;
@@ -19,7 +19,7 @@ Token Lexer::next()
 	}
 
 	if (i >= src.size()) {
-		Token t; t.kind = TokenKind::End; t.text = "<EOF>"; t.number = 0;
+		Token t; t.kind = TokenKind::End; t.text = ""; t.number = 0;
 		t.pos = (int)i; t.endPos = (int)i; t.line = line; t.column = column; t.endLine = line; t.endColumn = column;
 		return t;
 	}
@@ -57,9 +57,9 @@ Token Lexer::next()
 	// single-character tokens and comments
 	++i; ++pos; ++column;
 	switch (c) {
-case '+': t.kind = TokenKind::Plus; t.text = "+"; break;
-case '-': t.kind = TokenKind::Minus; t.text = "-"; break;
-case '*': t.kind = TokenKind::Star; t.text = "*"; break;
+	case '+': t.kind = TokenKind::Plus; break;
+	case '-': t.kind = TokenKind::Minus; break;
+	case '*': t.kind = TokenKind::Star; break;
 	case '/':
 		if (i < src.size() && src[i] == '/') { // line comment
 			// consume until newline
@@ -76,13 +76,13 @@ case '*': t.kind = TokenKind::Star; t.text = "*"; break;
 			return next();
 		}
 		t.kind = TokenKind::Slash; break;
-	case '(': t.kind = TokenKind::LParen; t.text = "("; break;
-	case ')': t.kind = TokenKind::RParen; t.text = ")"; break;
-	case '{': t.kind = TokenKind::LBrace; t.text = "{"; break;
-	case '}': t.kind = TokenKind::RBrace; t.text = "}"; break;
-	case ';': t.kind = TokenKind::Semicolon; t.text = ";"; break;
-	case ',': t.kind = TokenKind::Comma; t.text = ","; break;
-	case '=': t.kind = TokenKind::Assign; t.text = "="; break;
+	case '(': t.kind = TokenKind::LParen; break;
+	case ')': t.kind = TokenKind::RParen; break;
+	case '{': t.kind = TokenKind::LBrace; break;
+	case '}': t.kind = TokenKind::RBrace; break;
+	case ';': t.kind = TokenKind::Semicolon; break;
+	case ',': t.kind = TokenKind::Comma; break;
+	case '=': t.kind = TokenKind::Assign; break;
 	default:
 		t.kind = TokenKind::Unknown;
 		t.text = string(1, c);

@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "SemanticAnalyzer.h"
 
 SemanticAnalyzer::SemanticAnalyzer()
@@ -195,8 +195,7 @@ string SemanticAnalyzer::evalExprType(Expr* e)
 		return si->type;
 	}
 	// unknown expr
-	if (e) error("Unknown expression type encountered", static_cast<Node*>(e)->loc);
-	else error("Unknown expression type encountered");
+	error("Unknown expression type encountered");
 	return string();
 }
 
@@ -208,11 +207,6 @@ void SemanticAnalyzer::error(const string& msg)
 void SemanticAnalyzer::error(const string& msg, const Node::SourceLoc& loc)
 {
 	ostringstream os;
-	if (loc.startLine == loc.endLine && loc.startColumn == loc.endColumn) {
-		os << "line " << loc.startLine << ", col " << loc.startColumn << ": " << msg;
-	} else {
-		os << "line " << loc.startLine << ", col " << loc.startColumn
-		   << " - line " << loc.endLine << ", col " << loc.endColumn << ": " << msg;
-	}
+	os << "line " << loc.startLine << ", col " << loc.startColumn << ": " << msg;
 	errs.push_back(os.str());
 }
