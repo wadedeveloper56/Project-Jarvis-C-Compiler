@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "pch.h"
 #include "AST.h"
@@ -35,6 +35,5 @@ private:
 
 	// expression type evaluation
 	string evalExprType(Expr* e);
-	void error(const string& msg);
-	void error(const string& msg, const Node::SourceLoc& loc);
+	void error(const string& msg) { errs.push_back(msg); }
 };

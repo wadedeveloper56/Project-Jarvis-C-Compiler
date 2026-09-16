@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Lexer.h"
 #include "Parser.h"
@@ -7,7 +7,6 @@ struct ASTPrinter : ASTVisitor
 {
     int indent = 0;
     void ind() { for (int i = 0; i < indent; ++i) cout << "  "; }
-    void printLoc(const Node& n) { cout << " [" << n.loc.startLine << ":" << n.loc.startColumn << "-" << n.loc.endLine << ":" << n.loc.endColumn << "]"; }
 
     void visit(Program& n) override {
         cout << "Program\n";
@@ -17,13 +16,11 @@ struct ASTPrinter : ASTVisitor
     }
     void visit(VarDecl& n) override {
         ind(); cout << "VarDecl type=" << n.type << " name=" << n.name;
-        printLoc(n);
         if (n.init) { cout << " init=\n"; indent++; n.init->accept(*this); indent--; }
         else cout << "\n";
     }
     void visit(FunctionDecl& n) override {
         ind(); cout << "FunctionDecl ret=" << n.retType << " name=" << n.name << "\n";
-        printLoc(n);
         indent++;
         ind(); cout << "Params:\n"; indent++;
         for (auto& p : n.params) { ind(); cout << p.first << " " << p.second << "\n"; }
@@ -34,7 +31,6 @@ struct ASTPrinter : ASTVisitor
     }
     void visit(CompoundStmt& n) override {
         ind(); cout << "CompoundStmt\n";
-        printLoc(n);
         indent++;
         for (auto& d : n.localDecls) d->accept(*this);
         for (auto& s : n.stmts) s->accept(*this);

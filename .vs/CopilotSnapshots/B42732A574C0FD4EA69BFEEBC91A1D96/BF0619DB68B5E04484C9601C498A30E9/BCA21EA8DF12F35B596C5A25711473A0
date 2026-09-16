@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <vector>
 #include <memory>
@@ -84,8 +84,7 @@ public:
 		{
 			// global var declaration
 			auto vd = make_unique<VarDecl>();
-			vd->loc.startPos = idTok.pos; vd->loc.startLine = idTok.line; vd->loc.startColumn = idTok.column;
-			vd->loc.endPos = idTok.endPos; vd->loc.endLine = idTok.endLine; vd->loc.endColumn = idTok.endColumn;
+			vd->loc.pos = idTok.pos; vd->loc.line = idTok.line; vd->loc.column = idTok.column;
 			vd->type = type; vd->name = name;
 			if (accept(TokenKind::Assign))
 			{
@@ -168,8 +167,7 @@ public:
 				next();
 				auto val = parseAssignment();
 				auto asn = make_unique<AssignExpr>(ve->name, move(val));
-				asn->loc.startPos = assignTok.pos; asn->loc.startLine = assignTok.line; asn->loc.startColumn = assignTok.column;
-				asn->loc.endPos = assignTok.endPos; asn->loc.endLine = assignTok.endLine; asn->loc.endColumn = assignTok.endColumn;
+				asn->loc.pos = assignTok.pos; asn->loc.line = assignTok.line; asn->loc.column = assignTok.column;
 				return asn;
 			}
 		}

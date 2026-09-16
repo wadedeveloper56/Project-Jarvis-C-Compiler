@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <memory>
 #include <string>
@@ -12,7 +12,6 @@ struct Node
 {
     virtual ~Node() = default;
     virtual void accept(ASTVisitor& v) = 0;
-    struct SourceLoc { int startPos = 0; int endPos = 0; int startLine = 1; int startColumn = 1; int endLine = 1; int endColumn = 1; } loc;
 };
 
 using Ptr = unique_ptr<Node>;

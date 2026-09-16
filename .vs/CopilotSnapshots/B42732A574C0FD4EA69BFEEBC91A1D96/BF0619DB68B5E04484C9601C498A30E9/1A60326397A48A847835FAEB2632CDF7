@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "SemanticAnalyzer.h"
 
 SemanticAnalyzer::SemanticAnalyzer()
@@ -207,6 +207,6 @@ void SemanticAnalyzer::error(const string& msg)
 void SemanticAnalyzer::error(const string& msg, const Node::SourceLoc& loc)
 {
 	ostringstream os;
-	os << "line " << loc.startLine << ", col " << loc.startColumn << ": " << msg;
+	os << "line " << loc.line << ", col " << loc.column << ": " << msg;
 	errs.push_back(os.str());
 }

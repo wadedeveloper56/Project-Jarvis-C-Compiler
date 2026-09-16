@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "SemanticAnalyzer.h"
 
 SemanticAnalyzer::SemanticAnalyzer()
@@ -14,14 +14,14 @@ bool SemanticAnalyzer::analyze(Program& prog)
 		if (auto vd = dynamic_cast<VarDecl*>(d.get()))
 		{
 			if (!symbols.declareVariable(vd->name, vd->type))
-				error("Redeclaration of global variable '" + vd->name + "'", vd->loc);
+				error("Redeclaration of global variable '" + vd->name + "'");
 		}
 		else if (auto fd = dynamic_cast<FunctionDecl*>(d.get()))
 		{
 			vector<string> ptypes;
 			for (auto& p : fd->params) ptypes.push_back(p.first);
 			if (!symbols.declareFunctionProto(fd->name, fd->retType, ptypes))
-				error("Conflicting declaration of function '" + fd->name + "'", fd->loc);
+				error("Conflicting declaration of function '" + fd->name + "'");
 		}
 	}
 
@@ -43,14 +43,14 @@ void SemanticAnalyzer::visit(VarDecl& n)
 {
 	if (!symbols.declareVariable(n.name, n.type))
 	{
-		error("Redeclaration of variable '" + n.name + "'", n.loc);
+		error("Redeclaration of variable '" + n.name + "'");
 		return;
 	}
 	if (n.init)
 	{
 		string t = evalExprType(n.init.get());
 		if (t != n.type)
-			error("Type mismatch in initializer for '" + n.name + "' expected '" + n.type + "' got '" + t + "'", n.loc);
+			error("Type mismatch in initializer for '" + n.name + "' expected '" + n.type + "' got '" + t + "'");
 	}
 }
 
@@ -61,7 +61,7 @@ void SemanticAnalyzer::visit(FunctionDecl& n)
 	for (auto& p : n.params) ptypes.push_back(p.first);
 	if (!symbols.defineFunction(n.name, n.retType, ptypes))
 	{
-		error("Conflicting function definition for '" + n.name + "'", n.loc);
+		error("Conflicting function definition for '" + n.name + "'");
 	}
 
 	// enter function scope
@@ -70,7 +70,7 @@ void SemanticAnalyzer::visit(FunctionDecl& n)
 	for (auto& p : n.params)
 	{
 		if (!symbols.declareVariable(p.second, p.first))
-			error("Parameter name redeclared '" + p.second + "'", n.loc);
+			error("Parameter name redeclared '" + p.second + "'");
 	}
 
 	string prevRet = currentFunctionRetType;
@@ -93,7 +93,7 @@ void SemanticAnalyzer::visit(ReturnStmt& n)
 {
 	if (currentFunctionRetType.empty())
 	{
-		error("Return statement outside of function", n.loc);
+		error("Return statement outside of function");
 		return;
 	}
 	if (currentFunctionRetType == "void")
@@ -131,7 +131,7 @@ void SemanticAnalyzer::visit(BinaryExpr& n)
 {
 	string l = evalExprType(n.lhs.get());
 	string r = evalExprType(n.rhs.get());
-	if (l != "int" || r != "int") error("Binary operator applied to non-int types", n.loc);
+	if (l != "int" || r != "int") error("Binary operator applied to non-int types");
 }
 
 void SemanticAnalyzer::visit(AssignExpr& n)
@@ -170,7 +170,7 @@ string SemanticAnalyzer::evalExprType(Expr* e)
 	{
 		string l = evalExprType(be->lhs.get());
 		string r = evalExprType(be->rhs.get());
-		if (l != "int" || r != "int") { error("Binary operator applied to non-int types", be->loc); return string(); }
+		if (l != "int" || r != "int") { error("Binary operator applied to non-int types"); return string(); }
 		return string("int");
 	}
 	if (auto ae = dynamic_cast<AssignExpr*>(e))
@@ -197,16 +197,4 @@ string SemanticAnalyzer::evalExprType(Expr* e)
 	// unknown expr
 	error("Unknown expression type encountered");
 	return string();
-}
-
-void SemanticAnalyzer::error(const string& msg)
-{
-	errs.push_back(msg);
-}
-
-void SemanticAnalyzer::error(const string& msg, const Node::SourceLoc& loc)
-{
-	ostringstream os;
-	os << "line " << loc.startLine << ", col " << loc.startColumn << ": " << msg;
-	errs.push_back(os.str());
 }
