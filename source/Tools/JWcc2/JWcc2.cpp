@@ -10,15 +10,7 @@ bool bit32 = false;
 bool bit64 = false;
 int main(int argc, char* argv[])
 {
-	string src = "int x = 3;\n"
-		"int add(int a, int b) {\n"
-		"  int c = a + b * 2;\n"
-		"  return c;\n"
-		"}\n"
-		"int main() {\n"
-		"  int y = add(x, 4);\n"
-		"  return y;\n"
-		"}\n";
+	string src;
 	ArgIntPtr bitsize = argInt0("bB", "bitsize", NULL, "define bit size to be 16, 32 or 64 bits (default is 32)");
 	ArgFilePtr outfile = argFile0("Oo", "output", "<file>", "output file (default is \"-\")");
 	ArgLitPtr help = argLit0("hH", "help", "print this help and exit");
@@ -86,18 +78,28 @@ int main(int argc, char* argv[])
 	if (infiles->count == 0)
 	{
 		printf("No input file specified.\n");
-		//exitcode = 1;
-		//goto exit;
+		exitcode = 1;
+		goto exit;
 	}
 
 	if (outfile->count == 0)
 	{
 		printf("No output file specified.\n");
-		//exitcode = 1;
-		//goto exit;
+		exitcode = 1;
+		goto exit;
 	}
 	try
 	{
+		src = "int x = 3;\n"
+			"int add(int a, int b) {\n"
+			"  int c = a + b * 2;\n"
+			"  return c;\n"
+			"}\n"
+			"int main() {\n"
+			"  int y = add(x, 4);\n"
+			"  return y;\n"
+			"}\n";
+
 		Parser p(src);
 		auto prog = p.parseProgram();
 		ASTPrinter printer;
