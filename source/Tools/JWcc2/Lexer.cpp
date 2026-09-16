@@ -1,6 +1,7 @@
 #include <cctype>
 #include <string>
 #include <vector>
+#include "pch.h"
 #include "Lexer.h"
 
 using namespace std;

@@ -1,7 +1,4 @@
-#include <vector>
-#include <memory>
-#include <stdexcept>
-#include <iostream>
+#include "pch.h"
 #include "Parser.h"
 
 Parser::Parser(vector<Token> tokens) : tokens_(move(tokens)), index_(0) {}

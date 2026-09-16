@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "ASTPrinter.h"
 
 void ASTPrinter::visit(ProgramNode* node)
