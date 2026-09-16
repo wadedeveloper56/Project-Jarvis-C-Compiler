@@ -1,0 +1,30 @@
+﻿#ifdef JWCC2_ENABLE_GTEST
+#if defined(__has_include) && __has_include(<gtest/gtest.h>)
+#include "pch.h"
+#include <gtest/gtest.h>
+#include "Parser.h"
+#include "AST.h"
+
+using namespace std;
+
+TEST(ParserBasic, FunctionAndVarDecl) {
+	string src = "int g = 1;\nint sum(int a, int b) { int c = a + b; return c; }\n";
+	Parser p(src);
+	auto prog = p.parseProgram();
+	ASSERT_NE(prog, nullptr);
+	EXPECT_GE(prog->decls.size(), 2u);
+
+	auto vd = dynamic_cast<VarDecl*>(prog->decls[0].get());
+	ASSERT_NE(vd, nullptr);
+	EXPECT_EQ(vd->name, "g");
+
+	auto fd = dynamic_cast<FunctionDecl*>(prog->decls[1].get());
+	ASSERT_NE(fd, nullptr);
+	EXPECT_EQ(fd->name, "sum");
+	EXPECT_EQ(fd->params.size(), 2u);
+}
+
+#else
+#pragma message("GTest header not found; Parser tests disabled")
+#endif
+#endif

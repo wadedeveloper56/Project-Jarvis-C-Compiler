@@ -1,0 +1,39 @@
+﻿#ifdef JWCC2_ENABLE_GTEST
+#if defined(__has_include) && __has_include(<gtest/gtest.h>)
+#include "pch.h"
+#include <gtest/gtest.h>
+#include "Parser.h"
+#include "SemanticAnalyzer.h"
+
+using namespace std;
+
+TEST(SemanticErrors, UndefinedIdentifier) {
+	string src = "int main() { return x; }\n"; // x undeclared
+	Parser p(src);
+	auto prog = p.parseProgram();
+	SemanticAnalyzer sema;
+	bool ok = sema.analyze(*prog);
+	EXPECT_FALSE(ok);
+	auto errs = sema.errors();
+	bool found = false;
+	for (auto &e : errs) if (e.find("Use of undeclared identifier 'x'") != string::npos) found = true;
+	EXPECT_TRUE(found);
+}
+
+TEST(SemanticErrors, CallArityMismatch) {
+	string src = "int f(int a) { return a; }\nint main() { return f(1,2); }\n";
+	Parser p(src);
+	auto prog = p.parseProgram();
+	SemanticAnalyzer sema;
+	bool ok = sema.analyze(*prog);
+	EXPECT_FALSE(ok);
+	auto errs = sema.errors();
+	bool found = false;
+	for (auto &e : errs) if (e.find("Wrong number of arguments in call to 'f'") != string::npos) found = true;
+	EXPECT_TRUE(found);
+}
+
+#else
+#pragma message("GTest header not found; Semantic tests disabled")
+#endif
+#endif

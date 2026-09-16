@@ -38,3 +38,5 @@
 /build
 /source/dosbox-x/vs/freetype/objs
 /source/Tools/ocpp/x64
+/source/Tools/JWcc2/tests/Release
+/source/Tools/JWcc2/tests/x64

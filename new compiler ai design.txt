@@ -9,3 +9,25 @@
 •	Expand type system (pointers, arrays, type qualifiers).
 •	Add more semantic checks (duplicate function definitions vs prototype mismatch, control-flow checks).
 •	Add GTest unit tests for lexer/parser/semantic analyzer.
+
+
+
+
+
+•	I can improve the lexer's line/column tracking to be exact (preferred) and update all tokens accordingly.
+•	I can update ASTPrinter to print node locations.
+•	I can update the parser and semantic analyzer to include token ranges (start/end) for better highlighting.
+
+
+•	Propagate end positions for compound AST nodes (expressions/statements) so ranges cover full constructs.
+•	Include filename in Token/SourceLoc for multi-file parsing.
+•	Add source-range printing to diagnostics and highlights.
+•	Add tests that assert error messages include correct line/column (GTest).
+
+•	Add a test project .vcxproj or CMake test target wired to GTest.
+•	Expand tests to cover more cases and edge conditions (comments, multi-line tokens, operator precedence, more semantic errors).
+•	Add test runner configuration (CTest integration).
+
+•	Remove the separate JWcc2.Tests.x64.vcxproj and keep a single multi-platform vcxproj.
+•	Add a Directory.Build.targets step that automatically runs the restore script before build in CI.
+•	Add CI YAML for GitHub Actions to run vcpkg restore and then build+test.

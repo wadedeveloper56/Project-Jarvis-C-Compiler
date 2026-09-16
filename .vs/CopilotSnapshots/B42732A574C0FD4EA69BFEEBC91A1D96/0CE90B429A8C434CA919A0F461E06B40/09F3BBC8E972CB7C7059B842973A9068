@@ -1,0 +1,75 @@
+﻿// Only build these tests when GTest is available
+#if defined(__has_include)
+#  if __has_include(<gtest/gtest.h>)
+#include "pch.h"
+#include <gtest/gtest.h>
+#include "Lexer.h"
+#include "Parser.h"
+#include "SemanticAnalyzer.h"
+
+using namespace std;
+
+TEST(LexerTest, TokenizationAndLocations) {
+	string src = "int x = 42;\n";
+	Lexer lex(src);
+	Token t = lex.next();
+	EXPECT_EQ(t.kind, TokenKind::Int);
+	EXPECT_EQ(t.text, "int");
+	EXPECT_EQ(t.line, 1);
+	EXPECT_EQ(t.column, 1);
+
+	t = lex.next();
+	EXPECT_EQ(t.kind, TokenKind::Identifier);
+	EXPECT_EQ(t.text, "x");
+	EXPECT_EQ(t.line, 1);
+	EXPECT_EQ(t.column, 5);
+
+	t = lex.next();
+	EXPECT_EQ(t.kind, TokenKind::Assign);
+
+	t = lex.next();
+	EXPECT_EQ(t.kind, TokenKind::Number);
+	EXPECT_EQ(t.number, 42);
+
+	t = lex.next();
+	EXPECT_EQ(t.kind, TokenKind::Semicolon);
+
+	t = lex.next();
+	EXPECT_EQ(t.kind, TokenKind::End);
+}
+
+TEST(ParserTest, ParseSimpleProgram) {
+	string src = "int x;\nint main() { return 0; }\n";
+	Parser p(src);
+	auto prog = p.parseProgram();
+	ASSERT_NE(prog, nullptr);
+	EXPECT_GE(prog->decls.size(), 2u);
+	// first decl should be VarDecl named x
+	auto vd = dynamic_cast<VarDecl*>(prog->decls[0].get());
+	ASSERT_NE(vd, nullptr);
+	EXPECT_EQ(vd->name, "x");
+	// second should be function main
+	auto fd = dynamic_cast<FunctionDecl*>(prog->decls[1].get());
+	ASSERT_NE(fd, nullptr);
+	EXPECT_EQ(fd->name, "main");
+}
+
+TEST(SemanticTest, AnalyzerDetectsReturnMismatch) {
+	string good = "int main() { return 0; }\n";
+	Parser pg(good);
+	auto progGood = pg.parseProgram();
+	SemanticAnalyzer sema;
+	EXPECT_TRUE(sema.analyze(*progGood));
+
+	string bad = "int main() { return; }\n";
+	Parser pb(bad);
+	auto progBad = pb.parseProgram();
+	EXPECT_FALSE(sema.analyze(*progBad));
+	auto errs = sema.errors();
+	ASSERT_GT(errs.size(), 0u);
+	bool found = false;
+	for (auto &e : errs) if (e.find("Non-void function must return") != string::npos) found = true;
+	EXPECT_TRUE(found);
+}
+#  endif
+#endif

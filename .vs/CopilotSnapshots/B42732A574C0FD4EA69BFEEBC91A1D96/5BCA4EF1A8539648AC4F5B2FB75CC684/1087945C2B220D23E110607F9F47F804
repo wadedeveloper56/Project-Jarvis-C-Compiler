@@ -1,0 +1,37 @@
+﻿#ifdef JWCC2_ENABLE_GTEST
+#if defined(__has_include) && __has_include(<gtest/gtest.h>)
+#include "pch.h"
+#include <gtest/gtest.h>
+#include "Lexer.h"
+
+using namespace std;
+
+TEST(LexerBasic, IdentifiersNumbersAndPositions) {
+	string src = "int x = 123;\n// comment\nvoid f() {}\n";
+	Lexer lex(src);
+	Token t = lex.next();
+	EXPECT_EQ(t.kind, TokenKind::Int);
+	EXPECT_EQ(t.text, "int");
+	EXPECT_EQ(t.line, 1);
+
+	t = lex.next();
+	EXPECT_EQ(t.kind, TokenKind::Identifier);
+	EXPECT_EQ(t.text, "x");
+	EXPECT_EQ(t.line, 1);
+
+	// consume = and number
+	t = lex.next(); EXPECT_EQ(t.kind, TokenKind::Assign);
+	t = lex.next(); EXPECT_EQ(t.kind, TokenKind::Number); EXPECT_EQ(t.number, 123);
+
+	// semicolon
+	t = lex.next(); EXPECT_EQ(t.kind, TokenKind::Semicolon);
+
+	// comment skip, next token is Void
+	t = lex.next(); EXPECT_EQ(t.kind, TokenKind::Void);
+	t = lex.next(); EXPECT_EQ(t.kind, TokenKind::Identifier); EXPECT_EQ(t.text, "f");
+}
+
+#else
+#pragma message("GTest header not found; Lexer tests disabled")
+#endif
+#endif
