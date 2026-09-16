@@ -1,29 +1,26 @@
-#include <iostream>
-#include <vector>
+#include "pch.h"
 #include "Lexer.h"
 #include "Parser.h"
+#include "ASTPrinter.h"
 
 using namespace std;
 
-int main() {
-    string source_code = "int main() { return 42; }";
-
-    // 1. Run the Lexer
-    Lexer lexer(source_code);
-    vector<Token> tokens = lexer.tokenize();
-
-    // 2. Run the Parser
-    Parser parser(tokens);
-    try
-    {
-        unique_ptr<ProgramNode> ast = parser.parse_program();
-        cout << "Successfully parsed the source into an AST!" << endl;
-        // The AST root is ready for optimization or LLVM/ASM code generation.
-    }
-    catch (const exception& e)
-    {
-        cerr << e.what() << endl;
-    }
-
-    return 0;
+int main()
+{
+	string sourceCode = R"(int global_variable = 42;int standard_var;int main(int argc, int argv) {int local_var = 10;return local_var;})";
+	try
+	{
+		Lexer lexer(sourceCode);
+		vector tokens = lexer.tokenize();
+		Parser parser(tokens);
+		unique_ptr astRoot = parser.parseProgram();
+		ASTPrinter printer;
+		astRoot->accept(&printer);
+	}
+	catch (const exception& e)
+	{
+		cerr << e.what() << endl;
+		return 1;
+	}
+	return 0;
 }

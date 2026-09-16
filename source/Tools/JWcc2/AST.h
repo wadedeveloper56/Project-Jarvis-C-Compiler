@@ -1,58 +1,66 @@
 #pragma once
 
 #include <memory>
-
-using namespace std;
-
-#include <memory>
 #include <string>
 #include <vector>
 
 using namespace std;
 
-// Base Class
+class ASTVisitor;
+
 class ASTNode
 {
 public:
-	virtual ~ASTNode() = default;
+    virtual ~ASTNode() = default;
+    virtual void accept(ASTVisitor* visitor) = 0;
 };
 
-// Base Expression Class
-class ExprNode : public ASTNode {};
-
-// Literal Expression (e.g., "2")
-class LiteralNode : public ExprNode
+class VarDeclNode : public ASTNode
 {
 public:
-	string value;
-	LiteralNode(string val) : value(val) {}
+    string type;
+    string name;
+    string initValue; // Simple literal initialization for this example
+    bool isGlobal;
+
+    VarDeclNode(string t, string n, string val, bool global) : type(move(t)), name(move(n)), initValue(move(val)), isGlobal(global) {}
+    void accept(ASTVisitor* visitor) override;
 };
 
-// Base Statement Class
-class StmtNode : public ASTNode {};
-
-// Return Statement (e.g., "return 2;")
-class ReturnStmtNode : public StmtNode
+class ReturnStmtNode : public ASTNode
 {
 public:
-	unique_ptr<ExprNode> expr;
-	ReturnStmtNode(unique_ptr<ExprNode> e) : expr(move(e)) {}
+    string value;
+    explicit ReturnStmtNode(string val) : value(move(val)) {}
+    void accept(ASTVisitor* visitor) override;
 };
 
-// Function Declaration (e.g., "int main() { ... }")
-class FunctionNode : public ASTNode
+class FunctionDeclNode : public ASTNode
 {
 public:
-	string name;
-	vector<unique_ptr<StmtNode>> body;
-	FunctionNode(string n, vector<unique_ptr<StmtNode>> b)
-		: name(n), body(move(b)) {}
+    string returnType;
+    string name;
+    vector<pair<string, string>> params; // pair<type, name>
+    vector<unique_ptr<ASTNode>> body;
+
+    FunctionDeclNode(string rType, string n) : returnType(move(rType)), name(move(n)) {}
+    void accept(ASTVisitor* visitor) override;
 };
 
-// Root Program Node
 class ProgramNode : public ASTNode
 {
 public:
-	vector<unique_ptr<FunctionNode>> functions;
+    vector<unique_ptr<ASTNode>> externalDeclarations;
+    void accept(ASTVisitor* visitor) override;
+};
+
+// Visitor Interface for AST traversal (e.g., Code Gen or Printing)
+class ASTVisitor
+{
+public:
+    virtual void visit(ProgramNode* node) = 0;
+    virtual void visit(VarDeclNode* node) = 0;
+    virtual void visit(FunctionDeclNode* node) = 0;
+    virtual void visit(ReturnStmtNode* node) = 0;
 };
 

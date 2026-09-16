@@ -1,62 +1,78 @@
 #include <cctype>
 #include <string>
 #include <vector>
+#include "pch.h"
 #include "Lexer.h"
 
 using namespace std;
 
-Lexer::Lexer(string source) : src(source) {}
+Lexer::Lexer(string source) : source_(move(source)), index_(0) {}
 
-vector<Token> Lexer::tokenize() {
+vector<Token> Lexer::tokenize()
+{
 	vector<Token> tokens;
-	while (pos < src.length())
+	while (index_ < source_.size())
 	{
-		char current = src[pos];
+		char current = source_[index_];
 
 		if (isspace(current))
 		{
-			pos++;
+			index_++;
 			continue;
 		}
-		if (isalpha(current))
+
+		if (isalpha(current) || current == '_')
 		{
-			tokens.push_back(lex_identifier_or_keyword());
+			tokens.push_back(lexIdentifier());
 			continue;
 		}
+
 		if (isdigit(current))
 		{
-			tokens.push_back(lex_number());
+			tokens.push_back(lexNumber());
 			continue;
 		}
-		if (current == ';') { pos++; tokens.push_back({ TokenType::Semicolon, ";" }); continue; }
-		if (current == '(') { pos++; tokens.push_back({ TokenType::OpenParen, "(" }); continue; }
-		if (current == ')') { pos++; tokens.push_back({ TokenType::CloseParen, ")" }); continue; }
-		if (current == '{') { pos++; tokens.push_back({ TokenType::OpenBrace, "{" }); continue; }
-		if (current == '}') { pos++; tokens.push_back({ TokenType::CloseBrace, "}" }); continue; }
 
-		pos++; // Handle unknown characters or errors
+		switch (current)
+		{
+			case '(': index_++; tokens.push_back({ TokenType::OpenParen, "(" }); break;
+			case ')': index_++; tokens.push_back({ TokenType::CloseParen, ")" }); break;
+			case '{': index_++; tokens.push_back({ TokenType::OpenBrace, "{" }); break;
+			case '}': index_++; tokens.push_back({ TokenType::CloseBrace, "}" }); break;
+			case ';': index_++; tokens.push_back({ TokenType::Semicolon, ";" }); break;
+			case '=': index_++; tokens.push_back({ TokenType::Equal, "=" }); break;
+			case ',': index_++; tokens.push_back({ TokenType::Comma, "," }); break;
+			default:
+				index_++;
+				tokens.push_back({ TokenType::Unknown, string(1, current) });
+				break;
+		}
 	}
-	tokens.push_back({ TokenType::EOFToken, "" });
+	tokens.push_back({ TokenType::Eof, "" });
 	return tokens;
 }
 
-Token Lexer::lex_number() {
-	string res;
-	while (pos < src.length() && isdigit(src[pos]))
+Token Lexer::lexIdentifier() 
+{
+	size_t start = index_;
+	while (index_ < source_.size() && (isalnum(source_[index_]) || source_[index_] == '_'))
 	{
-		res += src[pos++];
+		index_++;
 	}
-	return { TokenType::IntegerLiteral, res };
+	string text = source_.substr(start, index_ - start);
+	if (text == "int") return { TokenType::Keyword_int, text };
+	if (text == "void") return { TokenType::Keyword_void, text };
+	if (text == "return") return { TokenType::Keyword_return, text };
+	return { TokenType::Identifier, text };
 }
 
-Token Lexer::lex_identifier_or_keyword() {
-	string res;
-	while (pos < src.length() && isalnum(src[pos]))
+Token Lexer::lexNumber() 
+{
+	size_t start = index_;
+	while (index_ < source_.size() && isdigit(source_[index_]))
 	{
-		res += src[pos++];
+		index_++;
 	}
-	if (res == "int") return { TokenType::Keyword_int, res };
-	if (res == "return") return { TokenType::Keyword_return, res };
-	return { TokenType::Identifier, res };
+	return { TokenType::Number, source_.substr(start, index_ - start) };
 }
 
