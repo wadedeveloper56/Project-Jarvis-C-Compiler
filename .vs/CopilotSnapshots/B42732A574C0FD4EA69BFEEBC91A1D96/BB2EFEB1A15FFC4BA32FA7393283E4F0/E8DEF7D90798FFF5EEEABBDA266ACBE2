@@ -1,8 +1,7 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "Lexer.h"
 #include "Parser.h"
 #include "ASTPrinter.h"
-#include "SemanticAnalyzer.h"
 #include "ArgumentTable.h"
 
 using namespace std;
@@ -103,16 +102,6 @@ int main(int argc, char* argv[])
 
 		Parser p(src);
 		auto prog = p.parseProgram();
-
-		// run semantic analysis
-		SemanticAnalyzer sema;
-		bool ok = sema.analyze(*prog);
-		if (!ok)
-		{
-			for (auto& e : sema.errors()) cerr << "Semantic error: " << e << "\n";
-			return 1;
-		}
-
 		ASTPrinter printer;
 		prog->accept(printer);
 	}

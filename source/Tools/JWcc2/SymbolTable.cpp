@@ -1,0 +1,69 @@
+#include "pch.h"
+#include "SymbolTable.h"
+
+SymbolTable::SymbolTable()
+{
+	// create global scope
+	scopes.emplace_back();
+}
+
+void SymbolTable::pushScope()
+{
+	scopes.emplace_back();
+}
+
+void SymbolTable::popScope()
+{
+	if (scopes.size() > 1)
+		scopes.pop_back();
+}
+
+bool SymbolTable::declareVariable(const string& name, const string& type)
+{
+	auto& cur = scopes.back();
+	if (cur.find(name) != cur.end()) return false; // already declared in this scope
+	SymbolInfo si; si.kind = SymbolKind::Variable; si.type = type;
+	cur.emplace(name, move(si));
+	return true;
+}
+
+bool SymbolTable::declareFunctionProto(const string& name, const string& retType, const vector<string>& paramTypes)
+{
+	auto& cur = scopes.front(); // function prototypes live in global scope
+	auto it = cur.find(name);
+	if (it != cur.end())
+	{
+		// if already a function, ensure signature matches
+		if (it->second.kind != SymbolKind::Function) return false;
+		if (it->second.type != retType) return false;
+		if (it->second.paramTypes != paramTypes) return false;
+		return true; // same prototype
+	}
+	SymbolInfo si; si.kind = SymbolKind::Function; si.type = retType; si.paramTypes = paramTypes;
+	cur.emplace(name, move(si));
+	return true;
+}
+
+bool SymbolTable::defineFunction(const string& name, const string& retType, const vector<string>& paramTypes)
+{
+	// same as declareFunctionProto for this simple model
+	return declareFunctionProto(name, retType, paramTypes);
+}
+
+const SymbolInfo* SymbolTable::lookup(const string& name) const
+{
+	for (auto it = scopes.rbegin(); it != scopes.rend(); ++it)
+	{
+		auto f = it->find(name);
+		if (f != it->end()) return &f->second;
+	}
+	return nullptr;
+}
+
+const SymbolInfo* SymbolTable::lookupCurrent(const string& name) const
+{
+	auto& cur = scopes.back();
+	auto f = cur.find(name);
+	if (f != cur.end()) return &f->second;
+	return nullptr;
+}

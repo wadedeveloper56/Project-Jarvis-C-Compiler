@@ -1,0 +1,38 @@
+#pragma once
+
+#include "pch.h"
+#include <string>
+#include <vector>
+#include <unordered_map>
+
+using namespace std;
+
+enum class SymbolKind { Variable, Function };
+
+struct SymbolInfo
+{
+	SymbolKind kind;
+	string type; // for variable: type name; for function: return type
+	vector<string> paramTypes; // only for functions
+};
+
+class SymbolTable
+{
+public:
+	SymbolTable();
+	void pushScope();
+	void popScope();
+
+	bool declareVariable(const string& name, const string& type);
+	bool declareFunctionProto(const string& name, const string& retType, const vector<string>& paramTypes);
+	bool defineFunction(const string& name, const string& retType, const vector<string>& paramTypes);
+
+	// lookup finds nearest symbol up the scope chain, returns nullptr if not found
+	const SymbolInfo* lookup(const string& name) const;
+
+	// lookup in current scope only
+	const SymbolInfo* lookupCurrent(const string& name) const;
+
+private:
+	vector<unordered_map<string, SymbolInfo>> scopes;
+};

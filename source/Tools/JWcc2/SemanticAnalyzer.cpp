@@ -1,0 +1,200 @@
+#include "pch.h"
+#include "SemanticAnalyzer.h"
+
+SemanticAnalyzer::SemanticAnalyzer()
+{
+}
+
+bool SemanticAnalyzer::analyze(Program& prog)
+{
+	errs.clear();
+	// First pass: register function prototypes and global vars
+	for (auto& d : prog.decls)
+	{
+		if (auto vd = dynamic_cast<VarDecl*>(d.get()))
+		{
+			if (!symbols.declareVariable(vd->name, vd->type))
+				error("Redeclaration of global variable '" + vd->name + "'");
+		}
+		else if (auto fd = dynamic_cast<FunctionDecl*>(d.get()))
+		{
+			vector<string> ptypes;
+			for (auto& p : fd->params) ptypes.push_back(p.first);
+			if (!symbols.declareFunctionProto(fd->name, fd->retType, ptypes))
+				error("Conflicting declaration of function '" + fd->name + "'");
+		}
+	}
+
+	// Second pass: analyze definitions
+	for (auto& d : prog.decls)
+	{
+		d->accept(*this);
+	}
+	return errs.empty();
+}
+
+// Visitors
+void SemanticAnalyzer::visit(Program& n)
+{
+	// handled in analyze()
+}
+
+void SemanticAnalyzer::visit(VarDecl& n)
+{
+	if (!symbols.declareVariable(n.name, n.type))
+	{
+		error("Redeclaration of variable '" + n.name + "'");
+		return;
+	}
+	if (n.init)
+	{
+		string t = evalExprType(n.init.get());
+		if (t != n.type)
+			error("Type mismatch in initializer for '" + n.name + "' expected '" + n.type + "' got '" + t + "'");
+	}
+}
+
+void SemanticAnalyzer::visit(FunctionDecl& n)
+{
+	// define function (ensure prototype matches)
+	vector<string> ptypes;
+	for (auto& p : n.params) ptypes.push_back(p.first);
+	if (!symbols.defineFunction(n.name, n.retType, ptypes))
+	{
+		error("Conflicting function definition for '" + n.name + "'");
+	}
+
+	// enter function scope
+	symbols.pushScope();
+	// declare parameters as local variables
+	for (auto& p : n.params)
+	{
+		if (!symbols.declareVariable(p.second, p.first))
+			error("Parameter name redeclared '" + p.second + "'");
+	}
+
+	string prevRet = currentFunctionRetType;
+	currentFunctionRetType = n.retType;
+	if (n.body) n.body->accept(*this);
+	currentFunctionRetType = prevRet;
+
+	symbols.popScope();
+}
+
+void SemanticAnalyzer::visit(CompoundStmt& n)
+{
+	symbols.pushScope();
+	for (auto& d : n.localDecls) d->accept(*this);
+	for (auto& s : n.stmts) s->accept(*this);
+	symbols.popScope();
+}
+
+void SemanticAnalyzer::visit(ReturnStmt& n)
+{
+	if (currentFunctionRetType.empty())
+	{
+		error("Return statement outside of function");
+		return;
+	}
+	if (currentFunctionRetType == "void")
+	{
+		if (n.expr) error("Returning value from void function");
+	}
+	else
+	{
+		if (!n.expr) error("Non-void function must return a value");
+		else
+		{
+			string t = evalExprType(n.expr.get());
+			if (t != currentFunctionRetType) error("Return type mismatch: expected '" + currentFunctionRetType + "' got '" + t + "'");
+		}
+	}
+}
+
+void SemanticAnalyzer::visit(ExprStmt& n)
+{
+	if (n.expr) evalExprType(n.expr.get());
+}
+
+void SemanticAnalyzer::visit(NumberExpr& n)
+{
+	// nothing
+}
+
+void SemanticAnalyzer::visit(VarExpr& n)
+{
+	const SymbolInfo* si = symbols.lookup(n.name);
+	if (!si) error("Use of undeclared identifier '" + n.name + "'");
+}
+
+void SemanticAnalyzer::visit(BinaryExpr& n)
+{
+	string l = evalExprType(n.lhs.get());
+	string r = evalExprType(n.rhs.get());
+	if (l != "int" || r != "int") error("Binary operator applied to non-int types");
+}
+
+void SemanticAnalyzer::visit(AssignExpr& n)
+{
+	const SymbolInfo* si = symbols.lookup(n.name);
+	if (!si) { error("Assignment to undeclared variable '" + n.name + "'"); return; }
+	string rt = evalExprType(n.value.get());
+	if (si->type != rt) error("Assignment type mismatch for '" + n.name + "': expected '" + si->type + "' got '" + rt + "'");
+}
+
+void SemanticAnalyzer::visit(CallExpr& n)
+{
+	const SymbolInfo* si = symbols.lookup(n.callee);
+	if (!si) { error("Call to undeclared function '" + n.callee + "'"); return; }
+	if (si->kind != SymbolKind::Function) { error("'" + n.callee + "' is not a function"); return; }
+	if (n.args.size() != si->paramTypes.size()) { error("Wrong number of arguments in call to '" + n.callee + "'"); return; }
+	for (size_t i = 0; i < n.args.size(); ++i)
+	{
+		string t = evalExprType(n.args[i].get());
+		if (t != si->paramTypes[i]) error("Argument type mismatch in call to '" + n.callee + "'");
+	}
+}
+
+// Evaluate expression type, returns type name or empty string on error
+string SemanticAnalyzer::evalExprType(Expr* e)
+{
+	if (!e) return string();
+	if (auto ne = dynamic_cast<NumberExpr*>(e)) return string("int");
+	if (auto ve = dynamic_cast<VarExpr*>(e))
+	{
+		const SymbolInfo* si = symbols.lookup(ve->name);
+		if (!si) { error("Use of undeclared identifier '" + ve->name + "'"); return string(); }
+		return si->type;
+	}
+	if (auto be = dynamic_cast<BinaryExpr*>(e))
+	{
+		string l = evalExprType(be->lhs.get());
+		string r = evalExprType(be->rhs.get());
+		if (l != "int" || r != "int") { error("Binary operator applied to non-int types"); return string(); }
+		return string("int");
+	}
+	if (auto ae = dynamic_cast<AssignExpr*>(e))
+	{
+		const SymbolInfo* si = symbols.lookup(ae->name);
+		if (!si) { error("Assignment to undeclared variable '" + ae->name + "'"); return string(); }
+		string rt = evalExprType(ae->value.get());
+		if (si->type != rt) { error("Assignment type mismatch for '" + ae->name + "'"); return string(); }
+		return si->type;
+	}
+	if (auto ce = dynamic_cast<CallExpr*>(e))
+	{
+		const SymbolInfo* si = symbols.lookup(ce->callee);
+		if (!si) { error("Call to undeclared function '" + ce->callee + "'"); return string(); }
+		if (si->kind != SymbolKind::Function) { error("'" + ce->callee + "' is not a function"); return string(); }
+		if (ce->args.size() != si->paramTypes.size()) { error("Wrong number of arguments in call to '" + ce->callee + "'"); return string(); }
+		for (size_t i = 0; i < ce->args.size(); ++i)
+		{
+			string t = evalExprType(ce->args[i].get());
+			if (t != si->paramTypes[i]) { error("Argument type mismatch in call to '" + ce->callee + "'"); return string(); }
+		}
+		return si->type;
+	}
+	// unknown expr
+	error("Unknown expression type encountered");
+	return string();
+}

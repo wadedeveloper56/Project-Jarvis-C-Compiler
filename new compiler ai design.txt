@@ -1,0 +1,3 @@
+•	Add source locations to tokens/AST and propagate them to error messages.
+•	Add more semantic checks (e.g., unreachable code, duplicate function definitions vs prototypes).
+•	Add unit tests (GTest) for the analyzer.
