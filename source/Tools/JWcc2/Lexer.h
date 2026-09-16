@@ -8,16 +8,11 @@ using namespace std;
 
 enum class TokenType
 {
-    Keyword_int,
-    Keyword_return,
-    Identifier,
-    IntegerLiteral,
-    OpenParen,
-    CloseParen,
-    OpenBrace,
-    CloseBrace,
-    Semicolon,
-    EOFToken
+    Keyword_int, Keyword_void, Keyword_return,
+    Identifier, Number,
+    OpenParen, CloseParen, OpenBrace, CloseBrace,
+    Semicolon, Equal, Comma,
+    Eof, Unknown
 };
 
 struct Token
@@ -26,21 +21,14 @@ struct Token
     string value;
 };
 
-#include <string>
-#include <vector>
-#include <cctype>
-
 class Lexer
 {
-    string src;
-    size_t pos = 0;
 public:
-    Lexer(string source);
+    explicit Lexer(string source);
     vector<Token> tokenize();
 private:
-    Token lex_number();
-    Token lex_identifier_or_keyword();
+    string source_;
+    size_t index_;
+    Token lexIdentifier();
+    Token lexNumber();
 };
-
-
-

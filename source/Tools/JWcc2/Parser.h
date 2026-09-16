@@ -11,24 +11,15 @@ using namespace std;
 
 class Parser
 {
-    vector<Token> tokens;
-    size_t pos = 0;
 public:
-    Parser(vector<Token> t);
-    // Main entry point: Program -> Function*
-    unique_ptr<ProgramNode> parse_program();
+    explicit Parser(vector<Token> tokens);
+    unique_ptr<ProgramNode> parseProgram();
 private:
-    // Function -> "int" Identifier "(" ")" "{" Statement* "}"
-    unique_ptr<FunctionNode> parse_function();
-    // Statement -> "return" Expression ";"
-    unique_ptr<StmtNode> parse_statement();
-    // Expression -> IntegerLiteral
-    unique_ptr<ExprNode> parse_expression();
-    // --- Parser Utilities ---
-    // Look at the current token without moving forward
-    Token peek() const;
-    // Assert the current token type matches expectations, then advance
-    Token consume(TokenType type, const string& error_msg);
+    vector<Token> tokens_;
+    size_t index_;
+    Token peek();
+    Token advance();
+    void consume(TokenType type, const string& errorMsg);
+    unique_ptr<ASTNode> parseExternalDeclaration();
+    unique_ptr<FunctionDeclNode> parseFunctionDefinition(const string& returnType, const string& name);
 };
-
-
