@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "Lexer.h"
 #include "Parser.h"
 #include "ArgumentTable.h"
@@ -18,7 +18,6 @@ int main(int argc, char* argv[])
 	int bits = 32; // default
 
 	// simple command-line parsing for bits: -b 16 | -b16 | --bitsize=16
-	bool isWindows = true; // default to Windows x64 ABI for 64-bit
 	for (int i = 1; i < argc; ++i) {
 		string a = argv[i];
 		// handle --windows or --sysv
@@ -39,6 +38,7 @@ int main(int argc, char* argv[])
 	bit16 = (bits == 16);
 	bit32 = (bits == 32);
 	bit64 = (bits == 64);
+	bool isWindows = true; // default to Windows x64 ABI for 64-bit
 
 	// validate bits
 	if (bits != 16 && bits != 32 && bits != 64) {
@@ -70,8 +70,8 @@ int main(int argc, char* argv[])
 			for (auto& e : sema.errors()) cerr << "Semantic error: " << e << "\n"; 
 			return 1; 
 		}
-		// On success, generate MASM-like asm to stdout using selected bit size and ABI
-		JWasmGenerator gen(cout, bits, isWindows);
+		// On success, generate MASM-like asm to stdout using selected bit size
+		JWasmGenerator gen(cout, bits /*, isWindows=true */);
 		gen.generate(*prog);
 	}
 	catch (const exception& ex)

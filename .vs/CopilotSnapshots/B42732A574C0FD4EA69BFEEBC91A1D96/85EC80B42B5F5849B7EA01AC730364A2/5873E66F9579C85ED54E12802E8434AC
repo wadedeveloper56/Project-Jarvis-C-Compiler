@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "Lexer.h"
 #include "Parser.h"
 #include "ArgumentTable.h"
@@ -39,6 +39,7 @@ int main(int argc, char* argv[])
 	bit16 = (bits == 16);
 	bit32 = (bits == 32);
 	bit64 = (bits == 64);
+	bool isWindows = true; // default to Windows x64 ABI for 64-bit
 
 	// validate bits
 	if (bits != 16 && bits != 32 && bits != 64) {
