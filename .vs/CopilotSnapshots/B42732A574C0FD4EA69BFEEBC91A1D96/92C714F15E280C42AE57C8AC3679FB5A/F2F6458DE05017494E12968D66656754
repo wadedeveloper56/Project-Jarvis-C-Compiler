@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "JWasmGenerator.h"
 #include "SymbolTable.h"
 
@@ -10,13 +10,6 @@ int JWasmGenerator::nextLocalIndex()
 	int idx = 0;
 	for (auto& kv : localIndex) idx = max(idx, kv.second);
 	return idx + 1;
-}
-
-string JWasmGenerator::wordForBits() const
-{
-	if (bits == 64) return "qword";
-	if (bits == 16) return "word";
-	return "dword";
 }
 
 string JWasmGenerator::wasmType(const string& ty) const
@@ -31,7 +24,7 @@ string JWasmGenerator::wasmType(const string& ty) const
 
 void JWasmGenerator::visit(Program& n)
 {
-	out << "; MASM output - program (word size: " << wordForBits() << ")\n";
+	out << "; JWasm output - program\n";
 	for (auto& d : n.decls) d->accept(*this);
 }
 
@@ -44,49 +37,43 @@ void JWasmGenerator::visit(FunctionDecl& n)
 {
 	// reset per-function locals map
 	localIndex.clear();
-	currentParams.clear();
-	currentLocals.clear();
-	inFunction = true;
 	// assign indices for params starting at 0
 	int idx = 0;
 	for (auto& p : n.params) {
 		localIndex[p.second] = idx++;
 	}
-	// emit MASM proc header
-	out << n.name << " proc" << "\n";
-	// params (MASM uses stack-based params; emit comments and locals block)
-	if (!n.params.empty()) {
-		ind(); out << "; params:\n";
-		for (auto& p : n.params) {
-			ind(); out << ";   " << p.second << " : " << p.first << "\n";
-			currentParams.push_back(p.second);
-			localIndex[p.second] = idx++;
-		}
+	out << "(func $" << n.name;
+	// params
+	for (auto& p : n.params) {
+		out << " (param $" << p.second << " " << wasmType(p.first) << ")";
 	}
-	// collect locals
+	// result
+	if (n.retType == "int") out << " (result " << wasmType(n.retType) << ")";
+	out << "\n";
+	indent++;
+
+	// declare locals (collect from localDecls) if body is a CompoundStmt
 	int localCountStart = idx;
 	if (n.body) {
 		if (auto comp = dynamic_cast<CompoundStmt*>(n.body.get())) {
 			for (auto& ld : comp->localDecls) {
 				if (auto v = dynamic_cast<VarDecl*>(ld.get())) {
-					currentLocals.push_back(v->name);
 					localIndex[v->name] = idx++;
 				}
 			}
 		}
 	}
-	if (!currentLocals.empty()) {
-		ind(); out << "; locals:\n";
-		for (auto& ln : currentLocals) {
-			ind(); out << ";   " << ln << " : " << "int" << "\n";
+	if (idx > localCountStart) {
+		ind(); out << ";; locals\n";
+		for (int i = localCountStart; i < idx; ++i) {
+			ind(); out << "(local i32) ;; index=" << i << "\n";
 		}
 	}
+
 	// body
-	indent++;
 	if (n.body) n.body->accept(*this);
 	indent--;
-	out << n.name << " endp\n\n";
-	inFunction = false;
+	out << ")\n";
 }
 
 void JWasmGenerator::visit(CompoundStmt& n)
@@ -123,9 +110,9 @@ void JWasmGenerator::visit(VarExpr& n)
 	ind();
 	auto it = localIndex.find(n.name);
 	if (it != localIndex.end()) {
-		out << "mov " << wordForBits() << " PTR [ebp + " << (it->second * (bits/8)) << "] ; load " << n.name << "\n";
+		out << "get_local $" << n.name << " ;; idx=" << it->second << "\n";
 	} else {
-		out << "; global ref " << n.name << "\n";
+		out << "get_global $" << n.name << "\n";
 	}
 }
 
@@ -141,12 +128,8 @@ void JWasmGenerator::visit(BinaryExpr& n)
 	else if (n.op == '*') op = "mul";
 	else if (n.op == '/') op = "div_s";
 	else op = "unknown";
-	// emit MASM arithmetic using stack convention: assume values are on stack or locals
-	if (op == "add") out << "add eax, ebx\n";
-	else if (op == "sub") out << "sub eax, ebx\n";
-	else if (op == "mul") out << "imul ebx\n";
-	else if (op == "div_s") out << "idiv ebx\n";
-	else out << "; unknown op\n";
+	if (bits == 64) out << "i64." << op << "\n";
+	else out << "i32." << op << "\n";
 }
 
 void JWasmGenerator::visit(AssignExpr& n)
@@ -156,9 +139,9 @@ void JWasmGenerator::visit(AssignExpr& n)
 	ind();
 	auto it = localIndex.find(n.name);
 	if (it != localIndex.end()) {
-		out << "mov [ebp + " << (it->second * (bits/8)) << "], eax ; store " << n.name << "\n";
+		out << "set_local $" << n.name << " ;; idx=" << it->second << "\n";
 	} else {
-		out << "; store to global " << n.name << "\n";
+		out << "set_global $" << n.name << "\n";
 	}
 }
 

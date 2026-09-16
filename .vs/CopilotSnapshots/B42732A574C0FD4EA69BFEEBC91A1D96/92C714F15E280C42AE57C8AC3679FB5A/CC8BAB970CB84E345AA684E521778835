@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "AST.h"
 #include <ostream>
@@ -7,7 +7,7 @@
 
 struct JWasmGenerator : ASTVisitor {
 	// bits: 16,32,64
-	JWasmGenerator(std::ostream& os, int bits = 32) : out(os), indent(0), bits(bits), inFunction(false) {}
+	JWasmGenerator(std::ostream& os, int bits = 32) : out(os), indent(0), bits(bits) {}
 
 	void generate(Program& p) { p.accept(*this); }
 
@@ -32,10 +32,6 @@ private:
 
 	// per-function state
 	std::unordered_map<std::string,int> localIndex; // maps name to local index (includes params)
-	bool inFunction;
 	int nextLocalIndex();
 	std::string wasmType(const std::string& ty) const;
-	std::vector<std::string> currentParams;
-	std::vector<std::string> currentLocals;
-	std::string wordForBits() const;
 };
