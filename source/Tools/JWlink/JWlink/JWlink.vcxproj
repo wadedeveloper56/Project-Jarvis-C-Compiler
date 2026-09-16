@@ -74,21 +74,25 @@
     <OutDir>..\..\..\..\bin\tools\$(Configuration)\$(Platform)\</OutDir>
     <IntDir>..\..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
     <IncludePath>.\;..\jwlinklib\h;..\..\File;..\orl\h;..\orl\coff\h;..\orl\elf\h;..\orl\omf\h;..\libmisc\h;..\sdk\rc\rc\h;..\sdk\rc\wres\h;..\dwarf\h;..\watcom\h;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>..\..\..\..\bin\tools\$(Configuration)\$(Platform)\</OutDir>
     <IntDir>..\..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
     <IncludePath>.\;..\jwlinklib\h;..\..\File;..\orl\h;..\orl\coff\h;..\orl\elf\h;..\orl\omf\h;..\libmisc\h;..\sdk\rc\rc\h;..\sdk\rc\wres\h;..\dwarf\h;..\watcom\h;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>..\..\..\..\bin\tools\$(Configuration)\$(Platform)\</OutDir>
     <IntDir>..\..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
     <IncludePath>.\;..\jwlinklib\h;..\..\File;..\orl\h;..\orl\coff\h;..\orl\elf\h;..\orl\omf\h;..\libmisc\h;..\sdk\rc\rc\h;..\sdk\rc\wres\h;..\dwarf\h;..\watcom\h;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>..\..\..\..\bin\tools\$(Configuration)\$(Platform)\</OutDir>
     <IntDir>..\..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
     <IncludePath>.\;..\jwlinklib\h;..\..\File;..\orl\h;..\orl\coff\h;..\orl\elf\h;..\orl\omf\h;..\libmisc\h;..\sdk\rc\rc\h;..\sdk\rc\wres\h;..\dwarf\h;..\watcom\h;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

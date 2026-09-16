@@ -75,6 +75,7 @@
     <IntDir>..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
     <IncludePath>..\BinaryFormats;..\Arguments;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <LinkIncremental>true</LinkIncremental>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>..\..\..\bin\tools\$(Configuration)\$(Platform)\</OutDir>
@@ -82,12 +83,14 @@
     <IncludePath>..\BinaryFormats;..\Arguments;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <LinkIncremental>
     </LinkIncremental>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>..\..\..\bin\tools\$(Configuration)\$(Platform)\</OutDir>
     <IntDir>..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
     <IncludePath>..\BinaryFormats;..\Arguments;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <LinkIncremental>true</LinkIncremental>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>..\..\..\bin\tools\$(Configuration)\$(Platform)\</OutDir>
@@ -95,6 +98,7 @@
     <IncludePath>..\BinaryFormats;..\Arguments;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <LinkIncremental>
     </LinkIncremental>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
