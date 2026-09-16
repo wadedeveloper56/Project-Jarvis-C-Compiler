@@ -1,0 +1,148 @@
+﻿#include "pch.h"
+#include "JWasmGenerator.h"
+#include "SymbolTable.h"
+
+
+using namespace std;
+
+int JWasmGenerator::nextLocalIndex()
+{
+	int idx = 0;
+	for (auto& kv : localIndex) idx = max(idx, kv.second);
+	return idx + 1;
+}
+
+string JWasmGenerator::wasmType(const string& ty) const
+{
+	if (ty == "int") {
+		if (bits == 16) return "i16"; // placeholder
+		if (bits == 64) return "i64";
+		return "i32";
+	}
+	return "i32";
+}
+
+void JWasmGenerator::visit(Program& n)
+{
+	out << "; JWasm output - program\n";
+	for (auto& d : n.decls) d->accept(*this);
+}
+
+void JWasmGenerator::visit(VarDecl& n)
+{
+	ind(); out << "; global var " << n.name << " type=" << n.type << "\n";
+}
+
+void JWasmGenerator::visit(FunctionDecl& n)
+{
+	// reset per-function locals map
+	localIndex.clear();
+	// assign indices for params starting at 0
+	int idx = 0;
+	for (auto& p : n.params) {
+		localIndex[p.second] = idx++;
+	}
+	out << "(func $" << n.name;
+	// params
+	for (auto& p : n.params) {
+		out << " (param $" << p.second << " " << wasmType(p.first) << ")";
+	}
+	// result
+	if (n.retType == "int") out << " (result " << wasmType(n.retType) << ")";
+	out << "\n";
+	indent++;
+
+	// declare locals (collect from localDecls)
+	int localCountStart = idx;
+	for (auto& ld : n.body ? n.body->localDecls : vector<unique_ptr<Decl>>()) {
+		if (auto v = dynamic_cast<VarDecl*>(ld.get())) {
+			localIndex[v->name] = idx++;
+		}
+	}
+	if (idx > localCountStart) {
+		ind(); out << ";; locals\n";
+		for (int i = localCountStart; i < idx; ++i) {
+			ind(); out << "(local i32) ;; index=" << i << "\n";
+		}
+	}
+
+	// body
+	if (n.body) n.body->accept(*this);
+	indent--;
+	out << ")\n";
+}
+
+void JWasmGenerator::visit(CompoundStmt& n)
+{
+	for (auto& d : n.localDecls) d->accept(*this);
+	for (auto& s : n.stmts) s->accept(*this);
+}
+
+void JWasmGenerator::visit(ReturnStmt& n)
+{
+	if (n.expr) {
+		n.expr->accept(*this);
+		ind(); out << "return\n";
+	} else {
+		ind(); out << "return\n";
+	}
+}
+
+void JWasmGenerator::visit(ExprStmt& n)
+{
+	if (n.expr) n.expr->accept(*this);
+}
+
+void JWasmGenerator::visit(NumberExpr& n)
+{
+	ind();
+	if (bits == 64) out << "i64.const " << n.value << "\n";
+	else if (bits == 16) out << "i32.const " << n.value << " ;; 16-bit\n";
+	else out << "i32.const " << n.value << "\n";
+}
+
+void JWasmGenerator::visit(VarExpr& n)
+{
+	ind();
+	auto it = localIndex.find(n.name);
+	if (it != localIndex.end()) {
+		out << "get_local $" << n.name << " ;; idx=" << it->second << "\n";
+	} else {
+		out << "get_global $" << n.name << "\n";
+	}
+}
+
+void JWasmGenerator::visit(BinaryExpr& n)
+{
+	// evaluate lhs and rhs, then emit op
+	n.lhs->accept(*this);
+	n.rhs->accept(*this);
+	ind();
+	string op;
+	if (n.op == '+') op = "add";
+	else if (n.op == '-') op = "sub";
+	else if (n.op == '*') op = "mul";
+	else if (n.op == '/') op = "div_s";
+	else op = "unknown";
+	if (bits == 64) out << "i64." << op << "\n";
+	else out << "i32." << op << "\n";
+}
+
+void JWasmGenerator::visit(AssignExpr& n)
+{
+	// evaluate value then set_local
+	n.value->accept(*this);
+	ind();
+	auto it = localIndex.find(n.name);
+	if (it != localIndex.end()) {
+		out << "set_local $" << n.name << " ;; idx=" << it->second << "\n";
+	} else {
+		out << "set_global $" << n.name << "\n";
+	}
+}
+
+void JWasmGenerator::visit(CallExpr& n)
+{
+	for (auto& a : n.args) a->accept(*this);
+	ind(); out << "call $" << n.callee << "\n";
+}

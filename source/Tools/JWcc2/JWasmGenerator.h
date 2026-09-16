@@ -1,0 +1,37 @@
+#pragma once
+
+#include "AST.h"
+#include <ostream>
+#include <unordered_map>
+#include <string>
+
+struct JWasmGenerator : ASTVisitor {
+	// bits: 16,32,64
+	JWasmGenerator(std::ostream& os, int bits = 32) : out(os), indent(0), bits(bits) {}
+
+	void generate(Program& p) { p.accept(*this); }
+
+	// Visitor overrides
+	void visit(Program& n) override;
+	void visit(VarDecl& n) override;
+	void visit(FunctionDecl& n) override;
+	void visit(CompoundStmt& n) override;
+	void visit(ReturnStmt& n) override;
+	void visit(ExprStmt& n) override;
+	void visit(NumberExpr& n) override;
+	void visit(VarExpr& n) override;
+	void visit(BinaryExpr& n) override;
+	void visit(AssignExpr& n) override;
+	void visit(CallExpr& n) override;
+
+private:
+	std::ostream& out;
+	int indent;
+	int bits;
+	void ind() { for (int i = 0; i < indent; ++i) out << "  "; }
+
+	// per-function state
+	std::unordered_map<std::string,int> localIndex; // maps name to local index (includes params)
+	int nextLocalIndex();
+	std::string wasmType(const std::string& ty) const;
+};

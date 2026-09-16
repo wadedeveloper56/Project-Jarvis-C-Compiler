@@ -1,0 +1,89 @@
+﻿#include "pch.h"
+#include "JWasmGenerator.h"
+#include "SymbolTable.h"
+
+using namespace std;
+
+void JWasmGenerator::visit(Program& n)
+{
+	out << "; JWasm output - program\n";
+	for (auto& d : n.decls) d->accept(*this);
+}
+
+void JWasmGenerator::visit(VarDecl& n)
+{
+	ind(); out << "; global var " << n.name << " type=" << n.type << "\n";
+}
+
+void JWasmGenerator::visit(FunctionDecl& n)
+{
+	out << "(func " << n.name << " (result " << (n.retType == "int" ? "i32" : "void") << ")\n";
+	indent++;
+	// params
+	for (auto& p : n.params) {
+		ind(); out << "; param " << p.second << " : " << p.first << "\n";
+	}
+	// body
+	if (n.body) n.body->accept(*this);
+	indent--;
+	out << ")\n";
+}
+
+void JWasmGenerator::visit(CompoundStmt& n)
+{
+	for (auto& d : n.localDecls) d->accept(*this);
+	for (auto& s : n.stmts) s->accept(*this);
+}
+
+void JWasmGenerator::visit(ReturnStmt& n)
+{
+	if (n.expr) {
+		n.expr->accept(*this);
+		ind(); out << "return\n";
+	} else {
+		ind(); out << "return\n";
+	}
+}
+
+void JWasmGenerator::visit(ExprStmt& n)
+{
+	if (n.expr) n.expr->accept(*this);
+}
+
+void JWasmGenerator::visit(NumberExpr& n)
+{
+	ind(); out << "i32.const " << n.value << "\n";
+}
+
+void JWasmGenerator::visit(VarExpr& n)
+{
+	ind(); out << "get_local $" << n.name << "\n";
+}
+
+void JWasmGenerator::visit(BinaryExpr& n)
+{
+	// evaluate lhs and rhs, then emit op
+	n.lhs->accept(*this);
+	n.rhs->accept(*this);
+	ind();
+	switch (n.op) {
+	case '+': out << "i32.add\n"; break;
+	case '-': out << "i32.sub\n"; break;
+	case '*': out << "i32.mul\n"; break;
+	case '/': out << "i32.div_s\n"; break;
+	default: out << ";; unknown op\n"; break;
+	}
+}
+
+void JWasmGenerator::visit(AssignExpr& n)
+{
+	// evaluate value then set_local
+	n.value->accept(*this);
+	ind(); out << "set_local $" << n.name << "\n";
+}
+
+void JWasmGenerator::visit(CallExpr& n)
+{
+	for (auto& a : n.args) a->accept(*this);
+	ind(); out << "call " << n.callee << "\n";
+}

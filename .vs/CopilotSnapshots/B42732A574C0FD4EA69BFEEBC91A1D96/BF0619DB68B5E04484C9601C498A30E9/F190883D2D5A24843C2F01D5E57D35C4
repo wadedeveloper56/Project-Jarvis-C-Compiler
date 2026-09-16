@@ -1,9 +1,9 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "Lexer.h"
 #include "Parser.h"
+#include "ASTPrinter.h"
 #include "ArgumentTable.h"
 #include "SemanticAnalyzer.h"
-#include "JWasmGenerator.h"
 
 using namespace std;
 bool bit16 = false;
@@ -32,14 +32,9 @@ int main(int argc, char* argv[])
 		auto prog = p.parseProgram();
 		SemanticAnalyzer sema; 
 		bool ok = sema.analyze(*prog); 
-		if (!ok) 
-		{ 
-			for (auto& e : sema.errors()) cerr << "Semantic error: " << e << "\n"; 
-			return 1; 
-		}
-		// On success, generate JWasm to stdout
-		JWasmGenerator gen(cout);
-		gen.generate(*prog);
+		if (!ok) { for (auto& e : sema.errors()) cerr << "Semantic error: " << e << "\n"; return 1; }
+		ASTPrinter printer;
+		prog->accept(printer);
 	}
 	catch (const exception& ex)
 	{

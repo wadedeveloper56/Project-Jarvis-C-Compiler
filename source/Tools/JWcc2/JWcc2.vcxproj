@@ -181,6 +181,7 @@
   <ItemGroup>
     <ClCompile Include="AST.cpp" />
     <ClCompile Include="ASTPrinter.cpp" />
+    <ClCompile Include="JWasmGenerator.cpp" />
     <ClCompile Include="JWcc2.cpp" />
     <ClCompile Include="Lexer.cpp" />
     <ClCompile Include="Parser.cpp" />
@@ -196,6 +197,7 @@
   <ItemGroup>
     <ClInclude Include="AST.h" />
     <ClInclude Include="ASTPrinter.h" />
+    <ClInclude Include="JWasmGenerator.h" />
     <ClInclude Include="Lexer.h" />
     <ClInclude Include="Parser.h" />
     <ClInclude Include="pch.h" />
