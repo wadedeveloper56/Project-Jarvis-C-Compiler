@@ -26,7 +26,7 @@ class Parser
 		if (cur.kind != k)
 		{
 			ostringstream os;
-			os << "Parse error at line " << cur.line << ", col " << cur.column << " expected token";
+			os << "1 Parse error at line " << cur.line << ", col " << cur.column << " expected token";
 			if (*msg) os << " (" << msg << ")";
 			os << " (got '" << cur.text << "')";
 			throw runtime_error(os.str());
@@ -90,6 +90,10 @@ public:
 					expect(TokenKind::RParen);
 					break;
 				}
+			}
+			else
+			{
+				expect(TokenKind::RParen);
 			}
 			// parse body
 			fn->body = parseCompoundStmt();
