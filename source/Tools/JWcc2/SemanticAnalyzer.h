@@ -1,0 +1,43 @@
+#pragma once
+
+#include "AST.h"
+#include "SymbolTable.h"
+#include <string>
+#include <vector>
+
+using namespace std;
+
+struct SemanticAnalyzer : ASTVisitor {
+	SemanticAnalyzer();
+
+	// Analyze program; returns true if no semantic errors found
+	bool analyze(Program& prog);
+
+	// Retrieve formatted error messages
+	vector<string> errors() const { return errs; }
+
+	// Visitor overrides
+	void visit(Program& n) override;
+	void visit(VarDecl& n) override;
+	void visit(FunctionDecl& n) override;
+	void visit(CompoundStmt& n) override;
+	void visit(ReturnStmt& n) override;
+	void visit(ExprStmt& n) override;
+	void visit(NumberExpr& n) override;
+	void visit(VarExpr& n) override;
+	void visit(BinaryExpr& n) override;
+	void visit(AssignExpr& n) override;
+	void visit(CallExpr& n) override;
+
+	// Evaluate expression type or empty string on error
+	string evalExprType(Expr* e);
+
+	// Report an error (with optional source location)
+	void error(const string& msg);
+	void error(const string& msg, const Node::SourceLoc& loc);
+
+private:
+	SymbolTable symbols;
+	vector<string> errs;
+	string currentFunctionRetType;
+};

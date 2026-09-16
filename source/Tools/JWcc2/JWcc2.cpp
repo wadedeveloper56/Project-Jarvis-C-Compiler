@@ -3,6 +3,7 @@
 #include "Parser.h"
 #include "ASTPrinter.h"
 #include "ArgumentTable.h"
+#include "SemanticAnalyzer.h"
 
 using namespace std;
 bool bit16 = false;
@@ -29,6 +30,9 @@ int main(int argc, char* argv[])
 
 		Parser p(src);
 		auto prog = p.parseProgram();
+		SemanticAnalyzer sema; 
+		bool ok = sema.analyze(*prog); 
+		if (!ok) { for (auto& e : sema.errors()) cerr << "Semantic error: " << e << "\n"; return 1; }
 		ASTPrinter printer;
 		prog->accept(printer);
 	}
