@@ -164,12 +164,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AST.cpp" />
+    <ClCompile Include="ASTPrinter.cpp" />
     <ClCompile Include="JWcc2.cpp" />
     <ClCompile Include="Lexer.cpp" />
     <ClCompile Include="Parser.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AST.h" />
+    <ClInclude Include="ASTPrinter.h" />
     <ClInclude Include="Lexer.h" />
     <ClInclude Include="Parser.h" />
   </ItemGroup>
