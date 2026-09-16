@@ -3,14 +3,65 @@
 #include "Lexer.h"
 #include "Parser.h"
 
-class ASTPrinter : public ASTVisitor
+struct ASTPrinter : ASTVisitor
 {
-public:
-	void visit(ProgramNode* node) override;
-	void visit(VarDeclNode* node) override;
-	void visit(FunctionDeclNode* node) override;
-	void visit(ReturnStmtNode* node) override;
-	void visit(IntegerLiteral* node) override;
-	void visit(IdentifierExpr* node) override;
-	void visit(BinaryExpr* node) override;
+    int indent = 0;
+    void ind() { for (int i = 0; i < indent; ++i) cout << "  "; }
+
+    void visit(Program& n) override {
+        cout << "Program\n";
+        indent++;
+        for (auto& d : n.decls) { d->accept(*this); }
+        indent--;
+    }
+    void visit(VarDecl& n) override {
+        ind(); cout << "VarDecl type=" << n.type << " name=" << n.name;
+        if (n.init) { cout << " init=\n"; indent++; n.init->accept(*this); indent--; }
+        else cout << "\n";
+    }
+    void visit(FunctionDecl& n) override {
+        ind(); cout << "FunctionDecl ret=" << n.retType << " name=" << n.name << "\n";
+        indent++;
+        ind(); cout << "Params:\n"; indent++;
+        for (auto& p : n.params) { ind(); cout << p.first << " " << p.second << "\n"; }
+        indent--;
+        ind(); cout << "Body:\n"; indent++;
+        if (n.body) n.body->accept(*this);
+        indent -= 2;
+    }
+    void visit(CompoundStmt& n) override {
+        ind(); cout << "CompoundStmt\n";
+        indent++;
+        for (auto& d : n.localDecls) d->accept(*this);
+        for (auto& s : n.stmts) s->accept(*this);
+        indent--;
+    }
+    void visit(ReturnStmt& n) override {
+        ind(); cout << "Return\n";
+        if (n.expr) { indent++; n.expr->accept(*this); indent--; }
+    }
+    void visit(ExprStmt& n) override {
+        ind(); cout << "ExprStmt\n";
+        if (n.expr) { indent++; n.expr->accept(*this); indent--; }
+    }
+    void visit(NumberExpr& n) override {
+        ind(); cout << "Number " << n.value << "\n";
+    }
+    void visit(VarExpr& n) override {
+        ind(); cout << "Variable " << n.name << "\n";
+    }
+    void visit(BinaryExpr& n) override {
+        ind(); cout << "Binary op=" << n.op << "\n";
+        indent++; n.lhs->accept(*this); n.rhs->accept(*this); indent--;
+    }
+    void visit(AssignExpr& n) override {
+        ind(); cout << "Assign to " << n.name << "\n";
+        indent++; n.value->accept(*this); indent--;
+    }
+    void visit(CallExpr& n) override {
+        ind(); cout << "Call " << n.callee << "\n";
+        indent++;
+        for (auto& a : n.args) a->accept(*this);
+        indent--;
+    }
 };

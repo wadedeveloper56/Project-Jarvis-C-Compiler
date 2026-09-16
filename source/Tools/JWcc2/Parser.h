@@ -11,15 +11,227 @@ using namespace std;
 
 class Parser
 {
+	Lexer lexer;
+	Token cur;
+	void next() { cur = lexer.next(); }
+
+	bool accept(TokenKind k) 
+	{
+		if (cur.kind == k) { next(); return true; }
+		return false;
+	}
+
+	void expect(TokenKind k, const char* msg = "") 
+	{
+		if (cur.kind != k)
+		{
+			ostringstream os; os << "Parse error at pos " << cur.pos << " expected token";
+			if (*msg) os << " (" << msg << ")";
+			throw runtime_error(os.str());
+		}
+		next();
+	}
+
 public:
-    explicit Parser(vector<Token> tokens);
-    unique_ptr<ProgramNode> parseProgram();
-private:
-    vector<Token> tokens_;
-    size_t index_;
-    Token peek();
-    Token advance();
-    void consume(TokenType type, const string& errorMsg);
-    unique_ptr<ASTNode> parseExternalDeclaration();
-    unique_ptr<FunctionDeclNode> parseFunctionDefinition(const string& returnType, const string& name);
+	Parser(string s) : lexer(move(s)) { next(); }
+
+	unique_ptr<Program> parseProgram() 
+	{
+		auto prog = make_unique<Program>();
+		while (cur.kind != TokenKind::End)
+		{
+			prog->decls.push_back(parseDecl());
+		}
+		return prog;
+	}
+
+	unique_ptr<Decl> parseDecl()
+	{
+		// Only support 'int' and 'void' return types
+		string type = parseType();
+		if (cur.kind != TokenKind::Identifier) throw runtime_error("Expected identifier after type");
+		string name = cur.text;
+		next();
+		if (accept(TokenKind::LParen))
+		{
+			// function declaration
+			auto fn = make_unique<FunctionDecl>();
+			fn->retType = type;
+			fn->name = name;
+			if (!accept(TokenKind::RParen))
+			{
+				// parse params
+				while (true)
+				{
+					string ptype = parseType();
+					if (cur.kind != TokenKind::Identifier) throw runtime_error("expected param name");
+					string pname = cur.text; next();
+					fn->params.emplace_back(ptype, pname);
+					if (accept(TokenKind::Comma)) continue;
+					expect(TokenKind::RParen);
+					break;
+				}
+			}
+			// parse body
+			fn->body = parseCompoundStmt();
+			return fn;
+		}
+		else
+		{
+			// global var declaration
+			auto vd = make_unique<VarDecl>();
+			vd->type = type; vd->name = name;
+			if (accept(TokenKind::Assign))
+			{
+				vd->init = parseExpression();
+			}
+			expect(TokenKind::Semicolon);
+			return vd;
+		}
+	}
+
+	unique_ptr<Stmt> parseCompoundStmt()
+	{
+		expect(TokenKind::LBrace);
+		auto comp = make_unique<CompoundStmt>();
+		while (cur.kind != TokenKind::RBrace && cur.kind != TokenKind::End)
+		{
+			// either local decl (type identifier ;) or stmt
+			if (cur.kind == TokenKind::Int || cur.kind == TokenKind::Void)
+			{
+				// for simplicity only accept 'int' local decls (void params only as function param)
+				string t = parseType();
+				if (cur.kind != TokenKind::Identifier) throw runtime_error("expected identifier in local decl");
+				string n = cur.text; next();
+				auto vd = make_unique<VarDecl>();
+				vd->type = t; vd->name = n;
+				if (accept(TokenKind::Assign)) vd->init = parseExpression();
+				expect(TokenKind::Semicolon);
+				comp->localDecls.push_back(move(vd));
+			}
+			else
+			{
+				comp->stmts.push_back(parseStmt());
+			}
+		}
+		expect(TokenKind::RBrace);
+		return comp;
+	}
+
+	unique_ptr<Stmt> parseStmt() 
+	{
+		if (accept(TokenKind::Return))
+		{
+			auto ret = make_unique<ReturnStmt>();
+			if (cur.kind != TokenKind::Semicolon) ret->expr = parseExpression();
+			expect(TokenKind::Semicolon);
+			return ret;
+		}
+		if (cur.kind == TokenKind::LBrace) return parseCompoundStmt();
+		// expression statement
+		auto es = make_unique<ExprStmt>();
+		if (cur.kind != TokenKind::Semicolon) es->expr = parseExpression();
+		expect(TokenKind::Semicolon);
+		return es;
+	}
+
+	unique_ptr<Expr> parseExpression() 
+	{
+		return parseAssignment();
+	}
+
+	unique_ptr<Expr> parseAssignment()
+	{
+		// parse left as primary or identifier; support simple 'id = expr'
+		auto left = parseAddSub();
+		if (auto* ve = dynamic_cast<VarExpr*>(left.get()))
+		{
+			if (accept(TokenKind::Assign))
+			{
+				auto val = parseAssignment();
+				return make_unique<AssignExpr>(ve->name, move(val));
+			}
+		}
+		return left;
+	}
+
+	unique_ptr<Expr> parseAddSub() 
+	{
+		auto node = parseMulDiv();
+		while (cur.kind == TokenKind::Plus || cur.kind == TokenKind::Minus)
+		{
+			char op = (cur.kind == TokenKind::Plus ? '+' : '-'); next();
+			auto rhs = parseMulDiv();
+			node = make_unique<BinaryExpr>(op, move(node), move(rhs));
+		}
+		return node;
+	}
+
+	unique_ptr<Expr> parseMulDiv() 
+	{
+		auto node = parseUnary();
+		while (cur.kind == TokenKind::Star || cur.kind == TokenKind::Slash)
+		{
+			char op = (cur.kind == TokenKind::Star ? '*' : '/'); next();
+			auto rhs = parseUnary();
+			node = make_unique<BinaryExpr>(op, move(node), move(rhs));
+		}
+		return node;
+	}
+
+	unique_ptr<Expr> parseUnary() 
+	{
+		if (accept(TokenKind::Plus)) return parseUnary();
+		if (accept(TokenKind::Minus))
+		{
+			auto rhs = parseUnary();
+			auto zero = make_unique<NumberExpr>(0);
+			return make_unique<BinaryExpr>('-', move(zero), move(rhs));
+		}
+		return parsePrimary();
+	}
+
+	unique_ptr<Expr> parsePrimary() 
+	{
+		if (cur.kind == TokenKind::Number)
+		{
+			auto n = make_unique<NumberExpr>(cur.number);
+			next(); return n;
+		}
+		if (cur.kind == TokenKind::Identifier)
+		{
+			string name = cur.text; next();
+			if (accept(TokenKind::LParen))
+			{
+				auto call = make_unique<CallExpr>(name);
+				if (!accept(TokenKind::RParen))
+				{
+					while (true)
+					{
+						call->args.push_back(parseExpression());
+						if (accept(TokenKind::Comma)) continue;
+						expect(TokenKind::RParen);
+						break;
+					}
+				}
+				return call;
+			}
+			return make_unique<VarExpr>(name);
+		}
+		if (accept(TokenKind::LParen))
+		{
+			auto e = parseExpression();
+			expect(TokenKind::RParen);
+			return e;
+		}
+		throw runtime_error("Unexpected token in primary");
+	}
+
+	string parseType() 
+	{
+		if (accept(TokenKind::Int)) return "int";
+		if (accept(TokenKind::Void)) return "void";
+		throw runtime_error("Unknown type");
+	}
 };
+

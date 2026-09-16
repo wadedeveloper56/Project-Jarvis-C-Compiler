@@ -28,6 +28,8 @@
 #include <stack>
 #include <sstream>
 #include <stdexcept>
+#include <algorithm>
+#include <unordered_set>
 
 #pragma warning(disable:4267)
 #pragma warning(disable:4244)

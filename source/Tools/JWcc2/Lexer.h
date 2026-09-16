@@ -1,35 +1,44 @@
 #pragma once
 
+#include <cctype>
+#include <iostream>
+#include <memory>
 #include <string>
-#include <unordered_map>
 #include <vector>
+#include <sstream>
+#include <stdexcept>
+#include <map>
+#include <algorithm>
+#include <unordered_set>
 
 using namespace std;
 
-enum class TokenType
+enum class TokenKind
 {
-    Keyword_int, Keyword_void, Keyword_return,
-    Identifier, Number,
-    OpenParen, CloseParen, OpenBrace, CloseBrace,
-    Semicolon, Equal, Comma,
+    End, Identifier, Number,
+    Int, Void, Return,
     Plus, Minus, Star, Slash,
-    Eof, Unknown
+    LParen, RParen, LBrace, RBrace,
+    Semicolon, Comma, Assign,
+    Unknown
 };
 
 struct Token
 {
-    TokenType type;
-    string value;
+    TokenKind kind;
+    string text;
+    int number = 0;
+    int pos = 0;
 };
 
 class Lexer
 {
+    string src;
+    size_t i = 0;
+    int pos = 0;
+    unordered_set<string> keywords{ "int", "void", "return" };
 public:
-    explicit Lexer(string source);
-    vector<Token> tokenize();
-private:
-    string source_;
-    size_t index_;
-    Token lexIdentifier();
-    Token lexNumber();
+    Lexer(string s);
+    Token next();
 };
+

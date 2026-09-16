@@ -1,82 +1,77 @@
-#include <cctype>
-#include <string>
-#include <vector>
 #include "pch.h"
 #include "Lexer.h"
 
 using namespace std;
 
-Lexer::Lexer(string source) : source_(move(source)), index_(0) {}
+Lexer::Lexer(string s) : src(move(s)) {}
 
-vector<Token> Lexer::tokenize()
+Token Lexer::next() 
 {
-	vector<Token> tokens;
-	while (index_ < source_.size())
+	while (i < src.size() && isspace((unsigned char)src[i])) { ++i; ++pos; }
+	if (i >= src.size()) return { TokenKind::End, "", 0, pos };
+
+	char c = src[i];
+	Token t; t.pos = pos;
+
+	// identifiers / keywords
+	if (isalpha((unsigned char)c) || c == '_')
 	{
-		char current = source_[index_];
-
-		if (isspace(current))
-		{
-			index_++;
-			continue;
-		}
-
-		if (isalpha(current) || current == '_')
-		{
-			tokens.push_back(lexIdentifier());
-			continue;
-		}
-
-		if (isdigit(current))
-		{
-			tokens.push_back(lexNumber());
-			continue;
-		}
-
-		switch (current)
-		{
-			case '(': index_++; tokens.push_back({ TokenType::OpenParen, "(" }); break;
-			case ')': index_++; tokens.push_back({ TokenType::CloseParen, ")" }); break;
-			case '{': index_++; tokens.push_back({ TokenType::OpenBrace, "{" }); break;
-			case '}': index_++; tokens.push_back({ TokenType::CloseBrace, "}" }); break;
-			case ';': index_++; tokens.push_back({ TokenType::Semicolon, ";" }); break;
-			case '=': index_++; tokens.push_back({ TokenType::Equal, "=" }); break;
-			case ',': index_++; tokens.push_back({ TokenType::Comma, "," }); break;
-			case '+': index_++; tokens.push_back({ TokenType::Plus, "+" }); break;
-			case '-': index_++; tokens.push_back({ TokenType::Minus, "-" }); break;
-			case '*': index_++; tokens.push_back({ TokenType::Star, "*" }); break;
-			case '/': index_++; tokens.push_back({ TokenType::Slash, "/" }); break;
-			default:
-				index_++;
-				tokens.push_back({ TokenType::Unknown, string(1, current) });
-				break;
-		}
+		size_t start = i;
+		while (i < src.size() && (isalnum((unsigned char)src[i]) || src[i] == '_')) ++i;
+		t.text = src.substr(start, i - start);
+		if (t.text == "int") t.kind = TokenKind::Int;
+		else if (t.text == "void") t.kind = TokenKind::Void;
+		else if (t.text == "return") t.kind = TokenKind::Return;
+		else { t.kind = TokenKind::Identifier; }
+		pos += (int)t.text.size();
+		return t;
 	}
-	tokens.push_back({ TokenType::Eof, "" });
-	return tokens;
-}
 
-Token Lexer::lexIdentifier() 
-{
-	size_t start = index_;
-	while (index_ < source_.size() && (isalnum(source_[index_]) || source_[index_] == '_'))
+	// numbers (integers only)
+	if (isdigit((unsigned char)c))
 	{
-		index_++;
+		size_t start = i;
+		while (i < src.size() && isdigit((unsigned char)src[i])) ++i;
+		t.text = src.substr(start, i - start);
+		t.number = stoi(t.text);
+		t.kind = TokenKind::Number;
+		pos += (int)t.text.size();
+		return t;
 	}
-	string text = source_.substr(start, index_ - start);
-	if (text == "int") return { TokenType::Keyword_int, text };
-	if (text == "void") return { TokenType::Keyword_void, text };
-	if (text == "return") return { TokenType::Keyword_return, text };
-	return { TokenType::Identifier, text };
-}
 
-Token Lexer::lexNumber() 
-{
-	size_t start = index_;
-	while (index_ < source_.size() && isdigit(source_[index_]))
+	// two-character or one-character tokens
+	++i; ++pos;
+	switch (c)
 	{
-		index_++;
+		case '+': t.kind = TokenKind::Plus; return t;
+		case '-': t.kind = TokenKind::Minus; return t;
+		case '*': t.kind = TokenKind::Star; return t;
+		case '/':
+			// handle comments: // and /* */
+			if (i < src.size() && src[i] == '/')
+			{ // line comment
+				while (i < src.size() && src[i] != '\n') ++i;
+				return next();
+			}
+			if (i < src.size() && src[i] == '*')
+			{ // block comment
+				++i;
+				while (i + 1 < src.size() && !(src[i] == '*' && src[i + 1] == '/')) ++i;
+				if (i + 1 < src.size()) i += 2;
+				return next();
+			}
+			t.kind = TokenKind::Slash; return t;
+		case '(': t.kind = TokenKind::LParen; return t;
+		case ')': t.kind = TokenKind::RParen; return t;
+		case '{': t.kind = TokenKind::LBrace; return t;
+		case '}': t.kind = TokenKind::RBrace; return t;
+		case ';': t.kind = TokenKind::Semicolon; return t;
+		case ',': t.kind = TokenKind::Comma; return t;
+		case '=': t.kind = TokenKind::Assign; return t;
+		default:
+			t.kind = TokenKind::Unknown;
+			t.text = string(1, c);
+			return t;
 	}
-	return { TokenType::Number, source_.substr(start, index_ - start) };
 }
 

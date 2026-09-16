@@ -3,10 +3,16 @@
 
 using namespace std;
 
-void IntegerLiteral::accept(ASTVisitor* visitor) { visitor->visit(this); }
-void IdentifierExpr::accept(ASTVisitor* visitor) { visitor->visit(this); }
-void BinaryExpr::accept(ASTVisitor* visitor) { visitor->visit(this); }
-void VarDeclNode::accept(ASTVisitor* visitor) { visitor->visit(this); }
-void ReturnStmtNode::accept(ASTVisitor* visitor) { visitor->visit(this); }
-void FunctionDeclNode::accept(ASTVisitor* visitor) { visitor->visit(this); }
-void ProgramNode::accept(ASTVisitor* visitor) { visitor->visit(this); }
+// accept implementations
+void Program::accept(ASTVisitor& v) { v.visit(*this); }
+void VarDecl::accept(ASTVisitor& v) { v.visit(*this); }
+void FunctionDecl::accept(ASTVisitor& v) { v.visit(*this); }
+void CompoundStmt::accept(ASTVisitor& v) { v.visit(*this); }
+void ReturnStmt::accept(ASTVisitor& v) { v.visit(*this); }
+void ExprStmt::accept(ASTVisitor& v) { v.visit(*this); }
+void NumberExpr::accept(ASTVisitor& v) { v.visit(*this); }
+void VarExpr::accept(ASTVisitor& v) { v.visit(*this); }
+void BinaryExpr::accept(ASTVisitor& v) { v.visit(*this); }
+void AssignExpr::accept(ASTVisitor& v) { v.visit(*this); }
+void CallExpr::accept(ASTVisitor& v) { v.visit(*this); }
+

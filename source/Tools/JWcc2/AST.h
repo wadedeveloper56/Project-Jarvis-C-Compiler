@@ -6,90 +6,119 @@
 
 using namespace std;
 
-class ASTVisitor;
+struct ASTVisitor;
 
-class ASTNode
+struct Node
 {
-public:
-    virtual ~ASTNode() = default;
-    virtual void accept(ASTVisitor* visitor) = 0;
-};
-using ASTPtr = unique_ptr<ASTNode>;
-
-struct Expr : ASTNode {}; 
-using ExprPtr = unique_ptr<Expr>;
-
-struct IntegerLiteral : Expr 
-{ 
-    int value; 
-    IntegerLiteral(int v) : value(v) {} 
-    void accept(ASTVisitor* visitor) override;
+    virtual ~Node() = default;
+    virtual void accept(ASTVisitor& v) = 0;
 };
 
-struct IdentifierExpr : Expr 
-{ 
-    string name; 
-    IdentifierExpr(string n) : name(move(n)) {} 
-    void accept(ASTVisitor* visitor) override;
-};
+using Ptr = unique_ptr<Node>;
 
-struct BinaryExpr : Expr 
-{ 
-    string op; 
-    ExprPtr lhs, rhs; 
-    BinaryExpr(string op, ExprPtr l, ExprPtr r) : op(move(op)), lhs(move(l)), rhs(move(r)) {} 
-    void accept(ASTVisitor* visitor) override; 
-};
+struct Expr : Node {};
+struct Stmt : Node {};
+struct Decl : Node {};
 
-class VarDeclNode : public ASTNode
+struct Program : Node
 {
-public:
+    vector<unique_ptr<Decl>> decls;
+    void accept(ASTVisitor& v) override;
+};
+
+// Declarations
+struct VarDecl : Decl
+{
     string type;
     string name;
-    string initValue; // Simple literal initialization for this example
-    bool isGlobal;
-
-    VarDeclNode(string t, string n, string val, bool global) : type(move(t)), name(move(n)), initValue(move(val)), isGlobal(global) {}
-    void accept(ASTVisitor* visitor) override;
+    unique_ptr<Expr> init; // optional
+    void accept(ASTVisitor& v) override;
 };
 
-class ReturnStmtNode : public ASTNode
+struct FunctionDecl : Decl
 {
-public:
-    string value;
-    explicit ReturnStmtNode(string val) : value(move(val)) {}
-    void accept(ASTVisitor* visitor) override;
-};
-
-class FunctionDeclNode : public ASTNode
-{
-public:
-    string returnType;
+    string retType;
     string name;
-    vector<pair<string, string>> params; // pair<type, name>
-    vector<unique_ptr<ASTNode>> body;
-
-    FunctionDeclNode(string rType, string n) : returnType(move(rType)), name(move(n)) {}
-    void accept(ASTVisitor* visitor) override;
+    vector<pair<string, string>> params; // (type,name)
+    unique_ptr<Stmt> body;
+    void accept(ASTVisitor& v) override;
 };
 
-class ProgramNode : public ASTNode
+// Statements
+struct CompoundStmt : Stmt
 {
-public:
-    vector<unique_ptr<ASTNode>> externalDeclarations;
-    void accept(ASTVisitor* visitor) override;
+    vector<unique_ptr<Decl>> localDecls;
+    vector<unique_ptr<Stmt>> stmts;
+    void accept(ASTVisitor& v) override;
 };
 
-// Visitor Interface for AST traversal (e.g., Code Gen or Printing)
-class ASTVisitor
+struct ReturnStmt : Stmt
 {
-public:
-    virtual void visit(ProgramNode* node) = 0;
-    virtual void visit(VarDeclNode* node) = 0;
-    virtual void visit(FunctionDeclNode* node) = 0;
-    virtual void visit(ReturnStmtNode* node) = 0;
-	virtual void visit(IntegerLiteral* node) = 0;
-	virtual void visit(IdentifierExpr* node) = 0;
-	virtual void visit(BinaryExpr* node) = 0;
+    unique_ptr<Expr> expr; // optional
+    void accept(ASTVisitor& v) override;
+};
+
+struct ExprStmt : Stmt
+{
+    unique_ptr<Expr> expr; // optional
+    void accept(ASTVisitor& v) override;
+};
+
+// Expressions
+struct NumberExpr : Expr
+{
+    int value;
+    NumberExpr(int v) : value(v) {}
+    void accept(ASTVisitor& v) override;
+};
+
+struct VarExpr : Expr
+{
+    string name;
+    VarExpr(string n) : name(move(n)) {}
+    void accept(ASTVisitor& v) override;
+};
+
+struct BinaryExpr : Expr
+{
+    char op;
+    unique_ptr<Expr> lhs, rhs;
+    BinaryExpr(char o, unique_ptr<Expr> l, unique_ptr<Expr> r)
+        : op(o), lhs(move(l)), rhs(move(r)) {}
+    void accept(ASTVisitor& v) override;
+};
+
+struct AssignExpr : Expr
+{
+    string name;
+    unique_ptr<Expr> value;
+    AssignExpr(string n, unique_ptr<Expr> v)
+        : name(move(n)), value(move(v)) {}
+    void accept(ASTVisitor& v) override;
+};
+
+struct CallExpr : Expr
+{
+    string callee;
+    vector<unique_ptr<Expr>> args;
+    CallExpr(string c) : callee(move(c)) {}
+    void accept(ASTVisitor& v) override;
+};
+
+// Visitor interface
+struct ASTVisitor
+{
+    virtual ~ASTVisitor() = default;
+    virtual void visit(Program& n) = 0;
+    virtual void visit(VarDecl& n) = 0;
+    virtual void visit(FunctionDecl& n) = 0;
+    virtual void visit(CompoundStmt& n) = 0;
+    virtual void visit(ReturnStmt& n) = 0;
+    virtual void visit(ExprStmt& n) = 0;
+    virtual void visit(NumberExpr& n) = 0;
+    virtual void visit(VarExpr& n) = 0;
+    virtual void visit(BinaryExpr& n) = 0;
+    virtual void visit(AssignExpr& n) = 0;
+    virtual void visit(CallExpr& n) = 0;
 };
 

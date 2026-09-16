@@ -10,8 +10,15 @@ bool bit32 = false;
 bool bit64 = false;
 int main(int argc, char* argv[])
 {
-	string sourceCode = R"(int global_variable = 42;int standard_var;int main(int argc, int argv) {int local_var = 10;return local_var;})";
-
+	string src = "int x = 3;\n"
+		"int add(int a, int b) {\n"
+		"  int c = a + b * 2;\n"
+		"  return c;\n"
+		"}\n"
+		"int main() {\n"
+		"  int y = add(x, 4);\n"
+		"  return y;\n"
+		"}\n";
 	ArgIntPtr bitsize = argInt0("bB", "bitsize", NULL, "define bit size to be 16, 32 or 64 bits (default is 32)");
 	ArgFilePtr outfile = argFile0("Oo", "output", "<file>", "output file (default is \"-\")");
 	ArgLitPtr help = argLit0("hH", "help", "print this help and exit");
@@ -91,16 +98,14 @@ int main(int argc, char* argv[])
 	}
 	try
 	{
-		Lexer lexer(sourceCode);
-		vector tokens = lexer.tokenize();
-		Parser parser(tokens);
-		unique_ptr astRoot = parser.parseProgram();
+		Parser p(src);
+		auto prog = p.parseProgram();
 		ASTPrinter printer;
-		astRoot->accept(&printer);
+		prog->accept(printer);
 	}
-	catch (const exception& e)
+	catch (const std::exception& ex)
 	{
-		cerr << e.what() << endl;
+		std::cerr << "Error: " << ex.what() << "\n";
 		return 1;
 	}
 
