@@ -36,24 +36,24 @@ void JWasmGenerator::emitPrologue(int localBytes)
 	// For 32-bit and 16-bit, use ebp frame
 	if (bits == 32 || bits == 16)
 	{
-		ind(); out << "push ebp\n";
-		ind(); out << "mov ebp, esp\n";
-		// save callee-saved registers (ebx, esi, edi)
-		ind(); out << "push ebx\n";
-		ind(); out << "push esi\n";
-		ind(); out << "push edi\n";
-		if (localBytes > 0) { ind(); out << "sub esp, " << localBytes << "\n"; }
+		//ind(); out << "push ebp\n";
+		//ind(); out << "mov ebp, esp\n";
+		//// save callee-saved registers (ebx, esi, edi)
+		//ind(); out << "push ebx\n";
+		//ind(); out << "push esi\n";
+		//ind(); out << "push edi\n";
+		//if (localBytes > 0) { ind(); out << "sub esp, " << localBytes << "\n"; }
 	}
 	else if (bits == 64)
 	{
-		// For x64, follow chosen calling convention: save callee-saved (rbx, rsi, rdi, rbp, r12-r15 as needed)
-		ind(); out << "push rbp\n";
-		ind(); out << "mov rbp, rsp\n";
-		// save some callee-saved registers (rbx, rsi, rdi)
-		ind(); out << "push rbx\n";
-		ind(); out << "push rsi\n";
-		ind(); out << "push rdi\n";
-		if (localBytes > 0) { ind(); out << "sub rsp, " << localBytes << "\n"; }
+		//// For x64, follow chosen calling convention: save callee-saved (rbx, rsi, rdi, rbp, r12-r15 as needed)
+		//ind(); out << "push rbp\n";
+		//ind(); out << "mov rbp, rsp\n";
+		//// save some callee-saved registers (rbx, rsi, rdi)
+		//ind(); out << "push rbx\n";
+		//ind(); out << "push rsi\n";
+		//ind(); out << "push rdi\n";
+		//if (localBytes > 0) { ind(); out << "sub rsp, " << localBytes << "\n"; }
 	}
 }
 
@@ -61,28 +61,28 @@ void JWasmGenerator::emitEpilogue()
 {
 	if (bits == 32 || bits == 16)
 	{
-		if (inFunction)
-		{
-			// restore stack
-			ind(); out << "mov esp, ebp\n";
-			ind(); out << "pop edi\n";
-			ind(); out << "pop esi\n";
-			ind(); out << "pop ebx\n";
-			ind(); out << "pop ebp\n";
-			ind(); out << "ret\n";
-		}
+		//if (inFunction)
+		//{
+		//	// restore stack
+		//	ind(); out << "mov esp, ebp\n";
+		//	ind(); out << "pop edi\n";
+		//	ind(); out << "pop esi\n";
+		//	ind(); out << "pop ebx\n";
+		//	ind(); out << "pop ebp\n";
+		//	ind(); out << "ret\n";
+		//}
 	}
 	else if (bits == 64)
 	{
-		if (inFunction)
-		{
-			ind(); out << "add rsp, 0 ; adjust (if locals allocated)\n";
-			ind(); out << "pop rdi\n";
-			ind(); out << "pop rsi\n";
-			ind(); out << "pop rbx\n";
-			ind(); out << "pop rbp\n";
-			ind(); out << "ret\n";
-		}
+		//if (inFunction)
+		//{
+		//	ind(); out << "add rsp, 0 ; adjust (if locals allocated)\n";
+		//	ind(); out << "pop rdi\n";
+		//	ind(); out << "pop rsi\n";
+		//	ind(); out << "pop rbx\n";
+		//	ind(); out << "pop rbp\n";
+		//	ind(); out << "ret\n";
+		//}
 	}
 }
 
@@ -112,7 +112,7 @@ void JWasmGenerator::visit(Program& n)
 	else
 	{
 		out << ".x64p" << endl;
-		out << ".model flat, c;" << endl;
+		//out << ".model flat, c;" << endl;
 	}
 	out << "option casemap : none" << endl;
 
@@ -136,14 +136,16 @@ void JWasmGenerator::visit(Program& n)
 	{
 		if (auto gv = dynamic_cast<VarDecl*>(d.get()))
 		{
-			auto init = dynamic_cast<Expr*>(gv->init.get());
-			if (init != nullptr)
+			if (auto init = dynamic_cast<Expr*>(gv->init.get()))
 			{
-				auto expr = dynamic_cast<NumberExpr*>(init);
-				if (gv->type == "int")	out << gv->name << " SDWORD " << expr->value << "; global var " << gv->name << " type = " << gv->type << " value = " << expr->value << endl;
+				if (auto expr = dynamic_cast<NumberExpr*>(init))
+				{
+					if (gv->type == "int")	out << gv->name << " SDWORD " << expr->value << "; global var " << gv->name << " type = " << gv->type << " value = " << expr->value << endl;
+				}
 			}
 		}
 	}
+
 	out << endl << ".code" << endl;
 	for (auto& d : n.decls)
 	{
@@ -152,6 +154,7 @@ void JWasmGenerator::visit(Program& n)
 			gv->accept(*this);
 		}
 	}
+	out << "end" << endl;
 }
 
 void JWasmGenerator::visit(VarDecl& n)
@@ -172,9 +175,8 @@ void JWasmGenerator::visit(FunctionDecl& n)
 	{
 		localIndex[p.second] = idx++;
 	}
-	// emit MASM proc header
-	out << n.name << " proc" << "\n";
 	// params (MASM uses stack-based params; emit comments and locals block)
+	out << ";-----------------\n";
 	if (!n.params.empty())
 	{
 		ind(); out << "; params:\n";
@@ -195,7 +197,7 @@ void JWasmGenerator::visit(FunctionDecl& n)
 			{
 				if (auto v = dynamic_cast<VarDecl*>(ld.get()))
 				{
-					currentLocals.push_back(v->name);
+					currentLocals.push_back(v);
 					localIndex[v->name] = idx++;
 				}
 			}
@@ -206,8 +208,31 @@ void JWasmGenerator::visit(FunctionDecl& n)
 		ind(); out << "; locals:\n";
 		for (auto& ln : currentLocals)
 		{
-			ind(); out << ";   " << ln << " : " << "int" << "\n";
+			ind(); out << ";   " << ln->name << " : " << "int" << "\n";
 		}
+	}
+	out << ";-----------------\n";
+	// emit MASM proc header
+	out << n.name << " PROC C";
+	for (auto& p : n.params)
+	{
+		if (p.first == "int")	out << "," << p.second << ":SDWORD";
+
+	}
+	out << endl;
+	if (!currentLocals.empty())
+	{
+		ind();
+		out << "      LOCAL ";
+		int size = (int)currentLocals.size();
+		int idx = 0;
+		for (auto& ln : currentLocals)
+		{
+			if (ln->type == "int") out << ln->name << ":SDWORD";
+			if (idx < size - 1) out << ",";
+			idx++;
+		}
+		out << endl;
 	}
 	// body prologue
 	int totalLocalBytes = (idx - localCountStart) * wordBytes();
@@ -217,7 +242,7 @@ void JWasmGenerator::visit(FunctionDecl& n)
 	if (n.body) n.body->accept(*this);
 	indent--;
 	emitEpilogue();
-	out << n.name << " endp\n\n";
+	out << n.name << " ENDP" << endl << endl;
 	inFunction = false;
 }
 
@@ -232,11 +257,11 @@ void JWasmGenerator::visit(ReturnStmt& n)
 	if (n.expr)
 	{
 		n.expr->accept(*this);
-		ind(); out << "return\n";
+		ind(); out << "ret" << endl;
 	}
 	else
 	{
-		ind(); out << "return\n";
+		ind(); out << "ret" << endl;
 	}
 }
 
@@ -249,8 +274,8 @@ void JWasmGenerator::visit(NumberExpr& n)
 {
 	// push immediate into register/stack
 	ind();
-	if (bits == 64) out << "mov " << regA() << ", " << n.value << "\n";
-	else out << "mov " << regA() << ", " << n.value << "\n";
+	//if (bits == 64) out << "mov " << regA() << ", " << n.value << "\n";
+	//else out << "mov " << regA() << ", " << n.value << "\n";
 	// push onto stack to follow simple eval convention
 	ind(); out << "push " << regA() << "\n";
 }
@@ -261,12 +286,12 @@ void JWasmGenerator::visit(VarExpr& n)
 	auto it = localIndex.find(n.name);
 	if (it != localIndex.end())
 	{
-		out << "mov " << regA() << ", [ebp + " << (it->second * wordBytes()) << "] ; load " << n.name << "\n";
-		ind(); out << "push " << regA() << "\n";
+		//out << "mov " << regA() << ", [ebp + " << (it->second * wordBytes()) << "] ; load " << n.name << "\n";
+		//ind(); out << "push " << regA() << "\n";
 	}
 	else
 	{
-		out << "; global ref " << n.name << "\n";
+		//out << "; global ref " << n.name << "\n";
 	}
 }
 
@@ -301,11 +326,11 @@ void JWasmGenerator::visit(AssignExpr& n)
 	auto it = localIndex.find(n.name);
 	if (it != localIndex.end())
 	{
-		out << "mov [ebp + " << (it->second * wordBytes()) << "], " << regA() << " ; store " << n.name << "\n";
+		//out << "mov [ebp + " << (it->second * wordBytes()) << "], " << regA() << " ; store " << n.name << "\n";
 	}
 	else
 	{
-		out << "; store to global " << n.name << "\n";
+		//out << "; store to global " << n.name << "\n";
 	}
 }
 

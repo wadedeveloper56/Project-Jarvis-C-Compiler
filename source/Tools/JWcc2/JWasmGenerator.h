@@ -5,10 +5,12 @@
 #include <unordered_map>
 #include <string>
 
+using namespace std;
+
 struct JWasmGenerator : ASTVisitor {
 	// bits: 16,32,64
 	// isWindows: when bits==64 choose Windows x64 calling convention if true, otherwise SysV
-	JWasmGenerator(std::ostream& os, int bits = 32, bool isWindows = true) : out(os), indent(0), bits(bits), inFunction(false), isWindows(isWindows) {}
+	JWasmGenerator(ostream& os, int bits = 32, bool isWindows = true) : out(os), indent(0), bits(bits), inFunction(false), isWindows(isWindows) {}
 
 	void generate(Program& p) { p.accept(*this); }
 
@@ -26,23 +28,23 @@ struct JWasmGenerator : ASTVisitor {
 	void visit(CallExpr& n) override;
 
 private:
-	std::ostream& out;
+	ostream& out;
 	int indent;
 	int bits;
 	void ind() { for (int i = 0; i < indent; ++i) out << "  "; }
 
 	// per-function state
-	std::unordered_map<std::string,int> paramIndex; // param name -> index
-	std::unordered_map<std::string,int> localIndex; // local name -> slot (0..)
+	unordered_map<string,int> paramIndex; // param name -> index
+	unordered_map<string,int> localIndex; // local name -> slot (0..)
 	bool inFunction;
 	int nextLocalIndex();
-	std::string wasmType(const std::string& ty) const;
-	std::vector<std::string> currentParams;
-	std::vector<std::string> currentLocals;
-	std::string wordForBits() const;
+	string wasmType(const string& ty) const;
+	vector<string> currentParams;
+	vector<VarDecl*> currentLocals;
+	string wordForBits() const;
 	bool isWindows;
-	std::string regA() const;
-	std::string regB() const;
+	string regA() const;
+	string regB() const;
 	int wordBytes() const { return bits / 8; }
 	void emitPrologue(int localBytes);
 	void emitEpilogue();
