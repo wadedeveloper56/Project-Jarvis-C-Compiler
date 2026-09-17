@@ -1,4 +1,4 @@
-JWasm v2.12pre, Aug 22 2026
+JWasm v2.12pre, Sep 16 2026
 C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\x86\test1.asm
                                 .386
                                 .model flat, c;
@@ -78,12 +78,12 @@ Symbols:
 @Cpu . . . . . . . . . . . . . .        Number           D0Fh 
 @CurSeg  . . . . . . . . . . . .        Text   
 @DataSize  . . . . . . . . . . .        Number             0h 
-@Date  . . . . . . . . . . . . .        Text   08/22/26
+@Date  . . . . . . . . . . . . .        Text   09/16/26
 @FileCur . . . . . . . . . . . .        Text   C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\x86\test1.asm
 @FileName  . . . . . . . . . . .        Text   TEST1
 @Interface . . . . . . . . . . .        Number             1h 
 @Model . . . . . . . . . . . . .        Number             7h 
-@Time  . . . . . . . . . . . . .        Text   16:12:35
+@Time  . . . . . . . . . . . . .        Text   20:51:40
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT

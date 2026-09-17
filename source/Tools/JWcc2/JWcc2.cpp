@@ -52,6 +52,7 @@ int main(int argc, char* argv[])
 	try
 	{
 		src = "int x = 3;\n"
+			  "int m;\n"
 			  "int add(int a, int b) {\n"
 			  "  int c = a + b * 2;\n"
 			  "  return c;\n"

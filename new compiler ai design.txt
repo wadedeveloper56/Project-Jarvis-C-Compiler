@@ -31,3 +31,6 @@
 •	Remove the separate JWcc2.Tests.x64.vcxproj and keep a single multi-platform vcxproj.
 •	Add a Directory.Build.targets step that automatically runs the restore script before build in CI.
 •	Add CI YAML for GitHub Actions to run vcpkg restore and then build+test.
+
+•	Update the generator to fully implement Windows x64 (RCX/RDX/R8/R9 parameter passing) and SysV (RDI/RSI/RDX/RCX/R8/R9).
+•	Replace the hardcoded sample input with reading files or standard input. Which should I do next?
