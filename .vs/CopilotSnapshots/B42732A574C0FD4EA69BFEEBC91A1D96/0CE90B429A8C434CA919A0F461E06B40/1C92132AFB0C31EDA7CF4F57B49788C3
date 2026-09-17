@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "pch.h"
 #include <string>
@@ -14,7 +14,6 @@ struct SymbolInfo
 	SymbolKind kind;
 	string type; // for variable: type name; for function: return type
 	vector<string> paramTypes; // only for functions
-	bool defined = false; // true when a function has been defined (not just declared)
 };
 
 class SymbolTable
@@ -26,8 +25,7 @@ public:
 
 	bool declareVariable(const string& name, const string& type);
 	bool declareFunctionProto(const string& name, const string& retType, const vector<string>& paramTypes);
-	enum class DefineResult { Success = 0, PrototypeMismatch = 1, AlreadyDefined = 2 };
-	DefineResult defineFunction(const string& name, const string& retType, const vector<string>& paramTypes);
+	bool defineFunction(const string& name, const string& retType, const vector<string>& paramTypes);
 
 	// lookup finds nearest symbol up the scope chain, returns nullptr if not found
 	const SymbolInfo* lookup(const string& name) const;

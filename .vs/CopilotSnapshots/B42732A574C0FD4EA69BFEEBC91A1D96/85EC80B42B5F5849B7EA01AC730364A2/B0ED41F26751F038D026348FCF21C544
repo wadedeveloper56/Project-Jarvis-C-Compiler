@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "AST.h"
 #include "SymbolTable.h"
@@ -28,9 +28,6 @@ struct SemanticAnalyzer : ASTVisitor {
 	void visit(BinaryExpr& n) override;
 	void visit(AssignExpr& n) override;
 	void visit(CallExpr& n) override;
-
-	// Control-flow checks
-	void checkFunctionReturns(FunctionDecl& f);
 
 	// Evaluate expression type or empty string on error
 	string evalExprType(Expr* e);

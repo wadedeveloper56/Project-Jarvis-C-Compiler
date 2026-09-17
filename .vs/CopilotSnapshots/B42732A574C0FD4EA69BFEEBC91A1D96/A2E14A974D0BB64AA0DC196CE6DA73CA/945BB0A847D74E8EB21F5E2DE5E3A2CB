@@ -1,34 +1,8 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "SemanticAnalyzer.h"
 
 SemanticAnalyzer::SemanticAnalyzer()
 {
-}
-
-// Simple control-flow check: ensure every path in the function body returns when function is non-void
-void SemanticAnalyzer::checkFunctionReturns(FunctionDecl& f)
-{
-	// conservative approach: traverse the top-level statements of the compound body
-	// and verify at least one return exists; for full path-sensitivity a CFG is needed.
-	if (!f.body) return;
-	auto cs = dynamic_cast<CompoundStmt*>(f.body.get());
-	if (!cs) return;
-	bool foundReturn = false;
-	for (auto& s : cs->stmts)
-	{
-		if (dynamic_cast<ReturnStmt*>(s.get())) { foundReturn = true; break; }
-		// also check nested compound statements
-		if (auto inner = dynamic_cast<CompoundStmt*>(s.get()))
-		{
-			for (auto& is : inner->stmts)
-			{
-				if (dynamic_cast<ReturnStmt*>(is.get())) { foundReturn = true; break; }
-			}
-			if (foundReturn) break;
-		}
-	}
-	if (!foundReturn)
-		error("Function '" + f.name + "' may not return on all paths", f.loc);
 }
 
 bool SemanticAnalyzer::analyze(Program& prog)
@@ -99,11 +73,7 @@ void SemanticAnalyzer::visit(FunctionDecl& n)
 
 	string prevRet = currentFunctionRetType;
 	currentFunctionRetType = n.retType;
-	if (n.body) {
-		n.body->accept(*this);
-		// control-flow check: ensure non-void functions return on all paths
-		if (n.retType != "void") checkFunctionReturns(n);
-	}
+	if (n.body) n.body->accept(*this);
 	currentFunctionRetType = prevRet;
 
 	symbols.popScope();

@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "SymbolTable.h"
 
 SymbolTable::SymbolTable()
@@ -44,23 +44,10 @@ bool SymbolTable::declareFunctionProto(const string& name, const string& retType
 	return true;
 }
 
-SymbolTable::DefineResult SymbolTable::defineFunction(const string& name, const string& retType, const vector<string>& paramTypes)
+bool SymbolTable::defineFunction(const string& name, const string& retType, const vector<string>& paramTypes)
 {
-	auto& cur = scopes.front();
-	auto it = cur.find(name);
-	if (it != cur.end())
-	{
-		if (it->second.kind != SymbolKind::Function) return DefineResult::PrototypeMismatch;
-		if (it->second.type != retType) return DefineResult::PrototypeMismatch;
-		if (it->second.paramTypes != paramTypes) return DefineResult::PrototypeMismatch;
-		if (it->second.defined) return DefineResult::AlreadyDefined;
-		it->second.defined = true;
-		return DefineResult::Success;
-	}
-	// no prior prototype: insert and mark defined
-	SymbolInfo si; si.kind = SymbolKind::Function; si.type = retType; si.paramTypes = paramTypes; si.defined = true;
-	cur.emplace(name, move(si));
-	return DefineResult::Success;
+	// same as declareFunctionProto for this simple model
+	return declareFunctionProto(name, retType, paramTypes);
 }
 
 const SymbolInfo* SymbolTable::lookup(const string& name) const
