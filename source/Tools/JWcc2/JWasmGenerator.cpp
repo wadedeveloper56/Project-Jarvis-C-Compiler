@@ -120,8 +120,7 @@ void JWasmGenerator::visit(Program& n)
 	out << endl << ".data?" << endl;
 	for (auto& d : n.decls)
 	{
-		auto gv = dynamic_cast<VarDecl*>(d.get());
-		if (gv != nullptr)
+		if (auto gv = dynamic_cast<VarDecl*>(d.get()))
 		{
 			auto init = dynamic_cast<Expr*>(gv->init.get());
 			if (init == nullptr)
@@ -135,8 +134,7 @@ void JWasmGenerator::visit(Program& n)
 	out << endl << ".data" << endl;
 	for (auto& d : n.decls)
 	{
-		auto gv = dynamic_cast<VarDecl*>(d.get());
-		if (gv != nullptr)
+		if (auto gv = dynamic_cast<VarDecl*>(d.get()))
 		{
 			auto init = dynamic_cast<Expr*>(gv->init.get());
 			if (init != nullptr)
@@ -147,7 +145,13 @@ void JWasmGenerator::visit(Program& n)
 		}
 	}
 	out << endl << ".code" << endl;
-	for (auto& d : n.decls) d->accept(*this);
+	for (auto& d : n.decls)
+	{
+		if (auto gv = dynamic_cast<FunctionDecl*>(d.get()))
+		{
+			gv->accept(*this);
+		}
+	}
 }
 
 void JWasmGenerator::visit(VarDecl& n)
