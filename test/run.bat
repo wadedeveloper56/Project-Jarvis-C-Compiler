@@ -28,7 +28,13 @@ C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\pedump -a %CD%
 C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\pedump -a %CD%\bin\windows\x86\c032.obj > %CD%\bin\windows\x86\c032.asm.log
 C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\pedump -a %CD%\bin\windows\x86\test1.exe > %CD%\bin\windows\x86\test1.exe.log
 
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWlib ?
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWmake --help --version
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWcpp --help --version
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWrc --help
+REM C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWlib ?
+REM C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWmake --help --version
+REM C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWcpp --help --version
+REM C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWrc --help
+
+C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWcc2 -b 64 -o test2.asm test2.c
+C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWasm -win64 -Fl=test3.lst -Sa -Fotest3.obj test3.asm
+C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWasm -win64 -Fl=test2.lst -Sa -Fotest2.obj test2.asm
+C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\pedump -a test2.obj > test2.asm.log
+C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\pedump -a test3.obj > test3.asm.log

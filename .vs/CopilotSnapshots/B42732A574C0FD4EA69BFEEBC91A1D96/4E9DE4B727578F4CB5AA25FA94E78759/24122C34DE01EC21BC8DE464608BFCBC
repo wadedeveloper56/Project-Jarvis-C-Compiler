@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <vector>
 #include <memory>
@@ -37,7 +37,7 @@ class Parser
 	}
 
 public:
-	Parser(string s, istream& in) : lexer(move(s), in), in(in) { next(); }
+	Parser(string s, istream& in) : lexer(move(s),in), in(in) { next(); }
 
 	unique_ptr<Program> parseProgram()
 	{

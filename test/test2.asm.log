@@ -1,15 +1,15 @@
 PEDUMP - Win32/Win64 COFF EXE/OBJ/LIB file dumper v1.0 (C) Copyright 2025-2026 Christopher D. Wade.
 All Rights Reserved
-Dump of file C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\x64\test1.obj
-File Size 389 bytes
+Dump of file test2.obj
+File Size 348 bytes
 File Type: 64-bit COFF OBJECT
 
 FILE HEADER VALUES
               8664 Machine (x64)
                  3 (3) Number of Sections
-          6AADA779 TimeDateStamp ->  n/a
-                97 PointerToSymbolTable
-                 D (13) NumberOfSymbols
+          6AADA77C TimeDateStamp ->  n/a
+                A4 PointerToSymbolTable
+                 A (10) NumberOfSymbols
                  0 (0) SizeOfOptionalHeader
                  0 Flags
 
@@ -18,8 +18,8 @@ SECTION HEADER #0 (0)
    .text name
        0 physical address
        0 virtual address
-       B (11) size of raw data
-      8C file pointer to raw data (0000008C to 00000096)
+      14 (20) size of raw data
+      8C file pointer to raw data (0000008C to 0000009F)
        0 file pointer to relocation table
        0 file pointer to line numbers
        0 number of relocations
@@ -32,15 +32,16 @@ SECTION HEADER #0 (0)
          Readable
 
 RAW DATA #0 (0)
-00000000  55 48 8b ec b8 05 00 00  00 c9 c3                 UH.........
+00000000  55 48 8b ec 48 83 ec 08  c9 c3 55 48 8b ec 48 83  UH..H.....UH..H.
+00000010  ec 08 c9 c3                                       ....
 
 
 SECTION HEADER #1 (1)
    .data name
        0 physical address
        0 virtual address
-       0 (0) size of raw data
-       0 file pointer to raw data (00000000 to FFFFFFFF)
+       4 (4) size of raw data
+      A0 file pointer to raw data (000000A0 to 000000A3)
        0 file pointer to relocation table
        0 file pointer to line numbers
        0 number of relocations
@@ -52,14 +53,16 @@ C0500040 flags
          Readable
          Writeable
 
+RAW DATA #1 (1)
+00000000  03 00 00 00                                       ....
 
 
 SECTION HEADER #2 (2)
     .bss name
        0 physical address
        0 virtual address
-       7 (7) size of raw data
-       0 file pointer to raw data (00000000 to 00000006)
+       4 (4) size of raw data
+       0 file pointer to raw data (00000000 to 00000003)
        0 file pointer to relocation table
        0 file pointer to line numbers
        0 number of relocations
@@ -73,17 +76,18 @@ C0500080 flags
 
 
 
-Symbol Table - 13 entries  (* = auxillary symbol)
+Symbol Table - 10 entries  (* = auxillary symbol)
 Indx Sectn   Value   Type  Storage Name
 ---- ----- -------- ----- -------  --------
 0000 DEBUG 00000000  0000 FILE     .file
-     * C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\x64\test1.asm
-0006     1 00000000  0000 STATIC   .text
-     * Section: 0000  Len: 0000B  Relocs: 0000  LineNums: 0000 checksum:00000000
-0008     2 00000000  0000 STATIC   .data
-     * Section: 0000  Len: 00000  Relocs: 0000  LineNums: 0000 checksum:00000000
-000A     3 00000000  0000 STATIC   .bss
-     * Section: 0000  Len: 00007  Relocs: 0000  LineNums: 0000 checksum:00000000
-000C     1 00000000  0020 EXTERNAL __main
+     * test2.asm
+0002     1 00000000  0000 STATIC   .text
+     * Section: 0000  Len: 00014  Relocs: 0000  LineNums: 0000 checksum:00000000
+0004     2 00000000  0000 STATIC   .data
+     * Section: 0000  Len: 00004  Relocs: 0000  LineNums: 0000 checksum:00000000
+0006     3 00000000  0000 STATIC   .bss
+     * Section: 0000  Len: 00004  Relocs: 0000  LineNums: 0000 checksum:00000000
+0008     1 00000000  0020 EXTERNAL _add
+0009     1 0000000A  0020 EXTERNAL _main
 
 String Table Size = 0x4 (4) bytes 0 entries

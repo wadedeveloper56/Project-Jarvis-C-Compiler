@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "Lexer.h"
 #include "Parser.h"
 #include "ArgumentTable.h"
@@ -30,8 +30,8 @@ int main(int argc, char* argv[])
 	void* argtable[] = { bitsize, platform, outfile, help, version, infiles, end };
 	const char* progname = "Compiler";
 	int exitcode = 0, nerrors = 0;
-	string src = "";
-	ostringstream ss;
+	string src="";
+	std::ostringstream ss;
 
 	printf("Compiler (x86/x64) v1.0 (C) Copyright 2025-2026 Christopher D. Wade.\n");
 	printf("All Rights Reserved\n");
@@ -101,44 +101,45 @@ int main(int argc, char* argv[])
 		exitcode = 1;
 		goto exit;
 	}
-
+	// open input file and read into source string
 	in.open(infiles->filename[0], ifstream::in);
-	out.open(outfile->filename[0], ofstream::out);
-
-	if (in.is_open() && out.is_open())
+	if (!in.is_open()) {
+		cerr << "Error opening input file " << infiles->filename[0] << "\n";
+		return 1;
+	}
+	
+	std::ostringstream ss;
+	ss << in.rdbuf();
+	src = ss.str();
+	
+	try
 	{
-		ss.clear();
-		ss << in.rdbuf();
-		src = ss.str();
-
-		try
+		Parser p(src, in);
+		auto prog = p.parseProgram();
+		SemanticAnalyzer sema;
+		bool ok = sema.analyze(*prog);
+		if (!ok)
 		{
-			Parser p(src, in);
-			auto prog = p.parseProgram();
-			SemanticAnalyzer sema;
-			bool ok = sema.analyze(*prog);
-			if (!ok)
-			{
-				for (auto& e : sema.errors()) cerr << "Semantic error: " << e << "\n";
-				return 1;
-			}
-			JWasmGenerator gen(out, bits, isWindows);
-			gen.generate(*prog);
-		}
-		catch (const exception& ex)
-		{
-			cerr << "Error: " << ex.what() << "\n";
+			for (auto& e : sema.errors()) cerr << "Semantic error: " << e << "\n";
 			return 1;
 		}
+		// On success, generate MASM-like asm to the chosen output stream using selected bit size and ABI
+		// open output file if requested
+		ostream* outp = &cout;
+		if (outfile->count > 0 && string(outfile->filename[0]) != "-")
+		{
+			out.open(outfile->filename[0], ofstream::out | ofstream::trunc);
+			if (!out.is_open()) { cerr << "Error opening output file " << outfile->filename[0] << "\n"; return 1; }
+			outp = &out;
+		}
+		JWasmGenerator gen(*outp, bits, isWindows);
+		gen.generate(*prog);
 	}
-	else
+	catch (const exception& ex)
 	{
-		cerr << "Error opening file " << infiles->filename[0] << endl;
-		exitcode = -1;
+		cerr << "Error: " << ex.what() << "\n";
+		return 1;
 	}
-
-
-
 
 exit:
 	argFreeTable(argtable, sizeof(argtable) / sizeof(argtable[0]));

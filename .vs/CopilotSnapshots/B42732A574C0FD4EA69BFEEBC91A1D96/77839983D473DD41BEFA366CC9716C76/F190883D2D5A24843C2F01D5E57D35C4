@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "Lexer.h"
 #include "Parser.h"
 #include "ArgumentTable.h"
@@ -14,6 +14,7 @@ bool bit32 = true; // default to 32-bit
 bool bit64 = false;
 bool isWindows = true; // default to Windows calling convention for 64-bit
 bool isLinux = false;
+string src;
 
 int main(int argc, char* argv[])
 {
@@ -30,8 +31,6 @@ int main(int argc, char* argv[])
 	void* argtable[] = { bitsize, platform, outfile, help, version, infiles, end };
 	const char* progname = "Compiler";
 	int exitcode = 0, nerrors = 0;
-	string src = "";
-	ostringstream ss;
 
 	printf("Compiler (x86/x64) v1.0 (C) Copyright 2025-2026 Christopher D. Wade.\n");
 	printf("All Rights Reserved\n");
@@ -101,44 +100,37 @@ int main(int argc, char* argv[])
 		exitcode = 1;
 		goto exit;
 	}
-
-	in.open(infiles->filename[0], ifstream::in);
-	out.open(outfile->filename[0], ofstream::out);
-
-	if (in.is_open() && out.is_open())
+	src = "int x = 3;\n"
+		"int m;\n"
+		"int add(int a, int b) {\n"
+		"  int c = a + b * 2;\n"
+		"  return c;\n"
+		"}\n"
+		"int main() {\n"
+		"  int y = add(x, 4);\n"
+		"  return y;\n"
+		"}\n";
+	try
 	{
-		ss.clear();
-		ss << in.rdbuf();
-		src = ss.str();
 
-		try
+		Parser p(src, in);
+		auto prog = p.parseProgram();
+		SemanticAnalyzer sema;
+		bool ok = sema.analyze(*prog);
+		if (!ok)
 		{
-			Parser p(src, in);
-			auto prog = p.parseProgram();
-			SemanticAnalyzer sema;
-			bool ok = sema.analyze(*prog);
-			if (!ok)
-			{
-				for (auto& e : sema.errors()) cerr << "Semantic error: " << e << "\n";
-				return 1;
-			}
-			JWasmGenerator gen(out, bits, isWindows);
-			gen.generate(*prog);
-		}
-		catch (const exception& ex)
-		{
-			cerr << "Error: " << ex.what() << "\n";
+			for (auto& e : sema.errors()) cerr << "Semantic error: " << e << "\n";
 			return 1;
 		}
+		// On success, generate MASM-like asm to stdout using selected bit size and ABI
+		JWasmGenerator gen(cout, bits, isWindows);
+		gen.generate(*prog);
 	}
-	else
+	catch (const exception& ex)
 	{
-		cerr << "Error opening file " << infiles->filename[0] << endl;
-		exitcode = -1;
+		cerr << "Error: " << ex.what() << "\n";
+		return 1;
 	}
-
-
-
 
 exit:
 	argFreeTable(argtable, sizeof(argtable) / sizeof(argtable[0]));

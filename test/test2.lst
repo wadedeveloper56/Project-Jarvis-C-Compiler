@@ -1,0 +1,118 @@
+JWasm v2.12pre, Sep 16 2026
+test2.asm
+                            *   .model FLAT
+00000000                    *   _TEXT segment PARA FLAT PUBLIC 'CODE'
+                            *   _TEXT ends
+00000000                    *   _DATA segment PARA FLAT PUBLIC 'DATA'
+                            *   _DATA ends
+                            *   assume cs:flat,ds:flat,ss:flat,es:flat,fs:ERROR,gs:NOTHING
+                                .x64p
+                                option casemap : none
+
+                                .data?
+00000000                    *   _BSS segment PARA FLAT PUBLIC 'BSS'
+                            *   assume cs:ERROR
+00000000  00000000              m SDWORD ? ; global var m type = int
+
+00000000                        .data
+00000004                    *   _BSS ends
+00000000                    *   _DATA segment
+                            *   assume cs:ERROR
+00000000  03000000              x SDWORD 3; global var x type = int value = 3
+
+00000000                        .code
+00000004                    *   _DATA ends
+00000000                    *   _TEXT segment
+                            *   assume cs:FLAT
+                                ;-----------------
+                                ; params:
+                                ;   a : int
+                                ;   b : int
+                                ; locals:
+                                ;   c : int
+                                ;-----------------
+00000000                        _add PROC,a:SDWORD,b:SDWORD
+                                      LOCAL _c:SDWORD
+00000000  55                *   push rbp
+00000001  488BEC            *   mov rbp, rsp
+00000004  4883EC08          *   sub rsp, 8
+00000008                              ret
+00000008  C9                *   leave
+00000009  C3                *   retn 
+0000000A                        _add ENDP
+
+                                ;-----------------
+                                ; locals:
+                                ;   y : int
+                                ;-----------------
+0000000A                        _main PROC
+                                      LOCAL _y:SDWORD
+0000000A  55                *   push rbp
+0000000B  488BEC            *   mov rbp, rsp
+0000000E  4883EC08          *   sub rsp, 8
+00000012                              ret
+00000012  C9                *   leave
+00000013  C3                *   retn
+00000014                        _main ENDP
+
+                                end
+00000014                    *   _TEXT ends
+
+
+Macros:
+
+                N a m e                 Type
+
+@CatStr  . . . . . . . . . . . .        Func     0
+@Environ . . . . . . . . . . . .        Func     0
+@InStr . . . . . . . . . . . . .        Func     0
+@SizeStr . . . . . . . . . . . .        Func     0
+@SubStr  . . . . . . . . . . . .        Func     0
+
+
+Segments and Groups:
+
+                N a m e                 Size     Length   Align   Combine Class
+
+FLAT . . . . . . . . . . . . . .        GROUP
+_BSS . . . . . . . . . . . . . .        64 Bit   00000004 Para    Public  'BSS'
+_DATA  . . . . . . . . . . . . .        64 Bit   00000004 Para    Public  'DATA'
+_TEXT  . . . . . . . . . . . . .        64 Bit   00000014 Para    Public  'CODE'
+
+
+Procedures, parameters and locals:
+
+                N a m e                 Type     Value    Segment  Length
+
+_add . . . . . . . . . . . . . .        P Near   00000000 _TEXT    0000000A Public   FASTCALL
+  b  . . . . . . . . . . . . . .        DWord             rbp + 0018
+  a  . . . . . . . . . . . . . .        DWord             rbp + 0010
+  _c . . . . . . . . . . . . . .        DWord             rbp - 0004
+_main  . . . . . . . . . . . . .        P Near   0000000A _TEXT    0000000A Public   FASTCALL
+  _y . . . . . . . . . . . . . .        DWord             rbp - 0004
+
+
+Symbols:
+
+                N a m e                 Type       Value     Attr
+
+@CodeSize  . . . . . . . . . . .        Number             0h 
+@Cpu . . . . . . . . . . . . . .        Number           DDFh 
+@CurSeg  . . . . . . . . . . . .        Text   
+@DataSize  . . . . . . . . . . .        Number             0h 
+@Date  . . . . . . . . . . . . .        Text   09/18/26
+@FileCur . . . . . . . . . . . .        Text   test2.asm
+@FileName  . . . . . . . . . . .        Text   TEST2
+@Interface . . . . . . . . . . .        Number             7h 
+@Model . . . . . . . . . . . . .        Number             7h 
+@ReservedStack . . . . . . . . .        Number             0h 
+@Time  . . . . . . . . . . . . .        Text   16:05:00
+@Version . . . . . . . . . . . .        Text   800
+@code  . . . . . . . . . . . . .        Text   _TEXT
+@data  . . . . . . . . . . . . .        Text   FLAT
+@stack . . . . . . . . . . . . .        Text   FLAT
+__JWASM__  . . . . . . . . . . .        Number            D4h 
+m  . . . . . . . . . . . . . . .        DWord              0h _BSS FASTCALL
+x  . . . . . . . . . . . . . . .        DWord              0h _DATA FASTCALL
+
+test2.asm: 32 lines, 2 passes, 1 ms, 0 warnings, 0 errors

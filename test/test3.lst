@@ -1,0 +1,108 @@
+JWasm v2.12pre, Sep 16 2026
+test3.asm
+                            *   .model FLAT
+00000000                    *   _TEXT segment PARA FLAT PUBLIC 'CODE'
+                            *   _TEXT ends
+00000000                    *   _DATA segment PARA FLAT PUBLIC 'DATA'
+                            *   _DATA ends
+                            *   assume cs:flat,ds:flat,ss:flat,es:flat,fs:ERROR,gs:NOTHING
+                                option casemap:none
+                                includelib kernel32.lib
+
+                                ;extern ExitProcess:proc
+
+                                .code
+00000000                    *   _TEXT segment
+                            *   assume cs:FLAT
+
+                                ; A 64-bit procedure taking two QWORD (64-bit) parameters 
+                                ; and allocating local stack space.
+00000000                        AddValues PROC arg1:QWORD, arg2:QWORD
+                                    LOCAL localVal:QWORD
+
+                                    ; Parameters passed in RCX, RDX (first two Win64 integer arguments)
+                                    ; JWasm maps arg1 to rcx/shadow space and arg2 to rdx/shadow space
+00000000  55                *   push rbp
+00000001  488BEC            *   mov rbp, rsp
+00000004  4883EC08          *   sub rsp, 8
+00000008  488B4510                  mov rax, arg1
+0000000C  488B5D18                  mov rbx, arg2
+00000010  4803C3                    add rax, rbx
+                                    
+                                    ; Using a local variable
+00000013  488945F8                  mov localVal, rax
+00000017  488B45F8                  mov rax, localVal
+
+0000001B                            ret
+0000001B  C9                *   leave
+0000001C  C3                *   retn 
+0000001D                        AddValues ENDP
+
+0000001D                        main PROC
+0000001D  4883EC28                  sub rsp, 28h        ; Allocate shadow space (32 bytes) + alignment
+                                    
+00000021  48C7C10F000000            mov rcx, 15         ; First argument
+00000028  48C7C219000000            mov rdx, 25         ; Second argument
+0000002F  E8CCFFFFFF                call AddValues
+                                    
+00000034  488BC8                    mov rcx, rax        ; Result from RAX becomes exit code
+                                    ;call ExitProcess
+00000037                        main ENDP
+
+                                END
+00000037                    *   _TEXT ends
+
+
+Macros:
+
+                N a m e                 Type
+
+@CatStr  . . . . . . . . . . . .        Func     0
+@Environ . . . . . . . . . . . .        Func     0
+@InStr . . . . . . . . . . . . .        Func     0
+@SizeStr . . . . . . . . . . . .        Func     0
+@SubStr  . . . . . . . . . . . .        Func     0
+
+
+Segments and Groups:
+
+                N a m e                 Size     Length   Align   Combine Class
+
+FLAT . . . . . . . . . . . . . .        GROUP
+_DATA  . . . . . . . . . . . . .        64 Bit   00000000 Para    Public  'DATA'
+_TEXT  . . . . . . . . . . . . .        64 Bit   00000037 Para    Public  'CODE'
+
+
+Procedures, parameters and locals:
+
+                N a m e                 Type     Value    Segment  Length
+
+AddValues  . . . . . . . . . . .        P Near   00000000 _TEXT    0000001D Public   FASTCALL
+  arg2 . . . . . . . . . . . . .        QWord             rbp + 0018
+  arg1 . . . . . . . . . . . . .        QWord             rbp + 0010
+  localVal . . . . . . . . . . .        QWord             rbp - 0008
+main . . . . . . . . . . . . . .        P Near   0000001D _TEXT    0000001A Public   FASTCALL
+
+
+Symbols:
+
+                N a m e                 Type       Value     Attr
+
+@CodeSize  . . . . . . . . . . .        Number             0h 
+@Cpu . . . . . . . . . . . . . .        Number           D5Fh 
+@CurSeg  . . . . . . . . . . . .        Text   
+@DataSize  . . . . . . . . . . .        Number             0h 
+@Date  . . . . . . . . . . . . .        Text   09/18/26
+@FileCur . . . . . . . . . . . .        Text   test3.asm
+@FileName  . . . . . . . . . . .        Text   TEST3
+@Interface . . . . . . . . . . .        Number             7h 
+@Model . . . . . . . . . . . . .        Number             7h 
+@ReservedStack . . . . . . . . .        Number             0h 
+@Time  . . . . . . . . . . . . .        Text   16:05:00
+@Version . . . . . . . . . . . .        Text   800
+@code  . . . . . . . . . . . . .        Text   _TEXT
+@data  . . . . . . . . . . . . .        Text   FLAT
+@stack . . . . . . . . . . . . .        Text   FLAT
+__JWASM__  . . . . . . . . . . .        Number            D4h 
+
+test3.asm: 37 lines, 2 passes, 1 ms, 0 warnings, 0 errors

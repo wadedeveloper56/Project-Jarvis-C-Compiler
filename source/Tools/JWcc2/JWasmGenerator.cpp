@@ -213,7 +213,7 @@ void JWasmGenerator::visit(FunctionDecl& n)
 	}
 	out << ";-----------------\n";
 	// emit MASM proc header
-	out << n.name << " PROC C";
+	out << "_" << n.name << " PROC";
 	for (auto& p : n.params)
 	{
 		if (p.first == "int")	out << "," << p.second << ":SDWORD";
@@ -228,7 +228,7 @@ void JWasmGenerator::visit(FunctionDecl& n)
 		int idx = 0;
 		for (auto& ln : currentLocals)
 		{
-			if (ln->type == "int") out << ln->name << ":SDWORD";
+			if (ln->type == "int") out << "_" << ln->name << ":SDWORD";
 			if (idx < size - 1) out << ",";
 			idx++;
 		}
@@ -242,7 +242,7 @@ void JWasmGenerator::visit(FunctionDecl& n)
 	if (n.body) n.body->accept(*this);
 	indent--;
 	emitEpilogue();
-	out << n.name << " ENDP" << endl << endl;
+	out << "_" << n.name << " ENDP" << endl << endl;
 	inFunction = false;
 }
 

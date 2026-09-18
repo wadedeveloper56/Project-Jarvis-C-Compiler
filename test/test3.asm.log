@@ -1,15 +1,15 @@
 PEDUMP - Win32/Win64 COFF EXE/OBJ/LIB file dumper v1.0 (C) Copyright 2025-2026 Christopher D. Wade.
 All Rights Reserved
-Dump of file C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\x64\test1.obj
-File Size 389 bytes
+Dump of file test3.obj
+File Size 414 bytes
 File Type: 64-bit COFF OBJECT
 
 FILE HEADER VALUES
               8664 Machine (x64)
                  3 (3) Number of Sections
-          6AADA779 TimeDateStamp ->  n/a
-                97 PointerToSymbolTable
-                 D (13) NumberOfSymbols
+          6AADA77C TimeDateStamp ->  n/a
+                DC PointerToSymbolTable
+                 A (10) NumberOfSymbols
                  0 (0) SizeOfOptionalHeader
                  0 Flags
 
@@ -18,8 +18,8 @@ SECTION HEADER #0 (0)
    .text name
        0 physical address
        0 virtual address
-       B (11) size of raw data
-      8C file pointer to raw data (0000008C to 00000096)
+      37 (55) size of raw data
+      8C file pointer to raw data (0000008C to 000000C2)
        0 file pointer to relocation table
        0 file pointer to line numbers
        0 number of relocations
@@ -32,7 +32,10 @@ SECTION HEADER #0 (0)
          Readable
 
 RAW DATA #0 (0)
-00000000  55 48 8b ec b8 05 00 00  00 c9 c3                 UH.........
+00000000  55 48 8b ec 48 83 ec 08  48 8b 45 10 48 8b 5d 18  UH..H...H.E.H.].
+00000010  48 03 c3 48 89 45 f8 48  8b 45 f8 c9 c3 48 83 ec  H..H.E.H.E...H..
+00000020  28 48 c7 c1 0f 00 00 00  48 c7 c2 19 00 00 00 e8  (H......H.......
+00000030  cc ff ff ff 48 8b c8                              ....H..
 
 
 SECTION HEADER #1 (1)
@@ -55,35 +58,37 @@ C0500040 flags
 
 
 SECTION HEADER #2 (2)
-    .bss name
+.drectve name
        0 physical address
        0 virtual address
-       7 (7) size of raw data
-       0 file pointer to raw data (00000000 to 00000006)
+      19 (25) size of raw data
+      C3 file pointer to raw data (000000C3 to 000000DB)
        0 file pointer to relocation table
        0 file pointer to line numbers
        0 number of relocations
        0 number of line numbers
-C0500080 flags
-         Unnitialized Data
-         1_BYTE_ALIGN
-         8_BYTE_ALIGN
-         Readable
-         Writeable
+     A00 flags
+         Informataion
+         Remove
+
+RAW DATA #2 (2)
+00000000  2d 64 65 66 61 75 6c 74  6c 69 62 3a 6b 65 72 6e  -defaultlib:kern
+00000010  65 6c 33 32 2e 6c 69 62  20                       el32.lib 
 
 
-
-Symbol Table - 13 entries  (* = auxillary symbol)
+Symbol Table - 10 entries  (* = auxillary symbol)
 Indx Sectn   Value   Type  Storage Name
 ---- ----- -------- ----- -------  --------
 0000 DEBUG 00000000  0000 FILE     .file
-     * C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\x64\test1.asm
-0006     1 00000000  0000 STATIC   .text
-     * Section: 0000  Len: 0000B  Relocs: 0000  LineNums: 0000 checksum:00000000
-0008     2 00000000  0000 STATIC   .data
+     * test3.asm
+0002     1 00000000  0000 STATIC   .text
+     * Section: 0000  Len: 00037  Relocs: 0000  LineNums: 0000 checksum:00000000
+0004     2 00000000  0000 STATIC   .data
      * Section: 0000  Len: 00000  Relocs: 0000  LineNums: 0000 checksum:00000000
-000A     3 00000000  0000 STATIC   .bss
-     * Section: 0000  Len: 00007  Relocs: 0000  LineNums: 0000 checksum:00000000
-000C     1 00000000  0020 EXTERNAL __main
+0006     3 00000000  0000 STATIC   .drectve
+     * Section: 0000  Len: 00019  Relocs: 0000  LineNums: 0000 checksum:00000000
+0008     1 00000000  0020 EXTERNAL AddValues
+0009     1 0000001D  0020 EXTERNAL main
 
-String Table Size = 0x4 (4) bytes 0 entries
+String Table Size = 0xE (14) bytes 1 entries
+stringtable[   0] = AddValues
