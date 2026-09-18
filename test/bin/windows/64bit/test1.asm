@@ -13,7 +13,7 @@ _var3 SDWORD  ?
 _main PROTO C _argc:SDWORD , _argv:QWORD ;
 
 _main PROC C, _argc:SDWORD , _argv:QWORD 
-	mov eax,5
+	mov rax,5
 	ret
 _main endp
 end

@@ -1,6 +1,6 @@
 PEDUMP - Win32/Win64 COFF EXE/OBJ/LIB file dumper v1.0 (C) Copyright 2025-2026 Christopher D. Wade.
 All Rights Reserved
-Dump of file C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\x86\test1.exe
+Dump of file C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\32bit\test1.exe
 File Size 2048 bytes
 File Type: 32-bit PE EXECUTABLE IMAGE
 DOS HEADER VALUES

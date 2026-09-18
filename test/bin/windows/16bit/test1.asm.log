@@ -1,0 +1,45 @@
+PEDUMP - Win32/Win64 COFF EXE/OBJ/LIB file dumper v1.0 (C) Copyright 2025-2026 Christopher D. Wade.
+All Rights Reserved
+Dump of file C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\16bit\test1.obj
+File Size 214 bytes
+File Type: 16-bit DOS\Windows OBJECT
+
+Type 0x80 (THEADR) : length 0x004E (78)
+00000003  4c 43 3a 5c 70 72 6f 6a  65 63 74 73 5c 4f 53 44  LC:\projects\OSD
+00000013  65 76 5c 50 72 6f 6a 65  63 74 2d 4a 61 72 76 69  ev\Project-Jarvi
+00000023  73 2d 43 2d 43 6f 6d 70  69 6c 65 72 5c 74 65 73  s-C-Compiler\tes
+00000033  74 5c 62 69 6e 5c 77 69  6e 64 6f 77 73 5c 31 36  t\bin\windows\16
+00000043  62 69 74 5c 74 65 73 74  31 2e 61 73 6d 09        bit\test1.asm.
+
+Type 0x96 (LNAMES) : length 0x0028 (40)
+00000054  00 04 43 4f 44 45 05 5f  54 45 58 54 04 44 41 54  ..CODE._TEXT.DAT
+00000064  41 05 5f 44 41 54 41 06  44 47 52 4f 55 50 03 42  A._DATA.DGROUP.B
+00000074  53 53 04 5f 42 53 53 d1                           SS._BSS.
+
+Type 0x98 (SEGDEF) : length 0x0007 (7)
+0000007f  48 08 00 03 02 01 0b                              H......
+
+Type 0x88 (COMENT) : length 0x0005 (5)
+00000089  80 fe 4f 01 a5                                    ..O..
+
+Type 0x98 (SEGDEF) : length 0x0007 (7)
+00000091  48 00 00 05 04 01 0f                              H......
+
+Type 0x98 (SEGDEF) : length 0x0007 (7)
+0000009b  48 07 00 08 07 01 02                              H......
+
+Type 0x9A : length 0x0006 (6)
+000000a5  06 ff 02 ff 03 57                                 .....W
+
+Type 0x90 : length 0x000D (13)
+000000ae  00 01 06 5f 5f 6d 61 69  6e 00 00 00 f9           ...__main....
+
+Type 0x88 (COMENT) : length 0x0004 (4)
+000000be  00 a2 01 d1                                       ....
+
+Type 0xA0 (LEDATA) : length 0x000C (12)
+000000c5  01 00 00 55 8b ec b8 05  00 c9 c3 3e              ...U.......>
+
+Type 0x8A : length 0x0002 (2)
+000000d4  00 74                                             .t
+

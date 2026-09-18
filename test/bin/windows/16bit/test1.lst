@@ -1,0 +1,98 @@
+JWasm v2.12pre, Sep 16 2026
+C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\16bit\test1.asm
+                                .286
+                                .model small;
+00000000                    *   _TEXT segment WORD  PUBLIC 'CODE'
+                            *   _TEXT ends
+00000000                    *   _DATA segment WORD  PUBLIC 'DATA'
+                            *   _DATA ends
+                            *   DGROUP group _DATA
+                            *   assume cs:_TEXT,ds:DGROUP,ss:DGROUP
+                                option casemap : none
+
+
+
+                                .data
+00000000                    *   _DATA segment
+                            *   assume cs:ERROR
+00000000                        .data?
+                            *   _DATA ends
+00000000                    *   _BSS segment WORD  PUBLIC 'BSS'
+                            *   assume cs:ERROR
+                            *   DGROUP group _BSS
+00000000  00                    _var1 SBYTE  ?
+00000001  0000                  _var2 SWORD  ?
+00000003  00000000              _var3 SDWORD  ?
+
+00000000                        .code
+00000007                    *   _BSS ends
+00000000                    *   _TEXT segment
+                            *   assume cs:_TEXT
+                                _main PROTO C _argc:SDWORD , _argv:WORD ;
+
+00000000                        _main PROC C, _argc:SDWORD , _argv:WORD 
+00000000  55                *   push bp
+00000001  8BEC              *   mov bp, sp
+00000003  B80500                	mov ax,5
+00000006                        	ret
+00000006  C9                *   leave
+00000007  C3                *   retn 
+00000008                        _main endp
+                                end
+00000008                    *   _TEXT ends
+
+
+Macros:
+
+                N a m e                 Type
+
+@CatStr  . . . . . . . . . . . .        Func     0
+@Environ . . . . . . . . . . . .        Func     0
+@InStr . . . . . . . . . . . . .        Func     0
+@SizeStr . . . . . . . . . . . .        Func     0
+@SubStr  . . . . . . . . . . . .        Func     0
+
+
+Segments and Groups:
+
+                N a m e                 Size     Length   Align   Combine Class
+
+_TEXT  . . . . . . . . . . . . .        16 Bit   0008     Word    Public  'CODE'
+DGROUP . . . . . . . . . . . . .        GROUP
+_DATA  . . . . . . . . . . . . .        16 Bit   0000     Word    Public  'DATA'
+_BSS . . . . . . . . . . . . . .        16 Bit   0007     Word    Public  'BSS'
+
+
+Procedures, parameters and locals:
+
+                N a m e                 Type     Value    Segment  Length
+
+_main  . . . . . . . . . . . . .        P Near   0000     _TEXT    0008 Public   C
+  _argc  . . . . . . . . . . . .        DWord             bp + 0004
+  _argv  . . . . . . . . . . . .        Word              bp + 0008
+
+
+Symbols:
+
+                N a m e                 Type       Value     Attr
+
+@CodeSize  . . . . . . . . . . .        Number             0h 
+@Cpu . . . . . . . . . . . . . .        Number           507h 
+@CurSeg  . . . . . . . . . . . .        Text   
+@DataSize  . . . . . . . . . . .        Number             0h 
+@Date  . . . . . . . . . . . . .        Text   09/18/26
+@FileCur . . . . . . . . . . . .        Text   C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\16bit\test1.asm
+@FileName  . . . . . . . . . . .        Text   TEST1
+@Interface . . . . . . . . . . .        Number             0h 
+@Model . . . . . . . . . . . . .        Number             2h 
+@Time  . . . . . . . . . . . . .        Text   16:34:14
+@Version . . . . . . . . . . . .        Text   800
+@code  . . . . . . . . . . . . .        Text   _TEXT
+@data  . . . . . . . . . . . . .        Text   DGROUP
+@stack . . . . . . . . . . . . .        Text   DGROUP
+__JWASM__  . . . . . . . . . . .        Number            D4h 
+_var1  . . . . . . . . . . . . .        Byte               0h _BSS 
+_var2  . . . . . . . . . . . . .        Word               1h _BSS 
+_var3  . . . . . . . . . . . . .        DWord              3h _BSS 
+
+C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\16bit\test1.asm: 20 lines, 2 passes, 1 ms, 0 warnings, 0 errors

@@ -1,14 +1,14 @@
 PEDUMP - Win32/Win64 COFF EXE/OBJ/LIB file dumper v1.0 (C) Copyright 2025-2026 Christopher D. Wade.
 All Rights Reserved
-Dump of file C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\x64\test1.obj
-File Size 389 bytes
-File Type: 64-bit COFF OBJECT
+Dump of file C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\32bit\test1.obj
+File Size 388 bytes
+File Type: 32-bit COFF OBJECT
 
 FILE HEADER VALUES
-              8664 Machine (x64)
+               14C Machine (Intel 386 or later processors and compatible processors)
                  3 (3) Number of Sections
-          6AADA779 TimeDateStamp ->  n/a
-                97 PointerToSymbolTable
+          6AADAE55 TimeDateStamp ->  n/a
+                96 PointerToSymbolTable
                  D (13) NumberOfSymbols
                  0 (0) SizeOfOptionalHeader
                  0 Flags
@@ -18,21 +18,21 @@ SECTION HEADER #0 (0)
    .text name
        0 physical address
        0 virtual address
-       B (11) size of raw data
-      8C file pointer to raw data (0000008C to 00000096)
+       A (10) size of raw data
+      8C file pointer to raw data (0000008C to 00000095)
        0 file pointer to relocation table
        0 file pointer to line numbers
        0 number of relocations
        0 number of line numbers
-60500020 flags
+60300020 flags
          Code
          1_BYTE_ALIGN
-         8_BYTE_ALIGN
+         2_BYTE_ALIGN
          Executable
          Readable
 
 RAW DATA #0 (0)
-00000000  55 48 8b ec b8 05 00 00  00 c9 c3                 UH.........
+00000000  55 8b ec b8 05 00 00 00  c9 c3                    U.........
 
 
 SECTION HEADER #1 (1)
@@ -45,10 +45,10 @@ SECTION HEADER #1 (1)
        0 file pointer to line numbers
        0 number of relocations
        0 number of line numbers
-C0500040 flags
+C0300040 flags
          Initialized Data
          1_BYTE_ALIGN
-         8_BYTE_ALIGN
+         2_BYTE_ALIGN
          Readable
          Writeable
 
@@ -64,10 +64,10 @@ SECTION HEADER #2 (2)
        0 file pointer to line numbers
        0 number of relocations
        0 number of line numbers
-C0500080 flags
+C0300080 flags
          Unnitialized Data
          1_BYTE_ALIGN
-         8_BYTE_ALIGN
+         2_BYTE_ALIGN
          Readable
          Writeable
 
@@ -77,9 +77,9 @@ Symbol Table - 13 entries  (* = auxillary symbol)
 Indx Sectn   Value   Type  Storage Name
 ---- ----- -------- ----- -------  --------
 0000 DEBUG 00000000  0000 FILE     .file
-     * C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\x64\test1.asm
+     * C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\32bit\test1.asm
 0006     1 00000000  0000 STATIC   .text
-     * Section: 0000  Len: 0000B  Relocs: 0000  LineNums: 0000 checksum:00000000
+     * Section: 0000  Len: 0000A  Relocs: 0000  LineNums: 0000 checksum:00000000
 0008     2 00000000  0000 STATIC   .data
      * Section: 0000  Len: 00000  Relocs: 0000  LineNums: 0000 checksum:00000000
 000A     3 00000000  0000 STATIC   .bss

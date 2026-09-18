@@ -87,7 +87,9 @@ static void jumpProcess(ostream& out, shared_ptr<TreeNodeData> left, shared_ptr<
 		{
 			if (current->getIConst() != nullptr)
 			{
-				out << "\t" << "mov eax," << current->getIConst()->getIntegerConst() << endl;
+				if (bit16) out << "\t" << "mov ax," << current->getIConst()->getIntegerConst() << endl;
+				else if (bit32) out << "\t" << "mov eax," << current->getIConst()->getIntegerConst() << endl;
+				else if (bit64) out << "\t" << "mov rax," << current->getIConst()->getIntegerConst() << endl;
 			}
 		}
 	}
