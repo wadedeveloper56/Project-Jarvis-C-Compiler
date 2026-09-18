@@ -15,13 +15,13 @@ class Parser
 	Token cur;
 	void next() { cur = lexer.next(); }
 
-	bool accept(TokenKind k) 
+	bool accept(TokenKind k)
 	{
 		if (cur.kind == k) { next(); return true; }
 		return false;
 	}
 
-	void expect(TokenKind k, const char* msg = "") 
+	void expect(TokenKind k, const char* msg = "")
 	{
 		if (cur.kind != k)
 		{
@@ -37,7 +37,7 @@ class Parser
 public:
 	Parser(string s) : lexer(move(s)) { next(); }
 
-	unique_ptr<Program> parseProgram() 
+	unique_ptr<Program> parseProgram()
 	{
 		auto prog = make_unique<Program>();
 		while (cur.kind != TokenKind::End)
@@ -51,7 +51,8 @@ public:
 	{
 		// Only support 'int' and 'void' return types
 		string type = parseType();
-		if (cur.kind != TokenKind::Identifier) {
+		if (cur.kind != TokenKind::Identifier)
+		{
 			ostringstream os; os << "Parse error at line " << cur.line << ", col " << cur.column << ": expected identifier after type";
 			throw runtime_error(os.str());
 		}
@@ -80,7 +81,8 @@ public:
 						expect(TokenKind::RParen);
 						break;
 					}
-					if (cur.kind != TokenKind::Identifier) {
+					if (cur.kind != TokenKind::Identifier)
+					{
 						ostringstream os; os << "Parse error at line " << cur.line << ", col " << cur.column << ": expected parameter name";
 						throw runtime_error(os.str());
 					}
@@ -129,15 +131,16 @@ public:
 			{
 				// for simplicity only accept 'int' local decls (void params only as function param)
 				string t = parseType();
-			if (cur.kind != TokenKind::Identifier) {
-				ostringstream os; os << "Parse error at line " << cur.line << ", col " << cur.column << ": expected identifier in local declaration";
-				throw runtime_error(os.str());
-			}
+				if (cur.kind != TokenKind::Identifier)
+				{
+					ostringstream os; os << "Parse error at line " << cur.line << ", col " << cur.column << ": expected identifier in local declaration";
+					throw runtime_error(os.str());
+				}
 				Token idTok = cur;
 				string n = cur.text; next();
 				auto vd = make_unique<VarDecl>();
-			vd->loc.startPos = idTok.pos; vd->loc.startLine = idTok.line; vd->loc.startColumn = idTok.column;
-			vd->loc.endPos = idTok.endPos; vd->loc.endLine = idTok.endLine; vd->loc.endColumn = idTok.endColumn;
+				vd->loc.startPos = idTok.pos; vd->loc.startLine = idTok.line; vd->loc.startColumn = idTok.column;
+				vd->loc.endPos = idTok.endPos; vd->loc.endLine = idTok.endLine; vd->loc.endColumn = idTok.endColumn;
 				vd->type = t; vd->name = n;
 				if (accept(TokenKind::Assign)) vd->init = parseExpression();
 				expect(TokenKind::Semicolon);
@@ -173,7 +176,7 @@ public:
 		return es;
 	}
 
-	unique_ptr<Expr> parseExpression() 
+	unique_ptr<Expr> parseExpression()
 	{
 		return parseAssignment();
 	}
@@ -198,7 +201,7 @@ public:
 		return left;
 	}
 
-	unique_ptr<Expr> parseAddSub() 
+	unique_ptr<Expr> parseAddSub()
 	{
 		auto node = parseMulDiv();
 		while (cur.kind == TokenKind::Plus || cur.kind == TokenKind::Minus)
@@ -214,7 +217,7 @@ public:
 		return node;
 	}
 
-	unique_ptr<Expr> parseMulDiv() 
+	unique_ptr<Expr> parseMulDiv()
 	{
 		auto node = parseUnary();
 		while (cur.kind == TokenKind::Star || cur.kind == TokenKind::Slash)
@@ -247,7 +250,7 @@ public:
 		return parsePrimary();
 	}
 
-	unique_ptr<Expr> parsePrimary() 
+	unique_ptr<Expr> parsePrimary()
 	{
 		if (cur.kind == TokenKind::Number)
 		{
@@ -296,7 +299,7 @@ public:
 		}
 	}
 
-	string parseType() 
+	string parseType()
 	{
 		if (accept(TokenKind::Int)) return "int";
 		if (accept(TokenKind::Void)) return "void";

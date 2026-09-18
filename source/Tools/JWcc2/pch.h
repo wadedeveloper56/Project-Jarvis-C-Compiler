@@ -30,6 +30,14 @@
 #include <stdexcept>
 #include <algorithm>
 #include <unordered_set>
+#include <format>
+
+#ifdef _DEBUG
+#define DEBUG_PRINT(x) std::cout << std::format x;
+//("{} is {} years old. Pi is {:.2f}\n", name, age, pi);
+#else
+#define DEBUG_PRINT(x)
+#endif
 
 #pragma warning(disable:4267)
 #pragma warning(disable:4244)
