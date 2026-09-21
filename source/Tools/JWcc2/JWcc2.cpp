@@ -136,10 +136,6 @@ int main(int argc, char* argv[])
 		cerr << "Error opening file " << infiles->filename[0] << endl;
 		exitcode = -1;
 	}
-
-
-
-
 exit:
 	argFreeTable(argtable, sizeof(argtable) / sizeof(argtable[0]));
 	in.close();
