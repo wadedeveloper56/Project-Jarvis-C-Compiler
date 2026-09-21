@@ -1,14 +1,14 @@
 PEDUMP - Win32/Win64 COFF EXE/OBJ/LIB file dumper v1.0 (C) Copyright 2025-2026 Christopher D. Wade.
 All Rights Reserved
 Dump of file test2.obj
-File Size 396 bytes
+File Size 402 bytes
 File Type: 64-bit COFF OBJECT
 
 FILE HEADER VALUES
               8664 Machine (x64)
                  3 (3) Number of Sections
-          6AB15122 TimeDateStamp ->  n/a
-                D4 PointerToSymbolTable
+          6AB1AF59 TimeDateStamp ->  n/a
+                DA PointerToSymbolTable
                  A (10) NumberOfSymbols
                  0 (0) SizeOfOptionalHeader
                  0 Flags
@@ -18,8 +18,8 @@ SECTION HEADER #0 (0)
    .text name
        0 physical address
        0 virtual address
-      44 (68) size of raw data
-      8C file pointer to raw data (0000008C to 000000CF)
+      4A (74) size of raw data
+      8C file pointer to raw data (0000008C to 000000D5)
        0 file pointer to relocation table
        0 file pointer to line numbers
        0 number of relocations
@@ -34,9 +34,9 @@ SECTION HEADER #0 (0)
 RAW DATA #0 (0)
 00000000  55 48 8b ec 48 83 ec 08  48 63 45 10 50 48 63 45  UH..H...HcE.PHcE
 00000010  18 50 48 c7 c0 02 00 00  00 50 5b 58 48 0f af c3  .PH......P[XH...
-00000020  50 5b 58 48 03 c3 50 c9  c3 55 48 8b ec 48 83 ec  P[XH..P..UH..H..
-00000030  08 48 c7 c0 04 00 00 00  50 e8 c2 ff ff ff 83 c4  .H......P.......
-00000040  10 50 c9 c3                                       .P..
+00000020  50 5b 58 48 03 c3 50 89  45 fc c9 c3 55 48 8b ec  P[XH..P.E...UH..
+00000030  48 83 ec 08 48 c7 c0 04  00 00 00 50 e8 bf ff ff  H...H......P....
+00000040  ff 83 c4 10 50 89 45 fc  c9 c3                    ....P.E...
 
 
 SECTION HEADER #1 (1)
@@ -44,7 +44,7 @@ SECTION HEADER #1 (1)
        0 physical address
        0 virtual address
        4 (4) size of raw data
-      D0 file pointer to raw data (000000D0 to 000000D3)
+      D6 file pointer to raw data (000000D6 to 000000D9)
        0 file pointer to relocation table
        0 file pointer to line numbers
        0 number of relocations
@@ -85,12 +85,12 @@ Indx Sectn   Value   Type  Storage Name
 0000 DEBUG 00000000  0000 FILE     .file
      * test2.asm
 0002     1 00000000  0000 STATIC   .text
-     * Section: 0000  Len: 00044  Relocs: 0000  LineNums: 0000 checksum:00000000
+     * Section: 0000  Len: 0004A  Relocs: 0000  LineNums: 0000 checksum:00000000
 0004     2 00000000  0000 STATIC   .data
      * Section: 0000  Len: 00004  Relocs: 0000  LineNums: 0000 checksum:00000000
 0006     3 00000000  0000 STATIC   .bss
      * Section: 0000  Len: 00004  Relocs: 0000  LineNums: 0000 checksum:00000000
 0008     1 00000000  0020 EXTERNAL _add
-0009     1 00000029  0020 EXTERNAL _main
+0009     1 0000002C  0020 EXTERNAL _main
 
 String Table Size = 0x4 (4) bytes 0 entries

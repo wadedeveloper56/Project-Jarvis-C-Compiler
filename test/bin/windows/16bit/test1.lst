@@ -1,4 +1,4 @@
-JWasm v2.12pre, Sep 18 2026
+JWasm v2.12pre, Sep 21 2026
 C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\16bit\test1.asm
                                 .286
                                 .model small;
@@ -85,7 +85,7 @@ Symbols:
 @FileName  . . . . . . . . . . .        Text   TEST1
 @Interface . . . . . . . . . . .        Number             0h 
 @Model . . . . . . . . . . . . .        Number             2h 
-@Time  . . . . . . . . . . . . .        Text   10:45:38
+@Time  . . . . . . . . . . . . .        Text   17:27:37
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   DGROUP

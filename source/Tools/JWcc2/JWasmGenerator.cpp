@@ -19,9 +19,9 @@ string JWasmGenerator::wordForBits() const
 	return "dword";
 }
 
-string JWasmGenerator::regA() const {
-	if (bits == 64) return "rax";
-	if (bits == 16) return "ax";
+string JWasmGenerator::regA(int size) const {
+	if (size == 64) return "rax";
+	if (size == 16) return "ax";
 	return "eax";
 }
 
@@ -159,12 +159,14 @@ void JWasmGenerator::visit(Program& n)
 
 void JWasmGenerator::visit(VarDecl& n)
 {
-	ind();
+	//ind();
+	out << "; var decl " << n.name << " type = " << n.type << endl;
 }
 
 void JWasmGenerator::visit(FunctionDecl& n)
 {
 	paramIndex.clear();
+	localIndex.clear();
 	//currentParams.clear();
 	//currentLocals.clear();
 	//inFunction = true;
@@ -188,8 +190,10 @@ void JWasmGenerator::visit(FunctionDecl& n)
 	}
 	out << endl;
 
+	//indent++;
 	//proc body
 	//local variables def
+	idx = 0;
 	if (auto comp = dynamic_cast<CompoundStmt*>(n.body.get()))
 	{
 		index = 0;
@@ -198,7 +202,8 @@ void JWasmGenerator::visit(FunctionDecl& n)
 		{
 			if (auto v = dynamic_cast<VarDecl*>(ld.get()))
 			{
-				ind();
+				localIndex[v->name] = { v->type, idx++ };
+				//ind();
 				out << "LOCAL ";
 				if (v->type == "int") out << "_" << v->name << ":SDWORD";
 				if (index < size - 1) out << ",";
@@ -223,12 +228,11 @@ void JWasmGenerator::visit(FunctionDecl& n)
 				}
 			}
 		}
-		out << endl;
+		//out << endl;
 	}
 
-	indent++;
 	if (n.body) n.body->accept(*this);
-	indent--;
+	//indent--;
 
 	//proc trailer
 	out << "_" << n.name << " ENDP" << endl << endl;
@@ -335,12 +339,14 @@ void JWasmGenerator::visit(ReturnStmt& n)
 {
 	if (n.expr)
 	{
+	//ind();
 		n.expr->accept(*this);
-		ind(); out << "ret" << endl;
+		out << "ret ; return 1" << endl;
 	}
 	else
 	{
-		ind(); out << "ret" << endl;
+		//ind();
+		out << "ret ; return 2" << endl;
 	}
 }
 
@@ -352,26 +358,37 @@ void JWasmGenerator::visit(ExprStmt& n)
 void JWasmGenerator::visit(NumberExpr& n)
 {
 	// push immediate into register/stack
-	ind();
-	if (bits == 64) out << "mov " << regA() << ", " << n.value << "\n";
-	else out << "mov " << regA() << ", " << n.value << "\n";
+	//ind();
+	if (bits == 64) out << "mov " << regA(bits) << ", " << n.value << "\n";
+	else out << "mov " << regA(bits) << ", " << n.value << "\n";
 	// push onto stack to follow simple eval convention
-	ind(); out << "push " << regA() << "\n";
+	//ind(); 
+	out << "push " << regA(bits) << "; push 2\n";
 }
 
 void JWasmGenerator::visit(VarExpr& n)
 {
-	ind();
 	auto it = paramIndex.find(n.name);
+	auto itLocal = localIndex.find(n.name);
 	if (it != paramIndex.end())
 	{
-		if (it->second.type == "int" && bits == 64) out << "movsxd " << regA() << ", " << n.name << " ; load " << n.name << "\n";
-		if (it->second.type == "int" && bits == 32) out << "mov " << regA() << ", " << n.name << " ; load " << n.name << "\n";
-		ind(); out << "push " << regA() << "\n";
+		//ind();
+		if (it->second.type == "int" && bits == 64) out << "movsxd " << regA(bits) << ", " << n.name << " ; load " << n.name << "1\n";
+		if (it->second.type == "int" && bits == 32) out << "mov " << regA(bits) << ", " << n.name << " ; load " << n.name << "2\n";
+		//ind();
+		out << "push " << regA(bits) << "; push 4\n";
+	}
+	else if (itLocal != localIndex.end())
+	{
+		if (itLocal->second.type == "int")
+		{
+			//indent--; 
+			out << "mov _" << n.name << ", " << regA(32) << " ; store local 1" << n.name << "\n";
+		}
 	}
 	else
 	{
-		out << "; global ref " << n.name << "\n";
+		out << "; global ref " << n.name << "2\n";
 	}
 }
 
@@ -381,19 +398,24 @@ void JWasmGenerator::visit(BinaryExpr& n)
 	n.lhs->accept(*this); // pushes lhs
 	n.rhs->accept(*this); // pushes rhs
 	// pop rhs into regB, pop lhs into regA
-	ind(); out << "pop " << regB() << "\n";
-	ind(); out << "pop " << regA() << "\n";
-	ind();
-	if (n.op == '+') out << "add " << regA() << ", " << regB() << "\n";
-	else if (n.op == '-') out << "sub " << regA() << ", " << regB() << "\n";
-	else if (n.op == '*') out << "imul " << regA() << ", " << regB() << "\n";
+	//ind(); 
+	out << "pop " << regB() << "\n";
+	//ind(); 
+	out << "pop " << regA(bits) << "\n";
+	//ind();
+	if (n.op == '+') out << "add " << regA(bits) << ", " << regB() << "\n";
+	else if (n.op == '-') out << "sub " << regA(bits) << ", " << regB() << "\n";
+	else if (n.op == '*') out << "imul " << regA(bits) << ", " << regB() << "\n";
 	else if (n.op == '/')
 	{
-		ind(); out << "cdq\n"; // extend eax to edx:eax for idiv
-		ind(); out << "idiv " << regB() << "\n";
+		//ind(); 
+		out << "cdq\n"; // extend eax to edx:eax for idiv
+		//ind(); 
+		out << "idiv " << regB() << "\n";
 	}
 	// push result
-	ind(); out << "push " << regA() << "\n";
+	//ind(); 
+	out << "push " << regA(bits) << "; push 1\n";
 }
 
 void JWasmGenerator::visit(AssignExpr& n)
@@ -401,12 +423,18 @@ void JWasmGenerator::visit(AssignExpr& n)
 	// evaluate value then set_local
 	n.value->accept(*this); // pushes value
 	// pop into regA and store
-	ind(); out << "pop " << regA() << "\n";
-	ind();
+	//ind(); 
+	out << "pop " << regA(bits) << "\n";
+	//ind();
 	auto it = paramIndex.find(n.name);
+	auto itLocal = localIndex.find(n.name);
 	if (it != paramIndex.end())
 	{
-		out << "mov " << n.name << ", " << regA() << " ; store " << n.name << "\n";
+		out << "mov " << n.name << ", " << regA(bits) << " ; store parameter" << n.name << "\n";
+	}
+	else if (itLocal != localIndex.end())
+	{
+		out << "mov _" << n.name << ", " << regA(bits) << " ; store local " << n.name << "\n";
 	}
 	else
 	{
@@ -422,13 +450,16 @@ void JWasmGenerator::visit(CallExpr& n)
 		(*it)->accept(*this); // pushes arg
 	}
 	// emit call
-	ind(); out << "call _" << n.callee << "\n";
+	//ind(); 
+	out << "call _" << n.callee << "\n";
 	// after call, caller cleans up arguments: add esp, argsbytes
 	if (!n.args.empty())
 	{
 		int argsBytes = (int)n.args.size() * wordBytes();
-		ind(); out << "add esp, " << argsBytes << "\n";
+		//ind(); 
+		out << "add esp, " << argsBytes << "\n";
 	}
 	// push return value (assumed in regA)
-	ind(); out << "push " << regA() << "\n";
+	//ind(); 
+	out << "push " << regA(bits) << "; push 3\n";
 }

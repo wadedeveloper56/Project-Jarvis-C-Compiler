@@ -1,4 +1,4 @@
-JWasm v2.12pre, Sep 18 2026
+JWasm v2.12pre, Sep 21 2026
 test2.asm
                             *   .model FLAT
 00000000                    *   _TEXT segment PARA FLAT PUBLIC 'CODE'
@@ -29,47 +29,47 @@ test2.asm
 00000000  55                *   push rbp
 00000001  488BEC            *   mov rbp, rsp
 00000004  4883EC08          *   sub rsp, 8
-00000008  48634510              movsxd rax, a ; load a
-0000000C  50                    push rax
-0000000D  48634518              movsxd rax, b ; load b
-00000011  50                    push rax
+00000008  48634510              movsxd rax, a ; load a1
+0000000C  50                    push rax; push 4
+0000000D  48634518              movsxd rax, b ; load b1
+00000011  50                    push rax; push 4
 00000012  48C7C002000000        mov rax, 2
-00000019  50                    push rax
+00000019  50                    push rax; push 2
 0000001A  5B                    pop rbx
 0000001B  58                    pop rax
 0000001C  480FAFC3              imul rax, rbx
-00000020  50                    push rax
+00000020  50                    push rax; push 1
 00000021  5B                    pop rbx
 00000022  58                    pop rax
 00000023  4803C3                add rax, rbx
-00000026  50                    push rax
+00000026  50                    push rax; push 1
+                                ; var decl c type = int
+00000027  8945FC                mov _c, eax ; store local 1c
+0000002A                        ret ; return 1
+0000002A  C9                *   leave
+0000002B  C3                *   retn 
+0000002C                        _add ENDP
 
-                                    ; global ref c
-00000027                          ret
-00000027  C9                *   leave
-00000028  C3                *   retn 
-00000029                        _add ENDP
-
-00000029                        _main PROC 
+0000002C                        _main PROC 
                                 LOCAL _y:SDWORD
-00000029  55                *   push rbp
-0000002A  488BEC            *   mov rbp, rsp
-0000002D  4883EC08          *   sub rsp, 8
-00000031  48C7C004000000        mov rax, 4
-00000038  50                    push rax
-                                ; global ref x
-00000039  E8C2FFFFFF            call _add
-0000003E  83C410                add esp, 16
-00000041  50                    push rax
-
-                                    ; global ref y
-00000042                          ret
-00000042  C9                *   leave
-00000043  C3                *   retn
-00000044                        _main ENDP
+0000002C  55                *   push rbp
+0000002D  488BEC            *   mov rbp, rsp
+00000030  4883EC08          *   sub rsp, 8
+00000034  48C7C004000000        mov rax, 4
+0000003B  50                    push rax; push 2
+                                ; global ref x2
+0000003C  E8BFFFFFFF            call _add
+00000041  83C410                add esp, 16
+00000044  50                    push rax; push 3
+                                ; var decl y type = int
+00000045  8945FC                mov _y, eax ; store local 1y
+00000048                        ret ; return 1
+00000048  C9                *   leave
+00000049  C3                *   retn
+0000004A                        _main ENDP
 
                                 end
-00000044                    *   _TEXT ends
+0000004A                    *   _TEXT ends
 
 
 Macros:
@@ -90,18 +90,18 @@ Segments and Groups:
 FLAT . . . . . . . . . . . . . .        GROUP
 _BSS . . . . . . . . . . . . . .        64 Bit   00000004 Para    Public  'BSS'
 _DATA  . . . . . . . . . . . . .        64 Bit   00000004 Para    Public  'DATA'
-_TEXT  . . . . . . . . . . . . .        64 Bit   00000044 Para    Public  'CODE'
+_TEXT  . . . . . . . . . . . . .        64 Bit   0000004A Para    Public  'CODE'
 
 
 Procedures, parameters and locals:
 
                 N a m e                 Type     Value    Segment  Length
 
-_add . . . . . . . . . . . . . .        P Near   00000000 _TEXT    00000029 Public   FASTCALL
+_add . . . . . . . . . . . . . .        P Near   00000000 _TEXT    0000002C Public   FASTCALL
   b  . . . . . . . . . . . . . .        DWord             rbp + 0018
   a  . . . . . . . . . . . . . .        DWord             rbp + 0010
   _c . . . . . . . . . . . . . .        DWord             rbp - 0004
-_main  . . . . . . . . . . . . .        P Near   00000029 _TEXT    0000001B Public   FASTCALL
+_main  . . . . . . . . . . . . .        P Near   0000002C _TEXT    0000001E Public   FASTCALL
   _y . . . . . . . . . . . . . .        DWord             rbp - 0004
 
 
@@ -119,7 +119,7 @@ Symbols:
 @Interface . . . . . . . . . . .        Number             7h 
 @Model . . . . . . . . . . . . .        Number             7h 
 @ReservedStack . . . . . . . . .        Number             0h 
-@Time  . . . . . . . . . . . . .        Text   10:45:38
+@Time  . . . . . . . . . . . . .        Text   17:27:37
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT
@@ -128,4 +128,4 @@ __JWASM__  . . . . . . . . . . .        Number            D4h
 m  . . . . . . . . . . . . . . .        DWord              0h _BSS FASTCALL
 x  . . . . . . . . . . . . . . .        DWord              0h _DATA FASTCALL
 
-test2.asm: 45 lines, 2 passes, 0 ms, 0 warnings, 0 errors
+test2.asm: 45 lines, 2 passes, 1 ms, 0 warnings, 0 errors
