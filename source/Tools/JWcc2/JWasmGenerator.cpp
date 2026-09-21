@@ -178,20 +178,44 @@ void JWasmGenerator::visit(FunctionDecl& n)
 	out << endl;
 
 	//proc body
-	if (!currentLocals.empty())
+	if (auto comp = dynamic_cast<CompoundStmt*>(n.body.get()))
 	{
-		ind();
-		out << "      LOCAL ";
-		int size = (int)currentLocals.size();
 		index = 0;
-		for (auto& ln : currentLocals)
+		int size = (int)currentLocals.size();
+		for (auto& ld : comp->localDecls)
 		{
-			if (ln->type == "int") out << "_" << ln->name << ":SDWORD";
-			if (index < size - 1) out << ",";
-			index++;
+			if (auto v = dynamic_cast<VarDecl*>(ld.get()))
+			{
+				ind();
+				out << "LOCAL ";
+				if (v->type == "int") out << "_" << v->name << ":SDWORD";
+				if (index < size - 1) out << ",";
+				index++;
+			}
 		}
 		out << endl;
 	}
+
+	if (auto comp = dynamic_cast<CompoundStmt*>(n.body.get()))
+	{
+		index = 0;
+		int size = (int)currentLocals.size();
+		for (auto& ld : comp->localDecls)
+		{
+			if (auto v = dynamic_cast<VarDecl*>(ld.get()))
+			{
+				if (auto exp = dynamic_cast<Expr*>(v->init.get()))
+				{
+					exp->accept(*this);
+				}
+			}
+		}
+		out << endl;
+	}
+
+	indent++;
+	if (n.body) n.body->accept(*this);
+	indent--;
 
 	//proc trailer
 	out << "_" << n.name << " ENDP" << endl << endl;
@@ -284,8 +308,14 @@ void JWasmGenerator::visit(FunctionDecl& n)
 
 void JWasmGenerator::visit(CompoundStmt& n)
 {
-	for (auto& d : n.localDecls) d->accept(*this);
-	for (auto& s : n.stmts) s->accept(*this);
+	for (auto& d : n.localDecls)
+	{
+		d->accept(*this);
+	}
+	for (auto& s : n.stmts)
+	{
+		s->accept(*this);
+	}
 }
 
 void JWasmGenerator::visit(ReturnStmt& n)
