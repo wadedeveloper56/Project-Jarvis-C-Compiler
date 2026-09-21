@@ -8,25 +8,10 @@ m SDWORD ? ; global var m type = int
 x SDWORD 3; global var x type = int value = 3
 
 .code
-;-----------------
-; params:
-;   a : int
-;   b : int
-; locals:
-;   c : int
-;-----------------
-_add PROC,a:SDWORD,b:SDWORD
-      LOCAL _c:SDWORD
-      ret
+_add PROC a:SDWORD,b:SDWORD
 _add ENDP
 
-;-----------------
-; locals:
-;   y : int
-;-----------------
-_main PROC
-      LOCAL _y:SDWORD
-      ret
+_main PROC 
 _main ENDP
 
 end

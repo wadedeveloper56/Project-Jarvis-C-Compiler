@@ -1,14 +1,14 @@
 PEDUMP - Win32/Win64 COFF EXE/OBJ/LIB file dumper v1.0 (C) Copyright 2025-2026 Christopher D. Wade.
 All Rights Reserved
 Dump of file test2.obj
-File Size 348 bytes
+File Size 328 bytes
 File Type: 64-bit COFF OBJECT
 
 FILE HEADER VALUES
               8664 Machine (x64)
                  3 (3) Number of Sections
-          6AADAE56 TimeDateStamp ->  n/a
-                A4 PointerToSymbolTable
+          6AB131E3 TimeDateStamp ->  n/a
+                90 PointerToSymbolTable
                  A (10) NumberOfSymbols
                  0 (0) SizeOfOptionalHeader
                  0 Flags
@@ -18,8 +18,8 @@ SECTION HEADER #0 (0)
    .text name
        0 physical address
        0 virtual address
-      14 (20) size of raw data
-      8C file pointer to raw data (0000008C to 0000009F)
+       0 (0) size of raw data
+       0 file pointer to raw data (00000000 to FFFFFFFF)
        0 file pointer to relocation table
        0 file pointer to line numbers
        0 number of relocations
@@ -31,9 +31,6 @@ SECTION HEADER #0 (0)
          Executable
          Readable
 
-RAW DATA #0 (0)
-00000000  55 48 8b ec 48 83 ec 08  c9 c3 55 48 8b ec 48 83  UH..H.....UH..H.
-00000010  ec 08 c9 c3                                       ....
 
 
 SECTION HEADER #1 (1)
@@ -41,7 +38,7 @@ SECTION HEADER #1 (1)
        0 physical address
        0 virtual address
        4 (4) size of raw data
-      A0 file pointer to raw data (000000A0 to 000000A3)
+      8C file pointer to raw data (0000008C to 0000008F)
        0 file pointer to relocation table
        0 file pointer to line numbers
        0 number of relocations
@@ -82,12 +79,12 @@ Indx Sectn   Value   Type  Storage Name
 0000 DEBUG 00000000  0000 FILE     .file
      * test2.asm
 0002     1 00000000  0000 STATIC   .text
-     * Section: 0000  Len: 00014  Relocs: 0000  LineNums: 0000 checksum:00000000
+     * Section: 0000  Len: 00000  Relocs: 0000  LineNums: 0000 checksum:00000000
 0004     2 00000000  0000 STATIC   .data
      * Section: 0000  Len: 00004  Relocs: 0000  LineNums: 0000 checksum:00000000
 0006     3 00000000  0000 STATIC   .bss
      * Section: 0000  Len: 00004  Relocs: 0000  LineNums: 0000 checksum:00000000
 0008     1 00000000  0020 EXTERNAL _add
-0009     1 0000000A  0020 EXTERNAL _main
+0009     1 00000000  0020 EXTERNAL _main
 
 String Table Size = 0x4 (4) bytes 0 entries

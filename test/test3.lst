@@ -1,4 +1,4 @@
-JWasm v2.12pre, Sep 16 2026
+JWasm v2.12pre, Sep 18 2026
 test3.asm
                             *   .model FLAT
 00000000                    *   _TEXT segment PARA FLAT PUBLIC 'CODE'
@@ -92,17 +92,17 @@ Symbols:
 @Cpu . . . . . . . . . . . . . .        Number           D5Fh 
 @CurSeg  . . . . . . . . . . . .        Text   
 @DataSize  . . . . . . . . . . .        Number             0h 
-@Date  . . . . . . . . . . . . .        Text   09/18/26
+@Date  . . . . . . . . . . . . .        Text   09/21/26
 @FileCur . . . . . . . . . . . .        Text   test3.asm
 @FileName  . . . . . . . . . . .        Text   TEST3
 @Interface . . . . . . . . . . .        Number             7h 
 @Model . . . . . . . . . . . . .        Number             7h 
 @ReservedStack . . . . . . . . .        Number             0h 
-@Time  . . . . . . . . . . . . .        Text   16:34:14
+@Time  . . . . . . . . . . . . .        Text   08:32:19
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT
 @stack . . . . . . . . . . . . .        Text   FLAT
 __JWASM__  . . . . . . . . . . .        Number            D4h 
 
-test3.asm: 37 lines, 2 passes, 1 ms, 0 warnings, 0 errors
+test3.asm: 37 lines, 2 passes, 0 ms, 0 warnings, 0 errors

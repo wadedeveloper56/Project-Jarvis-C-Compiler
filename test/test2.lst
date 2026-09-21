@@ -1,4 +1,4 @@
-JWasm v2.12pre, Sep 16 2026
+JWasm v2.12pre, Sep 18 2026
 test2.asm
                             *   .model FLAT
 00000000                    *   _TEXT segment PARA FLAT PUBLIC 'CODE'
@@ -24,39 +24,14 @@ test2.asm
 00000004                    *   _DATA ends
 00000000                    *   _TEXT segment
                             *   assume cs:FLAT
-                                ;-----------------
-                                ; params:
-                                ;   a : int
-                                ;   b : int
-                                ; locals:
-                                ;   c : int
-                                ;-----------------
-00000000                        _add PROC,a:SDWORD,b:SDWORD
-                                      LOCAL _c:SDWORD
-00000000  55                *   push rbp
-00000001  488BEC            *   mov rbp, rsp
-00000004  4883EC08          *   sub rsp, 8
-00000008                              ret
-00000008  C9                *   leave
-00000009  C3                *   retn 
-0000000A                        _add ENDP
+00000000                        _add PROC a:SDWORD,b:SDWORD
+00000000                        _add ENDP
 
-                                ;-----------------
-                                ; locals:
-                                ;   y : int
-                                ;-----------------
-0000000A                        _main PROC
-                                      LOCAL _y:SDWORD
-0000000A  55                *   push rbp
-0000000B  488BEC            *   mov rbp, rsp
-0000000E  4883EC08          *   sub rsp, 8
-00000012                              ret
-00000012  C9                *   leave
-00000013  C3                *   retn
-00000014                        _main ENDP
+00000000                        _main PROC 
+00000000                        _main ENDP
 
                                 end
-00000014                    *   _TEXT ends
+00000000                    *   _TEXT ends
 
 
 Macros:
@@ -77,19 +52,17 @@ Segments and Groups:
 FLAT . . . . . . . . . . . . . .        GROUP
 _BSS . . . . . . . . . . . . . .        64 Bit   00000004 Para    Public  'BSS'
 _DATA  . . . . . . . . . . . . .        64 Bit   00000004 Para    Public  'DATA'
-_TEXT  . . . . . . . . . . . . .        64 Bit   00000014 Para    Public  'CODE'
+_TEXT  . . . . . . . . . . . . .        64 Bit   00000000 Para    Public  'CODE'
 
 
 Procedures, parameters and locals:
 
                 N a m e                 Type     Value    Segment  Length
 
-_add . . . . . . . . . . . . . .        P Near   00000000 _TEXT    0000000A Public   FASTCALL
+_add . . . . . . . . . . . . . .        P Near   00000000 _TEXT    00000000 Public   FASTCALL
   b  . . . . . . . . . . . . . .        DWord             rbp + 0018
   a  . . . . . . . . . . . . . .        DWord             rbp + 0010
-  _c . . . . . . . . . . . . . .        DWord             rbp - 0004
-_main  . . . . . . . . . . . . .        P Near   0000000A _TEXT    0000000A Public   FASTCALL
-  _y . . . . . . . . . . . . . .        DWord             rbp - 0004
+_main  . . . . . . . . . . . . .        P Near   00000000 _TEXT    00000000 Public   FASTCALL
 
 
 Symbols:
@@ -100,13 +73,13 @@ Symbols:
 @Cpu . . . . . . . . . . . . . .        Number           DDFh 
 @CurSeg  . . . . . . . . . . . .        Text   
 @DataSize  . . . . . . . . . . .        Number             0h 
-@Date  . . . . . . . . . . . . .        Text   09/18/26
+@Date  . . . . . . . . . . . . .        Text   09/21/26
 @FileCur . . . . . . . . . . . .        Text   test2.asm
 @FileName  . . . . . . . . . . .        Text   TEST2
 @Interface . . . . . . . . . . .        Number             7h 
 @Model . . . . . . . . . . . . .        Number             7h 
 @ReservedStack . . . . . . . . .        Number             0h 
-@Time  . . . . . . . . . . . . .        Text   16:34:14
+@Time  . . . . . . . . . . . . .        Text   08:32:19
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT
@@ -115,4 +88,4 @@ __JWASM__  . . . . . . . . . . .        Number            D4h
 m  . . . . . . . . . . . . . . .        DWord              0h _BSS FASTCALL
 x  . . . . . . . . . . . . . . .        DWord              0h _DATA FASTCALL
 
-test2.asm: 32 lines, 2 passes, 1 ms, 0 warnings, 0 errors
+test2.asm: 17 lines, 2 passes, 0 ms, 0 warnings, 0 errors

@@ -1,4 +1,4 @@
-JWasm v2.12pre, Sep 16 2026
+JWasm v2.12pre, Sep 18 2026
 c032.asm
                                 .686
                                 .model flat, stdcall
@@ -144,12 +144,12 @@ Symbols:
 @Cpu . . . . . . . . . . . . . .        Number           D5Fh 
 @CurSeg  . . . . . . . . . . . .        Text   
 @DataSize  . . . . . . . . . . .        Number             0h 
-@Date  . . . . . . . . . . . . .        Text   09/18/26
+@Date  . . . . . . . . . . . . .        Text   09/21/26
 @FileCur . . . . . . . . . . . .        Text   c032.asm
 @FileName  . . . . . . . . . . .        Text   C032
 @Interface . . . . . . . . . . .        Number             3h 
 @Model . . . . . . . . . . . . .        Number             7h 
-@Time  . . . . . . . . . . . . .        Text   16:34:13
+@Time  . . . . . . . . . . . . .        Text   08:32:17
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT

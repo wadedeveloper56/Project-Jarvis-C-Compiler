@@ -164,6 +164,41 @@ void JWasmGenerator::visit(VarDecl& n)
 
 void JWasmGenerator::visit(FunctionDecl& n)
 {
+	//proc header
+	out << "_" << n.name << " PROC ";
+	int index = 0;
+	int size = (int)n.params.size();
+	for (auto& p : n.params)
+	{
+		if (p.first == "int") out << p.second << ":SDWORD";
+		if (index < (int)n.params.size() - 1) out << ",";
+		index++;
+
+	}
+	out << endl;
+
+	//proc body
+	if (!currentLocals.empty())
+	{
+		ind();
+		out << "      LOCAL ";
+		int size = (int)currentLocals.size();
+		index = 0;
+		for (auto& ln : currentLocals)
+		{
+			if (ln->type == "int") out << "_" << ln->name << ":SDWORD";
+			if (index < size - 1) out << ",";
+			index++;
+		}
+		out << endl;
+	}
+
+	//proc trailer
+	out << "_" << n.name << " ENDP" << endl << endl;
+
+
+
+	/*
 	// reset per-function locals map
 	localIndex.clear();
 	currentParams.clear();
@@ -244,6 +279,7 @@ void JWasmGenerator::visit(FunctionDecl& n)
 	emitEpilogue();
 	out << "_" << n.name << " ENDP" << endl << endl;
 	inFunction = false;
+	*/
 }
 
 void JWasmGenerator::visit(CompoundStmt& n)
@@ -274,8 +310,8 @@ void JWasmGenerator::visit(NumberExpr& n)
 {
 	// push immediate into register/stack
 	ind();
-	//if (bits == 64) out << "mov " << regA() << ", " << n.value << "\n";
-	//else out << "mov " << regA() << ", " << n.value << "\n";
+	if (bits == 64) out << "mov " << regA() << ", " << n.value << "\n";
+	else out << "mov " << regA() << ", " << n.value << "\n";
 	// push onto stack to follow simple eval convention
 	ind(); out << "push " << regA() << "\n";
 }
@@ -286,12 +322,12 @@ void JWasmGenerator::visit(VarExpr& n)
 	auto it = localIndex.find(n.name);
 	if (it != localIndex.end())
 	{
-		//out << "mov " << regA() << ", [ebp + " << (it->second * wordBytes()) << "] ; load " << n.name << "\n";
-		//ind(); out << "push " << regA() << "\n";
+		out << "mov " << regA() << ", [ebp + " << (it->second * wordBytes()) << "] ; load " << n.name << "\n";
+		ind(); out << "push " << regA() << "\n";
 	}
 	else
 	{
-		//out << "; global ref " << n.name << "\n";
+		out << "; global ref " << n.name << "\n";
 	}
 }
 
@@ -326,11 +362,11 @@ void JWasmGenerator::visit(AssignExpr& n)
 	auto it = localIndex.find(n.name);
 	if (it != localIndex.end())
 	{
-		//out << "mov [ebp + " << (it->second * wordBytes()) << "], " << regA() << " ; store " << n.name << "\n";
+		out << "mov [ebp + " << (it->second * wordBytes()) << "], " << regA() << " ; store " << n.name << "\n";
 	}
 	else
 	{
-		//out << "; store to global " << n.name << "\n";
+		out << "; store to global " << n.name << "\n";
 	}
 }
 

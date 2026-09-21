@@ -1,4 +1,4 @@
-JWasm v2.12pre, Sep 16 2026
+JWasm v2.12pre, Sep 18 2026
 C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\16bit\test1.asm
                                 .286
                                 .model small;
@@ -80,12 +80,12 @@ Symbols:
 @Cpu . . . . . . . . . . . . . .        Number           507h 
 @CurSeg  . . . . . . . . . . . .        Text   
 @DataSize  . . . . . . . . . . .        Number             0h 
-@Date  . . . . . . . . . . . . .        Text   09/18/26
+@Date  . . . . . . . . . . . . .        Text   09/21/26
 @FileCur . . . . . . . . . . . .        Text   C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\16bit\test1.asm
 @FileName  . . . . . . . . . . .        Text   TEST1
 @Interface . . . . . . . . . . .        Number             0h 
 @Model . . . . . . . . . . . . .        Number             2h 
-@Time  . . . . . . . . . . . . .        Text   16:34:14
+@Time  . . . . . . . . . . . . .        Text   08:32:19
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   DGROUP
