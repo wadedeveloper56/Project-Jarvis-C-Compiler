@@ -7,10 +7,16 @@
 
 using namespace std;
 
+struct VarData
+{
+	string type;
+	int index;
+};
+
 struct JWasmGenerator : ASTVisitor {
 	// bits: 16,32,64
 	// isWindows: when bits==64 choose Windows x64 calling convention if true, otherwise SysV
-	JWasmGenerator(ostream& os, int bits = 32, bool isWindows = true) : out(os), indent(0), bits(bits), inFunction(false), isWindows(isWindows) {}
+	JWasmGenerator(ostream& os, int bits = 32, bool isWindows = true) : out(os), indent(0), bits(bits), isWindows(isWindows) {}
 
 	void generate(Program& p) { p.accept(*this); }
 
@@ -34,13 +40,13 @@ private:
 	void ind() { for (int i = 0; i < indent; ++i) out << "  "; }
 
 	// per-function state
-	unordered_map<string,int> paramIndex; // param name -> index
-	unordered_map<string,int> localIndex; // local name -> slot (0..)
-	bool inFunction;
+	unordered_map<string,VarData> paramIndex; // param name -> index
+	//unordered_map<string,VarData> localIndex; // local name -> slot (0..)
+	//bool inFunction;
 	int nextLocalIndex();
 	string wasmType(const string& ty) const;
-	vector<string> currentParams;
-	vector<VarDecl*> currentLocals;
+	//vector<string> currentParams;
+	//vector<VarDecl*> currentLocals;
 	string wordForBits() const;
 	bool isWindows;
 	string regA() const;

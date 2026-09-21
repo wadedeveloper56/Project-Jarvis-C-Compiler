@@ -8,7 +8,7 @@ using namespace std;
 int JWasmGenerator::nextLocalIndex()
 {
 	int idx = 0;
-	for (auto& kv : localIndex) idx = max(idx, kv.second);
+	for (auto& kv : paramIndex) idx = max(idx, kv.second.index);
 	return idx + 1;
 }
 
@@ -164,6 +164,17 @@ void JWasmGenerator::visit(VarDecl& n)
 
 void JWasmGenerator::visit(FunctionDecl& n)
 {
+	paramIndex.clear();
+	//currentParams.clear();
+	//currentLocals.clear();
+	//inFunction = true;
+	// assign indices for params starting at 0
+	int idx = 0;
+	for (auto& p : n.params)
+	{
+		paramIndex[p.second] = { p.first, idx++ };
+	}
+
 	//proc header
 	out << "_" << n.name << " PROC ";
 	int index = 0;
@@ -178,10 +189,11 @@ void JWasmGenerator::visit(FunctionDecl& n)
 	out << endl;
 
 	//proc body
+	//local variables def
 	if (auto comp = dynamic_cast<CompoundStmt*>(n.body.get()))
 	{
 		index = 0;
-		int size = (int)currentLocals.size();
+		int size = (int)comp->localDecls.size();
 		for (auto& ld : comp->localDecls)
 		{
 			if (auto v = dynamic_cast<VarDecl*>(ld.get()))
@@ -196,10 +208,11 @@ void JWasmGenerator::visit(FunctionDecl& n)
 		out << endl;
 	}
 
+	//local variables init
 	if (auto comp = dynamic_cast<CompoundStmt*>(n.body.get()))
 	{
 		index = 0;
-		int size = (int)currentLocals.size();
+		int size = (int)comp->localDecls.size();
 		for (auto& ld : comp->localDecls)
 		{
 			if (auto v = dynamic_cast<VarDecl*>(ld.get()))
@@ -349,10 +362,11 @@ void JWasmGenerator::visit(NumberExpr& n)
 void JWasmGenerator::visit(VarExpr& n)
 {
 	ind();
-	auto it = localIndex.find(n.name);
-	if (it != localIndex.end())
+	auto it = paramIndex.find(n.name);
+	if (it != paramIndex.end())
 	{
-		out << "mov " << regA() << ", [ebp + " << (it->second * wordBytes()) << "] ; load " << n.name << "\n";
+		if (it->second.type == "int" && bits == 64) out << "movsxd " << regA() << ", " << n.name << " ; load " << n.name << "\n";
+		if (it->second.type == "int" && bits == 32) out << "mov " << regA() << ", " << n.name << " ; load " << n.name << "\n";
 		ind(); out << "push " << regA() << "\n";
 	}
 	else
@@ -389,10 +403,10 @@ void JWasmGenerator::visit(AssignExpr& n)
 	// pop into regA and store
 	ind(); out << "pop " << regA() << "\n";
 	ind();
-	auto it = localIndex.find(n.name);
-	if (it != localIndex.end())
+	auto it = paramIndex.find(n.name);
+	if (it != paramIndex.end())
 	{
-		out << "mov [ebp + " << (it->second * wordBytes()) << "], " << regA() << " ; store " << n.name << "\n";
+		out << "mov " << n.name << ", " << regA() << " ; store " << n.name << "\n";
 	}
 	else
 	{
@@ -408,7 +422,7 @@ void JWasmGenerator::visit(CallExpr& n)
 		(*it)->accept(*this); // pushes arg
 	}
 	// emit call
-	ind(); out << "call " << n.callee << "\n";
+	ind(); out << "call _" << n.callee << "\n";
 	// after call, caller cleans up arguments: add esp, argsbytes
 	if (!n.args.empty())
 	{
