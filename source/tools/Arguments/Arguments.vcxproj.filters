@@ -29,40 +29,40 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Arguments.c">
+    <ClCompile Include="Arguments.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="pch.c">
+    <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ArgDate.c">
+    <ClCompile Include="ArgDate.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ArgDbl.c">
+    <ClCompile Include="ArgDbl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ArgDstr.c">
+    <ClCompile Include="ArgDstr.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ArgEnd.c">
+    <ClCompile Include="ArgEnd.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ArgFile.c">
+    <ClCompile Include="ArgFile.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ArgGetOpt.c">
+    <ClCompile Include="ArgGetOpt.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ArgInt.c">
+    <ClCompile Include="ArgInt.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ArgLit.c">
+    <ClCompile Include="ArgLit.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ArgRex.c">
+    <ClCompile Include="ArgRex.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ArgStr.c">
+    <ClCompile Include="ArgStr.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

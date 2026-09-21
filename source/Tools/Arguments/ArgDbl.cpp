@@ -75,7 +75,7 @@ ArgDblPtr argDbl1(const char* shortopts, const char* longopts, const char* datat
 
 ArgDblPtr argDblN(const char* shortopts, const char* longopts, const char* datatype, int mincount, int maxcount, const char* glossary) {
 	maxcount = (maxcount < mincount) ? mincount : maxcount;
-	ArgDblPtr result = AllocateMemory(sizeof(ArgDbl));
+	ArgDblPtr result = (ArgDblPtr)AllocateMemory(sizeof(ArgDbl));
 	if (result) {
 		result->hdr.flag = ARG_HASVALUE;
 		result->hdr.shortopts = shortopts;
@@ -89,7 +89,7 @@ ArgDblPtr argDblN(const char* shortopts, const char* longopts, const char* datat
 		result->hdr.scanfn = argDblScanFn;
 		result->hdr.checkfn = argDblCheckFn;
 		result->hdr.errorfn = argDblErrorFn;
-		result->dval = AllocateMemory(sizeof(double)*maxcount);
+		result->dval = (double*)AllocateMemory(sizeof(double)*maxcount);
 		result->count = 0;
 	}
 	return result;

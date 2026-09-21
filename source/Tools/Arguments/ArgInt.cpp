@@ -164,7 +164,7 @@ void argIntErrorFn(void* parent_, ArgDstrPtr ds, int errorcode, const char* argv
 
 ArgIntPtr argIntN(const char* shortopts, const char* longopts, const char* datatype, int mincount, int maxcount, const char* glossary) {
 	maxcount = (maxcount < mincount) ? mincount : maxcount;
-	ArgIntPtr result = AllocateMemory(sizeof(ArgInt));
+	ArgIntPtr result = (ArgIntPtr)AllocateMemory(sizeof(ArgInt));
 	if (result) {
 		result->hdr.flag = ARG_HASVALUE;
 		result->hdr.shortopts = shortopts;
@@ -178,7 +178,7 @@ ArgIntPtr argIntN(const char* shortopts, const char* longopts, const char* datat
 		result->hdr.scanfn = argIntScanFn;
 		result->hdr.checkfn = argIntCheckFn;
 		result->hdr.errorfn = argIntErrorFn;
-		result->ival = AllocateMemory(sizeof(int)*maxcount);
+		result->ival = (int*)AllocateMemory(sizeof(int)*maxcount);
 		result->count = 0;
 	}
 	return result;

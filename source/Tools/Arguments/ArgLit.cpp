@@ -45,7 +45,7 @@ void argLitErrorFn(void* parent_, ArgDstrPtr ds, int errorcode, const char* argv
 
 ArgLitPtr argLitN(const char* shortopts, const char* longopts, int mincount, int maxcount, const char* glossary) {
 	maxcount = (maxcount < mincount) ? mincount : maxcount;
-	ArgLitPtr result = AllocateMemory(sizeof(ArgLit));
+	ArgLitPtr result = (ArgLitPtr)AllocateMemory(sizeof(ArgLit));
 	if (result) {
 		result->hdr.flag = 0;
 		result->hdr.shortopts = shortopts;
