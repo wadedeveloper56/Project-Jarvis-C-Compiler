@@ -40,7 +40,7 @@ private:
 	bool isWindows;
 	unordered_map<string,VarData> paramIndex; // param name -> index
 	unordered_map<string,VarData> localIndex; // local name -> slot (0..)
-	void ind() { for (int i = 0; i < indent; ++i) out << "  "; }
+	void ind() { for (int i = 1; i <= indent; ++i) out << "  "; }
 
 	// per-function state
 	//bool inFunction;
@@ -50,8 +50,7 @@ private:
 	//vector<VarDecl*> currentLocals;
 	string wordForBits() const;
 	string regA(int size) const;
+	string regC(int size) const;
 	string regB() const;
 	int wordBytes() const { return bits / 8; }
-	void emitPrologue(int localBytes);
-	void emitEpilogue();
 };

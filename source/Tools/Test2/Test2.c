@@ -1,16 +1,14 @@
 int x = 3;
+int m;
 
-void add() {
-  int c = 7;
-  int d= 9;
-}
-
-void sub() {
-  int y = 7;
+int add(int a, int b) {
+	int c = a + b * 2;
+	return c;
 }
 
 int main() {
-  int y=9;
-  return 0;
+	int y = add(x, 4);
+	return y;
 }
+
 

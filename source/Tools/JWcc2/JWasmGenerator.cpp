@@ -25,65 +25,15 @@ string JWasmGenerator::regA(int size) const {
 	return "eax";
 }
 
+string JWasmGenerator::regC(int size) const {
+	if (size == 64) return "rcx";
+	if (size == 16) return "cx";
+	return "ecx";
+}
 string JWasmGenerator::regB() const {
 	if (bits == 64) return "rbx";
 	if (bits == 16) return "bx";
 	return "ebx";
-}
-
-void JWasmGenerator::emitPrologue(int localBytes)
-{
-	// For 32-bit and 16-bit, use ebp frame
-	if (bits == 32 || bits == 16)
-	{
-		//ind(); out << "push ebp\n";
-		//ind(); out << "mov ebp, esp\n";
-		//// save callee-saved registers (ebx, esi, edi)
-		//ind(); out << "push ebx\n";
-		//ind(); out << "push esi\n";
-		//ind(); out << "push edi\n";
-		//if (localBytes > 0) { ind(); out << "sub esp, " << localBytes << "\n"; }
-	}
-	else if (bits == 64)
-	{
-		//// For x64, follow chosen calling convention: save callee-saved (rbx, rsi, rdi, rbp, r12-r15 as needed)
-		//ind(); out << "push rbp\n";
-		//ind(); out << "mov rbp, rsp\n";
-		//// save some callee-saved registers (rbx, rsi, rdi)
-		//ind(); out << "push rbx\n";
-		//ind(); out << "push rsi\n";
-		//ind(); out << "push rdi\n";
-		//if (localBytes > 0) { ind(); out << "sub rsp, " << localBytes << "\n"; }
-	}
-}
-
-void JWasmGenerator::emitEpilogue()
-{
-	if (bits == 32 || bits == 16)
-	{
-		//if (inFunction)
-		//{
-		//	// restore stack
-		//	ind(); out << "mov esp, ebp\n";
-		//	ind(); out << "pop edi\n";
-		//	ind(); out << "pop esi\n";
-		//	ind(); out << "pop ebx\n";
-		//	ind(); out << "pop ebp\n";
-		//	ind(); out << "ret\n";
-		//}
-	}
-	else if (bits == 64)
-	{
-		//if (inFunction)
-		//{
-		//	ind(); out << "add rsp, 0 ; adjust (if locals allocated)\n";
-		//	ind(); out << "pop rdi\n";
-		//	ind(); out << "pop rsi\n";
-		//	ind(); out << "pop rbx\n";
-		//	ind(); out << "pop rbp\n";
-		//	ind(); out << "ret\n";
-		//}
-	}
 }
 
 string JWasmGenerator::wasmType(const string& ty) const
@@ -112,11 +62,10 @@ void JWasmGenerator::visit(Program& n)
 	else
 	{
 		out << ".x64p" << endl;
-		//out << ".model flat, c;" << endl;
 	}
 	out << "option casemap : none" << endl;
 
-	// data section for globals
+	// uninitialized data section for globals
 	out << endl << ".data?" << endl;
 	for (auto& d : n.decls)
 	{
@@ -125,12 +74,12 @@ void JWasmGenerator::visit(Program& n)
 			auto init = dynamic_cast<Expr*>(gv->init.get());
 			if (init == nullptr)
 			{
-				if (gv->type == "int")	out << gv->name << " SDWORD ? ; global var " << gv->name << " type = " << gv->type << "\n";
+				if (gv->type == "int")	out << gv->name << " SDWORD ? ;global var " << gv->name << " type = " << gv->type << "\n";
 			}
 		}
 	}
 
-	// data section for globals
+	// initialized data section for globals
 	out << endl << ".data" << endl;
 	for (auto& d : n.decls)
 	{
@@ -140,7 +89,7 @@ void JWasmGenerator::visit(Program& n)
 			{
 				if (auto expr = dynamic_cast<NumberExpr*>(init))
 				{
-					if (gv->type == "int")	out << gv->name << " SDWORD " << expr->value << "; global var " << gv->name << " type = " << gv->type << " value = " << expr->value << endl;
+					if (gv->type == "int")	out << gv->name << " SDWORD " << expr->value << " ;global var " << gv->name << " type = " << gv->type << " value = " << expr->value << endl;
 				}
 			}
 		}
@@ -159,23 +108,45 @@ void JWasmGenerator::visit(Program& n)
 
 void JWasmGenerator::visit(VarDecl& n)
 {
-	//ind();
-	out << "mov _" << n.name << ", " << regA(32) <<  "; var decl " << n.name << " type = " << n.type << endl;
+	ind(); out << "mov _" << n.name << ", " << regA(32) << " ;var decl " << n.name << " type = " << n.type << endl;
 }
 
 void JWasmGenerator::visit(FunctionDecl& n)
 {
 	paramIndex.clear();
 	localIndex.clear();
-	//currentParams.clear();
-	//currentLocals.clear();
-	//inFunction = true;
-	// assign indices for params starting at 0
+	
 	int idx = 0;
 	for (auto& p : n.params)
 	{
 		paramIndex[p.second] = { p.first, idx++ };
 	}
+
+	// params (MASM uses stack-based params; emit comments and locals block)
+	out << ";-----------------\n";
+	out << "; params:\n";
+	if (!n.params.empty())
+	{
+		for (auto& p : n.params)
+		{
+			out << ";   " << p.second << " : " << p.first << "\n";
+		}
+	}
+	out << "; locals:\n";
+	if (n.body)
+	{
+		if (auto comp = dynamic_cast<CompoundStmt*>(n.body.get()))
+		{
+			for (auto& ld : comp->localDecls)
+			{
+				if (auto v = dynamic_cast<VarDecl*>(ld.get()))
+				{
+					out << ";   " << v->name << " : " << v->type << "\n";
+				}
+			}
+		}
+	}
+	out << ";-----------------\n";
 
 	//proc header
 	out << "_" << n.name << " PROC ";
@@ -190,20 +161,19 @@ void JWasmGenerator::visit(FunctionDecl& n)
 	}
 	out << endl;
 
-	//indent++;
 	//proc body
 	//local variables def
 	idx = 0;
+	indent++;
 	if (auto comp = dynamic_cast<CompoundStmt*>(n.body.get()))
 	{
-		index = 0;
 		int size = (int)comp->localDecls.size();
 		for (auto& ld : comp->localDecls)
 		{
 			if (auto v = dynamic_cast<VarDecl*>(ld.get()))
 			{
 				localIndex[v->name] = { v->type, idx++ };
-				//ind();
+				ind();
 				out << "LOCAL ";
 				if (v->type == "int") out << "_" << v->name << ":SDWORD";
 				if (index < size - 1) out << ",";
@@ -228,99 +198,13 @@ void JWasmGenerator::visit(FunctionDecl& n)
 				}
 			}
 		}
-		//out << endl;
 	}
 
 	if (n.body) n.body->accept(*this);
-	//indent--;
 
+	indent--;
 	//proc trailer
 	out << "_" << n.name << " ENDP" << endl << endl;
-
-
-
-	/*
-	// reset per-function locals map
-	localIndex.clear();
-	currentParams.clear();
-	currentLocals.clear();
-	inFunction = true;
-	// assign indices for params starting at 0
-	int idx = 0;
-	for (auto& p : n.params)
-	{
-		localIndex[p.second] = idx++;
-	}
-	// params (MASM uses stack-based params; emit comments and locals block)
-	out << ";-----------------\n";
-	if (!n.params.empty())
-	{
-		ind(); out << "; params:\n";
-		for (auto& p : n.params)
-		{
-			ind(); out << ";   " << p.second << " : " << p.first << "\n";
-			currentParams.push_back(p.second);
-			localIndex[p.second] = idx++;
-		}
-	}
-	// collect locals
-	int localCountStart = idx;
-	if (n.body)
-	{
-		if (auto comp = dynamic_cast<CompoundStmt*>(n.body.get()))
-		{
-			for (auto& ld : comp->localDecls)
-			{
-				if (auto v = dynamic_cast<VarDecl*>(ld.get()))
-				{
-					currentLocals.push_back(v);
-					localIndex[v->name] = idx++;
-				}
-			}
-		}
-	}
-	if (!currentLocals.empty())
-	{
-		ind(); out << "; locals:\n";
-		for (auto& ln : currentLocals)
-		{
-			ind(); out << ";   " << ln->name << " : " << "int" << "\n";
-		}
-	}
-	out << ";-----------------\n";
-	// emit MASM proc header
-	out << "_" << n.name << " PROC";
-	for (auto& p : n.params)
-	{
-		if (p.first == "int")	out << "," << p.second << ":SDWORD";
-
-	}
-	out << endl;
-	if (!currentLocals.empty())
-	{
-		ind();
-		out << "      LOCAL ";
-		int size = (int)currentLocals.size();
-		int idx = 0;
-		for (auto& ln : currentLocals)
-		{
-			if (ln->type == "int") out << "_" << ln->name << ":SDWORD";
-			if (idx < size - 1) out << ",";
-			idx++;
-		}
-		out << endl;
-	}
-	// body prologue
-	int totalLocalBytes = (idx - localCountStart) * wordBytes();
-	emitPrologue(totalLocalBytes);
-	// no-op patch: preserve behavior, adjust history
-	indent++;
-	if (n.body) n.body->accept(*this);
-	indent--;
-	emitEpilogue();
-	out << "_" << n.name << " ENDP" << endl << endl;
-	inFunction = false;
-	*/
 }
 
 void JWasmGenerator::visit(CompoundStmt& n)
@@ -339,14 +223,12 @@ void JWasmGenerator::visit(ReturnStmt& n)
 {
 	if (n.expr)
 	{
-	//ind();
 		n.expr->accept(*this);
-		out << "ret ; return 1" << endl;
+		ind(); out << "ret ;return 1" << endl;
 	}
 	else
 	{
-		//ind();
-		out << "ret ; return 2" << endl;
+		ind(); out << "ret ;return 2" << endl;
 	}
 }
 
@@ -358,12 +240,11 @@ void JWasmGenerator::visit(ExprStmt& n)
 void JWasmGenerator::visit(NumberExpr& n)
 {
 	// push immediate into register/stack
-	//ind();
-	if (bits == 64) out << "mov " << regA(bits) << ", " << n.value << "\n";
-	else out << "mov " << regA(bits) << ", " << n.value << "\n";
+	ind();
+	if (bits == 64) out << "mov " << regA(bits) << ", " << n.value << " ;load immediate into register\n";
+	else out << "mov " << regA(bits) << ", " << n.value << " ;load immediate into register\n";
 	// push onto stack to follow simple eval convention
-	//ind(); 
-	out << "push " << regA(bits) << "; push 2\n";
+	ind(); out << "push " << regA(bits) << " ;push register A on to the stack\n";
 }
 
 void JWasmGenerator::visit(VarExpr& n)
@@ -372,23 +253,23 @@ void JWasmGenerator::visit(VarExpr& n)
 	auto itLocal = localIndex.find(n.name);
 	if (it != paramIndex.end())
 	{
-		//ind();
-		if (it->second.type == "int" && bits == 64) out << "movsxd " << regA(bits) << ", " << n.name << " ; load " << n.name << "1\n";
-		if (it->second.type == "int" && bits == 32) out << "mov " << regA(bits) << ", " << n.name << " ; load " << n.name << "2\n";
-		//ind();
-		out << "push " << regA(bits) << "; push 4\n";
+		ind();
+		if (it->second.type == "int" && bits == 64) out << "movsxd " << regA(bits) << ", " << n.name << " ;load and sign extend '" << n.name << "' in to register 1\n";
+		if (it->second.type == "int" && bits == 32) out << "mov " << regA(bits) << ", " << n.name << " ;load '" << n.name << "' in to register 2\n";
+		ind();
+		out << "push " << regA(bits) << " ;push 4 on to stack\n";
 	}
 	else if (itLocal != localIndex.end())
 	{
 		if (itLocal->second.type == "int")
 		{
-			//indent--; 
-			out << "mov " << regA(32) << ", _" << n.name << " ; store local 1" << n.name << "\n";
-		}
+			ind(); out << "mov " << regA(32) << ", _" << n.name << " ;load local '" << n.name << "' in to register A\n";
+		 }
 	}
 	else
 	{
-		out << "; global ref " << n.name << "2\n";
+		ind(); out << "mov " << regA(32) << ", " << n.name << " ;load global '" << n.name << "' in to register A\n";
+		ind(); out << "push " << regA(bits) << " ;push register A on to the stack\n";
 	}
 }
 
@@ -398,24 +279,18 @@ void JWasmGenerator::visit(BinaryExpr& n)
 	n.lhs->accept(*this); // pushes lhs
 	n.rhs->accept(*this); // pushes rhs
 	// pop rhs into regB, pop lhs into regA
-	//ind(); 
-	out << "pop " << regB() << "\n";
-	//ind(); 
-	out << "pop " << regA(bits) << "\n";
-	//ind();
-	if (n.op == '+') out << "add " << regA(bits) << ", " << regB() << "\n";
-	else if (n.op == '-') out << "sub " << regA(bits) << ", " << regB() << "\n";
-	else if (n.op == '*') out << "imul " << regA(bits) << ", " << regB() << "\n";
+	ind();  out << "pop " << regB() << " ;pop rhs into register B\n";
+	ind();  out << "pop " << regA(bits) << " ;pop lhs into register A\n";
+	if (n.op == '+') { ind(); out << "add " << regA(bits) << ", " << regB() << " ;add registers A and B and store result in A\n"; }
+	else if (n.op == '-') { ind(); out << "sub " << regA(bits) << ", " << regB() << " ;subtract register B from A and store result in A\n"; }
+	else if (n.op == '*') { ind(); out << "imul " << regA(bits) << ", " << regB() << " ;multiply registers A and B and store result in A\n"; }
 	else if (n.op == '/')
 	{
-		//ind(); 
-		out << "cdq\n"; // extend eax to edx:eax for idiv
-		//ind(); 
-		out << "idiv " << regB() << "\n";
+		ind(); out << "cdq ;extend eax to edx:eax for idiv" << endl;
+		ind(); out << "idiv " << regB() << " ;integer divide registers A and B and store result in A\n";
 	}
 	// push result
-	//ind(); 
-	out << "push " << regA(bits) << "; push 1\n";
+	ind(); 	out << "push " << regA(bits) << " ;push register A on to the stack\n";
 }
 
 void JWasmGenerator::visit(AssignExpr& n)
@@ -423,9 +298,7 @@ void JWasmGenerator::visit(AssignExpr& n)
 	// evaluate value then set_local
 	n.value->accept(*this); // pushes value
 	// pop into regA and store
-	//ind(); 
-	out << "pop " << regA(bits) << "\n";
-	//ind();
+	out << "pop " << regA(bits) << " ;pop value into register 1\n";
 	auto it = paramIndex.find(n.name);
 	auto itLocal = localIndex.find(n.name);
 	if (it != paramIndex.end())
@@ -450,16 +323,13 @@ void JWasmGenerator::visit(CallExpr& n)
 		(*it)->accept(*this); // pushes arg
 	}
 	// emit call
-	//ind(); 
-	out << "call _" << n.callee << "\n";
+	ind(); out << "call _" << n.callee << " ;call function '" << n.callee << "'\n";
 	// after call, caller cleans up arguments: add esp, argsbytes
 	if (!n.args.empty())
 	{
 		int argsBytes = (int)n.args.size() * wordBytes();
-		//ind(); 
 		//out << "add esp, " << argsBytes << "\n";
 	}
 	// push return value (assumed in regA)
-	//ind(); 
-	out << "push " << regA(bits) << "; push 3\n";
+	ind(); out << "push " << regA(bits) << " ;push register A on to the stack\n";
 }

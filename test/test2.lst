@@ -12,63 +12,76 @@ test2.asm
                                 .data?
 00000000                    *   _BSS segment PARA FLAT PUBLIC 'BSS'
                             *   assume cs:ERROR
-00000000  00000000              m SDWORD ? ; global var m type = int
+00000000  00000000              m SDWORD ? ;global var m type = int
 
 00000000                        .data
 00000004                    *   _BSS ends
 00000000                    *   _DATA segment
                             *   assume cs:ERROR
-00000000  03000000              x SDWORD 3; global var x type = int value = 3
+00000000  03000000              x SDWORD 3 ;global var x type = int value = 3
 
 00000000                        .code
 00000004                    *   _DATA ends
 00000000                    *   _TEXT segment
                             *   assume cs:FLAT
+                                ;-----------------
+                                ; params:
+                                ;   a : int
+                                ;   b : int
+                                ; locals:
+                                ;   c : int
+                                ;-----------------
 00000000                        _add PROC a:SDWORD,b:SDWORD
-                                LOCAL _c:SDWORD
+                                  LOCAL _c:SDWORD
 00000000  55                *   push rbp
 00000001  488BEC            *   mov rbp, rsp
 00000004  4883EC08          *   sub rsp, 8
-00000008  48634510              movsxd rax, a ; load a1
-0000000C  50                    push rax; push 4
-0000000D  48634518              movsxd rax, b ; load b1
-00000011  50                    push rax; push 4
-00000012  48C7C002000000        mov rax, 2
-00000019  50                    push rax; push 2
-0000001A  5B                    pop rbx
-0000001B  58                    pop rax
-0000001C  480FAFC3              imul rax, rbx
-00000020  50                    push rax; push 1
-00000021  5B                    pop rbx
-00000022  58                    pop rax
-00000023  4803C3                add rax, rbx
-00000026  50                    push rax; push 1
-00000027  8945FC                mov _c, eax; var decl c type = int
-0000002A  8B45FC                mov eax, _c ; store local 1c
-0000002D                        ret ; return 1
+00000008  48634510                movsxd rax, a ;load and sign extend 'a' in to register 1
+0000000C  50                      push rax ;push 4 on to stack
+0000000D  48634518                movsxd rax, b ;load and sign extend 'b' in to register 1
+00000011  50                      push rax ;push 4 on to stack
+00000012  48C7C002000000          mov rax, 2 ;load immediate into register
+00000019  50                      push rax ;push register A on to the stack
+0000001A  5B                      pop rbx ;pop rhs into register B
+0000001B  58                      pop rax ;pop lhs into register A
+0000001C  480FAFC3                imul rax, rbx ;multiply registers A and B and store result in A
+00000020  50                      push rax ;push register A on to the stack
+00000021  5B                      pop rbx ;pop rhs into register B
+00000022  58                      pop rax ;pop lhs into register A
+00000023  4803C3                  add rax, rbx ;add registers A and B and store result in A
+00000026  50                      push rax ;push register A on to the stack
+00000027  8945FC                  mov _c, eax ;var decl c type = int
+0000002A  8B45FC                  mov eax, _c ;load local 'c' in to register A
+0000002D                          ret ;return 1
 0000002D  C9                *   leave
 0000002E  C3                *   retn 
 0000002F                        _add ENDP
 
+                                ;-----------------
+                                ; params:
+                                ; locals:
+                                ;   y : int
+                                ;-----------------
 0000002F                        _main PROC 
-                                LOCAL _y:SDWORD
+                                  LOCAL _y:SDWORD
 0000002F  55                *   push rbp
 00000030  488BEC            *   mov rbp, rsp
 00000033  4883EC08          *   sub rsp, 8
-00000037  48C7C004000000        mov rax, 4
-0000003E  50                    push rax; push 2
-                                ; global ref x2
-0000003F  E8BCFFFFFF            call _add
-00000044  50                    push rax; push 3
-00000045  8945FC                mov _y, eax; var decl y type = int
-00000048  8B45FC                mov eax, _y ; store local 1y
-0000004B                        ret ; return 1
-0000004B  C9                *   leave
-0000004C  C3                *   retn
-0000004D                        _main ENDP
+00000037  48C7C004000000          mov rax, 4 ;load immediate into register
+0000003E  50                      push rax ;push register A on to the stack
+0000003F  8B0500000000            mov eax, x ;load global 'x' in to register A
+00000045  50                      push rax ;push register A on to the stack
+00000046  E8B5FFFFFF              call _add ;call function 'add'
+0000004B  50                      push rax ;push register A on to the stack
+0000004C  8945FC                  mov _y, eax ;var decl y type = int
+0000004F  8B45FC                  mov eax, _y ;load local 'y' in to register A
+00000052                          ret ;return 1
+00000052  C9                *   leave
+00000053  C3                *   retn
+00000054                        _main ENDP
 
                                 end
-0000004D                    *   _TEXT ends
+00000054                    *   _TEXT ends
 
 
 Macros:
@@ -89,7 +102,7 @@ Segments and Groups:
 FLAT . . . . . . . . . . . . . .        GROUP
 _BSS . . . . . . . . . . . . . .        64 Bit   00000004 Para    Public  'BSS'
 _DATA  . . . . . . . . . . . . .        64 Bit   00000004 Para    Public  'DATA'
-_TEXT  . . . . . . . . . . . . .        64 Bit   0000004D Para    Public  'CODE'
+_TEXT  . . . . . . . . . . . . .        64 Bit   00000054 Para    Public  'CODE'
 
 
 Procedures, parameters and locals:
@@ -100,7 +113,7 @@ _add . . . . . . . . . . . . . .        P Near   00000000 _TEXT    0000002F Publ
   b  . . . . . . . . . . . . . .        DWord             rbp + 0018
   a  . . . . . . . . . . . . . .        DWord             rbp + 0010
   _c . . . . . . . . . . . . . .        DWord             rbp - 0004
-_main  . . . . . . . . . . . . .        P Near   0000002F _TEXT    0000001E Public   FASTCALL
+_main  . . . . . . . . . . . . .        P Near   0000002F _TEXT    00000025 Public   FASTCALL
   _y . . . . . . . . . . . . . .        DWord             rbp - 0004
 
 
@@ -118,7 +131,7 @@ Symbols:
 @Interface . . . . . . . . . . .        Number             7h 
 @Model . . . . . . . . . . . . .        Number             7h 
 @ReservedStack . . . . . . . . .        Number             0h 
-@Time  . . . . . . . . . . . . .        Text   10:09:33
+@Time  . . . . . . . . . . . . .        Text   11:28:01
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT
@@ -127,4 +140,4 @@ __JWASM__  . . . . . . . . . . .        Number            D4h
 m  . . . . . . . . . . . . . . .        DWord              0h _BSS FASTCALL
 x  . . . . . . . . . . . . . . .        DWord              0h _DATA FASTCALL
 
-test2.asm: 44 lines, 2 passes, 1 ms, 0 warnings, 0 errors
+test2.asm: 57 lines, 2 passes, 1 ms, 0 warnings, 0 errors
