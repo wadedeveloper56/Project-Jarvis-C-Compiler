@@ -44,7 +44,7 @@ public:
 		auto prog = make_unique<Program>();
 		while (cur.kind != TokenKind::End)
 		{
-			prog->decls.push_back(parseDecl());
+			prog->declarations.push_back(parseDecl());
 		}
 		return prog;
 	}

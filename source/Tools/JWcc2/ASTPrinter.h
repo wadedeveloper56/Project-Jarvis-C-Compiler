@@ -12,7 +12,7 @@ struct ASTPrinter : ASTVisitor
     void visit(Program& n) override {
         cout << "Program\n";
         indent++;
-        for (auto& d : n.decls) { d->accept(*this); }
+        for (auto& d : n.declarations) { d->accept(*this); }
         indent--;
     }
     void visit(VarDecl& n) override {

@@ -35,7 +35,7 @@ bool SemanticAnalyzer::analyze(Program& prog)
 {
 	errs.clear();
 	// First pass: register function prototypes and global vars
-	for (auto& d : prog.decls)
+	for (auto& d : prog.declarations)
 	{
 		if (auto vd = dynamic_cast<VarDecl*>(d.get()))
 		{

@@ -47,7 +47,7 @@ string JWasmGenerator::wasmType(const string& ty) const
 	return "i32";
 }
 
-void JWasmGenerator::visit(Program& n)
+void JWasmGenerator::visit(Program& program)
 {
 	if (bits == 16)
 	{
@@ -67,7 +67,7 @@ void JWasmGenerator::visit(Program& n)
 
 	// uninitialized data section for globals
 	out << endl << ".data?" << endl;
-	for (auto& d : n.decls)
+	for (auto& d : program.declarations)
 	{
 		if (auto gv = dynamic_cast<VarDecl*>(d.get()))
 		{
@@ -81,7 +81,7 @@ void JWasmGenerator::visit(Program& n)
 
 	// initialized data section for globals
 	out << endl << ".data" << endl;
-	for (auto& d : n.decls)
+	for (auto& d : program.declarations)
 	{
 		if (auto gv = dynamic_cast<VarDecl*>(d.get()))
 		{
@@ -96,7 +96,7 @@ void JWasmGenerator::visit(Program& n)
 	}
 
 	out << endl << ".code" << endl;
-	for (auto& d : n.decls)
+	for (auto& d : program.declarations)
 	{
 		if (auto gv = dynamic_cast<FunctionDecl*>(d.get()))
 		{

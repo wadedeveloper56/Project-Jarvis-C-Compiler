@@ -23,7 +23,7 @@ struct Decl : Node {};
 
 struct Program : Node
 {
-    vector<unique_ptr<Decl>> decls;
+    vector<unique_ptr<Decl>> declarations;
     void accept(ASTVisitor& v) override;
 };
 

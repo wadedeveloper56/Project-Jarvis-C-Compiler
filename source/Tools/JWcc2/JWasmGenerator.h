@@ -15,13 +15,13 @@ struct VarData
 
 struct JWasmGenerator : ASTVisitor {
 	// bits: 16,32,64
-	// isWindows: when bits==64 choose Windows x64 calling convention if true, otherwise SysV
+	// isWindows: choose Windows x64 calling convention if true, otherwise SysV
 	JWasmGenerator(ostream& os, int bits = 32, bool isWindows = true) : out(os), bits(bits), indent(0), isWindows(isWindows), preparingFunctionParms(false) {}
 
-	void generate(Program& p) { p.accept(*this); }
+	void generate(Program& program) { program.accept(*this); }
 
 	// Visitor overrides
-	void visit(Program& n) override;
+	void visit(Program& program) override;
 	void visit(VarDecl& n) override;
 	void visit(FunctionDecl& n) override;
 	void visit(CompoundStmt& n) override;
