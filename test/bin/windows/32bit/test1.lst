@@ -1,4 +1,4 @@
-JWasm v2.12pre, Sep 21 2026
+JWasm v2.12pre, Sep 22 2026
 C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\32bit\test1.asm
                                 .386
                                 .model flat, c;
@@ -83,7 +83,7 @@ Symbols:
 @FileName  . . . . . . . . . . .        Text   TEST1
 @Interface . . . . . . . . . . .        Number             1h 
 @Model . . . . . . . . . . . . .        Number             7h 
-@Time  . . . . . . . . . . . . .        Text   14:55:08
+@Time  . . . . . . . . . . . . .        Text   18:44:32
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT

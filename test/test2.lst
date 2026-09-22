@@ -1,4 +1,4 @@
-JWasm v2.12pre, Sep 21 2026
+JWasm v2.12pre, Sep 22 2026
 test2.asm
                             *   .model FLAT
 00000000                    *   _TEXT segment PARA FLAT PUBLIC 'CODE'
@@ -31,7 +31,7 @@ test2.asm
                                 ; locals:
                                 ;   c : int
                                 ;-----------------
-00000000                        _add PROC a:SDWORD,b:SDWORD
+00000000                        _func1 PROC a:SDWORD,b:SDWORD
                                   LOCAL _c:SDWORD
 00000000  55                *   push rbp
 00000001  488BEC            *   mov rbp, rsp
@@ -40,7 +40,7 @@ test2.asm
 0000000C  50                      push rax ;push 4 on to stack
 0000000D  48634518                movsxd rax, b ;load and sign extend 'b' in to register 1
 00000011  50                      push rax ;push 4 on to stack
-00000012  48C7C002000000          mov rax, 2 ;load immediate into register
+00000012  48C7C005000000          mov rax, 5 ;load immediate into register
 00000019  50                      push rax ;push register A on to the stack
 0000001A  5B                      pop rbx ;pop rhs into register B
 0000001B  58                      pop rax ;pop lhs into register A
@@ -54,7 +54,7 @@ test2.asm
 00000027                          ret ;return 1
 00000027  C9                *   leave
 00000028  C3                *   retn 
-00000029                        _add ENDP
+00000029                        _func1 ENDP
 
                                 ;-----------------
                                 ; params:
@@ -63,7 +63,7 @@ test2.asm
                                 ; locals:
                                 ;   c : int
                                 ;-----------------
-00000029                        _sub PROC a:SDWORD,b:SDWORD
+00000029                        _func2 PROC a:SDWORD,b:SDWORD
                                   LOCAL _c:SDWORD
 00000029  55                *   push rbp
 0000002A  488BEC            *   mov rbp, rsp
@@ -72,7 +72,7 @@ test2.asm
 00000035  50                      push rax ;push 4 on to stack
 00000036  48634518                movsxd rax, b ;load and sign extend 'b' in to register 1
 0000003A  50                      push rax ;push 4 on to stack
-0000003B  48C7C002000000          mov rax, 2 ;load immediate into register
+0000003B  48C7C003000000          mov rax, 3 ;load immediate into register
 00000042  50                      push rax ;push register A on to the stack
 00000043  5B                      pop rbx ;pop rhs into register B
 00000044  58                      pop rax ;pop lhs into register A
@@ -87,7 +87,7 @@ test2.asm
 00000050                          ret ;return 1
 00000050  C9                *   leave
 00000051  C3                *   retn 
-00000052                        _sub ENDP
+00000052                        _func2 ENDP
 
                                 ;-----------------
                                 ; params:
@@ -95,25 +95,25 @@ test2.asm
                                 ;   y : int
                                 ;   x : int
                                 ;-----------------
-00000052                        _main PROC 
+00000052                        _func3 PROC 
                                   LOCAL _y:SDWORD,_x:SDWORD
 00000052  55                *   push rbp
 00000053  488BEC            *   mov rbp, rsp
 00000056  4883EC08          *   sub rsp, 8
-0000005A                          invoke _add, x, 4 ;invoke function 'add' with 2 arguments
+0000005A                          invoke _func1, x, 4 ;invoke function 'func1' with 2 arguments
 0000005A  4883EC20          *    sub rsp, 32
 0000005E  8B0D00000000      *    mov ecx, x
 00000064  BA04000000        *    mov edx, 4
-00000069  E892FFFFFF        *    call _add
+00000069  E892FFFFFF        *    call _func1
 0000006E  4883C420          *    add rsp, 32
 00000072  8945FC                  mov _y, eax ;var decl y type = int
 00000075  486345FC                movsxd rax, _y ;load and sign extend 'y' in to register 1
 00000079  50                      push rax ; push result onto stack
-0000007A                          invoke _sub, m, 6 ;invoke function 'sub' with 2 arguments
+0000007A                          invoke _func2, m, 6 ;invoke function 'func2' with 2 arguments
 0000007A  4883EC20          *    sub rsp, 32
 0000007E  8B0D00000000      *    mov ecx, m
 00000084  BA06000000        *    mov edx, 6
-00000089  E89BFFFFFF        *    call _sub
+00000089  E89BFFFFFF        *    call _func2
 0000008E  4883C420          *    add rsp, 32
 00000092  8945F8                  mov _x, eax ;var decl x type = int
 00000095  486345F8                movsxd rax, _x ;load and sign extend 'x' in to register 1
@@ -125,7 +125,7 @@ test2.asm
 000000A0                          ret ;return 1
 000000A0  C9                *   leave
 000000A1  C3                *   retn
-000000A2                        _main ENDP
+000000A2                        _func3 ENDP
 
                                 end
 000000A2                    *   _TEXT ends
@@ -156,17 +156,17 @@ Procedures, parameters and locals:
 
                 N a m e                 Type     Value    Segment  Length
 
-_add . . . . . . . . . . . . . .        P Near   00000000 _TEXT    00000029 Public   FASTCALL
+_func1 . . . . . . . . . . . . .        P Near   00000000 _TEXT    00000029 Public   FASTCALL
   b  . . . . . . . . . . . . . .        DWord             rbp + 0018
   a  . . . . . . . . . . . . . .        DWord             rbp + 0010
   _c . . . . . . . . . . . . . .        DWord             rbp - 0004
-_main  . . . . . . . . . . . . .        P Near   00000052 _TEXT    00000050 Public   FASTCALL
+_func2 . . . . . . . . . . . . .        P Near   00000029 _TEXT    00000029 Public   FASTCALL
+  b  . . . . . . . . . . . . . .        DWord             rbp + 0018
+  a  . . . . . . . . . . . . . .        DWord             rbp + 0010
+  _c . . . . . . . . . . . . . .        DWord             rbp - 0004
+_func3 . . . . . . . . . . . . .        P Near   00000052 _TEXT    00000050 Public   FASTCALL
   _y . . . . . . . . . . . . . .        DWord             rbp - 0004
   _x . . . . . . . . . . . . . .        DWord             rbp - 0008
-_sub . . . . . . . . . . . . . .        P Near   00000029 _TEXT    00000029 Public   FASTCALL
-  b  . . . . . . . . . . . . . .        DWord             rbp + 0018
-  a  . . . . . . . . . . . . . .        DWord             rbp + 0010
-  _c . . . . . . . . . . . . . .        DWord             rbp - 0004
 
 
 Symbols:
@@ -183,7 +183,7 @@ Symbols:
 @Interface . . . . . . . . . . .        Number             7h 
 @Model . . . . . . . . . . . . .        Number             7h 
 @ReservedStack . . . . . . . . .        Number             0h 
-@Time  . . . . . . . . . . . . .        Text   14:55:09
+@Time  . . . . . . . . . . . . .        Text   18:44:33
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT

@@ -15,13 +15,13 @@ x SDWORD 3 ;global var x type = int value = 3
 ; locals:
 ;   c : int
 ;-----------------
-_add PROC a:SDWORD,b:SDWORD
+_func1 PROC a:SDWORD,b:SDWORD
   LOCAL _c:SDWORD
   movsxd rax, a ;load and sign extend 'a' in to register 1
   push rax ;push 4 on to stack
   movsxd rax, b ;load and sign extend 'b' in to register 1
   push rax ;push 4 on to stack
-  mov rax, 2 ;load immediate into register
+  mov rax, 5 ;load immediate into register
   push rax ;push register A on to the stack
   pop rbx ;pop rhs into register B
   pop rax ;pop lhs into register A
@@ -33,7 +33,7 @@ _add PROC a:SDWORD,b:SDWORD
   push rax ;push register A on to the stack
   ;assign decl c type = int
   ret ;return 1
-_add ENDP
+_func1 ENDP
 
 ;-----------------
 ; params:
@@ -42,13 +42,13 @@ _add ENDP
 ; locals:
 ;   c : int
 ;-----------------
-_sub PROC a:SDWORD,b:SDWORD
+_func2 PROC a:SDWORD,b:SDWORD
   LOCAL _c:SDWORD
   movsxd rax, a ;load and sign extend 'a' in to register 1
   push rax ;push 4 on to stack
   movsxd rax, b ;load and sign extend 'b' in to register 1
   push rax ;push 4 on to stack
-  mov rax, 2 ;load immediate into register
+  mov rax, 3 ;load immediate into register
   push rax ;push register A on to the stack
   pop rbx ;pop rhs into register B
   pop rax ;pop lhs into register A
@@ -61,7 +61,7 @@ _sub PROC a:SDWORD,b:SDWORD
   push rax ;push register A on to the stack
   ;assign decl c type = int
   ret ;return 1
-_sub ENDP
+_func2 ENDP
 
 ;-----------------
 ; params:
@@ -69,13 +69,13 @@ _sub ENDP
 ;   y : int
 ;   x : int
 ;-----------------
-_main PROC 
+_func3 PROC 
   LOCAL _y:SDWORD,_x:SDWORD
-  invoke _add, x, 4 ;invoke function 'add' with 2 arguments
+  invoke _func1, x, 4 ;invoke function 'func1' with 2 arguments
   mov _y, eax ;var decl y type = int
   movsxd rax, _y ;load and sign extend 'y' in to register 1
   push rax ; push result onto stack
-  invoke _sub, m, 6 ;invoke function 'sub' with 2 arguments
+  invoke _func2, m, 6 ;invoke function 'func2' with 2 arguments
   mov _x, eax ;var decl x type = int
   movsxd rax, _x ;load and sign extend 'x' in to register 1
   push rax ; push result onto stack
@@ -84,6 +84,6 @@ _main PROC
   add rax, rbx ;add registers A and B and store result in A
   push rax ;push register A on to the stack
   ret ;return 1
-_main ENDP
+_func3 ENDP
 
 end

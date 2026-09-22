@@ -1,18 +1,18 @@
 int x = 3;
 int m;
 
-int add(int a, int b) {
-  int c = a + b * 2;
-  return c;
+int func1(int a, int b) {
+	int c = a + b * 5;
+	return c;
 }
 
-int sub(int a, int b) {
-  int c = a + b / 2;
-  return c;
+int func2(int a, int b) {
+	int c = a + b / 3;
+	return c;
 }
 
-int main() {
-  int y = add(x, 4);
-  int x = sub(m,6);
-  return x+y;
+int func3() {
+	int y = func1(x, 4);
+	int x = func2(m, 6);
+	return x + y;
 }

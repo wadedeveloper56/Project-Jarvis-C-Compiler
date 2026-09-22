@@ -1,4 +1,4 @@
-JWasm v2.12pre, Sep 21 2026
+JWasm v2.12pre, Sep 22 2026
 c064.asm
                             *   .model FLAT
 00000000                    *   _TEXT segment PARA FLAT PUBLIC 'CODE'
@@ -106,7 +106,7 @@ Symbols:
 @Interface . . . . . . . . . . .        Number             7h 
 @Model . . . . . . . . . . . . .        Number             7h 
 @ReservedStack . . . . . . . . .        Number             0h 
-@Time  . . . . . . . . . . . . .        Text   14:55:07
+@Time  . . . . . . . . . . . . .        Text   18:44:30
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT
@@ -118,4 +118,4 @@ LocalFree  . . . . . . . . . . .        L Near64           0h External FASTCALL
 __JWASM__  . . . . . . . . . . .        Number            D4h 
 __main . . . . . . . . . . . . .        L Near64           0h External FASTCALL
 
-c064.asm: 53 lines, 2 passes, 1 ms, 0 warnings, 0 errors
+c064.asm: 53 lines, 2 passes, 0 ms, 0 warnings, 0 errors
