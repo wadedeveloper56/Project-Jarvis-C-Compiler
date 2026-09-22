@@ -108,14 +108,14 @@ void JWasmGenerator::visit(Program& n)
 
 void JWasmGenerator::visit(VarDecl& n)
 {
-	ind(); out << "mov _" << n.name << ", " << regA(32) << " ;var decl " << n.name << " type = " << n.type << endl;
+	//ind(); out << "mov _" << n.name << ", " << regA(32) << " ;var decl " << n.name << " type = " << n.type << endl;
 }
 
 void JWasmGenerator::visit(FunctionDecl& n)
 {
 	paramIndex.clear();
 	localIndex.clear();
-	
+
 	int idx = 0;
 	for (auto& p : n.params)
 	{
@@ -168,13 +168,13 @@ void JWasmGenerator::visit(FunctionDecl& n)
 	if (auto comp = dynamic_cast<CompoundStmt*>(n.body.get()))
 	{
 		int size = (int)comp->localDecls.size();
+		ind();
+		out << "LOCAL ";
 		for (auto& ld : comp->localDecls)
 		{
 			if (auto v = dynamic_cast<VarDecl*>(ld.get()))
 			{
 				localIndex[v->name] = { v->type, idx++ };
-				ind();
-				out << "LOCAL ";
 				if (v->type == "int") out << "_" << v->name << ":SDWORD";
 				if (index < size - 1) out << ",";
 				index++;
@@ -192,9 +192,20 @@ void JWasmGenerator::visit(FunctionDecl& n)
 		{
 			if (auto v = dynamic_cast<VarDecl*>(ld.get()))
 			{
-				if (auto exp = dynamic_cast<Expr*>(v->init.get()))
+				if (auto exp = dynamic_cast<CallExpr*>(v->init.get()))
+				{
+					preparingFunctionParms = true;
+					exp->accept(*this);
+					ind(); out << "mov _" << v->name << ", " << regA(32) << " ;var decl " << v->name << " type = " << v->type << endl;
+					if (v->type == "int" && bits == 64) { ind(); out << "movsxd " << regA(bits) << ", _" << v->name << " ;load and sign extend '" << v->name << "' in to register 1\n"; }
+					if (v->type == "int" && bits == 32) { ind(); out << "mov " << regA(bits) << ", _" << v->name << " ;load '" << v->name << "' in to register 2\n"; }
+					ind(); out << "push " << regA(64) << " ; push result onto stack" << endl;
+					preparingFunctionParms = false;
+				}
+				else if (auto exp = dynamic_cast<Expr*>(v->init.get()))
 				{
 					exp->accept(*this);
+					ind();  out << ";assign decl " << v->name << " type = " << v->type << endl;
 				}
 			}
 		}
@@ -261,10 +272,10 @@ void JWasmGenerator::visit(VarExpr& n)
 	}
 	else if (itLocal != localIndex.end())
 	{
-		if (itLocal->second.type == "int")
+		if (itLocal->second.type == "int" && preparingFunctionParms)
 		{
 			ind(); out << "mov " << regA(32) << ", _" << n.name << " ;load local '" << n.name << "' in to register A\n";
-		 }
+		}
 	}
 	else
 	{
@@ -311,25 +322,24 @@ void JWasmGenerator::visit(AssignExpr& n)
 	}
 	else
 	{
-		out << "; store to global " << n.name << "\n";
+		out << "; store to global " << n.name << endl;
 	}
 }
 
 void JWasmGenerator::visit(CallExpr& n)
 {
-	// push arguments in reverse (cdecl-like)
-	for (auto it = n.args.rbegin(); it != n.args.rend(); ++it)
+	ind(); out << "invoke _" << n.callee;
+	for (auto& it : n.args)
 	{
-		(*it)->accept(*this); // pushes arg
+		if (auto exp = dynamic_cast<VarExpr*>(it.get()))
+		{
+			out << ", " << exp->name;
+		}
+		else if (auto exp = dynamic_cast<NumberExpr*>(it.get()))
+		{
+			out << ", " << exp->value;
+		}
 	}
-	// emit call
-	ind(); out << "call _" << n.callee << " ;call function '" << n.callee << "'\n";
-	// after call, caller cleans up arguments: add esp, argsbytes
-	if (!n.args.empty())
-	{
-		int argsBytes = (int)n.args.size() * wordBytes();
-		//out << "add esp, " << argsBytes << "\n";
-	}
-	// push return value (assumed in regA)
-	ind(); out << "push " << regA(bits) << " ;push register A on to the stack\n";
+	//ind(); out << "push " << regA(bits) << " ;push register A on to the stack\n";
+	out << " ;invoke function '" << n.callee << "' with " << n.args.size() << " arguments" << endl;
 }

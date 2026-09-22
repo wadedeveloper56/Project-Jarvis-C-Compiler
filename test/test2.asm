@@ -31,26 +31,58 @@ _add PROC a:SDWORD,b:SDWORD
   pop rax ;pop lhs into register A
   add rax, rbx ;add registers A and B and store result in A
   push rax ;push register A on to the stack
-  mov _c, eax ;var decl c type = int
-  mov eax, _c ;load local 'c' in to register A
+  ;assign decl c type = int
   ret ;return 1
 _add ENDP
 
 ;-----------------
 ; params:
+;   a : int
+;   b : int
+; locals:
+;   c : int
+;-----------------
+_sub PROC a:SDWORD,b:SDWORD
+  LOCAL _c:SDWORD
+  movsxd rax, a ;load and sign extend 'a' in to register 1
+  push rax ;push 4 on to stack
+  movsxd rax, b ;load and sign extend 'b' in to register 1
+  push rax ;push 4 on to stack
+  mov rax, 2 ;load immediate into register
+  push rax ;push register A on to the stack
+  pop rbx ;pop rhs into register B
+  pop rax ;pop lhs into register A
+  cdq ;extend eax to edx:eax for idiv
+  idiv rbx ;integer divide registers A and B and store result in A
+  push rax ;push register A on to the stack
+  pop rbx ;pop rhs into register B
+  pop rax ;pop lhs into register A
+  add rax, rbx ;add registers A and B and store result in A
+  push rax ;push register A on to the stack
+  ;assign decl c type = int
+  ret ;return 1
+_sub ENDP
+
+;-----------------
+; params:
 ; locals:
 ;   y : int
+;   x : int
 ;-----------------
 _main PROC 
-  LOCAL _y:SDWORD
-  mov rax, 4 ;load immediate into register
-  push rax ;push register A on to the stack
-  mov eax, x ;load global 'x' in to register A
-  push rax ;push register A on to the stack
-  call _add ;call function 'add'
-  push rax ;push register A on to the stack
+  LOCAL _y:SDWORD,_x:SDWORD
+  invoke _add, x, 4 ;invoke function 'add' with 2 arguments
   mov _y, eax ;var decl y type = int
-  mov eax, _y ;load local 'y' in to register A
+  movsxd rax, _y ;load and sign extend 'y' in to register 1
+  push rax ; push result onto stack
+  invoke _sub, m, 6 ;invoke function 'sub' with 2 arguments
+  mov _x, eax ;var decl x type = int
+  movsxd rax, _x ;load and sign extend 'x' in to register 1
+  push rax ; push result onto stack
+  pop rbx ;pop rhs into register B
+  pop rax ;pop lhs into register A
+  add rax, rbx ;add registers A and B and store result in A
+  push rax ;push register A on to the stack
   ret ;return 1
 _main ENDP
 
