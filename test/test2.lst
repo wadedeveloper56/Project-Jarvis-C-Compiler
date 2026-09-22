@@ -43,33 +43,32 @@ test2.asm
 00000022  58                    pop rax
 00000023  4803C3                add rax, rbx
 00000026  50                    push rax; push 1
-                                ; var decl c type = int
-00000027  8945FC                mov _c, eax ; store local 1c
-0000002A                        ret ; return 1
-0000002A  C9                *   leave
-0000002B  C3                *   retn 
-0000002C                        _add ENDP
+00000027  8945FC                mov _c, eax; var decl c type = int
+0000002A  8B45FC                mov eax, _c ; store local 1c
+0000002D                        ret ; return 1
+0000002D  C9                *   leave
+0000002E  C3                *   retn 
+0000002F                        _add ENDP
 
-0000002C                        _main PROC 
+0000002F                        _main PROC 
                                 LOCAL _y:SDWORD
-0000002C  55                *   push rbp
-0000002D  488BEC            *   mov rbp, rsp
-00000030  4883EC08          *   sub rsp, 8
-00000034  48C7C004000000        mov rax, 4
-0000003B  50                    push rax; push 2
+0000002F  55                *   push rbp
+00000030  488BEC            *   mov rbp, rsp
+00000033  4883EC08          *   sub rsp, 8
+00000037  48C7C004000000        mov rax, 4
+0000003E  50                    push rax; push 2
                                 ; global ref x2
-0000003C  E8BFFFFFFF            call _add
-00000041  83C410                add esp, 16
+0000003F  E8BCFFFFFF            call _add
 00000044  50                    push rax; push 3
-                                ; var decl y type = int
-00000045  8945FC                mov _y, eax ; store local 1y
-00000048                        ret ; return 1
-00000048  C9                *   leave
-00000049  C3                *   retn
-0000004A                        _main ENDP
+00000045  8945FC                mov _y, eax; var decl y type = int
+00000048  8B45FC                mov eax, _y ; store local 1y
+0000004B                        ret ; return 1
+0000004B  C9                *   leave
+0000004C  C3                *   retn
+0000004D                        _main ENDP
 
                                 end
-0000004A                    *   _TEXT ends
+0000004D                    *   _TEXT ends
 
 
 Macros:
@@ -90,18 +89,18 @@ Segments and Groups:
 FLAT . . . . . . . . . . . . . .        GROUP
 _BSS . . . . . . . . . . . . . .        64 Bit   00000004 Para    Public  'BSS'
 _DATA  . . . . . . . . . . . . .        64 Bit   00000004 Para    Public  'DATA'
-_TEXT  . . . . . . . . . . . . .        64 Bit   0000004A Para    Public  'CODE'
+_TEXT  . . . . . . . . . . . . .        64 Bit   0000004D Para    Public  'CODE'
 
 
 Procedures, parameters and locals:
 
                 N a m e                 Type     Value    Segment  Length
 
-_add . . . . . . . . . . . . . .        P Near   00000000 _TEXT    0000002C Public   FASTCALL
+_add . . . . . . . . . . . . . .        P Near   00000000 _TEXT    0000002F Public   FASTCALL
   b  . . . . . . . . . . . . . .        DWord             rbp + 0018
   a  . . . . . . . . . . . . . .        DWord             rbp + 0010
   _c . . . . . . . . . . . . . .        DWord             rbp - 0004
-_main  . . . . . . . . . . . . .        P Near   0000002C _TEXT    0000001E Public   FASTCALL
+_main  . . . . . . . . . . . . .        P Near   0000002F _TEXT    0000001E Public   FASTCALL
   _y . . . . . . . . . . . . . .        DWord             rbp - 0004
 
 
@@ -113,13 +112,13 @@ Symbols:
 @Cpu . . . . . . . . . . . . . .        Number           DDFh 
 @CurSeg  . . . . . . . . . . . .        Text   
 @DataSize  . . . . . . . . . . .        Number             0h 
-@Date  . . . . . . . . . . . . .        Text   09/21/26
+@Date  . . . . . . . . . . . . .        Text   09/22/26
 @FileCur . . . . . . . . . . . .        Text   test2.asm
 @FileName  . . . . . . . . . . .        Text   TEST2
 @Interface . . . . . . . . . . .        Number             7h 
 @Model . . . . . . . . . . . . .        Number             7h 
 @ReservedStack . . . . . . . . .        Number             0h 
-@Time  . . . . . . . . . . . . .        Text   17:27:37
+@Time  . . . . . . . . . . . . .        Text   10:09:33
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT
@@ -128,4 +127,4 @@ __JWASM__  . . . . . . . . . . .        Number            D4h
 m  . . . . . . . . . . . . . . .        DWord              0h _BSS FASTCALL
 x  . . . . . . . . . . . . . . .        DWord              0h _DATA FASTCALL
 
-test2.asm: 45 lines, 2 passes, 1 ms, 0 warnings, 0 errors
+test2.asm: 44 lines, 2 passes, 1 ms, 0 warnings, 0 errors

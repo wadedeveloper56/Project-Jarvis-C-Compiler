@@ -24,8 +24,8 @@ pop rbx
 pop rax
 add rax, rbx
 push rax; push 1
-; var decl c type = int
-mov _c, eax ; store local 1c
+mov _c, eax; var decl c type = int
+mov eax, _c ; store local 1c
 ret ; return 1
 _add ENDP
 
@@ -35,10 +35,9 @@ mov rax, 4
 push rax; push 2
 ; global ref x2
 call _add
-add esp, 16
 push rax; push 3
-; var decl y type = int
-mov _y, eax ; store local 1y
+mov _y, eax; var decl y type = int
+mov eax, _y ; store local 1y
 ret ; return 1
 _main ENDP
 

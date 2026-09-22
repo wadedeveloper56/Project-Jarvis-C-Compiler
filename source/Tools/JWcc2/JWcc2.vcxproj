@@ -209,6 +209,9 @@
       <Project>{9f695958-67a8-42be-884f-2f9d616e6ab5}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="tests\JWcc2.Tests.vcxproj.filters" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

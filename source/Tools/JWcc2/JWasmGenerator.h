@@ -16,7 +16,7 @@ struct VarData
 struct JWasmGenerator : ASTVisitor {
 	// bits: 16,32,64
 	// isWindows: when bits==64 choose Windows x64 calling convention if true, otherwise SysV
-	JWasmGenerator(ostream& os, int bits = 32, bool isWindows = true) : out(os), bits(bits), isWindows(isWindows) {}
+	JWasmGenerator(ostream& os, int bits = 32, bool isWindows = true) : out(os), bits(bits), indent(0), isWindows(isWindows) {}
 
 	void generate(Program& p) { p.accept(*this); }
 
@@ -35,20 +35,20 @@ struct JWasmGenerator : ASTVisitor {
 
 private:
 	ostream& out;
-	//int indent;
+	int indent;
 	int bits;
-	//void ind() { for (int i = 0; i < indent; ++i) out << "  "; }
-
-	// per-function state
+	bool isWindows;
 	unordered_map<string,VarData> paramIndex; // param name -> index
 	unordered_map<string,VarData> localIndex; // local name -> slot (0..)
+	void ind() { for (int i = 0; i < indent; ++i) out << "  "; }
+
+	// per-function state
 	//bool inFunction;
 	int nextLocalIndex();
 	string wasmType(const string& ty) const;
 	//vector<string> currentParams;
 	//vector<VarDecl*> currentLocals;
 	string wordForBits() const;
-	bool isWindows;
 	string regA(int size) const;
 	string regB() const;
 	int wordBytes() const { return bits / 8; }

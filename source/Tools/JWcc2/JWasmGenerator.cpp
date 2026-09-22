@@ -160,7 +160,7 @@ void JWasmGenerator::visit(Program& n)
 void JWasmGenerator::visit(VarDecl& n)
 {
 	//ind();
-	out << "; var decl " << n.name << " type = " << n.type << endl;
+	out << "mov _" << n.name << ", " << regA(32) <<  "; var decl " << n.name << " type = " << n.type << endl;
 }
 
 void JWasmGenerator::visit(FunctionDecl& n)
@@ -383,7 +383,7 @@ void JWasmGenerator::visit(VarExpr& n)
 		if (itLocal->second.type == "int")
 		{
 			//indent--; 
-			out << "mov _" << n.name << ", " << regA(32) << " ; store local 1" << n.name << "\n";
+			out << "mov " << regA(32) << ", _" << n.name << " ; store local 1" << n.name << "\n";
 		}
 	}
 	else
@@ -457,7 +457,7 @@ void JWasmGenerator::visit(CallExpr& n)
 	{
 		int argsBytes = (int)n.args.size() * wordBytes();
 		//ind(); 
-		out << "add esp, " << argsBytes << "\n";
+		//out << "add esp, " << argsBytes << "\n";
 	}
 	// push return value (assumed in regA)
 	//ind(); 
