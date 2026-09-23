@@ -4,6 +4,7 @@
 #include "ArgumentTable.h"
 #include "SemanticAnalyzer.h"
 #include "JWasmGenerator.h"
+#include "ASTPrinter.h"
 
 using namespace std;
 
@@ -124,6 +125,8 @@ int main(int argc, char* argv[])
 			}
 			JWasmGenerator gen(out, bits, isWindows);
 			gen.generate(*prog);
+			ASTPrinter printer;
+			printer.visit(*prog);
 		}
 		catch (const exception& ex)
 		{
