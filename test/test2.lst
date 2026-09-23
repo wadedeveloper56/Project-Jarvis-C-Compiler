@@ -177,13 +177,13 @@ Symbols:
 @Cpu . . . . . . . . . . . . . .        Number           DDFh 
 @CurSeg  . . . . . . . . . . . .        Text   
 @DataSize  . . . . . . . . . . .        Number             0h 
-@Date  . . . . . . . . . . . . .        Text   09/22/26
+@Date  . . . . . . . . . . . . .        Text   09/23/26
 @FileCur . . . . . . . . . . . .        Text   test2.asm
 @FileName  . . . . . . . . . . .        Text   TEST2
 @Interface . . . . . . . . . . .        Number             7h 
 @Model . . . . . . . . . . . . .        Number             7h 
 @ReservedStack . . . . . . . . .        Number             0h 
-@Time  . . . . . . . . . . . . .        Text   19:59:43
+@Time  . . . . . . . . . . . . .        Text   09:00:41
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT

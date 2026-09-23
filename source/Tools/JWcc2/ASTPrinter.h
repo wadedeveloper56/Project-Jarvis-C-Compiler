@@ -7,7 +7,7 @@ struct ASTPrinter : ASTVisitor
 {
     int indent = 0;
     void ind() { for (int i = 0; i < indent; ++i) cout << "  "; }
-    void printLoc(const Node& n) { cout << " [" << n.loc.startLine << ":" << n.loc.startColumn << "-" << n.loc.endLine << ":" << n.loc.endColumn << "]"; }
+    //void printLoc(const Node& n) { cout << " [" << n.loc.startLine << ":" << n.loc.startColumn << "-" << n.loc.endLine << ":" << n.loc.endColumn << "]"; }
 
     void visit(Program& n) override {
         cout << "Program\n";
@@ -17,13 +17,13 @@ struct ASTPrinter : ASTVisitor
     }
     void visit(VariableDeclaration& n) override {
         ind(); cout << "VariableDeclaration type=" << n.type << " name=" << n.name;
-        printLoc(n);
+        // printLoc(n);
         if (n.init) { cout << " init=\n"; indent++; n.init->accept(*this); indent--; }
         else cout << "\n";
     }
     void visit(FunctionDeclaration& n) override {
         ind(); cout << "FunctionDeclaration ret=" << n.retType << " name=" << n.name << "\n";
-        printLoc(n);
+        // printLoc(n);
         indent++;
         ind(); cout << "Params:\n"; indent++;
         for (auto& p : n.params) { ind(); cout << p.first << " " << p.second << "\n"; }
@@ -34,7 +34,7 @@ struct ASTPrinter : ASTVisitor
     }
     void visit(CompoundStatement& n) override {
         ind(); cout << "CompoundStatement\n";
-        printLoc(n);
+        // printLoc(n);
         indent++;
         for (auto& d : n.localDeclarations) d->accept(*this);
         for (auto& s : n.stmts) s->accept(*this);

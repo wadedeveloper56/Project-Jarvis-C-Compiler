@@ -92,17 +92,17 @@ Symbols:
 @Cpu . . . . . . . . . . . . . .        Number           D5Fh 
 @CurSeg  . . . . . . . . . . . .        Text   
 @DataSize  . . . . . . . . . . .        Number             0h 
-@Date  . . . . . . . . . . . . .        Text   09/22/26
+@Date  . . . . . . . . . . . . .        Text   09/23/26
 @FileCur . . . . . . . . . . . .        Text   test3.asm
 @FileName  . . . . . . . . . . .        Text   TEST3
 @Interface . . . . . . . . . . .        Number             7h 
 @Model . . . . . . . . . . . . .        Number             7h 
 @ReservedStack . . . . . . . . .        Number             0h 
-@Time  . . . . . . . . . . . . .        Text   19:59:43
+@Time  . . . . . . . . . . . . .        Text   09:00:41
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT
 @stack . . . . . . . . . . . . .        Text   FLAT
 __JWASM__  . . . . . . . . . . .        Number            D4h 
 
-test3.asm: 37 lines, 2 passes, 1 ms, 0 warnings, 0 errors
+test3.asm: 37 lines, 2 passes, 0 ms, 0 warnings, 0 errors

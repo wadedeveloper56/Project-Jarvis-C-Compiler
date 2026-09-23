@@ -100,13 +100,13 @@ Symbols:
 @Cpu . . . . . . . . . . . . . .        Number           D5Fh 
 @CurSeg  . . . . . . . . . . . .        Text   
 @DataSize  . . . . . . . . . . .        Number             0h 
-@Date  . . . . . . . . . . . . .        Text   09/22/26
+@Date  . . . . . . . . . . . . .        Text   09/23/26
 @FileCur . . . . . . . . . . . .        Text   c064.asm
 @FileName  . . . . . . . . . . .        Text   C064
 @Interface . . . . . . . . . . .        Number             7h 
 @Model . . . . . . . . . . . . .        Number             7h 
 @ReservedStack . . . . . . . . .        Number             0h 
-@Time  . . . . . . . . . . . . .        Text   19:59:40
+@Time  . . . . . . . . . . . . .        Text   09:00:38
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT
@@ -118,4 +118,4 @@ LocalFree  . . . . . . . . . . .        L Near64           0h External FASTCALL
 __JWASM__  . . . . . . . . . . .        Number            D4h 
 __main . . . . . . . . . . . . .        L Near64           0h External FASTCALL
 
-c064.asm: 53 lines, 2 passes, 1 ms, 0 warnings, 0 errors
+c064.asm: 53 lines, 2 passes, 0 ms, 0 warnings, 0 errors
