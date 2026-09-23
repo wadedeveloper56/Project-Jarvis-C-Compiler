@@ -179,12 +179,12 @@ public:
 		return es;
 	}
 
-	unique_ptr<Expr> parseExpression()
+	unique_ptr<Expression> parseExpression()
 	{
 		return parseAssignment();
 	}
 
-	unique_ptr<Expr> parseAssignment()
+	unique_ptr<Expression> parseAssignment()
 	{
 		// parse left as primary or identifier; support simple 'id = expr'
 		auto left = parseAddSub();
@@ -204,7 +204,7 @@ public:
 		return left;
 	}
 
-	unique_ptr<Expr> parseAddSub()
+	unique_ptr<Expression> parseAddSub()
 	{
 		auto node = parseMulDiv();
 		while (cur.kind == TokenKind::Plus || cur.kind == TokenKind::Minus)
@@ -220,7 +220,7 @@ public:
 		return node;
 	}
 
-	unique_ptr<Expr> parseMulDiv()
+	unique_ptr<Expression> parseMulDiv()
 	{
 		auto node = parseUnary();
 		while (cur.kind == TokenKind::Star || cur.kind == TokenKind::Slash)
@@ -236,7 +236,7 @@ public:
 		return node;
 	}
 
-	unique_ptr<Expr> parseUnary()
+	unique_ptr<Expression> parseUnary()
 	{
 		if (cur.kind == TokenKind::Plus) { next(); return parseUnary(); }
 		if (cur.kind == TokenKind::Minus)
@@ -253,7 +253,7 @@ public:
 		return parsePrimary();
 	}
 
-	unique_ptr<Expr> parsePrimary()
+	unique_ptr<Expression> parsePrimary()
 	{
 		if (cur.kind == TokenKind::Number)
 		{

@@ -33,7 +33,7 @@ struct SemanticAnalyzer : ASTVisitor {
 	void checkFunctionReturns(FunctionDecl& f);
 
 	// Evaluate expression type or empty string on error
-	string evalExprType(Expr* e);
+	string evalExprType(Expression* e);
 
 	// Report an error (with optional source location)
 	void error(const string& msg);

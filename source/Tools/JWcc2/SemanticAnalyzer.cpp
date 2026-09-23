@@ -184,7 +184,7 @@ void SemanticAnalyzer::visit(CallExpr& n)
 }
 
 // Evaluate expression type, returns type name or empty string on error
-string SemanticAnalyzer::evalExprType(Expr* e)
+string SemanticAnalyzer::evalExprType(Expression* e)
 {
 	if (!e) return string();
 	if (auto ne = dynamic_cast<NumberExpr*>(e)) return string("int");

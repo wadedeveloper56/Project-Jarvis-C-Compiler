@@ -17,7 +17,7 @@ struct Node
 
 using Ptr = unique_ptr<Node>;
 
-struct Expr : Node {};
+struct Expression : Node {};
 struct Stmt : Node {};
 struct Declaration : Node {};
 
@@ -32,7 +32,7 @@ struct VarDecl : Declaration
 {
     string type;
     string name;
-    unique_ptr<Expr> init; // optional
+    unique_ptr<Expression> init; // optional
     void accept(ASTVisitor& v) override;
 };
 
@@ -55,53 +55,51 @@ struct CompoundStmt : Stmt
 
 struct ReturnStmt : Stmt
 {
-    unique_ptr<Expr> expr; // optional
+    unique_ptr<Expression> expr; // optional
     void accept(ASTVisitor& v) override;
 };
 
 struct ExprStmt : Stmt
 {
-    unique_ptr<Expr> expr; // optional
+    unique_ptr<Expression> expr; // optional
     void accept(ASTVisitor& v) override;
 };
 
 // Expressions
-struct NumberExpr : Expr
+struct NumberExpr : Expression
 {
     int value;
     NumberExpr(int v) : value(v) {}
     void accept(ASTVisitor& v) override;
 };
 
-struct VarExpr : Expr
+struct VarExpr : Expression
 {
     string name;
     VarExpr(string n) : name(move(n)) {}
     void accept(ASTVisitor& v) override;
 };
 
-struct BinaryExpr : Expr
+struct BinaryExpr : Expression
 {
     char op;
-    unique_ptr<Expr> lhs, rhs;
-    BinaryExpr(char o, unique_ptr<Expr> l, unique_ptr<Expr> r)
-        : op(o), lhs(move(l)), rhs(move(r)) {}
+    unique_ptr<Expression> lhs, rhs;
+    BinaryExpr(char o, unique_ptr<Expression> l, unique_ptr<Expression> r): op(o), lhs(move(l)), rhs(move(r)) {}
     void accept(ASTVisitor& v) override;
 };
 
-struct AssignExpr : Expr
+struct AssignExpr : Expression
 {
     string name;
-    unique_ptr<Expr> value;
-    AssignExpr(string n, unique_ptr<Expr> v)
-        : name(move(n)), value(move(v)) {}
+    unique_ptr<Expression> value;
+    AssignExpr(string n, unique_ptr<Expression> v): name(move(n)), value(move(v)) {}
     void accept(ASTVisitor& v) override;
 };
 
-struct CallExpr : Expr
+struct CallExpr : Expression
 {
     string callee;
-    vector<unique_ptr<Expr>> args;
+    vector<unique_ptr<Expression>> args;
     CallExpr(string c) : callee(move(c)) {}
     void accept(ASTVisitor& v) override;
 };

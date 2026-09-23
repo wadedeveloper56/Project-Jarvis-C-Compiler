@@ -71,7 +71,7 @@ void JWasmGenerator::visit(Program& program)
 	{
 		if (auto gv = dynamic_cast<VarDecl*>(d.get()))
 		{
-			auto init = dynamic_cast<Expr*>(gv->init.get());
+			auto init = dynamic_cast<Expression*>(gv->init.get());
 			if (init == nullptr)
 			{
 				if (gv->type == "int")	out << gv->name << " SDWORD ? ;global var " << gv->name << " type = " << gv->type << "\n";
@@ -85,7 +85,7 @@ void JWasmGenerator::visit(Program& program)
 	{
 		if (auto gv = dynamic_cast<VarDecl*>(d.get()))
 		{
-			if (auto init = dynamic_cast<Expr*>(gv->init.get()))
+			if (auto init = dynamic_cast<Expression*>(gv->init.get()))
 			{
 				if (auto expr = dynamic_cast<NumberExpr*>(init))
 				{
@@ -202,7 +202,7 @@ void JWasmGenerator::visit(FunctionDecl& n)
 					ind(); out << "push " << regA(64) << " ; push result onto stack" << endl;
 					preparingFunctionParms = false;
 				}
-				else if (auto exp = dynamic_cast<Expr*>(v->init.get()))
+				else if (auto exp = dynamic_cast<Expression*>(v->init.get()))
 				{
 					exp->accept(*this);
 					ind();  out << ";assign decl " << v->name << " type = " << v->type << endl;
