@@ -36,7 +36,7 @@ struct ASTPrinter : ASTVisitor
         ind(); cout << "CompoundStmt\n";
         printLoc(n);
         indent++;
-        for (auto& d : n.localDecls) d->accept(*this);
+        for (auto& d : n.localDeclarations) d->accept(*this);
         for (auto& s : n.stmts) s->accept(*this);
         indent--;
     }

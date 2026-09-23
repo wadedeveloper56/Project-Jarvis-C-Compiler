@@ -112,7 +112,7 @@ void SemanticAnalyzer::visit(FunctionDecl& n)
 void SemanticAnalyzer::visit(CompoundStmt& n)
 {
 	symbols.pushScope();
-	for (auto& d : n.localDecls) d->accept(*this);
+	for (auto& d : n.localDeclarations) d->accept(*this);
 	for (auto& s : n.stmts) s->accept(*this);
 	symbols.popScope();
 }

@@ -49,7 +49,7 @@ public:
 		return prog;
 	}
 
-	unique_ptr<Decl> parseDecl()
+	unique_ptr<Declaration> parseDecl()
 	{
 		// Only support 'int' and 'void' return types
 		string type = parseType();
@@ -147,7 +147,7 @@ public:
 				vd->type = t; vd->name = n;
 				if (accept(TokenKind::Assign)) vd->init = parseExpression();
 				expect(TokenKind::Semicolon);
-				comp->localDecls.push_back(move(vd));
+				comp->localDeclarations.push_back(move(vd));
 			}
 			else
 			{

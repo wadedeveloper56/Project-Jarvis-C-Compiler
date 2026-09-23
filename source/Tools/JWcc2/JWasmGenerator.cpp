@@ -137,7 +137,7 @@ void JWasmGenerator::visit(FunctionDecl& n)
 	{
 		if (auto comp = dynamic_cast<CompoundStmt*>(n.body.get()))
 		{
-			for (auto& ld : comp->localDecls)
+			for (auto& ld : comp->localDeclarations)
 			{
 				if (auto v = dynamic_cast<VarDecl*>(ld.get()))
 				{
@@ -167,10 +167,10 @@ void JWasmGenerator::visit(FunctionDecl& n)
 	indent++;
 	if (auto comp = dynamic_cast<CompoundStmt*>(n.body.get()))
 	{
-		int size = (int)comp->localDecls.size();
+		int size = (int)comp->localDeclarations.size();
 		ind();
 		out << "LOCAL ";
-		for (auto& ld : comp->localDecls)
+		for (auto& ld : comp->localDeclarations)
 		{
 			if (auto v = dynamic_cast<VarDecl*>(ld.get()))
 			{
@@ -187,8 +187,8 @@ void JWasmGenerator::visit(FunctionDecl& n)
 	if (auto comp = dynamic_cast<CompoundStmt*>(n.body.get()))
 	{
 		index = 0;
-		int size = (int)comp->localDecls.size();
-		for (auto& ld : comp->localDecls)
+		int size = (int)comp->localDeclarations.size();
+		for (auto& ld : comp->localDeclarations)
 		{
 			if (auto v = dynamic_cast<VarDecl*>(ld.get()))
 			{
@@ -220,7 +220,7 @@ void JWasmGenerator::visit(FunctionDecl& n)
 
 void JWasmGenerator::visit(CompoundStmt& n)
 {
-	for (auto& d : n.localDecls)
+	for (auto& d : n.localDeclarations)
 	{
 		d->accept(*this);
 	}

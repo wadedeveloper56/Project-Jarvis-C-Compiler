@@ -19,16 +19,16 @@ using Ptr = unique_ptr<Node>;
 
 struct Expr : Node {};
 struct Stmt : Node {};
-struct Decl : Node {};
+struct Declaration : Node {};
 
 struct Program : Node
 {
-    vector<unique_ptr<Decl>> declarations;
+    vector<unique_ptr<Declaration>> declarations;
     void accept(ASTVisitor& v) override;
 };
 
 // Declarations
-struct VarDecl : Decl
+struct VarDecl : Declaration
 {
     string type;
     string name;
@@ -36,7 +36,7 @@ struct VarDecl : Decl
     void accept(ASTVisitor& v) override;
 };
 
-struct FunctionDecl : Decl
+struct FunctionDecl : Declaration
 {
     string retType;
     string name;
@@ -48,7 +48,7 @@ struct FunctionDecl : Decl
 // Statements
 struct CompoundStmt : Stmt
 {
-    vector<unique_ptr<Decl>> localDecls;
+    vector<unique_ptr<Declaration>> localDeclarations;
     vector<unique_ptr<Stmt>> stmts;
     void accept(ASTVisitor& v) override;
 };
