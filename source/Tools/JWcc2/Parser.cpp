@@ -110,7 +110,7 @@ unique_ptr<Declaration> Parser::parseDecl()
 	}
 }
 
-unique_ptr<Statement> Parser::parseCompoundStmt()
+unique_ptr<CompoundStatement> Parser::parseCompoundStmt()
 {
 	Token lbraceTok = cur;
 	expect(TokenKind::LBrace);
@@ -141,7 +141,7 @@ unique_ptr<Statement> Parser::parseCompoundStmt()
 		}
 		else
 		{
-			comp->stmts.push_back(parseStmt());
+			comp->statements.push_back(parseStmt());
 		}
 	}
 	expect(TokenKind::RBrace);

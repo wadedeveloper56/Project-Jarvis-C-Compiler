@@ -36,20 +36,20 @@ struct VariableDeclaration : Declaration
     void accept(ASTVisitor& v) override;
 };
 
+// Statements
+struct CompoundStatement: Statement
+{
+    vector<unique_ptr<Declaration>> localDeclarations;
+    vector<unique_ptr<Statement>> statements;
+    void accept(ASTVisitor& v) override;
+};
+
 struct FunctionDeclaration : Declaration
 {
     string retType;
     string name;
     vector<pair<string, string>> params; // (type,name)
-    unique_ptr<Statement> body;
-    void accept(ASTVisitor& v) override;
-};
-
-// Statements
-struct CompoundStatement: Statement
-{
-    vector<unique_ptr<Declaration>> localDeclarations;
-    vector<unique_ptr<Statement>> stmts;
+    unique_ptr<CompoundStatement> body;
     void accept(ASTVisitor& v) override;
 };
 

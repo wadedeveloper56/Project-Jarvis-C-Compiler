@@ -37,7 +37,7 @@ void ASTPrinter::visit(CompoundStatement& n) {
 	// printLoc(n);
 	indent++;
 	for (auto& d : n.localDeclarations) d->accept(*this);
-	for (auto& s : n.stmts) s->accept(*this);
+	for (auto& s : n.statements) s->accept(*this);
 	indent--;
 }
 

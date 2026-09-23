@@ -14,13 +14,13 @@ void SemanticAnalyzer::checkFunctionReturns(FunctionDeclaration& f)
 	auto cs = dynamic_cast<CompoundStatement*>(f.body.get());
 	if (!cs) return;
 	bool foundReturn = false;
-	for (auto& s : cs->stmts)
+	for (auto& s : cs->statements)
 	{
 		if (dynamic_cast<ReturnStatement*>(s.get())) { foundReturn = true; break; }
 		// also check nested compound statements
 		if (auto inner = dynamic_cast<CompoundStatement*>(s.get()))
 		{
-			for (auto& is : inner->stmts)
+			for (auto& is : inner->statements)
 			{
 				if (dynamic_cast<ReturnStatement*>(is.get())) { foundReturn = true; break; }
 			}
@@ -113,7 +113,7 @@ void SemanticAnalyzer::visit(CompoundStatement& n)
 {
 	symbols.pushScope();
 	for (auto& d : n.localDeclarations) d->accept(*this);
-	for (auto& s : n.stmts) s->accept(*this);
+	for (auto& s : n.statements) s->accept(*this);
 	symbols.popScope();
 }
 

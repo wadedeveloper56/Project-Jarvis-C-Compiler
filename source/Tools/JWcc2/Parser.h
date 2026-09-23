@@ -21,7 +21,7 @@ public:
 	Parser(string s, istream& in);
 	unique_ptr<Program> parseProgram();
 	unique_ptr<Declaration> parseDecl();
-	unique_ptr<Statement> parseCompoundStmt();
+	unique_ptr<CompoundStatement> parseCompoundStmt();
 	unique_ptr<Statement> parseStmt();
 	unique_ptr<Expression> parseExpression();
 	unique_ptr<Expression> parseAssignment();

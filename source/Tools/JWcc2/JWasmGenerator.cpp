@@ -224,7 +224,7 @@ void JWasmGenerator::visit(CompoundStatement& n)
 	{
 		d->accept(*this);
 	}
-	for (auto& s : n.stmts)
+	for (auto& s : n.statements)
 	{
 		s->accept(*this);
 	}
