@@ -65,7 +65,7 @@ public:
 		if (cur.kind == TokenKind::LParen)
 		{
 			// function declaration
-			auto fn = make_unique<FunctionDecl>();
+			auto fn = make_unique<FunctionDeclaration>();
 			fn->loc.startPos = idTok.pos; fn->loc.startLine = idTok.line; fn->loc.startColumn = idTok.column;
 			fn->loc.endPos = idTok.endPos; fn->loc.endLine = idTok.endLine; fn->loc.endColumn = idTok.endColumn;
 			fn->retType = type;

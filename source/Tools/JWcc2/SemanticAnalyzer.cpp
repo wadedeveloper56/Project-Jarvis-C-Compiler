@@ -6,7 +6,7 @@ SemanticAnalyzer::SemanticAnalyzer()
 }
 
 // Simple control-flow check: ensure every path in the function body returns when function is non-void
-void SemanticAnalyzer::checkFunctionReturns(FunctionDecl& f)
+void SemanticAnalyzer::checkFunctionReturns(FunctionDeclaration& f)
 {
 	// conservative approach: traverse the top-level statements of the compound body
 	// and verify at least one return exists; for full path-sensitivity a CFG is needed.
@@ -42,7 +42,7 @@ bool SemanticAnalyzer::analyze(Program& prog)
 			if (!symbols.declareVariable(vd->name, vd->type))
 				error("Redeclaration of global variable '" + vd->name + "'", vd->loc);
 		}
-		else if (auto fd = dynamic_cast<FunctionDecl*>(d.get()))
+		else if (auto fd = dynamic_cast<FunctionDeclaration*>(d.get()))
 		{
 			vector<string> ptypes;
 			for (auto& p : fd->params) ptypes.push_back(p.first);
@@ -70,7 +70,7 @@ void SemanticAnalyzer::visit(VariableDeclaration& n)
 	}
 }
 
-void SemanticAnalyzer::visit(FunctionDecl& n)
+void SemanticAnalyzer::visit(FunctionDeclaration& n)
 {
 	// define function (ensure prototype matches)
 	vector<string> ptypes;

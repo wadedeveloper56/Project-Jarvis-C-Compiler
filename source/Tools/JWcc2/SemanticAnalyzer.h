@@ -19,7 +19,7 @@ struct SemanticAnalyzer : ASTVisitor {
 	// Visitor overrides
 	void visit(Program& n) override;
 	void visit(VariableDeclaration& n) override;
-	void visit(FunctionDecl& n) override;
+	void visit(FunctionDeclaration& n) override;
 	void visit(CompoundStatement& n) override;
 	void visit(ReturnStatement& n) override;
 	void visit(ExpressionStatement& n) override;
@@ -30,7 +30,7 @@ struct SemanticAnalyzer : ASTVisitor {
 	void visit(CallExpression& n) override;
 
 	// Control-flow checks
-	void checkFunctionReturns(FunctionDecl& f);
+	void checkFunctionReturns(FunctionDeclaration& f);
 
 	// Evaluate expression type or empty string on error
 	string evalExprType(Expression* e);

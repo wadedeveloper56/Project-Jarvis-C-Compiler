@@ -21,8 +21,8 @@ struct ASTPrinter : ASTVisitor
         if (n.init) { cout << " init=\n"; indent++; n.init->accept(*this); indent--; }
         else cout << "\n";
     }
-    void visit(FunctionDecl& n) override {
-        ind(); cout << "FunctionDecl ret=" << n.retType << " name=" << n.name << "\n";
+    void visit(FunctionDeclaration& n) override {
+        ind(); cout << "FunctionDeclaration ret=" << n.retType << " name=" << n.name << "\n";
         printLoc(n);
         indent++;
         ind(); cout << "Params:\n"; indent++;

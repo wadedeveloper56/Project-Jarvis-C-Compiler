@@ -36,7 +36,7 @@ struct VariableDeclaration : Declaration
     void accept(ASTVisitor& v) override;
 };
 
-struct FunctionDecl : Declaration
+struct FunctionDeclaration : Declaration
 {
     string retType;
     string name;
@@ -110,7 +110,7 @@ struct ASTVisitor
     virtual ~ASTVisitor() = default;
     virtual void visit(Program& n) = 0;
     virtual void visit(VariableDeclaration& n) = 0;
-    virtual void visit(FunctionDecl& n) = 0;
+    virtual void visit(FunctionDeclaration& n) = 0;
     virtual void visit(CompoundStatement& n) = 0;
     virtual void visit(ReturnStatement& n) = 0;
     virtual void visit(ExpressionStatement& n) = 0;

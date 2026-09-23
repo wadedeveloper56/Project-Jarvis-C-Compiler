@@ -98,7 +98,7 @@ void JWasmGenerator::visit(Program& program)
 	out << endl << ".code" << endl;
 	for (auto& d : program.declarations)
 	{
-		if (auto gv = dynamic_cast<FunctionDecl*>(d.get()))
+		if (auto gv = dynamic_cast<FunctionDeclaration*>(d.get()))
 		{
 			gv->accept(*this);
 		}
@@ -111,7 +111,7 @@ void JWasmGenerator::visit(VariableDeclaration& n)
 	//ind(); out << "mov _" << n.name << ", " << regA(32) << " ;var decl " << n.name << " type = " << n.type << endl;
 }
 
-void JWasmGenerator::visit(FunctionDecl& n)
+void JWasmGenerator::visit(FunctionDeclaration& n)
 {
 	paramIndex.clear();
 	localIndex.clear();
