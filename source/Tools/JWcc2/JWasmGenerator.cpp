@@ -186,8 +186,6 @@ void JWasmGenerator::visit(FunctionDeclaration& n)
 	//local variables init
 	if (auto comp = dynamic_cast<CompoundStatement*>(n.body.get()))
 	{
-		index = 0;
-		int size = (int)comp->localDeclarations.size();
 		for (auto& ld : comp->localDeclarations)
 		{
 			if (auto v = dynamic_cast<VariableDeclaration*>(ld.get()))
@@ -205,7 +203,8 @@ void JWasmGenerator::visit(FunctionDeclaration& n)
 				else if (auto exp = dynamic_cast<Expression*>(v->init.get()))
 				{
 					exp->accept(*this);
-					ind();  out << ";assign decl " << v->name << " type = " << v->type << endl;
+					if (v->type == "int" && bits == 64) { ind(); out << "movsxd " << regA(bits) << ", _" << v->name << ";assign decl " << v->name << " type = " << v->type << endl; }
+					if (v->type == "int" && bits == 32) { ind(); out << "mov " << regA(bits) << ", _" << v->name << ";assign decl " << v->name << " type = " << v->type << endl; }
 				}
 			}
 		}

@@ -31,7 +31,7 @@ _func1 PROC a:SDWORD,b:SDWORD
   pop rax ;pop lhs into register A
   add rax, rbx ;add registers A and B and store result in A
   push rax ;push register A on to the stack
-  ;assign decl c type = int
+  movsxd rax, _c;assign decl c type = int
   ret ;return 1
 _func1 ENDP
 
@@ -59,7 +59,7 @@ _func2 PROC a:SDWORD,b:SDWORD
   pop rax ;pop lhs into register A
   add rax, rbx ;add registers A and B and store result in A
   push rax ;push register A on to the stack
-  ;assign decl c type = int
+  movsxd rax, _c;assign decl c type = int
   ret ;return 1
 _func2 ENDP
 

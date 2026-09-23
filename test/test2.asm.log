@@ -1,14 +1,14 @@
 PEDUMP - Win32/Win64 COFF EXE/OBJ/LIB file dumper v1.0 (C) Copyright 2025-2026 Christopher D. Wade.
 All Rights Reserved
 Dump of file test2.obj
-File Size 564 bytes
+File Size 572 bytes
 File Type: 64-bit COFF OBJECT
 
 FILE HEADER VALUES
               8664 Machine (x64)
                  3 (3) Number of Sections
-          6AB3E5FC TimeDateStamp ->  n/a
-               146 PointerToSymbolTable
+          6AB3F3E5 TimeDateStamp ->  n/a
+               14E PointerToSymbolTable
                  D (13) NumberOfSymbols
                  0 (0) SizeOfOptionalHeader
                  0 Flags
@@ -18,9 +18,9 @@ SECTION HEADER #0 (0)
    .text name
        0 physical address
        0 virtual address
-      A2 (162) size of raw data
-      8C file pointer to raw data (0000008C to 0000012D)
-     12E file pointer to relocation table
+      AA (170) size of raw data
+      8C file pointer to raw data (0000008C to 00000135)
+     136 file pointer to relocation table
        0 file pointer to line numbers
        2 number of relocations
        0 number of line numbers
@@ -34,18 +34,18 @@ SECTION HEADER #0 (0)
 RAW DATA #0 (0)
 00000000  55 48 8b ec 48 83 ec 08  48 63 45 10 50 48 63 45  UH..H...HcE.PHcE
 00000010  18 50 48 c7 c0 05 00 00  00 50 5b 58 48 0f af c3  .PH......P[XH...
-00000020  50 5b 58 48 03 c3 50 c9  c3 55 48 8b ec 48 83 ec  P[XH..P..UH..H..
-00000030  08 48 63 45 10 50 48 63  45 18 50 48 c7 c0 03 00  .HcE.PHcE.PH....
-00000040  00 00 50 5b 58 99 48 f7  fb 50 5b 58 48 03 c3 50  ..P[X.H..P[XH..P
-00000050  c9 c3 55 48 8b ec 48 83  ec 08 48 83 ec 20 8b 0d  ..UH..H...H.. ..
-00000060  00 00 00 00 ba 04 00 00  00 e8 92 ff ff ff 48 83  ..............H.
-00000070  c4 20 89 45 fc 48 63 45  fc 50 48 83 ec 20 8b 0d  . .E.HcE.PH.. ..
-00000080  00 00 00 00 ba 06 00 00  00 e8 9b ff ff ff 48 83  ..............H.
-00000090  c4 20 89 45 f8 48 63 45  f8 50 5b 58 48 03 c3 50  . .E.HcE.P[XH..P
-000000a0  c9 c3                                             ..
+00000020  50 5b 58 48 03 c3 50 48  63 45 fc c9 c3 55 48 8b  P[XH..PHcE...UH.
+00000030  ec 48 83 ec 08 48 63 45  10 50 48 63 45 18 50 48  .H...HcE.PHcE.PH
+00000040  c7 c0 03 00 00 00 50 5b  58 99 48 f7 fb 50 5b 58  ......P[X.H..P[X
+00000050  48 03 c3 50 48 63 45 fc  c9 c3 55 48 8b ec 48 83  H..PHcE...UH..H.
+00000060  ec 08 48 83 ec 20 8b 0d  00 00 00 00 ba 04 00 00  ..H.. ..........
+00000070  00 e8 8a ff ff ff 48 83  c4 20 89 45 fc 48 63 45  ......H.. .E.HcE
+00000080  fc 50 48 83 ec 20 8b 0d  00 00 00 00 ba 06 00 00  .PH.. ..........
+00000090  00 e8 97 ff ff ff 48 83  c4 20 89 45 f8 48 63 45  ......H.. .E.HcE
+000000a0  f8 50 5b 58 48 03 c3 50  c9 c3                    .P[XH..P..
 SECTION HEADER #0 (0) RELOCATIONS
-  Address: 00000060  SymIndex: 0000000B  Type: ???_4
-  Address: 00000080  SymIndex: 0000000C  Type: ???_4
+  Address: 00000068  SymIndex: 0000000B  Type: ???_4
+  Address: 00000088  SymIndex: 0000000C  Type: ???_4
 
 
 SECTION HEADER #1 (1)
@@ -53,7 +53,7 @@ SECTION HEADER #1 (1)
        0 physical address
        0 virtual address
        4 (4) size of raw data
-     142 file pointer to raw data (00000142 to 00000145)
+     14A file pointer to raw data (0000014A to 0000014D)
        0 file pointer to relocation table
        0 file pointer to line numbers
        0 number of relocations
@@ -94,14 +94,14 @@ Indx Sectn   Value   Type  Storage Name
 0000 DEBUG 00000000  0000 FILE     .file
      * test2.asm
 0002     1 00000000  0000 STATIC   .text
-     * Section: 0000  Len: 000A2  Relocs: 0002  LineNums: 0000 checksum:00000000
+     * Section: 0000  Len: 000AA  Relocs: 0002  LineNums: 0000 checksum:00000000
 0004     2 00000000  0000 STATIC   .data
      * Section: 0000  Len: 00004  Relocs: 0000  LineNums: 0000 checksum:00000000
 0006     3 00000000  0000 STATIC   .bss
      * Section: 0000  Len: 00004  Relocs: 0000  LineNums: 0000 checksum:00000000
 0008     1 00000000  0020 EXTERNAL _func1
-0009     1 00000029  0020 EXTERNAL _func2
-000A     1 00000052  0020 EXTERNAL _func3
+0009     1 0000002D  0020 EXTERNAL _func2
+000A     1 0000005A  0020 EXTERNAL _func3
 000B     2 00000000  0000 STATIC   x
 000C     3 00000000  0000 STATIC   m
 
