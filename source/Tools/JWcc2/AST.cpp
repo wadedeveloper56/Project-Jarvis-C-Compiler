@@ -8,8 +8,8 @@ void Program::accept(ASTVisitor& v) { v.visit(*this); }
 void VarDecl::accept(ASTVisitor& v) { v.visit(*this); }
 void FunctionDecl::accept(ASTVisitor& v) { v.visit(*this); }
 void CompoundStatement::accept(ASTVisitor& v) { v.visit(*this); }
-void ReturnStmt::accept(ASTVisitor& v) { v.visit(*this); }
-void ExprStmt::accept(ASTVisitor& v) { v.visit(*this); }
+void ReturnStatement::accept(ASTVisitor& v) { v.visit(*this); }
+void ExprStatement::accept(ASTVisitor& v) { v.visit(*this); }
 void NumberExpr::accept(ASTVisitor& v) { v.visit(*this); }
 void VarExpr::accept(ASTVisitor& v) { v.visit(*this); }
 void BinaryExpr::accept(ASTVisitor& v) { v.visit(*this); }

@@ -53,13 +53,13 @@ struct CompoundStatement: Statement
     void accept(ASTVisitor& v) override;
 };
 
-struct ReturnStmt : Statement
+struct ReturnStatement: Statement
 {
     unique_ptr<Expression> expr; // optional
     void accept(ASTVisitor& v) override;
 };
 
-struct ExprStmt : Statement
+struct ExprStatement : Statement
 {
     unique_ptr<Expression> expr; // optional
     void accept(ASTVisitor& v) override;
@@ -112,8 +112,8 @@ struct ASTVisitor
     virtual void visit(VarDecl& n) = 0;
     virtual void visit(FunctionDecl& n) = 0;
     virtual void visit(CompoundStatement& n) = 0;
-    virtual void visit(ReturnStmt& n) = 0;
-    virtual void visit(ExprStmt& n) = 0;
+    virtual void visit(ReturnStatement& n) = 0;
+    virtual void visit(ExprStatement& n) = 0;
     virtual void visit(NumberExpr& n) = 0;
     virtual void visit(VarExpr& n) = 0;
     virtual void visit(BinaryExpr& n) = 0;

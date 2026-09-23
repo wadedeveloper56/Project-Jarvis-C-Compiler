@@ -40,12 +40,12 @@ struct ASTPrinter : ASTVisitor
         for (auto& s : n.stmts) s->accept(*this);
         indent--;
     }
-    void visit(ReturnStmt& n) override {
+    void visit(ReturnStatement& n) override {
         ind(); cout << "Return\n";
         if (n.expr) { indent++; n.expr->accept(*this); indent--; }
     }
-    void visit(ExprStmt& n) override {
-        ind(); cout << "ExprStmt\n";
+    void visit(ExprStatement& n) override {
+        ind(); cout << "ExprStatement\n";
         if (n.expr) { indent++; n.expr->accept(*this); indent--; }
     }
     void visit(NumberExpr& n) override {

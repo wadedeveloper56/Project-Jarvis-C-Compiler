@@ -16,13 +16,13 @@ void SemanticAnalyzer::checkFunctionReturns(FunctionDecl& f)
 	bool foundReturn = false;
 	for (auto& s : cs->stmts)
 	{
-		if (dynamic_cast<ReturnStmt*>(s.get())) { foundReturn = true; break; }
+		if (dynamic_cast<ReturnStatement*>(s.get())) { foundReturn = true; break; }
 		// also check nested compound statements
 		if (auto inner = dynamic_cast<CompoundStatement*>(s.get()))
 		{
 			for (auto& is : inner->stmts)
 			{
-				if (dynamic_cast<ReturnStmt*>(is.get())) { foundReturn = true; break; }
+				if (dynamic_cast<ReturnStatement*>(is.get())) { foundReturn = true; break; }
 			}
 			if (foundReturn) break;
 		}
@@ -117,7 +117,7 @@ void SemanticAnalyzer::visit(CompoundStatement& n)
 	symbols.popScope();
 }
 
-void SemanticAnalyzer::visit(ReturnStmt& n)
+void SemanticAnalyzer::visit(ReturnStatement& n)
 {
 	if (currentFunctionRetType.empty())
 	{
@@ -139,7 +139,7 @@ void SemanticAnalyzer::visit(ReturnStmt& n)
 	}
 }
 
-void SemanticAnalyzer::visit(ExprStmt& n)
+void SemanticAnalyzer::visit(ExprStatement& n)
 {
 	if (n.expr) evalExprType(n.expr.get());
 }

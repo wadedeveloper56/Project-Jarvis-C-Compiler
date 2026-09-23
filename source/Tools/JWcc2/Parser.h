@@ -164,7 +164,7 @@ public:
 		{
 			Token retTok = cur;
 			next();
-			auto ret = make_unique<ReturnStmt>();
+			auto ret = make_unique<ReturnStatement>();
 			ret->loc.startPos = retTok.pos; ret->loc.startLine = retTok.line; ret->loc.startColumn = retTok.column;
 			ret->loc.endPos = retTok.endPos; ret->loc.endLine = retTok.endLine; ret->loc.endColumn = retTok.endColumn;
 			if (cur.kind != TokenKind::Semicolon) ret->expr = parseExpression();
@@ -173,7 +173,7 @@ public:
 		}
 		if (cur.kind == TokenKind::LBrace) return parseCompoundStmt();
 		// expression statement
-		auto es = make_unique<ExprStmt>();
+		auto es = make_unique<ExprStatement>();
 		if (cur.kind != TokenKind::Semicolon) es->expr = parseExpression();
 		expect(TokenKind::Semicolon);
 		return es;

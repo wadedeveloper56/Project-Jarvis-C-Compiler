@@ -230,7 +230,7 @@ void JWasmGenerator::visit(CompoundStatement& n)
 	}
 }
 
-void JWasmGenerator::visit(ReturnStmt& n)
+void JWasmGenerator::visit(ReturnStatement& n)
 {
 	if (n.expr)
 	{
@@ -243,7 +243,7 @@ void JWasmGenerator::visit(ReturnStmt& n)
 	}
 }
 
-void JWasmGenerator::visit(ExprStmt& n)
+void JWasmGenerator::visit(ExprStatement& n)
 {
 	if (n.expr) n.expr->accept(*this);
 }
