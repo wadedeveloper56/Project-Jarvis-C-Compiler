@@ -120,7 +120,7 @@ public:
 		}
 	}
 
-	unique_ptr<Stmt> parseCompoundStmt()
+	unique_ptr<Statement> parseCompoundStmt()
 	{
 		Token lbraceTok = cur;
 		expect(TokenKind::LBrace);
@@ -158,7 +158,7 @@ public:
 		return comp;
 	}
 
-	unique_ptr<Stmt> parseStmt()
+	unique_ptr<Statement> parseStmt()
 	{
 		if (cur.kind == TokenKind::Return)
 		{

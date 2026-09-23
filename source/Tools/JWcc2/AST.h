@@ -18,7 +18,7 @@ struct Node
 using Ptr = unique_ptr<Node>;
 
 struct Expression : Node {};
-struct Stmt : Node {};
+struct Statement : Node {};
 struct Declaration : Node {};
 
 struct Program : Node
@@ -41,25 +41,25 @@ struct FunctionDecl : Declaration
     string retType;
     string name;
     vector<pair<string, string>> params; // (type,name)
-    unique_ptr<Stmt> body;
+    unique_ptr<Statement> body;
     void accept(ASTVisitor& v) override;
 };
 
 // Statements
-struct CompoundStmt : Stmt
+struct CompoundStmt : Statement
 {
     vector<unique_ptr<Declaration>> localDeclarations;
-    vector<unique_ptr<Stmt>> stmts;
+    vector<unique_ptr<Statement>> stmts;
     void accept(ASTVisitor& v) override;
 };
 
-struct ReturnStmt : Stmt
+struct ReturnStmt : Statement
 {
     unique_ptr<Expression> expr; // optional
     void accept(ASTVisitor& v) override;
 };
 
-struct ExprStmt : Stmt
+struct ExprStmt : Statement
 {
     unique_ptr<Expression> expr; // optional
     void accept(ASTVisitor& v) override;
