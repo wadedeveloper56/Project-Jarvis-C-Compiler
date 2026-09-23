@@ -60,8 +60,8 @@ void ASTPrinter::visit(VariableExpression& n) {
 }
 
 void ASTPrinter::visit(BinaryExpression& n) {
-	ind(); cout << "Binary op=" << n.op << "\n";
-	indent++; n.lhs->accept(*this); n.rhs->accept(*this); indent--;
+	ind(); cout << "Binary op=" << n.operator1 << "\n";
+	indent++; n.leftHandSide->accept(*this); n.rightHandSide->accept(*this); indent--;
 }
 
 void ASTPrinter::visit(AssignExpression& n) {

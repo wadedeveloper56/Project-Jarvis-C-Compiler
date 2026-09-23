@@ -157,8 +157,8 @@ void SemanticAnalyzer::visit(VariableExpression& n)
 
 void SemanticAnalyzer::visit(BinaryExpression& n)
 {
-	string l = evalExprType(n.lhs.get());
-	string r = evalExprType(n.rhs.get());
+	string l = evalExprType(n.leftHandSide.get());
+	string r = evalExprType(n.rightHandSide.get());
 	if (l != "int" || r != "int") error("Binary operator applied to non-int types.", n.loc);
 }
 
@@ -196,8 +196,8 @@ string SemanticAnalyzer::evalExprType(Expression* e)
 	}
 	if (auto be = dynamic_cast<BinaryExpression*>(e))
 	{
-		string l = evalExprType(be->lhs.get());
-		string r = evalExprType(be->rhs.get());
+		string l = evalExprType(be->leftHandSide.get());
+		string r = evalExprType(be->rightHandSide.get());
 		if (l != "int" || r != "int") { error("Binary operator applied to non-int types", be->loc); return string(); }
 		return string("int");
 	}

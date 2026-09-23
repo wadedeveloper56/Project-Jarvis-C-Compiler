@@ -13,17 +13,23 @@ struct VarData
 	int index;
 };
 
-struct JWasmGenerator : ASTVisitor {
-	// bits: 16,32,64
-	// isWindows: choose Windows x64 calling convention if true, otherwise SysV
+struct JWasmGenerator : ASTVisitor 
+{
+
+private:
+	ostream& out;
+	int indent;
+	int bits;
+	bool isWindows;
+	bool preparingFunctionParms;
+	unordered_map<string,VarData> paramIndex;
+	unordered_map<string,VarData> localIndex;
+public:
 	JWasmGenerator(ostream& os, int bits = 32, bool isWindows = true) : out(os), bits(bits), indent(0), isWindows(isWindows), preparingFunctionParms(false) {}
-
 	void generate(Program& program) { program.accept(*this); }
-
-	// Visitor overrides
 	void visit(Program& program) override;
 	void visit(VariableDeclaration& n) override;
-	void visit(FunctionDeclaration& n) override;
+	void visit(FunctionDeclaration& function) override;
 	void visit(CompoundStatement& n) override;
 	void visit(ReturnStatement& n) override;
 	void visit(ExpressionStatement& n) override;
@@ -32,23 +38,15 @@ struct JWasmGenerator : ASTVisitor {
 	void visit(BinaryExpression& n) override;
 	void visit(AssignExpression& n) override;
 	void visit(CallExpression& n) override;
-
 private:
-	ostream& out;
-	int indent;
-	int bits;
-	bool isWindows;
-	bool preparingFunctionParms;
-	unordered_map<string,VarData> paramIndex; // param name -> index
-	unordered_map<string,VarData> localIndex; // local name -> slot (0..)
 	void ind() { for (int i = 1; i <= indent; ++i) out << "  "; }
-
-	// per-function state
-	//bool inFunction;
+	void outputFunctionComment(FunctionDeclaration& function);
+	void outputFunctionLocals(FunctionDeclaration& function);
+	void outputFunctionLocalsInitialization(FunctionDeclaration& function);
+	void outputFunctionHeader(FunctionDeclaration& function);
+	void outputFunctionBody(FunctionDeclaration& function);
 	int nextLocalIndex();
 	string wasmType(const string& ty) const;
-	//vector<string> currentParams;
-	//vector<VarDecl*> currentLocals;
 	string wordForBits() const;
 	string regA(int size) const;
 	string regC(int size) const;

@@ -33,27 +33,31 @@ test2.asm
                                 ;-----------------
 00000000                        _func1 PROC a:SDWORD,b:SDWORD
                                   LOCAL _c:SDWORD
+                                ;----------------------------------------------------
 00000000  55                *   push rbp
 00000001  488BEC            *   mov rbp, rsp
 00000004  4883EC08          *   sub rsp, 8
-00000008  48634510                movsxd rax, a ;load and sign extend 'a' in to register 1
-0000000C  50                      push rax ;push 4 on to stack
-0000000D  48634518                movsxd rax, b ;load and sign extend 'b' in to register 1
-00000011  50                      push rax ;push 4 on to stack
-00000012  48C7C005000000          mov rax, 5 ;load immediate into register
-00000019  50                      push rax ;push register A on to the stack
-0000001A  5B                      pop rbx ;pop rhs into register B
-0000001B  58                      pop rax ;pop lhs into register A
-0000001C  480FAFC3                imul rax, rbx ;multiply registers A and B and store result in A
-00000020  50                      push rax ;push register A on to the stack
-00000021  5B                      pop rbx ;pop rhs into register B
-00000022  58                      pop rax ;pop lhs into register A
-00000023  4803C3                  add rax, rbx ;add registers A and B and store result in A
-00000026  50                      push rax ;push register A on to the stack
-00000027  486345FC                movsxd rax, _c;assign decl c type = int
-0000002B                          ret ;return 1
+00000008  48634510                movsxd rax, a		;load and sign extend 'a' in to register 1
+0000000C  50                      push rax			;push 4 on to stack
+0000000D  48634518                movsxd rax, b		;load and sign extend 'b' in to register 1
+00000011  50                      push rax			;push 4 on to stack
+00000012  48C7C005000000          mov rax, 5		;load immediate into register
+00000019  50                      push rax			;push register A on to the stack
+0000001A  5B                      pop rbx			;pop rhs into register B
+0000001B  58                      pop rax			;pop lhs into register A
+0000001C  480FAFC3                imul rax, rbx		;multiply registers A and B and store result in A
+00000020  50                      push rax			;push register A on to the stack
+00000021  5B                      pop rbx			;pop rhs into register B
+00000022  58                      pop rax			;pop lhs into register A
+00000023  4803C3                  add rax, rbx		;add registers A and B and store result in A
+00000026  50                      push rax			;push register A on to the stack
+00000027  486345FC                movsxd rax, _c		;assign decl c type = int
+                                ;----------------------------------------------------
+                                ;----------------------------------------------------
+0000002B                          ret 				;return 1
 0000002B  C9                *   leave
 0000002C  C3                *   retn 
+                                ;----------------------------------------------------
 0000002D                        _func1 ENDP
 
                                 ;-----------------
@@ -65,28 +69,32 @@ test2.asm
                                 ;-----------------
 0000002D                        _func2 PROC a:SDWORD,b:SDWORD
                                   LOCAL _c:SDWORD
+                                ;----------------------------------------------------
 0000002D  55                *   push rbp
 0000002E  488BEC            *   mov rbp, rsp
 00000031  4883EC08          *   sub rsp, 8
-00000035  48634510                movsxd rax, a ;load and sign extend 'a' in to register 1
-00000039  50                      push rax ;push 4 on to stack
-0000003A  48634518                movsxd rax, b ;load and sign extend 'b' in to register 1
-0000003E  50                      push rax ;push 4 on to stack
-0000003F  48C7C003000000          mov rax, 3 ;load immediate into register
-00000046  50                      push rax ;push register A on to the stack
-00000047  5B                      pop rbx ;pop rhs into register B
-00000048  58                      pop rax ;pop lhs into register A
-00000049  99                      cdq ;extend eax to edx:eax for idiv
-0000004A  48F7FB                  idiv rbx ;integer divide registers A and B and store result in A
-0000004D  50                      push rax ;push register A on to the stack
-0000004E  5B                      pop rbx ;pop rhs into register B
-0000004F  58                      pop rax ;pop lhs into register A
-00000050  4803C3                  add rax, rbx ;add registers A and B and store result in A
-00000053  50                      push rax ;push register A on to the stack
-00000054  486345FC                movsxd rax, _c;assign decl c type = int
-00000058                          ret ;return 1
+00000035  48634510                movsxd rax, a		;load and sign extend 'a' in to register 1
+00000039  50                      push rax			;push 4 on to stack
+0000003A  48634518                movsxd rax, b		;load and sign extend 'b' in to register 1
+0000003E  50                      push rax			;push 4 on to stack
+0000003F  48C7C003000000          mov rax, 3		;load immediate into register
+00000046  50                      push rax			;push register A on to the stack
+00000047  5B                      pop rbx			;pop rhs into register B
+00000048  58                      pop rax			;pop lhs into register A
+00000049  99                      cdq 				;extend eax to edx:eax for idiv
+0000004A  48F7FB                  idiv rbx			;integer divide registers A and B and store result in A
+0000004D  50                      push rax			;push register A on to the stack
+0000004E  5B                      pop rbx			;pop rhs into register B
+0000004F  58                      pop rax			;pop lhs into register A
+00000050  4803C3                  add rax, rbx		;add registers A and B and store result in A
+00000053  50                      push rax			;push register A on to the stack
+00000054  486345FC                movsxd rax, _c		;assign decl c type = int
+                                ;----------------------------------------------------
+                                ;----------------------------------------------------
+00000058                          ret 				;return 1
 00000058  C9                *   leave
 00000059  C3                *   retn 
+                                ;----------------------------------------------------
 0000005A                        _func2 ENDP
 
                                 ;-----------------
@@ -97,34 +105,38 @@ test2.asm
                                 ;-----------------
 0000005A                        _func3 PROC 
                                   LOCAL _y:SDWORD,_x:SDWORD
+                                ;----------------------------------------------------
 0000005A  55                *   push rbp
 0000005B  488BEC            *   mov rbp, rsp
 0000005E  4883EC08          *   sub rsp, 8
-00000062                          invoke _func1, x, 4 ;invoke function 'func1' with 2 arguments
+00000062                          invoke _func1, x, 4	;invoke function 'func1' with 2 arguments
 00000062  4883EC20          *    sub rsp, 32
 00000066  8B0D00000000      *    mov ecx, x
 0000006C  BA04000000        *    mov edx, 4
 00000071  E88AFFFFFF        *    call _func1
 00000076  4883C420          *    add rsp, 32
-0000007A  8945FC                  mov _y, eax ;var decl y type = int
-0000007D  486345FC                movsxd rax, _y ;load and sign extend 'y' in to register 1
-00000081  50                      push rax ; push result onto stack
-00000082                          invoke _func2, m, 6 ;invoke function 'func2' with 2 arguments
+0000007A  8945FC                  mov _y, eax			;var decl y type = int
+0000007D  486345FC                movsxd rax, _y		;load and sign extend 'y' in to register 1
+00000081  50                      push rax				;push result onto stack
+00000082                          invoke _func2, m, 6	;invoke function 'func2' with 2 arguments
 00000082  4883EC20          *    sub rsp, 32
 00000086  8B0D00000000      *    mov ecx, m
 0000008C  BA06000000        *    mov edx, 6
 00000091  E897FFFFFF        *    call _func2
 00000096  4883C420          *    add rsp, 32
-0000009A  8945F8                  mov _x, eax ;var decl x type = int
-0000009D  486345F8                movsxd rax, _x ;load and sign extend 'x' in to register 1
-000000A1  50                      push rax ; push result onto stack
-000000A2  5B                      pop rbx ;pop rhs into register B
-000000A3  58                      pop rax ;pop lhs into register A
-000000A4  4803C3                  add rax, rbx ;add registers A and B and store result in A
-000000A7  50                      push rax ;push register A on to the stack
-000000A8                          ret ;return 1
+0000009A  8945F8                  mov _x, eax			;var decl x type = int
+0000009D  486345F8                movsxd rax, _x		;load and sign extend 'x' in to register 1
+000000A1  50                      push rax				;push result onto stack
+                                ;----------------------------------------------------
+                                ;----------------------------------------------------
+000000A2  5B                      pop rbx			;pop rhs into register B
+000000A3  58                      pop rax			;pop lhs into register A
+000000A4  4803C3                  add rax, rbx		;add registers A and B and store result in A
+000000A7  50                      push rax			;push register A on to the stack
+000000A8                          ret 				;return 1
 000000A8  C9                *   leave
 000000A9  C3                *   retn
+                                ;----------------------------------------------------
 000000AA                        _func3 ENDP
 
                                 end
@@ -183,7 +195,7 @@ Symbols:
 @Interface . . . . . . . . . . .        Number             7h 
 @Model . . . . . . . . . . . . .        Number             7h 
 @ReservedStack . . . . . . . . .        Number             0h 
-@Time  . . . . . . . . . . . . .        Text   10:44:37
+@Time  . . . . . . . . . . . . .        Text   15:36:38
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT
@@ -192,4 +204,4 @@ __JWASM__  . . . . . . . . . . .        Number            D4h
 m  . . . . . . . . . . . . . . .        DWord              0h _BSS FASTCALL
 x  . . . . . . . . . . . . . . .        DWord              0h _DATA FASTCALL
 
-test2.asm: 89 lines, 2 passes, 1 ms, 0 warnings, 0 errors
+test2.asm: 101 lines, 2 passes, 1 ms, 0 warnings, 0 errors

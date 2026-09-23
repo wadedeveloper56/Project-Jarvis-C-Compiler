@@ -82,9 +82,9 @@ struct VariableExpression : Expression
 
 struct BinaryExpression : Expression
 {
-    char op;
-    unique_ptr<Expression> lhs, rhs;
-    BinaryExpression(char o, unique_ptr<Expression> l, unique_ptr<Expression> r): op(o), lhs(move(l)), rhs(move(r)) {}
+    char operator1;
+    unique_ptr<Expression> leftHandSide, rightHandSide;
+    BinaryExpression(char o, unique_ptr<Expression> l, unique_ptr<Expression> r): operator1(o), leftHandSide(move(l)), rightHandSide(move(r)) {}
     void accept(ASTVisitor& v) override;
 };
 
