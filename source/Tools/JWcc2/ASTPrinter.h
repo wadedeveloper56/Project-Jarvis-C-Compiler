@@ -15,8 +15,8 @@ struct ASTPrinter : ASTVisitor
         for (auto& d : n.declarations) { d->accept(*this); }
         indent--;
     }
-    void visit(VarDecl& n) override {
-        ind(); cout << "VarDecl type=" << n.type << " name=" << n.name;
+    void visit(VariableDeclaration& n) override {
+        ind(); cout << "VariableDeclaration type=" << n.type << " name=" << n.name;
         printLoc(n);
         if (n.init) { cout << " init=\n"; indent++; n.init->accept(*this); indent--; }
         else cout << "\n";

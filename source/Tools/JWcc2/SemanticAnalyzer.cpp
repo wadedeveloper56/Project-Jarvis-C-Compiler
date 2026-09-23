@@ -37,7 +37,7 @@ bool SemanticAnalyzer::analyze(Program& prog)
 	// First pass: register function prototypes and global vars
 	for (auto& d : prog.declarations)
 	{
-		if (auto vd = dynamic_cast<VarDecl*>(d.get()))
+		if (auto vd = dynamic_cast<VariableDeclaration*>(d.get()))
 		{
 			if (!symbols.declareVariable(vd->name, vd->type))
 				error("Redeclaration of global variable '" + vd->name + "'", vd->loc);
@@ -60,7 +60,7 @@ void SemanticAnalyzer::visit(Program& n)
 	// handled in analyze()
 }
 
-void SemanticAnalyzer::visit(VarDecl& n)
+void SemanticAnalyzer::visit(VariableDeclaration& n)
 {
 	if (n.init)
 	{

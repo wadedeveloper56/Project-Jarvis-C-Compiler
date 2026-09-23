@@ -69,7 +69,7 @@ void JWasmGenerator::visit(Program& program)
 	out << endl << ".data?" << endl;
 	for (auto& d : program.declarations)
 	{
-		if (auto gv = dynamic_cast<VarDecl*>(d.get()))
+		if (auto gv = dynamic_cast<VariableDeclaration*>(d.get()))
 		{
 			auto init = dynamic_cast<Expression*>(gv->init.get());
 			if (init == nullptr)
@@ -83,7 +83,7 @@ void JWasmGenerator::visit(Program& program)
 	out << endl << ".data" << endl;
 	for (auto& d : program.declarations)
 	{
-		if (auto gv = dynamic_cast<VarDecl*>(d.get()))
+		if (auto gv = dynamic_cast<VariableDeclaration*>(d.get()))
 		{
 			if (auto init = dynamic_cast<Expression*>(gv->init.get()))
 			{
@@ -106,7 +106,7 @@ void JWasmGenerator::visit(Program& program)
 	out << "end" << endl;
 }
 
-void JWasmGenerator::visit(VarDecl& n)
+void JWasmGenerator::visit(VariableDeclaration& n)
 {
 	//ind(); out << "mov _" << n.name << ", " << regA(32) << " ;var decl " << n.name << " type = " << n.type << endl;
 }
@@ -139,7 +139,7 @@ void JWasmGenerator::visit(FunctionDecl& n)
 		{
 			for (auto& ld : comp->localDeclarations)
 			{
-				if (auto v = dynamic_cast<VarDecl*>(ld.get()))
+				if (auto v = dynamic_cast<VariableDeclaration*>(ld.get()))
 				{
 					out << ";   " << v->name << " : " << v->type << "\n";
 				}
@@ -172,7 +172,7 @@ void JWasmGenerator::visit(FunctionDecl& n)
 		out << "LOCAL ";
 		for (auto& ld : comp->localDeclarations)
 		{
-			if (auto v = dynamic_cast<VarDecl*>(ld.get()))
+			if (auto v = dynamic_cast<VariableDeclaration*>(ld.get()))
 			{
 				localIndex[v->name] = { v->type, idx++ };
 				if (v->type == "int") out << "_" << v->name << ":SDWORD";
@@ -190,7 +190,7 @@ void JWasmGenerator::visit(FunctionDecl& n)
 		int size = (int)comp->localDeclarations.size();
 		for (auto& ld : comp->localDeclarations)
 		{
-			if (auto v = dynamic_cast<VarDecl*>(ld.get()))
+			if (auto v = dynamic_cast<VariableDeclaration*>(ld.get()))
 			{
 				if (auto exp = dynamic_cast<CallExpression*>(v->init.get()))
 				{

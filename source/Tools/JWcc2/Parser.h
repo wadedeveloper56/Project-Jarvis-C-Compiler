@@ -107,7 +107,7 @@ public:
 		else
 		{
 			// global var declaration
-			auto vd = make_unique<VarDecl>();
+			auto vd = make_unique<VariableDeclaration>();
 			vd->loc.startPos = idTok.pos; vd->loc.startLine = idTok.line; vd->loc.startColumn = idTok.column;
 			vd->loc.endPos = idTok.endPos; vd->loc.endLine = idTok.endLine; vd->loc.endColumn = idTok.endColumn;
 			vd->type = type; vd->name = name;
@@ -141,7 +141,7 @@ public:
 				}
 				Token idTok = cur;
 				string n = cur.text; next();
-				auto vd = make_unique<VarDecl>();
+				auto vd = make_unique<VariableDeclaration>();
 				vd->loc.startPos = idTok.pos; vd->loc.startLine = idTok.line; vd->loc.startColumn = idTok.column;
 				vd->loc.endPos = idTok.endPos; vd->loc.endLine = idTok.endLine; vd->loc.endColumn = idTok.endColumn;
 				vd->type = t; vd->name = n;

@@ -28,7 +28,7 @@ struct Program : Node
 };
 
 // Declarations
-struct VarDecl : Declaration
+struct VariableDeclaration : Declaration
 {
     string type;
     string name;
@@ -109,7 +109,7 @@ struct ASTVisitor
 {
     virtual ~ASTVisitor() = default;
     virtual void visit(Program& n) = 0;
-    virtual void visit(VarDecl& n) = 0;
+    virtual void visit(VariableDeclaration& n) = 0;
     virtual void visit(FunctionDecl& n) = 0;
     virtual void visit(CompoundStatement& n) = 0;
     virtual void visit(ReturnStatement& n) = 0;

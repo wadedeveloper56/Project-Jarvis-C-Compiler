@@ -22,7 +22,7 @@ struct JWasmGenerator : ASTVisitor {
 
 	// Visitor overrides
 	void visit(Program& program) override;
-	void visit(VarDecl& n) override;
+	void visit(VariableDeclaration& n) override;
 	void visit(FunctionDecl& n) override;
 	void visit(CompoundStatement& n) override;
 	void visit(ReturnStatement& n) override;
