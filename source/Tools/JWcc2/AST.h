@@ -59,48 +59,48 @@ struct ReturnStatement: Statement
     void accept(ASTVisitor& v) override;
 };
 
-struct ExprStatement : Statement
+struct ExpressionStatement : Statement
 {
     unique_ptr<Expression> expr; // optional
     void accept(ASTVisitor& v) override;
 };
 
 // Expressions
-struct NumberExpr : Expression
+struct NumberExpression : Expression
 {
     int value;
-    NumberExpr(int v) : value(v) {}
+    NumberExpression(int v) : value(v) {}
     void accept(ASTVisitor& v) override;
 };
 
-struct VarExpr : Expression
+struct VarExpression : Expression
 {
     string name;
-    VarExpr(string n) : name(move(n)) {}
+    VarExpression(string n) : name(move(n)) {}
     void accept(ASTVisitor& v) override;
 };
 
-struct BinaryExpr : Expression
+struct BinaryExpression : Expression
 {
     char op;
     unique_ptr<Expression> lhs, rhs;
-    BinaryExpr(char o, unique_ptr<Expression> l, unique_ptr<Expression> r): op(o), lhs(move(l)), rhs(move(r)) {}
+    BinaryExpression(char o, unique_ptr<Expression> l, unique_ptr<Expression> r): op(o), lhs(move(l)), rhs(move(r)) {}
     void accept(ASTVisitor& v) override;
 };
 
-struct AssignExpr : Expression
+struct AssignExpression : Expression
 {
     string name;
     unique_ptr<Expression> value;
-    AssignExpr(string n, unique_ptr<Expression> v): name(move(n)), value(move(v)) {}
+    AssignExpression(string n, unique_ptr<Expression> v): name(move(n)), value(move(v)) {}
     void accept(ASTVisitor& v) override;
 };
 
-struct CallExpr : Expression
+struct CallExpression : Expression
 {
     string callee;
     vector<unique_ptr<Expression>> args;
-    CallExpr(string c) : callee(move(c)) {}
+    CallExpression(string c) : callee(move(c)) {}
     void accept(ASTVisitor& v) override;
 };
 
@@ -113,11 +113,11 @@ struct ASTVisitor
     virtual void visit(FunctionDecl& n) = 0;
     virtual void visit(CompoundStatement& n) = 0;
     virtual void visit(ReturnStatement& n) = 0;
-    virtual void visit(ExprStatement& n) = 0;
-    virtual void visit(NumberExpr& n) = 0;
-    virtual void visit(VarExpr& n) = 0;
-    virtual void visit(BinaryExpr& n) = 0;
-    virtual void visit(AssignExpr& n) = 0;
-    virtual void visit(CallExpr& n) = 0;
+    virtual void visit(ExpressionStatement& n) = 0;
+    virtual void visit(NumberExpression& n) = 0;
+    virtual void visit(VarExpression& n) = 0;
+    virtual void visit(BinaryExpression& n) = 0;
+    virtual void visit(AssignExpression& n) = 0;
+    virtual void visit(CallExpression& n) = 0;
 };
 

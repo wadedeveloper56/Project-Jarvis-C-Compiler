@@ -173,7 +173,7 @@ public:
 		}
 		if (cur.kind == TokenKind::LBrace) return parseCompoundStmt();
 		// expression statement
-		auto es = make_unique<ExprStatement>();
+		auto es = make_unique<ExpressionStatement>();
 		if (cur.kind != TokenKind::Semicolon) es->expr = parseExpression();
 		expect(TokenKind::Semicolon);
 		return es;
@@ -188,14 +188,14 @@ public:
 	{
 		// parse left as primary or identifier; support simple 'id = expr'
 		auto left = parseAddSub();
-		if (auto* ve = dynamic_cast<VarExpr*>(left.get()))
+		if (auto* ve = dynamic_cast<VarExpression*>(left.get()))
 		{
 			if (cur.kind == TokenKind::Assign)
 			{
 				Token assignTok = cur;
 				next();
 				auto val = parseAssignment();
-				auto asn = make_unique<AssignExpr>(ve->name, move(val));
+				auto asn = make_unique<AssignExpression>(ve->name, move(val));
 				asn->loc.startPos = assignTok.pos; asn->loc.startLine = assignTok.line; asn->loc.startColumn = assignTok.column;
 				asn->loc.endPos = assignTok.endPos; asn->loc.endLine = assignTok.endLine; asn->loc.endColumn = assignTok.endColumn;
 				return asn;
@@ -212,7 +212,7 @@ public:
 			Token opTok = cur;
 			char op = (cur.kind == TokenKind::Plus ? '+' : '-'); next();
 			auto rhs = parseMulDiv();
-			auto bin = make_unique<BinaryExpr>(op, move(node), move(rhs));
+			auto bin = make_unique<BinaryExpression>(op, move(node), move(rhs));
 			bin->loc.startPos = opTok.pos; bin->loc.startLine = opTok.line; bin->loc.startColumn = opTok.column;
 			bin->loc.endPos = opTok.endPos; bin->loc.endLine = opTok.endLine; bin->loc.endColumn = opTok.endColumn;
 			node = move(bin);
@@ -228,7 +228,7 @@ public:
 			Token opTok = cur;
 			char op = (cur.kind == TokenKind::Star ? '*' : '/'); next();
 			auto rhs = parseUnary();
-			auto bin = make_unique<BinaryExpr>(op, move(node), move(rhs));
+			auto bin = make_unique<BinaryExpression>(op, move(node), move(rhs));
 			bin->loc.startPos = opTok.pos; bin->loc.startLine = opTok.line; bin->loc.startColumn = opTok.column;
 			bin->loc.endPos = opTok.endPos; bin->loc.endLine = opTok.endLine; bin->loc.endColumn = opTok.endColumn;
 			node = move(bin);
@@ -244,8 +244,8 @@ public:
 			Token minusTok = cur;
 			next();
 			auto rhs = parseUnary();
-			auto zero = make_unique<NumberExpr>(0);
-			auto bin = make_unique<BinaryExpr>('-', move(zero), move(rhs));
+			auto zero = make_unique<NumberExpression>(0);
+			auto bin = make_unique<BinaryExpression>('-', move(zero), move(rhs));
 			bin->loc.startPos = minusTok.pos; bin->loc.startLine = minusTok.line; bin->loc.startColumn = minusTok.column;
 			bin->loc.endPos = minusTok.endPos; bin->loc.endLine = minusTok.endLine; bin->loc.endColumn = minusTok.endColumn;
 			return bin;
@@ -258,7 +258,7 @@ public:
 		if (cur.kind == TokenKind::Number)
 		{
 			Token numTok = cur;
-			auto n = make_unique<NumberExpr>(cur.number);
+			auto n = make_unique<NumberExpression>(cur.number);
 			n->loc.startPos = numTok.pos; n->loc.startLine = numTok.line; n->loc.startColumn = numTok.column;
 			n->loc.endPos = numTok.endPos; n->loc.endLine = numTok.endLine; n->loc.endColumn = numTok.endColumn;
 			next(); return n;
@@ -270,7 +270,7 @@ public:
 			if (cur.kind == TokenKind::LParen)
 			{
 				next(); // consume '('
-				auto call = make_unique<CallExpr>(name);
+				auto call = make_unique<CallExpression>(name);
 				call->loc.startPos = idTok.pos; call->loc.startLine = idTok.line; call->loc.startColumn = idTok.column;
 				call->loc.endPos = idTok.endPos; call->loc.endLine = idTok.endLine; call->loc.endColumn = idTok.endColumn;
 				if (cur.kind != TokenKind::RParen)
@@ -285,7 +285,7 @@ public:
 				}
 				return call;
 			}
-			auto v = make_unique<VarExpr>(name);
+			auto v = make_unique<VarExpression>(name);
 			v->loc.startPos = idTok.pos; v->loc.startLine = idTok.line; v->loc.startColumn = idTok.column;
 			v->loc.endPos = idTok.endPos; v->loc.endLine = idTok.endLine; v->loc.endColumn = idTok.endColumn;
 			return v;

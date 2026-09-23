@@ -139,30 +139,30 @@ void SemanticAnalyzer::visit(ReturnStatement& n)
 	}
 }
 
-void SemanticAnalyzer::visit(ExprStatement& n)
+void SemanticAnalyzer::visit(ExpressionStatement& n)
 {
 	if (n.expr) evalExprType(n.expr.get());
 }
 
-void SemanticAnalyzer::visit(NumberExpr& n)
+void SemanticAnalyzer::visit(NumberExpression& n)
 {
 	// nothing
 }
 
-void SemanticAnalyzer::visit(VarExpr& n)
+void SemanticAnalyzer::visit(VarExpression& n)
 {
 	const SymbolInfo* si = symbols.lookup(n.name);
 	if (!si) error("Use of undeclared identifier '" + n.name + "'", n.loc);
 }
 
-void SemanticAnalyzer::visit(BinaryExpr& n)
+void SemanticAnalyzer::visit(BinaryExpression& n)
 {
 	string l = evalExprType(n.lhs.get());
 	string r = evalExprType(n.rhs.get());
 	if (l != "int" || r != "int") error("Binary operator applied to non-int types.", n.loc);
 }
 
-void SemanticAnalyzer::visit(AssignExpr& n)
+void SemanticAnalyzer::visit(AssignExpression& n)
 {
 	const SymbolInfo* si = symbols.lookup(n.name);
 	if (!si) { error("Assignment to undeclared variable '" + n.name + "'", n.loc); return; }
@@ -170,7 +170,7 @@ void SemanticAnalyzer::visit(AssignExpr& n)
 	if (si->type != rt) error("Assignment type mismatch for '" + n.name + "': expected '" + si->type + "' got '" + rt + "'", n.loc);
 }
 
-void SemanticAnalyzer::visit(CallExpr& n)
+void SemanticAnalyzer::visit(CallExpression& n)
 {
 	const SymbolInfo* si = symbols.lookup(n.callee);
 	if (!si) { error("Call to undeclared function '" + n.callee + "'", n.loc); return; }
@@ -187,21 +187,21 @@ void SemanticAnalyzer::visit(CallExpr& n)
 string SemanticAnalyzer::evalExprType(Expression* e)
 {
 	if (!e) return string();
-	if (auto ne = dynamic_cast<NumberExpr*>(e)) return string("int");
-	if (auto ve = dynamic_cast<VarExpr*>(e))
+	if (auto ne = dynamic_cast<NumberExpression*>(e)) return string("int");
+	if (auto ve = dynamic_cast<VarExpression*>(e))
 	{
 		const SymbolInfo* si = symbols.lookup(ve->name);
 		if (!si) { error("Use of undeclared identifier '" + ve->name + "'", ve->loc); return string(); }
 		return si->type;
 	}
-	if (auto be = dynamic_cast<BinaryExpr*>(e))
+	if (auto be = dynamic_cast<BinaryExpression*>(e))
 	{
 		string l = evalExprType(be->lhs.get());
 		string r = evalExprType(be->rhs.get());
 		if (l != "int" || r != "int") { error("Binary operator applied to non-int types", be->loc); return string(); }
 		return string("int");
 	}
-	if (auto ae = dynamic_cast<AssignExpr*>(e))
+	if (auto ae = dynamic_cast<AssignExpression*>(e))
 	{
 		const SymbolInfo* si = symbols.lookup(ae->name);
 		if (!si) { error("Assignment to undeclared variable '" + ae->name + "'", ae->loc); return string(); }
@@ -209,7 +209,7 @@ string SemanticAnalyzer::evalExprType(Expression* e)
 		if (si->type != rt) { error("Assignment type mismatch for '" + ae->name + "'", ae->loc); return string(); }
 		return si->type;
 	}
-	if (auto ce = dynamic_cast<CallExpr*>(e))
+	if (auto ce = dynamic_cast<CallExpression*>(e))
 	{
 		const SymbolInfo* si = symbols.lookup(ce->callee);
 		if (!si) { error("Call to undeclared function '" + ce->callee + "'", ce->loc); return string(); }

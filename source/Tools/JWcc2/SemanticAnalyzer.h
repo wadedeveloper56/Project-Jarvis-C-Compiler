@@ -22,12 +22,12 @@ struct SemanticAnalyzer : ASTVisitor {
 	void visit(FunctionDecl& n) override;
 	void visit(CompoundStatement& n) override;
 	void visit(ReturnStatement& n) override;
-	void visit(ExprStatement& n) override;
-	void visit(NumberExpr& n) override;
-	void visit(VarExpr& n) override;
-	void visit(BinaryExpr& n) override;
-	void visit(AssignExpr& n) override;
-	void visit(CallExpr& n) override;
+	void visit(ExpressionStatement& n) override;
+	void visit(NumberExpression& n) override;
+	void visit(VarExpression& n) override;
+	void visit(BinaryExpression& n) override;
+	void visit(AssignExpression& n) override;
+	void visit(CallExpression& n) override;
 
 	// Control-flow checks
 	void checkFunctionReturns(FunctionDecl& f);

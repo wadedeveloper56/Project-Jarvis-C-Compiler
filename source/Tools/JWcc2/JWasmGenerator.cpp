@@ -87,7 +87,7 @@ void JWasmGenerator::visit(Program& program)
 		{
 			if (auto init = dynamic_cast<Expression*>(gv->init.get()))
 			{
-				if (auto expr = dynamic_cast<NumberExpr*>(init))
+				if (auto expr = dynamic_cast<NumberExpression*>(init))
 				{
 					if (gv->type == "int")	out << gv->name << " SDWORD " << expr->value << " ;global var " << gv->name << " type = " << gv->type << " value = " << expr->value << endl;
 				}
@@ -192,7 +192,7 @@ void JWasmGenerator::visit(FunctionDecl& n)
 		{
 			if (auto v = dynamic_cast<VarDecl*>(ld.get()))
 			{
-				if (auto exp = dynamic_cast<CallExpr*>(v->init.get()))
+				if (auto exp = dynamic_cast<CallExpression*>(v->init.get()))
 				{
 					preparingFunctionParms = true;
 					exp->accept(*this);
@@ -243,12 +243,12 @@ void JWasmGenerator::visit(ReturnStatement& n)
 	}
 }
 
-void JWasmGenerator::visit(ExprStatement& n)
+void JWasmGenerator::visit(ExpressionStatement& n)
 {
 	if (n.expr) n.expr->accept(*this);
 }
 
-void JWasmGenerator::visit(NumberExpr& n)
+void JWasmGenerator::visit(NumberExpression& n)
 {
 	// push immediate into register/stack
 	ind();
@@ -258,7 +258,7 @@ void JWasmGenerator::visit(NumberExpr& n)
 	ind(); out << "push " << regA(bits) << " ;push register A on to the stack\n";
 }
 
-void JWasmGenerator::visit(VarExpr& n)
+void JWasmGenerator::visit(VarExpression& n)
 {
 	auto it = paramIndex.find(n.name);
 	auto itLocal = localIndex.find(n.name);
@@ -284,7 +284,7 @@ void JWasmGenerator::visit(VarExpr& n)
 	}
 }
 
-void JWasmGenerator::visit(BinaryExpr& n)
+void JWasmGenerator::visit(BinaryExpression& n)
 {
 	// evaluate lhs and rhs, then emit op
 	n.lhs->accept(*this); // pushes lhs
@@ -304,7 +304,7 @@ void JWasmGenerator::visit(BinaryExpr& n)
 	ind(); 	out << "push " << regA(bits) << " ;push register A on to the stack\n";
 }
 
-void JWasmGenerator::visit(AssignExpr& n)
+void JWasmGenerator::visit(AssignExpression& n)
 {
 	// evaluate value then set_local
 	n.value->accept(*this); // pushes value
@@ -326,16 +326,16 @@ void JWasmGenerator::visit(AssignExpr& n)
 	}
 }
 
-void JWasmGenerator::visit(CallExpr& n)
+void JWasmGenerator::visit(CallExpression& n)
 {
 	ind(); out << "invoke _" << n.callee;
 	for (auto& it : n.args)
 	{
-		if (auto exp = dynamic_cast<VarExpr*>(it.get()))
+		if (auto exp = dynamic_cast<VarExpression*>(it.get()))
 		{
 			out << ", " << exp->name;
 		}
-		else if (auto exp = dynamic_cast<NumberExpr*>(it.get()))
+		else if (auto exp = dynamic_cast<NumberExpression*>(it.get()))
 		{
 			out << ", " << exp->value;
 		}

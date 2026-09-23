@@ -44,25 +44,25 @@ struct ASTPrinter : ASTVisitor
         ind(); cout << "Return\n";
         if (n.expr) { indent++; n.expr->accept(*this); indent--; }
     }
-    void visit(ExprStatement& n) override {
-        ind(); cout << "ExprStatement\n";
+    void visit(ExpressionStatement& n) override {
+        ind(); cout << "ExpressionStatement\n";
         if (n.expr) { indent++; n.expr->accept(*this); indent--; }
     }
-    void visit(NumberExpr& n) override {
+    void visit(NumberExpression& n) override {
         ind(); cout << "Number " << n.value << "\n";
     }
-    void visit(VarExpr& n) override {
+    void visit(VarExpression& n) override {
         ind(); cout << "Variable " << n.name << "\n";
     }
-    void visit(BinaryExpr& n) override {
+    void visit(BinaryExpression& n) override {
         ind(); cout << "Binary op=" << n.op << "\n";
         indent++; n.lhs->accept(*this); n.rhs->accept(*this); indent--;
     }
-    void visit(AssignExpr& n) override {
+    void visit(AssignExpression& n) override {
         ind(); cout << "Assign to " << n.name << "\n";
         indent++; n.value->accept(*this); indent--;
     }
-    void visit(CallExpr& n) override {
+    void visit(CallExpression& n) override {
         ind(); cout << "Call " << n.callee << "\n";
         indent++;
         for (auto& a : n.args) a->accept(*this);
