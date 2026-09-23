@@ -73,10 +73,10 @@ struct NumberExpression : Expression
     void accept(ASTVisitor& v) override;
 };
 
-struct VarExpression : Expression
+struct VariableExpression : Expression
 {
     string name;
-    VarExpression(string n) : name(move(n)) {}
+    VariableExpression(string n) : name(move(n)) {}
     void accept(ASTVisitor& v) override;
 };
 
@@ -115,7 +115,7 @@ struct ASTVisitor
     virtual void visit(ReturnStatement& n) = 0;
     virtual void visit(ExpressionStatement& n) = 0;
     virtual void visit(NumberExpression& n) = 0;
-    virtual void visit(VarExpression& n) = 0;
+    virtual void visit(VariableExpression& n) = 0;
     virtual void visit(BinaryExpression& n) = 0;
     virtual void visit(AssignExpression& n) = 0;
     virtual void visit(CallExpression& n) = 0;

@@ -188,7 +188,7 @@ public:
 	{
 		// parse left as primary or identifier; support simple 'id = expr'
 		auto left = parseAddSub();
-		if (auto* ve = dynamic_cast<VarExpression*>(left.get()))
+		if (auto* ve = dynamic_cast<VariableExpression*>(left.get()))
 		{
 			if (cur.kind == TokenKind::Assign)
 			{
@@ -285,7 +285,7 @@ public:
 				}
 				return call;
 			}
-			auto v = make_unique<VarExpression>(name);
+			auto v = make_unique<VariableExpression>(name);
 			v->loc.startPos = idTok.pos; v->loc.startLine = idTok.line; v->loc.startColumn = idTok.column;
 			v->loc.endPos = idTok.endPos; v->loc.endLine = idTok.endLine; v->loc.endColumn = idTok.endColumn;
 			return v;

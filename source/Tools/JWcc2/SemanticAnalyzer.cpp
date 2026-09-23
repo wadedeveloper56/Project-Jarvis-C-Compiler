@@ -149,7 +149,7 @@ void SemanticAnalyzer::visit(NumberExpression& n)
 	// nothing
 }
 
-void SemanticAnalyzer::visit(VarExpression& n)
+void SemanticAnalyzer::visit(VariableExpression& n)
 {
 	const SymbolInfo* si = symbols.lookup(n.name);
 	if (!si) error("Use of undeclared identifier '" + n.name + "'", n.loc);
@@ -188,7 +188,7 @@ string SemanticAnalyzer::evalExprType(Expression* e)
 {
 	if (!e) return string();
 	if (auto ne = dynamic_cast<NumberExpression*>(e)) return string("int");
-	if (auto ve = dynamic_cast<VarExpression*>(e))
+	if (auto ve = dynamic_cast<VariableExpression*>(e))
 	{
 		const SymbolInfo* si = symbols.lookup(ve->name);
 		if (!si) { error("Use of undeclared identifier '" + ve->name + "'", ve->loc); return string(); }

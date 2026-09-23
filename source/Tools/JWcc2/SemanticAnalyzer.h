@@ -24,7 +24,7 @@ struct SemanticAnalyzer : ASTVisitor {
 	void visit(ReturnStatement& n) override;
 	void visit(ExpressionStatement& n) override;
 	void visit(NumberExpression& n) override;
-	void visit(VarExpression& n) override;
+	void visit(VariableExpression& n) override;
 	void visit(BinaryExpression& n) override;
 	void visit(AssignExpression& n) override;
 	void visit(CallExpression& n) override;

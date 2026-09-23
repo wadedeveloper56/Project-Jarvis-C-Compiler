@@ -51,7 +51,7 @@ struct ASTPrinter : ASTVisitor
     void visit(NumberExpression& n) override {
         ind(); cout << "Number " << n.value << "\n";
     }
-    void visit(VarExpression& n) override {
+    void visit(VariableExpression& n) override {
         ind(); cout << "Variable " << n.name << "\n";
     }
     void visit(BinaryExpression& n) override {

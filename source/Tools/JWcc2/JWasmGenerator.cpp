@@ -258,7 +258,7 @@ void JWasmGenerator::visit(NumberExpression& n)
 	ind(); out << "push " << regA(bits) << " ;push register A on to the stack\n";
 }
 
-void JWasmGenerator::visit(VarExpression& n)
+void JWasmGenerator::visit(VariableExpression& n)
 {
 	auto it = paramIndex.find(n.name);
 	auto itLocal = localIndex.find(n.name);
@@ -331,7 +331,7 @@ void JWasmGenerator::visit(CallExpression& n)
 	ind(); out << "invoke _" << n.callee;
 	for (auto& it : n.args)
 	{
-		if (auto exp = dynamic_cast<VarExpression*>(it.get()))
+		if (auto exp = dynamic_cast<VariableExpression*>(it.get()))
 		{
 			out << ", " << exp->name;
 		}

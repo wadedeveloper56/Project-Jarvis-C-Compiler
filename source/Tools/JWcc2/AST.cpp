@@ -11,7 +11,7 @@ void CompoundStatement::accept(ASTVisitor& v) { v.visit(*this); }
 void ReturnStatement::accept(ASTVisitor& v) { v.visit(*this); }
 void ExpressionStatement::accept(ASTVisitor& v) { v.visit(*this); }
 void NumberExpression::accept(ASTVisitor& v) { v.visit(*this); }
-void VarExpression::accept(ASTVisitor& v) { v.visit(*this); }
+void VariableExpression::accept(ASTVisitor& v) { v.visit(*this); }
 void BinaryExpression::accept(ASTVisitor& v) { v.visit(*this); }
 void AssignExpression::accept(ASTVisitor& v) { v.visit(*this); }
 void CallExpression::accept(ASTVisitor& v) { v.visit(*this); }
