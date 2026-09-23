@@ -124,7 +124,7 @@ public:
 	{
 		Token lbraceTok = cur;
 		expect(TokenKind::LBrace);
-		auto comp = make_unique<CompoundStmt>();
+		auto comp = make_unique<CompoundStatement>();
 		comp->loc.startPos = lbraceTok.pos; comp->loc.startLine = lbraceTok.line; comp->loc.startColumn = lbraceTok.column;
 		comp->loc.endPos = lbraceTok.endPos; comp->loc.endLine = lbraceTok.endLine; comp->loc.endColumn = lbraceTok.endColumn;
 		while (cur.kind != TokenKind::RBrace && cur.kind != TokenKind::End)

@@ -7,7 +7,7 @@ using namespace std;
 void Program::accept(ASTVisitor& v) { v.visit(*this); }
 void VarDecl::accept(ASTVisitor& v) { v.visit(*this); }
 void FunctionDecl::accept(ASTVisitor& v) { v.visit(*this); }
-void CompoundStmt::accept(ASTVisitor& v) { v.visit(*this); }
+void CompoundStatement::accept(ASTVisitor& v) { v.visit(*this); }
 void ReturnStmt::accept(ASTVisitor& v) { v.visit(*this); }
 void ExprStmt::accept(ASTVisitor& v) { v.visit(*this); }
 void NumberExpr::accept(ASTVisitor& v) { v.visit(*this); }

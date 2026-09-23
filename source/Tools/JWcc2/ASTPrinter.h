@@ -32,8 +32,8 @@ struct ASTPrinter : ASTVisitor
         if (n.body) n.body->accept(*this);
         indent -= 2;
     }
-    void visit(CompoundStmt& n) override {
-        ind(); cout << "CompoundStmt\n";
+    void visit(CompoundStatement& n) override {
+        ind(); cout << "CompoundStatement\n";
         printLoc(n);
         indent++;
         for (auto& d : n.localDeclarations) d->accept(*this);

@@ -11,14 +11,14 @@ void SemanticAnalyzer::checkFunctionReturns(FunctionDecl& f)
 	// conservative approach: traverse the top-level statements of the compound body
 	// and verify at least one return exists; for full path-sensitivity a CFG is needed.
 	if (!f.body) return;
-	auto cs = dynamic_cast<CompoundStmt*>(f.body.get());
+	auto cs = dynamic_cast<CompoundStatement*>(f.body.get());
 	if (!cs) return;
 	bool foundReturn = false;
 	for (auto& s : cs->stmts)
 	{
 		if (dynamic_cast<ReturnStmt*>(s.get())) { foundReturn = true; break; }
 		// also check nested compound statements
-		if (auto inner = dynamic_cast<CompoundStmt*>(s.get()))
+		if (auto inner = dynamic_cast<CompoundStatement*>(s.get()))
 		{
 			for (auto& is : inner->stmts)
 			{
@@ -109,7 +109,7 @@ void SemanticAnalyzer::visit(FunctionDecl& n)
 	symbols.popScope();
 }
 
-void SemanticAnalyzer::visit(CompoundStmt& n)
+void SemanticAnalyzer::visit(CompoundStatement& n)
 {
 	symbols.pushScope();
 	for (auto& d : n.localDeclarations) d->accept(*this);

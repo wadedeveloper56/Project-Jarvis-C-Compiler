@@ -46,7 +46,7 @@ struct FunctionDecl : Declaration
 };
 
 // Statements
-struct CompoundStmt : Statement
+struct CompoundStatement: Statement
 {
     vector<unique_ptr<Declaration>> localDeclarations;
     vector<unique_ptr<Statement>> stmts;
@@ -111,7 +111,7 @@ struct ASTVisitor
     virtual void visit(Program& n) = 0;
     virtual void visit(VarDecl& n) = 0;
     virtual void visit(FunctionDecl& n) = 0;
-    virtual void visit(CompoundStmt& n) = 0;
+    virtual void visit(CompoundStatement& n) = 0;
     virtual void visit(ReturnStmt& n) = 0;
     virtual void visit(ExprStmt& n) = 0;
     virtual void visit(NumberExpr& n) = 0;
