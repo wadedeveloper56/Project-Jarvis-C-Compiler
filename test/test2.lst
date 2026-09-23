@@ -33,7 +33,7 @@ test2.asm
                                 ;-----------------
 00000000                        _func1 PROC a:SDWORD,b:SDWORD
                                   LOCAL _c:SDWORD
-                                ;----------------------------------------------------
+                                ;----------- Local variable initialization ----------
 00000000  55                *   push rbp
 00000001  488BEC            *   mov rbp, rsp
 00000004  4883EC08          *   sub rsp, 8
@@ -53,7 +53,6 @@ test2.asm
 00000026  50                      push rax			;push register A on to the stack
 00000027  486345FC                movsxd rax, _c		;assign decl c type = int
                                 ;----------------------------------------------------
-                                ;----------------------------------------------------
 0000002B                          ret 				;return 1
 0000002B  C9                *   leave
 0000002C  C3                *   retn 
@@ -69,7 +68,7 @@ test2.asm
                                 ;-----------------
 0000002D                        _func2 PROC a:SDWORD,b:SDWORD
                                   LOCAL _c:SDWORD
-                                ;----------------------------------------------------
+                                ;----------- Local variable initialization ----------
 0000002D  55                *   push rbp
 0000002E  488BEC            *   mov rbp, rsp
 00000031  4883EC08          *   sub rsp, 8
@@ -90,7 +89,6 @@ test2.asm
 00000053  50                      push rax			;push register A on to the stack
 00000054  486345FC                movsxd rax, _c		;assign decl c type = int
                                 ;----------------------------------------------------
-                                ;----------------------------------------------------
 00000058                          ret 				;return 1
 00000058  C9                *   leave
 00000059  C3                *   retn 
@@ -105,7 +103,7 @@ test2.asm
                                 ;-----------------
 0000005A                        _func3 PROC 
                                   LOCAL _y:SDWORD,_x:SDWORD
-                                ;----------------------------------------------------
+                                ;----------- Local variable initialization ----------
 0000005A  55                *   push rbp
 0000005B  488BEC            *   mov rbp, rsp
 0000005E  4883EC08          *   sub rsp, 8
@@ -127,7 +125,6 @@ test2.asm
 0000009A  8945F8                  mov _x, eax			;var decl x type = int
 0000009D  486345F8                movsxd rax, _x		;load and sign extend 'x' in to register 1
 000000A1  50                      push rax				;push result onto stack
-                                ;----------------------------------------------------
                                 ;----------------------------------------------------
 000000A2  5B                      pop rbx			;pop rhs into register B
 000000A3  58                      pop rax			;pop lhs into register A
@@ -195,7 +192,7 @@ Symbols:
 @Interface . . . . . . . . . . .        Number             7h 
 @Model . . . . . . . . . . . . .        Number             7h 
 @ReservedStack . . . . . . . . .        Number             0h 
-@Time  . . . . . . . . . . . . .        Text   15:36:38
+@Time  . . . . . . . . . . . . .        Text   15:44:46
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT
@@ -204,4 +201,4 @@ __JWASM__  . . . . . . . . . . .        Number            D4h
 m  . . . . . . . . . . . . . . .        DWord              0h _BSS FASTCALL
 x  . . . . . . . . . . . . . . .        DWord              0h _DATA FASTCALL
 
-test2.asm: 101 lines, 2 passes, 1 ms, 0 warnings, 0 errors
+test2.asm: 98 lines, 2 passes, 1 ms, 0 warnings, 0 errors

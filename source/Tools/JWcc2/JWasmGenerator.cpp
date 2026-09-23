@@ -176,7 +176,7 @@ void JWasmGenerator::outputFunctionLocals(FunctionDeclaration& function)
 
 void JWasmGenerator::outputFunctionLocalsInitialization(FunctionDeclaration& function)
 {
-	out << ";----------------------------------------------------" << endl;
+	out << ";----------- Local variable initialization ----------" << endl;
 	if (auto comp = dynamic_cast<CompoundStatement*>(function.body.get()))
 	{
 		for (auto& ld : comp->localDeclarations)
@@ -209,11 +209,6 @@ void JWasmGenerator::outputFunctionBody(FunctionDeclaration& function)
 	if (function.body)
 	{
 		auto& body = *function.body;
-		out << ";----------------------------------------------------" << endl;
-		for (auto& locals : body.localDeclarations)
-		{
-			locals->accept(*this);
-		}
 		out << ";----------------------------------------------------" << endl;
 		for (auto& statement : body.statements)
 		{
