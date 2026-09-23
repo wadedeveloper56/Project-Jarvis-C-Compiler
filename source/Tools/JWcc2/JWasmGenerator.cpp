@@ -30,9 +30,9 @@ string JWasmGenerator::regC(int size) const {
 	if (size == 16) return "cx";
 	return "ecx";
 }
-string JWasmGenerator::regB() const {
-	if (bits == 64) return "rbx";
-	if (bits == 16) return "bx";
+string JWasmGenerator::regB(int size) const {
+	if (size == 64) return "rbx";
+	if (size == 16) return "bx";
 	return "ebx";
 }
 
@@ -174,6 +174,14 @@ void JWasmGenerator::outputFunctionLocals(FunctionDeclaration& function)
 	}
 }
 
+void JWasmGenerator::moveResultOfInvokeIntoRegisterA(VariableDeclaration* v)
+{
+	ind(); out << "mov _" << v->name << ", " << regA(32) << "\t\t\t;move result of invoke from register A to variable '" << v->name << "'" << endl;
+	if (v->type == "int" && bits == 64) { ind(); out << "movsxd " << regA(bits) << ", _" << v->name << "\t\t;load and sign extend '" << v->name << "' in to register A\n"; }
+	if (v->type == "int" && bits == 32) { ind(); out << "mov " << regA(bits) << ", _" << v->name << "\t\t\t;load '" << v->name << "' in to register A\n"; }
+	ind(); out << "push " << regA(64) << "\t\t\t\t;push the result in register A onto stack" << endl;
+}
+
 void JWasmGenerator::outputFunctionLocalsInitialization(FunctionDeclaration& function)
 {
 	out << ";----------- Local variable initialization ----------" << endl;
@@ -185,19 +193,33 @@ void JWasmGenerator::outputFunctionLocalsInitialization(FunctionDeclaration& fun
 			{
 				if (auto exp = dynamic_cast<CallExpression*>(v->init.get()))
 				{
-					preparingFunctionParms = true;
-					exp->accept(*this);
-					ind(); out << "mov _" << v->name << ", " << regA(32) << "\t\t\t;var decl " << v->name << " type = " << v->type << endl;
-					if (v->type == "int" && bits == 64) { ind(); out << "movsxd " << regA(bits) << ", _" << v->name << "\t\t;load and sign extend '" << v->name << "' in to register 1\n"; }
-					if (v->type == "int" && bits == 32) { ind(); out << "mov " << regA(bits) << ", _" << v->name << "\t\t\t;load '" << v->name << "' in to register 2\n"; }
-					ind(); out << "push " << regA(64) << "\t\t\t\t;push result onto stack" << endl;
-					preparingFunctionParms = false;
+					ind(); out << "invoke _" << exp->callee;
+					for (auto& it : exp->args)
+					{
+						if (auto exp = dynamic_cast<VariableExpression*>(it.get()))
+						{
+							out << ", " << exp->name;
+						}
+						else if (auto exp = dynamic_cast<NumberExpression*>(it.get()))
+						{
+							out << ", " << exp->value;
+						}
+					}
+					out << "\t;invoke function '" << exp->callee << "' with " << exp->args.size() << " arguments" << endl;
+					moveResultOfInvokeIntoRegisterA(v);
+					
 				}
 				else if (auto exp = dynamic_cast<Expression*>(v->init.get()))
 				{
-					exp->accept(*this);
-					if (v->type == "int" && bits == 64) { ind(); out << "movsxd " << regA(bits) << ", _" << v->name << "\t\t;assign decl " << v->name << " type = " << v->type << endl; }
-					if (v->type == "int" && bits == 32) { ind(); out << "mov " << regA(bits) << ", _" << v->name << "\t\t\t;assign decl " << v->name << " type = " << v->type << endl; }
+					if (auto be = dynamic_cast<BinaryExpression*>(exp))
+					{
+						be->accept(*this);
+					}
+					else
+					{
+						exp->accept(*this);
+					}
+					if (v->type == "int") { ind(); out << "mov _" << v->name << ", " << regA(32) << "\t\t;move result of binary expression from register A in to " << v->name << endl; }
 				}
 			}
 		}
@@ -282,7 +304,7 @@ void JWasmGenerator::visit(VariableExpression& expression)
 	}
 	else if (itLocal != localIndex.end())
 	{
-		if (itLocal->second.type == "int" && preparingFunctionParms)
+		if (itLocal->second.type == "int")
 		{
 			ind(); out << "mov " << regA(32) << ", _" << expression.name << "\t\t\t;load local '" << expression.name << "' in to register A\n";
 		}
@@ -294,23 +316,32 @@ void JWasmGenerator::visit(VariableExpression& expression)
 	}
 }
 
-void JWasmGenerator::visit(BinaryExpression& expression)
+void JWasmGenerator::visit(BinaryExpression& be)
 {
-	expression.leftHandSide->accept(*this);
-	expression.rightHandSide->accept(*this);
-	ind();  out << "pop " << regB() << "\t\t\t;pop rhs into register B\n";
-	ind();  out << "pop " << regA(bits) << "\t\t\t;pop lhs into register A\n";
-	if (expression.operator1 == '+') { ind(); out << "add " << regA(bits) << ", " << regB() << "\t\t;add registers A and B and store result in A\n"; }
-	else if (expression.operator1 == '-') { ind(); out << "sub " << regA(bits) << ", " << regB() << "\t\t;subtract register B from A and store result in A\n"; }
-	else if (expression.operator1 == '*') { ind(); out << "imul " << regA(bits) << ", " << regB() << "\t\t;multiply registers A and B and store result in A\n"; }
-	else if (expression.operator1 == '/')
+	be.leftHandSide->accept(*this);
+	be.rightHandSide->accept(*this);
+	ind();  out << "pop " << regB(bits) << "\t\t\t;pop top of stack into register B\n";
+	ind();  out << "pop " << regA(bits) << "\t\t\t;pop top of stack into register A\n";
+	if (be.operator1 == '+')
+	{
+		ind(); out << "add " << regA(bits) << ", " << regB(bits) << "\t\t;add registers A and B and store result in A\n";
+	}
+	else if (be.operator1 == '-')
+	{
+		ind(); out << "sub " << regA(bits) << ", " << regB(bits) << "\t\t;subtract register B from A and store result in A\n";
+	}
+	else if (be.operator1 == '*')
+	{
+		ind(); out << "imul " << regA(bits) << ", " << regB(bits) << "\t\t;multiply registers A and B and store result in A\n";
+	}
+	else if (be.operator1 == '/')
 	{
 		ind(); out << "cdq \t\t\t\t;extend eax to edx:eax for idiv" << endl;
-		ind(); out << "idiv " << regB() << "\t\t\t;integer divide registers A and B and store result in A\n";
+		ind(); out << "idiv " << regB(bits) << "\t\t\t;integer divide registers A and B and store result in A\n";
 	}
-	// push result
 	ind(); 	out << "push " << regA(bits) << "\t\t\t;push register A on to the stack\n";
-}
+
+	}
 
 void JWasmGenerator::visit(AssignExpression& n)
 {
@@ -336,18 +367,5 @@ void JWasmGenerator::visit(AssignExpression& n)
 
 void JWasmGenerator::visit(CallExpression& n)
 {
-	ind(); out << "invoke _" << n.callee;
-	for (auto& it : n.args)
-	{
-		if (auto exp = dynamic_cast<VariableExpression*>(it.get()))
-		{
-			out << ", " << exp->name;
-		}
-		else if (auto exp = dynamic_cast<NumberExpression*>(it.get()))
-		{
-			out << ", " << exp->value;
-		}
-	}
-	//ind(); out << "push " << regA(bits) << " ;push register A on to the stack\n";
-	out << "\t;invoke function '" << n.callee << "' with " << n.args.size() << " arguments" << endl;
+	
 }
