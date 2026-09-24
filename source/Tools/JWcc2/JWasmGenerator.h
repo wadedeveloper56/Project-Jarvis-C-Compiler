@@ -30,6 +30,7 @@ public:
 	void visit(VariableDeclaration& n) override;
 	void visit(FunctionDeclaration& function) override;
 	void visit(CompoundStatement& n) override;
+	void outputReturnBinaryExpression(BinaryExpression* be);
 	void visit(ReturnStatement& n) override;
 	void visit(ExpressionStatement& n) override;
 	void visit(NumberExpression& n) override;
@@ -42,9 +43,14 @@ private:
 	void outputFunctionComment(FunctionDeclaration& function);
 	void outputFunctionLocals(FunctionDeclaration& function);
 	void moveResultOfInvokeIntoRegisterA(VariableDeclaration* v);
+	void outputFunctionLocalsInitializationFunctionCall(CallExpression* exp);
 	void outputFunctionLocalsInitialization(FunctionDeclaration& function);
 	void outputFunctionHeader(FunctionDeclaration& function);
 	void outputFunctionBody(FunctionDeclaration& function);
+	void outputProgramFileHeader();
+	void outputProgramUninitializedData(Program& program);
+	void outputProgramInitializedData(Program& program);
+	void outputProgramCode(Program& program);
 	int nextLocalIndex();
 	string wasmType(const string& ty) const;
 	string wordForBits() const;

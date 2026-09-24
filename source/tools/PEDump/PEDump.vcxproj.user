@@ -1,22 +1,22 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LocalDebuggerCommandArguments> -a C:\projects\OSDev\ProjectJarvis\test\bin\windows\x64\test1.exe</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments> -a C:\projects\OSDev\Project-Jarvis-C-Compiler\test\test2_16.obj</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerCommandArgumentsHistory>-A C:\projects\OSDev\ProjectJarvis\bin\tools\intermediate\Arguments\Release\Win32\ArgDate.obj| -a C:\projects\OSDev\ProjectJarvis\test\bin\windows\x64\test1.exe|</LocalDebuggerCommandArgumentsHistory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LocalDebuggerCommandArguments>-A C:\projects\OSDev\ProjectJarvis\bin\tools\intermediate\Arguments\Release\Win32\ArgDate.obj</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments> -a C:\projects\OSDev\Project-Jarvis-C-Compiler\test\test2_16.obj</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerCommandArgumentsHistory>-A C:\projects\OSDev\ProjectJarvis\bin\tools\intermediate\Arguments\Release\Win32\ArgDate.obj|</LocalDebuggerCommandArgumentsHistory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments> -a C:\projects\OSDev\ProjectJarvis\test\bin\windows\x64\test1.exe</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments> -a C:\projects\OSDev\Project-Jarvis-C-Compiler\test\test2_16.obj</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArgumentsHistory>-A C:\projects\OSDev\ProjectJarvis\bin\tools\intermediate\JWasm\Release\Win32\assemble.obj|-A C:\projects\OSDev\ProjectJarvis\bin\tools\intermediate\Arguments\Debug\Win32\ArgDate.obj|-A C:\projects\OSDev\ProjectJarvis\bin\tools\intermediate\Arguments\Release\Win32\ArgDate.obj| -a C:\projects\OSDev\ProjectJarvis\test\bin\windows\x64\test1.exe|</LocalDebuggerCommandArgumentsHistory>
+    <LocalDebuggerCommandArgumentsHistory>-A C:\projects\OSDev\ProjectJarvis\bin\tools\intermediate\JWasm\Release\Win32\assemble.obj|-A C:\projects\OSDev\ProjectJarvis\bin\tools\intermediate\Arguments\Debug\Win32\ArgDate.obj|-A C:\projects\OSDev\ProjectJarvis\bin\tools\intermediate\Arguments\Release\Win32\ArgDate.obj| -a C:\projects\OSDev\ProjectJarvis\test\bin\windows\x64\test1.exe| -a C:\projects\OSDev\Project-Jarvis-C-Compiler\test\test2_16.obj|</LocalDebuggerCommandArgumentsHistory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>-A C:\projects\OSDev\ProjectJarvis\bin\tools\intermediate\Arguments\Release\Win32\ArgDate.obj</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments> -a C:\projects\OSDev\Project-Jarvis-C-Compiler\test\test2_16.obj</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerCommandArgumentsHistory>-A C:\projects\OSDev\ProjectJarvis\bin\tools\intermediate\Arguments\Release\Win32\ArgDate.obj|</LocalDebuggerCommandArgumentsHistory>
   </PropertyGroup>

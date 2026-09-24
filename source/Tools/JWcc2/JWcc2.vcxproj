@@ -203,6 +203,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="SemanticAnalyzer.h" />
     <ClInclude Include="SymbolTable.h" />
+    <ClInclude Include="types.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Arguments\Arguments.vcxproj">

@@ -1,0 +1,203 @@
+JWasm v2.12pre, Sep 22 2026
+test2_16.asm
+                                .386
+                                option segment:use16
+                                .model small, c;
+00000000                    *   _TEXT segment WORD  PUBLIC 'CODE'
+                            *   _TEXT ends
+00000000                    *   _DATA segment WORD  PUBLIC 'DATA'
+                            *   _DATA ends
+                            *   DGROUP group _DATA
+                            *   assume cs:_TEXT,ds:DGROUP,ss:DGROUP
+                                option casemap : none
+
+                                .data?
+00000000                    *   _BSS segment WORD  PUBLIC 'BSS'
+                            *   assume cs:ERROR
+                            *   DGROUP group _BSS
+00000000  00000000              m SDWORD ? ;global var m type = int
+
+00000000                        .data
+00000004                    *   _BSS ends
+00000000                    *   _DATA segment
+                            *   assume cs:ERROR
+00000000  03000000              x SDWORD 3 ;global var x type = int value = 3
+
+00000000                        .code
+00000004                    *   _DATA ends
+00000000                    *   _TEXT segment
+                            *   assume cs:_TEXT
+                                ;-----------------
+                                ; params:
+                                ;   a : int
+                                ;   b : int
+                                ; locals:
+                                ;   c : int
+                                ;-----------------
+00000000                        _func1 PROC a:SDWORD,b:SDWORD
+                                  LOCAL _c:SDWORD
+                                ;----------- Local variable initialization ----------
+00000000  55                *   push bp
+00000001  8BEC              *   mov bp, sp
+00000003  83EC04            *   sub sp, 4
+00000006  668B4604                mov eax, a			;load 'a' in to register A
+0000000A  6650                    push eax			;push register A on to stack
+0000000C  668B4608                mov eax, b			;load 'b' in to register A
+00000010  6650                    push eax			;push register A on to stack
+00000012  66B805000000            mov eax, 5		;load immediate into register
+00000018  6650                    push eax			;push register A on to the stack
+0000001A  5B                      pop bx			;pop top of stack into register B
+0000001B  58                      pop ax			;pop top of stack into register A
+0000001C  0FAFC3                  imul ax, bx		;multiply registers A and B and store result in A
+0000001F  50                      push ax			;push register A on to the stack
+00000020  5B                      pop bx			;pop top of stack into register B
+00000021  58                      pop ax			;pop top of stack into register A
+00000022  03C3                    add ax, bx		;add registers A and B and store result in A
+00000024  50                      push ax			;push register A on to the stack
+00000025  668946FC                mov _c, eax		;move result of binary expression from register A in to c
+                                ;----------Handle Function Body Statements-----------
+00000029  668B46FC                mov eax, _c			;load local 'c' in to register A
+0000002D                          ret 					;return from function
+0000002D  C9                *   leave
+0000002E  C3                *   retn 
+                                ;----------------------------------------------------
+0000002F                        _func1 ENDP
+
+                                ;-----------------
+                                ; params:
+                                ;   a : int
+                                ;   b : int
+                                ; locals:
+                                ;   c : int
+                                ;-----------------
+0000002F                        _func2 PROC a:SDWORD,b:SDWORD
+                                  LOCAL _c:SDWORD
+                                ;----------- Local variable initialization ----------
+0000002F  55                *   push bp
+00000030  8BEC              *   mov bp, sp
+00000032  83EC04            *   sub sp, 4
+00000035  668B4604                mov eax, a			;load 'a' in to register A
+00000039  6650                    push eax			;push register A on to stack
+0000003B  668B4608                mov eax, b			;load 'b' in to register A
+0000003F  6650                    push eax			;push register A on to stack
+00000041  66B803000000            mov eax, 3		;load immediate into register
+00000047  6650                    push eax			;push register A on to the stack
+00000049  5B                      pop bx			;pop top of stack into register B
+0000004A  58                      pop ax			;pop top of stack into register A
+0000004B  6699                    cdq 				;extend eax to edx:eax for idiv
+0000004D  F7FB                    idiv bx			;integer divide registers A and B and store result in A
+0000004F  50                      push ax			;push register A on to the stack
+00000050  5B                      pop bx			;pop top of stack into register B
+00000051  58                      pop ax			;pop top of stack into register A
+00000052  03C3                    add ax, bx		;add registers A and B and store result in A
+00000054  50                      push ax			;push register A on to the stack
+00000055  668946FC                mov _c, eax		;move result of binary expression from register A in to c
+                                ;----------Handle Function Body Statements-----------
+00000059  668B46FC                mov eax, _c			;load local 'c' in to register A
+0000005D                          ret 					;return from function
+0000005D  C9                *   leave
+0000005E  C3                *   retn 
+                                ;----------------------------------------------------
+0000005F                        _func2 ENDP
+
+                                ;-----------------
+                                ; params:
+                                ; locals:
+                                ;   y : int
+                                ;   x : int
+                                ;-----------------
+0000005F                        _func3 PROC 
+                                  LOCAL _y:SDWORD,_x:SDWORD
+                                ;----------- Local variable initialization ----------
+0000005F  55                *   push bp
+00000060  8BEC              *   mov bp, sp
+00000062  83EC08            *   sub sp, 8
+00000065                          invoke _func1, x, 4	;invoke function 'func1' with 2 arguments
+00000065  666A04            *    pushd 4
+00000068  66FF360000        *    push dword ptr x+0
+0000006D  E890FF            *    call _func1
+00000070  83C408            *    add sp, 8
+00000073  668946FC                mov _y, eax			;move result of invoke from register A to variable 'y'
+00000077  6650                    push eax				;push the result in register A onto stack
+00000079                          invoke _func2, m, 6	;invoke function 'func2' with 2 arguments
+00000079  666A06            *    pushd 6
+0000007C  66FF360000        *    push dword ptr m+0
+00000081  E8ABFF            *    call _func2
+00000084  83C408            *    add sp, 8
+00000087  668946F8                mov _x, eax			;move result of invoke from register A to variable 'x'
+0000008B  6650                    push eax				;push the result in register A onto stack
+                                ;----------Handle Function Body Statements-----------
+0000008D  5B                      pop bx				;pop top of stack into register B
+0000008E  58                      pop ax				;pop top of stack into register A
+0000008F  03C3                    add ax, bx			;add registers A and B and store result in A
+00000091                          ret 					;return from function
+00000091  C9                *   leave
+00000092  C3                *   retn
+                                ;----------------------------------------------------
+00000093                        _func3 ENDP
+
+                                end
+00000093                    *   _TEXT ends
+
+
+Macros:
+
+                N a m e                 Type
+
+@CatStr  . . . . . . . . . . . .        Func     0
+@Environ . . . . . . . . . . . .        Func     0
+@InStr . . . . . . . . . . . . .        Func     0
+@SizeStr . . . . . . . . . . . .        Func     0
+@SubStr  . . . . . . . . . . . .        Func     0
+
+
+Segments and Groups:
+
+                N a m e                 Size     Length   Align   Combine Class
+
+_TEXT  . . . . . . . . . . . . .        16 Bit   0093     Word    Public  'CODE'
+DGROUP . . . . . . . . . . . . .        GROUP
+_DATA  . . . . . . . . . . . . .        16 Bit   0004     Word    Public  'DATA'
+_BSS . . . . . . . . . . . . . .        16 Bit   0004     Word    Public  'BSS'
+
+
+Procedures, parameters and locals:
+
+                N a m e                 Type     Value    Segment  Length
+
+_func1 . . . . . . . . . . . . .        P Near   0000     _TEXT    002F Public   C
+  a  . . . . . . . . . . . . . .        DWord             bp + 0004
+  b  . . . . . . . . . . . . . .        DWord             bp + 0008
+  _c . . . . . . . . . . . . . .        DWord             bp - 0004
+_func2 . . . . . . . . . . . . .        P Near   002F     _TEXT    0030 Public   C
+  a  . . . . . . . . . . . . . .        DWord             bp + 0004
+  b  . . . . . . . . . . . . . .        DWord             bp + 0008
+  _c . . . . . . . . . . . . . .        DWord             bp - 0004
+_func3 . . . . . . . . . . . . .        P Near   005F     _TEXT    0034 Public   C
+  _y . . . . . . . . . . . . . .        DWord             bp - 0004
+  _x . . . . . . . . . . . . . .        DWord             bp - 0008
+
+
+Symbols:
+
+                N a m e                 Type       Value     Attr
+
+@CodeSize  . . . . . . . . . . .        Number             0h 
+@Cpu . . . . . . . . . . . . . .        Number           D0Fh 
+@CurSeg  . . . . . . . . . . . .        Text   
+@DataSize  . . . . . . . . . . .        Number             0h 
+@Date  . . . . . . . . . . . . .        Text   09/24/26
+@FileCur . . . . . . . . . . . .        Text   test2_16.asm
+@FileName  . . . . . . . . . . .        Text   TEST2_16
+@Interface . . . . . . . . . . .        Number             1h 
+@Model . . . . . . . . . . . . .        Number             2h 
+@Time  . . . . . . . . . . . . .        Text   10:34:27
+@Version . . . . . . . . . . . .        Text   800
+@code  . . . . . . . . . . . . .        Text   _TEXT
+@data  . . . . . . . . . . . . .        Text   DGROUP
+@stack . . . . . . . . . . . . .        Text   DGROUP
+__JWASM__  . . . . . . . . . . .        Number            D4h 
+m  . . . . . . . . . . . . . . .        DWord              0h _BSS C
+x  . . . . . . . . . . . . . . .        DWord              0h _DATA C
+
+test2_16.asm: 99 lines, 2 passes, 1 ms, 0 warnings, 0 errors

@@ -80,12 +80,12 @@ Symbols:
 @Cpu . . . . . . . . . . . . . .        Number           507h 
 @CurSeg  . . . . . . . . . . . .        Text   
 @DataSize  . . . . . . . . . . .        Number             0h 
-@Date  . . . . . . . . . . . . .        Text   09/23/26
+@Date  . . . . . . . . . . . . .        Text   09/24/26
 @FileCur . . . . . . . . . . . .        Text   C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\16bit\test1.asm
 @FileName  . . . . . . . . . . .        Text   TEST1
 @Interface . . . . . . . . . . .        Number             0h 
 @Model . . . . . . . . . . . . .        Number             2h 
-@Time  . . . . . . . . . . . . .        Text   18:28:40
+@Time  . . . . . . . . . . . . .        Text   10:34:26
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   DGROUP

@@ -144,12 +144,12 @@ Symbols:
 @Cpu . . . . . . . . . . . . . .        Number           D5Fh 
 @CurSeg  . . . . . . . . . . . .        Text   
 @DataSize  . . . . . . . . . . .        Number             0h 
-@Date  . . . . . . . . . . . . .        Text   09/23/26
+@Date  . . . . . . . . . . . . .        Text   09/24/26
 @FileCur . . . . . . . . . . . .        Text   c032.asm
 @FileName  . . . . . . . . . . .        Text   C032
 @Interface . . . . . . . . . . .        Number             3h 
 @Model . . . . . . . . . . . . .        Number             7h 
-@Time  . . . . . . . . . . . . .        Text   18:28:38
+@Time  . . . . . . . . . . . . .        Text   10:34:24
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT
@@ -160,4 +160,4 @@ argv . . . . . . . . . . . . . .        DWord[64]          Ch _BSS STDCALL
 cmdLinePtr . . . . . . . . . . .        DWord              4h _BSS STDCALL
 stdout . . . . . . . . . . . . .        DWord              0h _BSS STDCALL
 
-c032.asm: 81 lines, 2 passes, 0 ms, 0 warnings, 0 errors
+c032.asm: 81 lines, 2 passes, 1 ms, 0 warnings, 0 errors

@@ -42,8 +42,15 @@ REM C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWmake --h
 REM C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWcpp --help --version
 REM C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWrc --help
 
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWcc2 -b 64 -o test2.asm test2.c
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWasm -win64 -Fl=test3.lst -Sa -Fotest3.obj test3.asm
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWasm -win64 -Fl=test2.lst -Sa -Fotest2.obj test2.asm
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\pedump -a test2.obj > test2.asm.log
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\pedump -a test3.obj > test3.asm.log
+C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWcc2 -b 64 -o test2_64.asm test2.c
+C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWasm -win64 -Fl=test2_64.lst -Sa -Fotest2_64.obj test2_64.asm
+C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\pedump -a test2_64.obj > test2_64.asm.log
+
+C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWcc2 -b 32 -o test2_32.asm test2.c
+C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWasm -coff -Fl=test2_32.lst -Sa -Fotest2_32.obj test2_32.asm
+C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\pedump -a test2_32.obj > test2_32.asm.log
+
+C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWcc2 -b 16 -o test2_16.asm test2.c
+C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWasm -omf -Fl=test2_16.lst -Sa -Fotest2_16.obj test2_16.asm
+C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\pedump -a test2_16.obj > test2_16.asm.log
+
