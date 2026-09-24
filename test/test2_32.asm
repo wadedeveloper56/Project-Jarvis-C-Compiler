@@ -83,12 +83,14 @@ _func3 PROC
   LOCAL _y:SDWORD,_x:SDWORD
 ;----------- Local variable initialization ----------
   invoke _func1, x, 4	;invoke function 'func1' with 2 arguments
-  mov _y, eax			;move result of invoke from register A to variable 'y'
+  mov _y, eax			;move result of invoke from register EAX to variable 'y'
   push eax				;push the result in register A onto stack
   invoke _func2, m, 6	;invoke function 'func2' with 2 arguments
-  mov _x, eax			;move result of invoke from register A to variable 'x'
+  mov _x, eax			;move result of invoke from register EAX to variable 'x'
   push eax				;push the result in register A onto stack
 ;----------Handle Function Body Statements-----------
+  mov eax, _x			;load local 'x' in to register A
+  mov eax, _y			;load local 'y' in to register A
   pop ebx				;pop top of stack into register B
   pop eax				;pop top of stack into register A
   add eax, ebx			;add registers A and B and store result in A

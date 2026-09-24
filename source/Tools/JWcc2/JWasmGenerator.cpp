@@ -5,30 +5,14 @@
 
 using namespace std;
 
-int JWasmGenerator::nextLocalIndex()
-{
-	int idx = 0;
-	for (auto& kv : paramIndex) idx = max(idx, kv.second.index);
-	return idx + 1;
-}
+JWasmGenerator::JWasmGenerator(ostream& os, int bits, bool isWindows) : out(os), bits(bits), indent(0), isWindows(isWindows) {}
 
-string JWasmGenerator::wordForBits() const
-{
-	if (bits == 64) return "qword";
-	if (bits == 16) return "word";
-	return "dword";
-}
+void JWasmGenerator::ind() { for (int i = 1; i <= indent; ++i) out << "  "; }
 
 string JWasmGenerator::regA(int size) const {
 	if (size == 64) return "rax";
 	if (size == 16) return "ax";
 	return "eax";
-}
-
-string JWasmGenerator::regC(int size) const {
-	if (size == 64) return "rcx";
-	if (size == 16) return "cx";
-	return "ecx";
 }
 
 string JWasmGenerator::regB(int size) const {
@@ -37,15 +21,16 @@ string JWasmGenerator::regB(int size) const {
 	return "ebx";
 }
 
-string JWasmGenerator::wasmType(const string& ty) const
-{
-	if (ty == "int")
-	{
-		if (bits == 16) return "i16"; // placeholder
-		if (bits == 64) return "i64";
-		return "i32";
-	}
-	return "i32";
+string JWasmGenerator::regC(int size) const {
+	if (size == 64) return "rcx";
+	if (size == 16) return "cx";
+	return "ecx";
+}
+
+string JWasmGenerator::regD(int size) const {
+	if (size == 64) return "rdx";
+	if (size == 16) return "dx";
+	return "edx";
 }
 
 void JWasmGenerator::outputProgramFileHeader()
@@ -195,8 +180,31 @@ void JWasmGenerator::outputFunctionLocals(FunctionDeclaration& function)
 
 void JWasmGenerator::moveResultOfInvokeIntoRegisterA(VariableDeclaration* v)
 {
-	ind(); out << "mov _" << v->name << ", " << regA(32) << "\t\t\t;move result of invoke from register A to variable '" << v->name << "'" << endl;
-	ind(); out << "push " << regA(32) << "\t\t\t\t;push the result in register A onto stack" << endl;
+	auto type = v->type;
+	if (processorBitType == ProcessorBitType::BIT16_8086 || processorBitType == ProcessorBitType::BIT16_186 || processorBitType == ProcessorBitType::BIT16_286)
+	{
+        auto reg = (type == "int") ? regA(32) : regA(16);
+		ind(); out << "mov _" << v->name << ", " << reg << "\t\t\t;move result of invoke from register AX to variable '" << v->name << "'" << endl;
+		ind(); out << "push " << reg << "\t\t\t\t;push the result in register A onto stack" << endl;
+	}
+	else if (processorBitType == ProcessorBitType::BIT16_386 || processorBitType == ProcessorBitType::BIT16_486 || processorBitType == ProcessorBitType::BIT16_586 || processorBitType == ProcessorBitType::BIT16_686)
+	{
+		auto reg = (type == "int") ? regA(32) : regA(16);
+		ind(); out << "mov _" << v->name << ", " << reg << "\t\t\t;move result of invoke from register EAX to variable '" << v->name << "'" << endl;
+		ind(); out << "push " << reg << "\t\t\t\t;push the result in register A onto stack" << endl;
+	}
+	else if (processorBitType == ProcessorBitType::BIT32_386 || processorBitType == ProcessorBitType::BIT32_486 || processorBitType == ProcessorBitType::BIT32_586 || processorBitType == ProcessorBitType::BIT32_686)
+	{
+		auto reg = (type == "int") ? regA(32) : regA(16);
+		ind(); out << "mov _" << v->name << ", " << reg << "\t\t\t;move result of invoke from register EAX to variable '" << v->name << "'" << endl;
+		ind(); out << "push " << reg << "\t\t\t\t;push the result in register A onto stack" << endl;
+	}
+	else if (processorBitType == ProcessorBitType::BIT64_x64)
+	{
+		auto reg = (type == "int") ? regA(32) : regA(16);
+		ind(); out << "mov _" << v->name << ", " << reg << "\t\t\t;move result of invoke from register RAX to variable '" << v->name << "'" << endl;
+		//ind(); out << "push " << regA(64) << "\t\t\t\t;push the result in register RAX onto stack" << endl;
+	}
 }
 
 void JWasmGenerator::outputFunctionLocalsInitializationFunctionCall(CallExpression* exp)
@@ -286,6 +294,8 @@ void JWasmGenerator::visit(CompoundStatement& n)
 
 void JWasmGenerator::outputReturnBinaryExpression(BinaryExpression* be)
 {
+	be->leftHandSide->accept(*this);
+	be->rightHandSide->accept(*this);
 	ind();  out << "pop " << regB(bits) << "\t\t\t\t;pop top of stack into register B\n";
 	ind();  out << "pop " << regA(bits) << "\t\t\t\t;pop top of stack into register A\n";
 	if (be->operator1 == '+')
@@ -382,27 +392,26 @@ void JWasmGenerator::visit(BinaryExpression& be)
 {
 	be.leftHandSide->accept(*this);
 	be.rightHandSide->accept(*this);
-	ind();  out << "pop " << regB(bits) << "\t\t\t;pop top of stack into register B\n";
-	ind();  out << "pop " << regA(bits) << "\t\t\t;pop top of stack into register A\n";
+	ind();  out << "pop " << regB(32) << "\t\t\t;pop top of stack into register B\n";
+	ind();  out << "pop " << regA(32) << "\t\t\t;pop top of stack into register A\n";
 	if (be.operator1 == '+')
 	{
-		ind(); out << "add " << regA(bits) << ", " << regB(bits) << "\t\t;add registers A and B and store result in A\n";
+		ind(); out << "add " << regA(32) << ", " << regB(32) << "\t\t;add registers A and B and store result in A\n";
 	}
 	else if (be.operator1 == '-')
 	{
-		ind(); out << "sub " << regA(bits) << ", " << regB(bits) << "\t\t;subtract register B from A and store result in A\n";
+		ind(); out << "sub " << regA(32) << ", " << regB(32) << "\t\t;subtract register B from A and store result in A\n";
 	}
 	else if (be.operator1 == '*')
 	{
-		ind(); out << "imul " << regA(bits) << ", " << regB(bits) << "\t\t;multiply registers A and B and store result in A\n";
+		ind(); out << "imul " << regA(32) << ", " << regB(32) << "\t\t;multiply registers A and B and store result in A\n";
 	}
 	else if (be.operator1 == '/')
 	{
 		ind(); out << "cdq \t\t\t\t;extend eax to edx:eax for idiv" << endl;
-		ind(); out << "idiv " << regB(bits) << "\t\t\t;integer divide registers A and B and store result in A\n";
+		ind(); out << "idiv " << regB(32) << "\t\t\t;integer divide registers A and B and store result in A\n";
 	}
-	ind(); 	out << "push " << regA(bits) << "\t\t\t;push register A on to the stack\n";
-
+	ind(); 	out << "push " << regA(32) << "\t\t\t;push register A on to the stack\n";
 }
 
 void JWasmGenerator::visit(AssignExpression& n)

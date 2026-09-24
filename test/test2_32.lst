@@ -115,27 +115,29 @@ test2_32.asm
 00000056  FF3500000000      *    push x
 0000005C  E89FFFFFFF        *    call _func1
 00000061  83C408            *    add esp, 8
-00000064  8945FC                  mov _y, eax			;move result of invoke from register A to variable 'y'
+00000064  8945FC                  mov _y, eax			;move result of invoke from register EAX to variable 'y'
 00000067  50                      push eax				;push the result in register A onto stack
 00000068                          invoke _func2, m, 6	;invoke function 'func2' with 2 arguments
 00000068  6A06              *    push 6
 0000006A  FF3500000000      *    push m
 00000070  E8B2FFFFFF        *    call _func2
 00000075  83C408            *    add esp, 8
-00000078  8945F8                  mov _x, eax			;move result of invoke from register A to variable 'x'
+00000078  8945F8                  mov _x, eax			;move result of invoke from register EAX to variable 'x'
 0000007B  50                      push eax				;push the result in register A onto stack
                                 ;----------Handle Function Body Statements-----------
-0000007C  5B                      pop ebx				;pop top of stack into register B
-0000007D  58                      pop eax				;pop top of stack into register A
-0000007E  03C3                    add eax, ebx			;add registers A and B and store result in A
-00000080                          ret 					;return from function
-00000080  C9                *   leave
-00000081  C3                *   retn
+0000007C  8B45F8                  mov eax, _x			;load local 'x' in to register A
+0000007F  8B45FC                  mov eax, _y			;load local 'y' in to register A
+00000082  5B                      pop ebx				;pop top of stack into register B
+00000083  58                      pop eax				;pop top of stack into register A
+00000084  03C3                    add eax, ebx			;add registers A and B and store result in A
+00000086                          ret 					;return from function
+00000086  C9                *   leave
+00000087  C3                *   retn
                                 ;----------------------------------------------------
-00000082                        _func3 ENDP
+00000088                        _func3 ENDP
 
                                 end
-00000082                    *   _TEXT ends
+00000088                    *   _TEXT ends
 
 
 Macros:
@@ -156,7 +158,7 @@ Segments and Groups:
 FLAT . . . . . . . . . . . . . .        GROUP
 _BSS . . . . . . . . . . . . . .        32 Bit   00000004 DWord   Public  'BSS'
 _DATA  . . . . . . . . . . . . .        32 Bit   00000004 DWord   Public  'DATA'
-_TEXT  . . . . . . . . . . . . .        32 Bit   00000082 DWord   Public  'CODE'
+_TEXT  . . . . . . . . . . . . .        32 Bit   00000088 DWord   Public  'CODE'
 
 
 Procedures, parameters and locals:
@@ -171,7 +173,7 @@ _func2 . . . . . . . . . . . . .        P Near   00000027 _TEXT    00000027 Publ
   a  . . . . . . . . . . . . . .        DWord             ebp + 0008
   b  . . . . . . . . . . . . . .        DWord             ebp + 000C
   _c . . . . . . . . . . . . . .        DWord             ebp - 0004
-_func3 . . . . . . . . . . . . .        P Near   0000004E _TEXT    00000034 Public   C
+_func3 . . . . . . . . . . . . .        P Near   0000004E _TEXT    0000003A Public   C
   _y . . . . . . . . . . . . . .        DWord             ebp - 0004
   _x . . . . . . . . . . . . . .        DWord             ebp - 0008
 
@@ -189,7 +191,7 @@ Symbols:
 @FileName  . . . . . . . . . . .        Text   TEST2_32
 @Interface . . . . . . . . . . .        Number             1h 
 @Model . . . . . . . . . . . . .        Number             7h 
-@Time  . . . . . . . . . . . . .        Text   10:34:27
+@Time  . . . . . . . . . . . . .        Text   18:41:42
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT
@@ -198,4 +200,4 @@ __JWASM__  . . . . . . . . . . .        Number            D4h
 m  . . . . . . . . . . . . . . .        DWord              0h _BSS C
 x  . . . . . . . . . . . . . . .        DWord              0h _DATA C
 
-test2_32.asm: 99 lines, 2 passes, 1 ms, 0 warnings, 0 errors
+test2_32.asm: 101 lines, 2 passes, 1 ms, 0 warnings, 0 errors

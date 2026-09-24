@@ -18,7 +18,6 @@ typedef enum class ProcessorBitType
 	BIT16_686,
 	BIT32_686,
 
-	BIT32_x64,
 	BIT64_x64
 } ProcessorBitType;
 

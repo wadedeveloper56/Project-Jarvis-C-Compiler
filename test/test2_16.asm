@@ -26,14 +26,14 @@ _func1 PROC a:SDWORD,b:SDWORD
   push eax			;push register A on to stack
   mov eax, 5		;load immediate into register
   push eax			;push register A on to the stack
-  pop bx			;pop top of stack into register B
-  pop ax			;pop top of stack into register A
-  imul ax, bx		;multiply registers A and B and store result in A
-  push ax			;push register A on to the stack
-  pop bx			;pop top of stack into register B
-  pop ax			;pop top of stack into register A
-  add ax, bx		;add registers A and B and store result in A
-  push ax			;push register A on to the stack
+  pop ebx			;pop top of stack into register B
+  pop eax			;pop top of stack into register A
+  imul eax, ebx		;multiply registers A and B and store result in A
+  push eax			;push register A on to the stack
+  pop ebx			;pop top of stack into register B
+  pop eax			;pop top of stack into register A
+  add eax, ebx		;add registers A and B and store result in A
+  push eax			;push register A on to the stack
   mov _c, eax		;move result of binary expression from register A in to c
 ;----------Handle Function Body Statements-----------
   mov eax, _c			;load local 'c' in to register A
@@ -57,15 +57,15 @@ _func2 PROC a:SDWORD,b:SDWORD
   push eax			;push register A on to stack
   mov eax, 3		;load immediate into register
   push eax			;push register A on to the stack
-  pop bx			;pop top of stack into register B
-  pop ax			;pop top of stack into register A
+  pop ebx			;pop top of stack into register B
+  pop eax			;pop top of stack into register A
   cdq 				;extend eax to edx:eax for idiv
-  idiv bx			;integer divide registers A and B and store result in A
-  push ax			;push register A on to the stack
-  pop bx			;pop top of stack into register B
-  pop ax			;pop top of stack into register A
-  add ax, bx		;add registers A and B and store result in A
-  push ax			;push register A on to the stack
+  idiv ebx			;integer divide registers A and B and store result in A
+  push eax			;push register A on to the stack
+  pop ebx			;pop top of stack into register B
+  pop eax			;pop top of stack into register A
+  add eax, ebx		;add registers A and B and store result in A
+  push eax			;push register A on to the stack
   mov _c, eax		;move result of binary expression from register A in to c
 ;----------Handle Function Body Statements-----------
   mov eax, _c			;load local 'c' in to register A
@@ -83,12 +83,14 @@ _func3 PROC
   LOCAL _y:SDWORD,_x:SDWORD
 ;----------- Local variable initialization ----------
   invoke _func1, x, 4	;invoke function 'func1' with 2 arguments
-  mov _y, eax			;move result of invoke from register A to variable 'y'
+  mov _y, eax			;move result of invoke from register EAX to variable 'y'
   push eax				;push the result in register A onto stack
   invoke _func2, m, 6	;invoke function 'func2' with 2 arguments
-  mov _x, eax			;move result of invoke from register A to variable 'x'
+  mov _x, eax			;move result of invoke from register EAX to variable 'x'
   push eax				;push the result in register A onto stack
 ;----------Handle Function Body Statements-----------
+  mov eax, _x			;load local 'x' in to register A
+  mov eax, _y			;load local 'y' in to register A
   pop bx				;pop top of stack into register B
   pop ax				;pop top of stack into register A
   add ax, bx			;add registers A and B and store result in A

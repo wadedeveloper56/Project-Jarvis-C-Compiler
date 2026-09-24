@@ -13,9 +13,8 @@ struct VarData
 	int index;
 };
 
-struct JWasmGenerator : ASTVisitor 
+class JWasmGenerator : ASTVisitor 
 {
-
 private:
 	ostream& out;
 	int indent;
@@ -24,7 +23,7 @@ private:
 	unordered_map<string,VarData> paramIndex;
 	unordered_map<string,VarData> localIndex;
 public:
-	JWasmGenerator(ostream& os, int bits = 32, bool isWindows = true) : out(os), bits(bits), indent(0), isWindows(isWindows) {}
+	JWasmGenerator(ostream& os, int bits = 32, bool isWindows = true);
 	void generate(Program& program) { program.accept(*this); }
 	void visit(Program& program) override;
 	void visit(VariableDeclaration& n) override;
@@ -39,7 +38,7 @@ public:
 	void visit(AssignExpression& n) override;
 	void visit(CallExpression& n) override;
 private:
-	void ind() { for (int i = 1; i <= indent; ++i) out << "  "; }
+	void ind();
 	void outputFunctionComment(FunctionDeclaration& function);
 	void outputFunctionLocals(FunctionDeclaration& function);
 	void moveResultOfInvokeIntoRegisterA(VariableDeclaration* v);
@@ -51,11 +50,8 @@ private:
 	void outputProgramUninitializedData(Program& program);
 	void outputProgramInitializedData(Program& program);
 	void outputProgramCode(Program& program);
-	int nextLocalIndex();
-	string wasmType(const string& ty) const;
-	string wordForBits() const;
 	string regA(int size) const;
-	string regC(int size) const;
 	string regB(int size) const;
-	int wordBytes() const { return bits / 8; }
+	string regC(int size) const;
+	string regD(int size) const;
 };

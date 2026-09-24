@@ -64,6 +64,8 @@ int main(int argc, char* argv[])
 	isWindows = (platform->sval[0] == "windows");
 	isLinux = (platform->sval[0] == "linux");
 
+	cout << "Bits: " << bits << ", Processor: " << processor << ", Platform: " << (isWindows ? "Windows" : (isLinux ? "Linux" : "Unknown")) << endl;
+
 	if (bit16)
 	{
 		if (processor == "086") processorBitType = ProcessorBitType::BIT16_8086;
@@ -86,7 +88,6 @@ int main(int argc, char* argv[])
 		else if (processor == "486") processorBitType = ProcessorBitType::BIT32_486;
 		else if (processor == "586") processorBitType = ProcessorBitType::BIT32_586;
 		else if (processor == "686") processorBitType = ProcessorBitType::BIT32_686;
-		else if (processor == "x64") processorBitType = ProcessorBitType::BIT32_x64;
 		else
 		{
 			printf("Invalid processor for 32-bit: %s\n", processor.c_str());
@@ -174,8 +175,8 @@ int main(int argc, char* argv[])
 			}
 			JWasmGenerator gen(out, bits, isWindows);
 			gen.generate(*prog);
-			ASTPrinter printer;
-			printer.visit(*prog);
+			//ASTPrinter printer;
+			//printer.visit(*prog);
 		}
 		catch (const exception& ex)
 		{

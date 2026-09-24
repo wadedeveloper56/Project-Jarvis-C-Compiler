@@ -43,22 +43,28 @@ test2_64.asm
 00000011                          push rax			;push register A on to stack
 00000012                          mov rax, 5		;load immediate into register
 00000019                          push rax			;push register A on to the stack
-0000001A                          pop rbx			;pop top of stack into register B
-0000001B                          pop rax			;pop top of stack into register A
-0000001C                          imul rax, rbx		;multiply registers A and B and store result in A
-00000020                          push rax			;push register A on to the stack
-00000021                          pop rbx			;pop top of stack into register B
-00000022                          pop rax			;pop top of stack into register A
-00000023                          add rax, rbx		;add registers A and B and store result in A
-00000026                          push rax			;push register A on to the stack
-00000027                          mov _c, eax		;move result of binary expression from register A in to c
+0000001A                          pop ebx			;pop top of stack into register B
+                           Error A2049: Invalid instruction operands
+0000001A                          pop eax			;pop top of stack into register A
+                           Error A2049: Invalid instruction operands
+0000001A                          imul eax, ebx		;multiply registers A and B and store result in A
+0000001D                          push eax			;push register A on to the stack
+                           Error A2049: Invalid instruction operands
+0000001D                          pop ebx			;pop top of stack into register B
+                           Error A2049: Invalid instruction operands
+0000001D                          pop eax			;pop top of stack into register A
+                           Error A2049: Invalid instruction operands
+0000001D                          add eax, ebx		;add registers A and B and store result in A
+0000001F                          push eax			;push register A on to the stack
+                           Error A2049: Invalid instruction operands
+0000001F                          mov _c, eax		;move result of binary expression from register A in to c
                                 ;----------Handle Function Body Statements-----------
-0000002A                          mov eax, _c			;load local 'c' in to register A
-0000002D                          ret 					;return from function
-0000002D                    *   leave
-0000002E                    *   retn 
+00000022                          mov eax, _c			;load local 'c' in to register A
+00000025                          ret 					;return from function
+00000025                    *   leave
+00000026                    *   retn 
                                 ;----------------------------------------------------
-0000002F                        _func1 ENDP
+00000027                        _func1 ENDP
 
                                 ;-----------------
                                 ; params:
@@ -67,35 +73,41 @@ test2_64.asm
                                 ; locals:
                                 ;   c : int
                                 ;-----------------
-0000002F                        _func2 PROC a:SDWORD,b:SDWORD
+00000027                        _func2 PROC a:SDWORD,b:SDWORD
                                   LOCAL _c:SDWORD
                                 ;----------- Local variable initialization ----------
-0000002F                    *   push rbp
-00000030                    *   mov rbp, rsp
-00000033                    *   sub rsp, 8
-00000037                          movsxd rax, a		;load and sign extend 'a' in to register A
-0000003B                          push rax			;push register A on to stack
-0000003C                          movsxd rax, b		;load and sign extend 'b' in to register A
-00000040                          push rax			;push register A on to stack
-00000041                          mov rax, 3		;load immediate into register
-00000048                          push rax			;push register A on to the stack
-00000049                          pop rbx			;pop top of stack into register B
-0000004A                          pop rax			;pop top of stack into register A
-0000004B                          cdq 				;extend eax to edx:eax for idiv
-0000004C                          idiv rbx			;integer divide registers A and B and store result in A
-0000004F                          push rax			;push register A on to the stack
-00000050                          pop rbx			;pop top of stack into register B
-00000051                          pop rax			;pop top of stack into register A
-00000052                          add rax, rbx		;add registers A and B and store result in A
-00000055                          push rax			;push register A on to the stack
-00000056                          mov _c, eax		;move result of binary expression from register A in to c
+00000027                    *   push rbp
+00000028                    *   mov rbp, rsp
+0000002B                    *   sub rsp, 8
+0000002F                          movsxd rax, a		;load and sign extend 'a' in to register A
+00000033                          push rax			;push register A on to stack
+00000034                          movsxd rax, b		;load and sign extend 'b' in to register A
+00000038                          push rax			;push register A on to stack
+00000039                          mov rax, 3		;load immediate into register
+00000040                          push rax			;push register A on to the stack
+00000041                          pop ebx			;pop top of stack into register B
+                           Error A2049: Invalid instruction operands
+00000041                          pop eax			;pop top of stack into register A
+                           Error A2049: Invalid instruction operands
+00000041                          cdq 				;extend eax to edx:eax for idiv
+00000042                          idiv ebx			;integer divide registers A and B and store result in A
+00000044                          push eax			;push register A on to the stack
+                           Error A2049: Invalid instruction operands
+00000044                          pop ebx			;pop top of stack into register B
+                           Error A2049: Invalid instruction operands
+00000044                          pop eax			;pop top of stack into register A
+                           Error A2049: Invalid instruction operands
+00000044                          add eax, ebx		;add registers A and B and store result in A
+00000046                          push eax			;push register A on to the stack
+                           Error A2049: Invalid instruction operands
+00000046                          mov _c, eax		;move result of binary expression from register A in to c
                                 ;----------Handle Function Body Statements-----------
-00000059                          mov eax, _c			;load local 'c' in to register A
-0000005C                          ret 					;return from function
-0000005C                    *   leave
-0000005D                    *   retn 
+00000049                          mov eax, _c			;load local 'c' in to register A
+0000004C                          ret 					;return from function
+0000004C                    *   leave
+0000004D                    *   retn 
                                 ;----------------------------------------------------
-0000005E                        _func2 ENDP
+0000004E                        _func2 ENDP
 
                                 ;-----------------
                                 ; params:
@@ -103,39 +115,37 @@ test2_64.asm
                                 ;   y : int
                                 ;   x : int
                                 ;-----------------
-0000005E                        _func3 PROC 
+0000004E                        _func3 PROC 
                                   LOCAL _y:SDWORD,_x:SDWORD
                                 ;----------- Local variable initialization ----------
-0000005E                    *   push rbp
-0000005F                    *   mov rbp, rsp
-00000062                    *   sub rsp, 8
-00000066                          invoke _func1, x, 4	;invoke function 'func1' with 2 arguments
-00000066                    *    sub rsp, 32
-0000006A                    *    mov ecx, x
-00000070                    *    mov edx, 4
-00000075                    *    call _func1
-0000007A                    *    add rsp, 32
-0000007E                          mov _y, eax			;move result of invoke from register A to variable 'y'
-00000081                          push eax				;push the result in register A onto stack
-                           Error A2049: Invalid instruction operands
-00000081                          invoke _func2, m, 6	;invoke function 'func2' with 2 arguments
-00000081                    *    sub rsp, 32
-00000085                    *    mov ecx, m
-0000008B                    *    mov edx, 6
-00000090                    *    call _func2
-00000095                    *    add rsp, 32
-00000099                          mov _x, eax			;move result of invoke from register A to variable 'x'
-0000009C                          push eax				;push the result in register A onto stack
-                           Error A2049: Invalid instruction operands
+0000004E                    *   push rbp
+0000004F                    *   mov rbp, rsp
+00000052                    *   sub rsp, 8
+00000056                          invoke _func1, x, 4	;invoke function 'func1' with 2 arguments
+00000056                    *    sub rsp, 32
+0000005A                    *    mov ecx, x
+00000060                    *    mov edx, 4
+00000065                    *    call _func1
+0000006A                    *    add rsp, 32
+0000006E                          mov _y, eax			;move result of invoke from register RAX to variable 'y'
+00000071                          invoke _func2, m, 6	;invoke function 'func2' with 2 arguments
+00000071                    *    sub rsp, 32
+00000075                    *    mov ecx, m
+0000007B                    *    mov edx, 6
+00000080                    *    call _func2
+00000085                    *    add rsp, 32
+00000089                          mov _x, eax			;move result of invoke from register RAX to variable 'x'
                                 ;----------Handle Function Body Statements-----------
-0000009C                          pop rbx				;pop top of stack into register B
-0000009D                          pop rax				;pop top of stack into register A
-0000009E                          add rax, rbx			;add registers A and B and store result in A
-000000A1                          ret 					;return from function
-000000A1                    *   leave
-000000A2                    *   retn
+0000008C                          mov eax, _x			;load local 'x' in to register A
+0000008F                          mov eax, _y			;load local 'y' in to register A
+00000092                          pop rbx				;pop top of stack into register B
+00000093                          pop rax				;pop top of stack into register A
+00000094                          add rax, rbx			;add registers A and B and store result in A
+00000097                          ret 					;return from function
+00000097                    *   leave
+00000098                    *   retn
                                 ;----------------------------------------------------
-000000A3                        _func3 ENDP
+00000099                        _func3 ENDP
 
                                 end
                             *   _TEXT ends
@@ -159,22 +169,22 @@ Segments and Groups:
 FLAT . . . . . . . . . . . . . .        GROUP
 _BSS . . . . . . . . . . . . . .        64 Bit   00000004 Para    Public  'BSS'
 _DATA  . . . . . . . . . . . . .        64 Bit   00000004 Para    Public  'DATA'
-_TEXT  . . . . . . . . . . . . .        64 Bit   000000A3 Para    Public  'CODE'
+_TEXT  . . . . . . . . . . . . .        64 Bit   00000099 Para    Public  'CODE'
 
 
 Procedures, parameters and locals:
 
                 N a m e                 Type     Value    Segment  Length
 
-_func1 . . . . . . . . . . . . .        P Near   00000000 _TEXT    0000002F Public   FASTCALL
+_func1 . . . . . . . . . . . . .        P Near   00000000 _TEXT    00000027 Public   FASTCALL
   b  . . . . . . . . . . . . . .        DWord             rbp + 0018
   a  . . . . . . . . . . . . . .        DWord             rbp + 0010
   _c . . . . . . . . . . . . . .        DWord             rbp - 0004
-_func2 . . . . . . . . . . . . .        P Near   0000002F _TEXT    0000002F Public   FASTCALL
+_func2 . . . . . . . . . . . . .        P Near   00000027 _TEXT    00000027 Public   FASTCALL
   b  . . . . . . . . . . . . . .        DWord             rbp + 0018
   a  . . . . . . . . . . . . . .        DWord             rbp + 0010
   _c . . . . . . . . . . . . . .        DWord             rbp - 0004
-_func3 . . . . . . . . . . . . .        P Near   0000005E _TEXT    00000045 Public   FASTCALL
+_func3 . . . . . . . . . . . . .        P Near   0000004E _TEXT    0000004B Public   FASTCALL
   _y . . . . . . . . . . . . . .        DWord             rbp - 0004
   _x . . . . . . . . . . . . . .        DWord             rbp - 0008
 
@@ -193,7 +203,7 @@ Symbols:
 @Interface . . . . . . . . . . .        Number             7h 
 @Model . . . . . . . . . . . . .        Number             7h 
 @ReservedStack . . . . . . . . .        Number             0h 
-@Time  . . . . . . . . . . . . .        Text   10:34:26
+@Time  . . . . . . . . . . . . .        Text   18:41:41
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT
@@ -202,4 +212,4 @@ __JWASM__  . . . . . . . . . . .        Number            D4h
 m  . . . . . . . . . . . . . . .        DWord              0h _BSS FASTCALL
 x  . . . . . . . . . . . . . . .        DWord              0h _DATA FASTCALL
 
-test2_64.asm: 97 lines, 1 passes, 1 ms, 0 warnings, 2 errors
+test2_64.asm: 97 lines, 1 passes, 3 ms, 0 warnings, 12 errors
