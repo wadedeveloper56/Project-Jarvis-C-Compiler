@@ -301,6 +301,46 @@ void JWasmGenerator::visit(FunctionDeclaration& function)
 void JWasmGenerator::visit(CompoundStatement& n)
 {}
 
+void JWasmGenerator::asmStatementAddRegisterAAndRegisterB(string comment)
+{
+	if (bits == 64) { ind(); out << "add " << regA(32) << ", " << regB(32) << comment << endl; }
+	else if (bits == 32) { ind(); out << "add " << regA(32) << ", " << regB(32) << comment << endl; }
+	else if (bits == 16) { ind(); out << "add " << regA(16) << ", " << regB(16) << comment << endl; }
+}
+
+void JWasmGenerator::asmStatementSubRegisterAAndRegisterB(string comment)
+{
+	if (bits == 64) { ind(); out << "sub " << regA(32) << ", " << regB(32) << comment << endl; }
+	else if (bits == 32) { ind(); out << "sub " << regA(32) << ", " << regB(32) << comment << endl; }
+	else if (bits == 16) { ind(); out << "sub " << regA(16) << ", " << regB(16) << comment << endl; }
+}
+
+void JWasmGenerator::asmStatementImulRegisterAAndRegisterB(string comment)
+{
+	if (bits == 64) { ind(); out << "imul " << regA(32) << ", " << regB(32) << comment << endl; }
+	else if (bits == 32) { ind(); out << "imul " << regA(32) << ", " << regB(32) << comment << endl; }
+	else if (bits == 16) { ind(); out << "imul " << regA(16) << ", " << regB(16) << comment << endl; }
+}
+
+void JWasmGenerator::asmStatementIdivRegisterAAndRegisterB()
+{
+	if (bits == 64)
+	{
+		ind(); out << "cdq \t\t\t\t;extend eax to edx:eax for idiv" << endl;
+		ind(); out << "idiv " << regB(32) << "\t\t\t\t;integer divide registers A and B and store result in A\n";
+	}
+	if (bits == 32)
+	{
+		ind(); out << "cdq \t\t\t\t;extend eax to edx:eax for idiv" << endl;
+		ind(); out << "idiv " << regB(32) << "\t\t\t\t;integer divide registers A and B and store result in A\n";
+	}
+	if (bits == 16)
+	{
+		ind(); out << "cwd \t\t\t\t;extend eax to edx:eax for idiv" << endl;
+		ind(); out << "idiv " << regB(16) << "\t\t\t\t;integer divide registers A and B and store result in A\n";
+	}
+}
+
 void JWasmGenerator::outputReturnBinaryExpression(BinaryExpression* be)
 {
 	be->leftHandSide->accept(*this);
@@ -309,20 +349,19 @@ void JWasmGenerator::outputReturnBinaryExpression(BinaryExpression* be)
 	asmStatementPopRegisterA("\t\t\t;pop top of stack into register A");
 	if (be->operator1 == '+')
 	{
-		ind(); out << "add " << regA(bits) << ", " << regB(bits) << "\t\t\t;add registers A and B and store result in A\n";
+		asmStatementAddRegisterAAndRegisterB("\t\t\t;add registers A and B and store result in A\n");
 	}
 	else if (be->operator1 == '-')
 	{
-		ind(); out << "sub " << regA(bits) << ", " << regB(bits) << "\t\t\t;subtract register B from A and store result in A\n";
+		asmStatementSubRegisterAAndRegisterB("\t\t\t;subtract register B from A and store result in A\n");
 	}
 	else if (be->operator1 == '*')
 	{
-		ind(); out << "imul " << regA(bits) << ", " << regB(bits) << "\t\t\t;multiply registers A and B and store result in A\n";
+		asmStatementImulRegisterAAndRegisterB("\t\t\t;multiply registers A and B and store result in A\n");
 	}
 	else if (be->operator1 == '/')
 	{
-		ind(); out << "cdq \t\t\t\t;extend eax to edx:eax for idiv" << endl;
-		ind(); out << "idiv " << regB(bits) << "\t\t\t\t;integer divide registers A and B and store result in A\n";
+		asmStatementIdivRegisterAAndRegisterB();
 	}
 }
 
@@ -479,20 +518,19 @@ void JWasmGenerator::visit(BinaryExpression& be)
 	asmStatementPopRegisterA("\t\t\t;pop top of stack into register A");
 	if (be.operator1 == '+')
 	{
-		ind(); out << "add " << regA(32) << ", " << regB(32) << "\t\t;add registers A and B and store result in A\n";
+		asmStatementAddRegisterAAndRegisterB("\t\t\t;add registers A and B and store result in A\n");
 	}
 	else if (be.operator1 == '-')
 	{
-		ind(); out << "sub " << regA(32) << ", " << regB(32) << "\t\t;subtract register B from A and store result in A\n";
+		asmStatementSubRegisterAAndRegisterB("\t\t\t;subtract register B from A and store result in A\n");
 	}
 	else if (be.operator1 == '*')
 	{
-		ind(); out << "imul " << regA(32) << ", " << regB(32) << "\t\t;multiply registers A and B and store result in A\n";
+		asmStatementImulRegisterAAndRegisterB("\t\t\t;multiply registers A and B and store result in A\n");
 	}
 	else if (be.operator1 == '/')
 	{
-		ind(); out << "cdq \t\t\t\t;signed 32-bit value in the EAX register and sign-extends it into the 64-bit pair EDX:EAX" << endl;
-		ind(); out << "idiv " << regB(32) << "\t\t\t;divides the 64-bit value in EDX:EAX by EBX - quotient is stored in EAX -remainder is stored in EDX\n";
+		asmStatementIdivRegisterAAndRegisterB();
 	}
 	asmStatementPushRegisterA("\t\t\t;push register A on to the stack\n");
 }

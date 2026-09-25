@@ -31,12 +31,14 @@ _func1 PROC _a:SWORD,_b:SWORD
 
   pop bx			;pop top of stack into register B
   pop ax			;pop top of stack into register A
-  imul eax, ebx		;multiply registers A and B and store result in A
+  imul ax, bx			;multiply registers A and B and store result in A
+
   push ax			;push register A on to the stack
 
   pop bx			;pop top of stack into register B
   pop ax			;pop top of stack into register A
-  add eax, ebx		;add registers A and B and store result in A
+  add ax, bx			;add registers A and B and store result in A
+
   push ax			;push register A on to the stack
 
   mov _c, ax		;move result of binary expression from register A to variable 'c'
@@ -69,13 +71,14 @@ _func2 PROC _a:SWORD,_b:SWORD
 
   pop bx			;pop top of stack into register B
   pop ax			;pop top of stack into register A
-  cdq 				;signed 32-bit value in the EAX register and sign-extends it into the 64-bit pair EDX:EAX
-  idiv ebx			;divides the 64-bit value in EDX:EAX by EBX - quotient is stored in EAX -remainder is stored in EDX
+  cwd 				;extend eax to edx:eax for idiv
+  idiv bx				;integer divide registers A and B and store result in A
   push ax			;push register A on to the stack
 
   pop bx			;pop top of stack into register B
   pop ax			;pop top of stack into register A
-  add eax, ebx		;add registers A and B and store result in A
+  add ax, bx			;add registers A and B and store result in A
+
   push ax			;push register A on to the stack
 
   mov _c, ax		;move result of binary expression from register A to variable 'c'
@@ -112,6 +115,7 @@ _func3 PROC
   pop bx			;pop top of stack into register B
   pop ax			;pop top of stack into register A
   add ax, bx			;add registers A and B and store result in A
+
   ret 					;return from function
 ;----------------------------------------------------
 _func3 ENDP

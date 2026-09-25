@@ -29,6 +29,8 @@ public:
 	void visit(VariableDeclaration& n) override;
 	void visit(FunctionDeclaration& function) override;
 	void visit(CompoundStatement& n) override;
+	void asmStatementAddRegisterAAndRegisterB();
+	void asmStatementIdivRegisterAAndRegisterB();
 	void outputReturnBinaryExpression(BinaryExpression* be);
 	void visit(ReturnStatement& n) override;
 	void visit(ExpressionStatement& n) override;
@@ -49,6 +51,9 @@ private:
 	void asmStatementMoveRegisterAToVariable(string type, string name, string comment);
 	void moveResultOfInvokeIntoRegisterA(VariableDeclaration* v);
 	void asmStatementMoveImmediateToRegisterA(string type, string name, string comment);
+	void asmStatementAddRegisterAAndRegisterB(string comment);
+	void asmStatementSubRegisterAAndRegisterB(string comment);
+	void asmStatementImulRegisterAAndRegisterB(string comment);
 
 	void outputFunctionComment(FunctionDeclaration& function);
 	void outputFunctionLocals(FunctionDeclaration& function);

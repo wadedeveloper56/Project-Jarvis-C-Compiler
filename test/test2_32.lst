@@ -49,12 +49,14 @@ test2_32.asm
 
 00000014  5B                      pop ebx			;pop top of stack into register B
 00000015  58                      pop eax			;pop top of stack into register A
-00000016  0FAFC3                  imul eax, ebx		;multiply registers A and B and store result in A
+00000016  0FAFC3                  imul eax, ebx			;multiply registers A and B and store result in A
+
 00000019  50                      push eax			;push register A on to the stack
 
 0000001A  5B                      pop ebx			;pop top of stack into register B
 0000001B  58                      pop eax			;pop top of stack into register A
-0000001C  03C3                    add eax, ebx		;add registers A and B and store result in A
+0000001C  03C3                    add eax, ebx			;add registers A and B and store result in A
+
 0000001E  50                      push eax			;push register A on to the stack
 
 0000001F  8945FC                  mov _c, eax		;move result of binary expression from register A to variable 'c'
@@ -92,13 +94,14 @@ test2_32.asm
 
 0000003C  5B                      pop ebx			;pop top of stack into register B
 0000003D  58                      pop eax			;pop top of stack into register A
-0000003E  99                      cdq 				;signed 32-bit value in the EAX register and sign-extends it into the 64-bit pair EDX:EAX
-0000003F  F7FB                    idiv ebx			;divides the 64-bit value in EDX:EAX by EBX - quotient is stored in EAX -remainder is stored in EDX
+0000003E  99                      cdq 				;extend eax to edx:eax for idiv
+0000003F  F7FB                    idiv ebx				;integer divide registers A and B and store result in A
 00000041  50                      push eax			;push register A on to the stack
 
 00000042  5B                      pop ebx			;pop top of stack into register B
 00000043  58                      pop eax			;pop top of stack into register A
-00000044  03C3                    add eax, ebx		;add registers A and B and store result in A
+00000044  03C3                    add eax, ebx			;add registers A and B and store result in A
+
 00000046  50                      push eax			;push register A on to the stack
 
 00000047  8945FC                  mov _c, eax		;move result of binary expression from register A to variable 'c'
@@ -148,6 +151,7 @@ test2_32.asm
 00000086  5B                      pop ebx			;pop top of stack into register B
 00000087  58                      pop eax			;pop top of stack into register A
 00000088  03C3                    add eax, ebx			;add registers A and B and store result in A
+
 0000008A                          ret 					;return from function
 0000008A  C9                *   leave
 0000008B  C3                *   retn
@@ -209,7 +213,7 @@ Symbols:
 @FileName  . . . . . . . . . . .        Text   TEST2_32
 @Interface . . . . . . . . . . .        Number             1h 
 @Model . . . . . . . . . . . . .        Number             7h 
-@Time  . . . . . . . . . . . . .        Text   15:20:17
+@Time  . . . . . . . . . . . . .        Text   16:00:19
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT
@@ -218,4 +222,4 @@ __JWASM__  . . . . . . . . . . .        Number            D4h
 m  . . . . . . . . . . . . . . .        DWord              0h _BSS C
 x  . . . . . . . . . . . . . . .        DWord              0h _DATA C
 
-test2_32.asm: 119 lines, 2 passes, 1 ms, 0 warnings, 0 errors
+test2_32.asm: 123 lines, 2 passes, 1 ms, 0 warnings, 0 errors

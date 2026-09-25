@@ -1,14 +1,14 @@
 PEDUMP - Win32/Win64 COFF EXE/OBJ/LIB file dumper v1.0 (C) Copyright 2025-2026 Christopher D. Wade.
 All Rights Reserved
 Dump of file test2_64.obj
-File Size 574 bytes
+File Size 572 bytes
 File Type: 64-bit COFF OBJECT
 
 FILE HEADER VALUES
               8664 Machine (x64)
                  3 (3) Number of Sections
-          6AB6D781 TimeDateStamp ->  n/a
-               150 PointerToSymbolTable
+          6AB6E0E3 TimeDateStamp ->  n/a
+               14E PointerToSymbolTable
                  D (13) NumberOfSymbols
                  0 (0) SizeOfOptionalHeader
                  0 Flags
@@ -18,9 +18,9 @@ SECTION HEADER #0 (0)
    .text name
        0 physical address
        0 virtual address
-      AB (171) size of raw data
-      8C file pointer to raw data (0000008C to 00000136)
-     138 file pointer to relocation table
+      AA (170) size of raw data
+      8C file pointer to raw data (0000008C to 00000135)
+     136 file pointer to relocation table
        0 file pointer to line numbers
        2 number of relocations
        0 number of line numbers
@@ -42,7 +42,7 @@ RAW DATA #0 (0)
 00000070  00 e8 8a ff ff ff 48 83  c4 20 89 45 fc 50 48 83  ......H.. .E.PH.
 00000080  ec 20 8b 0d 00 00 00 00  ba 06 00 00 00 e8 9b ff  . ..............
 00000090  ff ff 48 83 c4 20 89 45  f8 50 48 63 45 f8 50 48  ..H.. .E.PHcE.PH
-000000a0  63 45 fc 50 5b 58 48 03  c3 c9 c3                 cE.P[XH....
+000000a0  63 45 fc 50 5b 58 03 c3  c9 c3                    cE.P[X....
 SECTION HEADER #0 (0) RELOCATIONS
   Address: 00000068  SymIndex: 0000000B  Type: ???_4
   Address: 00000084  SymIndex: 0000000C  Type: ???_4
@@ -53,7 +53,7 @@ SECTION HEADER #1 (1)
        0 physical address
        0 virtual address
        4 (4) size of raw data
-     14C file pointer to raw data (0000014C to 0000014F)
+     14A file pointer to raw data (0000014A to 0000014D)
        0 file pointer to relocation table
        0 file pointer to line numbers
        0 number of relocations
@@ -94,7 +94,7 @@ Indx Sectn   Value   Type  Storage Name
 0000 DEBUG 00000000  0000 FILE     .file
      * test2_64.asm
 0002     1 00000000  0000 STATIC   .text
-     * Section: 0000  Len: 000AB  Relocs: 0002  LineNums: 0000 checksum:00000000
+     * Section: 0000  Len: 000AA  Relocs: 0002  LineNums: 0000 checksum:00000000
 0004     2 00000000  0000 STATIC   .data
      * Section: 0000  Len: 00004  Relocs: 0000  LineNums: 0000 checksum:00000000
 0006     3 00000000  0000 STATIC   .bss

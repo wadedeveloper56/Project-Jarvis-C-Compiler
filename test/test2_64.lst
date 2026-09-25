@@ -48,12 +48,14 @@ test2_64.asm
 
 00000018  5B                      pop rbx			;pop top of stack into register B
 00000019  58                      pop rax			;pop top of stack into register A
-0000001A  0FAFC3                  imul eax, ebx		;multiply registers A and B and store result in A
+0000001A  0FAFC3                  imul eax, ebx			;multiply registers A and B and store result in A
+
 0000001D  50                      push rax			;push register A on to the stack
 
 0000001E  5B                      pop rbx			;pop top of stack into register B
 0000001F  58                      pop rax			;pop top of stack into register A
-00000020  03C3                    add eax, ebx		;add registers A and B and store result in A
+00000020  03C3                    add eax, ebx			;add registers A and B and store result in A
+
 00000022  50                      push rax			;push register A on to the stack
 
 00000023  8945FC                  mov _c, eax		;move result of binary expression from register A to variable 'c'
@@ -91,13 +93,14 @@ test2_64.asm
 
 00000045  5B                      pop rbx			;pop top of stack into register B
 00000046  58                      pop rax			;pop top of stack into register A
-00000047  99                      cdq 				;signed 32-bit value in the EAX register and sign-extends it into the 64-bit pair EDX:EAX
-00000048  F7FB                    idiv ebx			;divides the 64-bit value in EDX:EAX by EBX - quotient is stored in EAX -remainder is stored in EDX
+00000047  99                      cdq 				;extend eax to edx:eax for idiv
+00000048  F7FB                    idiv ebx				;integer divide registers A and B and store result in A
 0000004A  50                      push rax			;push register A on to the stack
 
 0000004B  5B                      pop rbx			;pop top of stack into register B
 0000004C  58                      pop rax			;pop top of stack into register A
-0000004D  03C3                    add eax, ebx		;add registers A and B and store result in A
+0000004D  03C3                    add eax, ebx			;add registers A and B and store result in A
+
 0000004F  50                      push rax			;push register A on to the stack
 
 00000050  8945FC                  mov _c, eax		;move result of binary expression from register A to variable 'c'
@@ -148,15 +151,16 @@ test2_64.asm
 
 000000A4  5B                      pop rbx			;pop top of stack into register B
 000000A5  58                      pop rax			;pop top of stack into register A
-000000A6  4803C3                  add rax, rbx			;add registers A and B and store result in A
-000000A9                          ret 					;return from function
-000000A9  C9                *   leave
-000000AA  C3                *   retn
+000000A6  03C3                    add eax, ebx			;add registers A and B and store result in A
+
+000000A8                          ret 					;return from function
+000000A8  C9                *   leave
+000000A9  C3                *   retn
                                 ;----------------------------------------------------
-000000AB                        _func3 ENDP
+000000AA                        _func3 ENDP
 
                                 end
-000000AB                    *   _TEXT ends
+000000AA                    *   _TEXT ends
 
 
 Macros:
@@ -177,7 +181,7 @@ Segments and Groups:
 FLAT . . . . . . . . . . . . . .        GROUP
 _BSS . . . . . . . . . . . . . .        64 Bit   00000004 Para    Public  'BSS'
 _DATA  . . . . . . . . . . . . .        64 Bit   00000004 Para    Public  'DATA'
-_TEXT  . . . . . . . . . . . . .        64 Bit   000000AB Para    Public  'CODE'
+_TEXT  . . . . . . . . . . . . .        64 Bit   000000AA Para    Public  'CODE'
 
 
 Procedures, parameters and locals:
@@ -192,7 +196,7 @@ _func2 . . . . . . . . . . . . .        P Near   0000002D _TEXT    0000002D Publ
   _b . . . . . . . . . . . . . .        DWord             rbp + 0018
   _a . . . . . . . . . . . . . .        DWord             rbp + 0010
   _c . . . . . . . . . . . . . .        DWord             rbp - 0004
-_func3 . . . . . . . . . . . . .        P Near   0000005A _TEXT    00000051 Public   FASTCALL
+_func3 . . . . . . . . . . . . .        P Near   0000005A _TEXT    00000050 Public   FASTCALL
   _y . . . . . . . . . . . . . .        DWord             rbp - 0004
   _x . . . . . . . . . . . . . .        DWord             rbp - 0008
 
@@ -211,7 +215,7 @@ Symbols:
 @Interface . . . . . . . . . . .        Number             7h 
 @Model . . . . . . . . . . . . .        Number             7h 
 @ReservedStack . . . . . . . . .        Number             0h 
-@Time  . . . . . . . . . . . . .        Text   15:20:17
+@Time  . . . . . . . . . . . . .        Text   16:00:19
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT
@@ -220,4 +224,4 @@ __JWASM__  . . . . . . . . . . .        Number            D4h
 m  . . . . . . . . . . . . . . .        DWord              0h _BSS FASTCALL
 x  . . . . . . . . . . . . . . .        DWord              0h _DATA FASTCALL
 
-test2_64.asm: 117 lines, 2 passes, 1 ms, 0 warnings, 0 errors
+test2_64.asm: 121 lines, 2 passes, 1 ms, 0 warnings, 0 errors
