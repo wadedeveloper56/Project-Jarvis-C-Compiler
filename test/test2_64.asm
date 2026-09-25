@@ -24,7 +24,7 @@ _func1 PROC _a:SDWORD,_b:SDWORD
   movsxd rax, _b		;load and sign extend 'b' in to register A
   push rax			;push register A on to stack
 
-  mov rax, 5		;load immediate into register
+  mov eax, 5		;load immediate into register
   push rax			;push register A on to the stack
 
   pop rbx			;pop top of stack into register B
@@ -39,6 +39,7 @@ _func1 PROC _a:SDWORD,_b:SDWORD
 
   mov _c, eax		;move result of binary expression from register A to variable 'c'
 ;----------Handle Function Body Statements-----------
+  movsxd rax, _c		;load and sign extend 'c' in to register A
   push rax			;push register A on to stack
 
   ret 					;return from function
@@ -61,7 +62,7 @@ _func2 PROC _a:SDWORD,_b:SDWORD
   movsxd rax, _b		;load and sign extend 'b' in to register A
   push rax			;push register A on to stack
 
-  mov rax, 3		;load immediate into register
+  mov eax, 3		;load immediate into register
   push rax			;push register A on to the stack
 
   pop rbx			;pop top of stack into register B
@@ -77,6 +78,7 @@ _func2 PROC _a:SDWORD,_b:SDWORD
 
   mov _c, eax		;move result of binary expression from register A to variable 'c'
 ;----------Handle Function Body Statements-----------
+  movsxd rax, _c		;load and sign extend 'c' in to register A
   push rax			;push register A on to stack
 
   ret 					;return from function
@@ -99,12 +101,14 @@ _func3 PROC
   mov _x, eax			;move result of invoke from register A to variable 'x'
   push rax			;push the result in register A onto stack
 ;----------Handle Function Body Statements-----------
+  movsxd rax, _x		;load and sign extend 'x' in to register A
   push rax			;push register A on to stack
 
+  movsxd rax, _y		;load and sign extend 'y' in to register A
   push rax			;push register A on to stack
 
-  pop rbx				;pop top of stack into register B
-  pop rax				;pop top of stack into register A
+  pop rbx			;pop top of stack into register B
+  pop rax			;pop top of stack into register A
   add rax, rbx			;add registers A and B and store result in A
   ret 					;return from function
 ;----------------------------------------------------

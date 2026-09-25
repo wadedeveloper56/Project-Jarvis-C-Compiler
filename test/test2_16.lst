@@ -46,21 +46,22 @@ test2_16.asm
 0000000A  8B4606                  mov ax, _b		;load parameter b
 0000000D  50                      push ax			;push register A on to stack
 
-0000000E  66B805000000            mov eax, 5		;load immediate into register
-00000014  50                      push ax			;push register A on to the stack
+0000000E  B80500                  mov ax, 5		;load immediate into register
+00000011  50                      push ax			;push register A on to the stack
 
-00000015  5B                      pop bx			;pop top of stack into register B
-00000016  58                      pop ax			;pop top of stack into register A
-00000017  660FAFC3                imul eax, ebx		;multiply registers A and B and store result in A
-0000001B  50                      push ax			;push register A on to the stack
+00000012  5B                      pop bx			;pop top of stack into register B
+00000013  58                      pop ax			;pop top of stack into register A
+00000014  660FAFC3                imul eax, ebx		;multiply registers A and B and store result in A
+00000018  50                      push ax			;push register A on to the stack
 
-0000001C  5B                      pop bx			;pop top of stack into register B
-0000001D  58                      pop ax			;pop top of stack into register A
-0000001E  6603C3                  add eax, ebx		;add registers A and B and store result in A
-00000021  50                      push ax			;push register A on to the stack
+00000019  5B                      pop bx			;pop top of stack into register B
+0000001A  58                      pop ax			;pop top of stack into register A
+0000001B  6603C3                  add eax, ebx		;add registers A and B and store result in A
+0000001E  50                      push ax			;push register A on to the stack
 
-00000022  8946FE                  mov _c, ax		;move result of binary expression from register A to variable 'c'
+0000001F  8946FE                  mov _c, ax		;move result of binary expression from register A to variable 'c'
                                 ;----------Handle Function Body Statements-----------
+00000022  8B46FE                  mov ax, _c		;load parameter c
 00000025  50                      push ax			;push register A on to stack
 
 00000026                          ret 					;return from function
@@ -88,22 +89,23 @@ test2_16.asm
 00000032  8B4606                  mov ax, _b		;load parameter b
 00000035  50                      push ax			;push register A on to stack
 
-00000036  66B803000000            mov eax, 3		;load immediate into register
-0000003C  50                      push ax			;push register A on to the stack
+00000036  B80300                  mov ax, 3		;load immediate into register
+00000039  50                      push ax			;push register A on to the stack
 
-0000003D  5B                      pop bx			;pop top of stack into register B
-0000003E  58                      pop ax			;pop top of stack into register A
-0000003F  6699                    cdq 				;signed 32-bit value in the EAX register and sign-extends it into the 64-bit pair EDX:EAX
-00000041  66F7FB                  idiv ebx			;divides the 64-bit value in EDX:EAX by EBX - quotient is stored in EAX -remainder is stored in EDX
-00000044  50                      push ax			;push register A on to the stack
+0000003A  5B                      pop bx			;pop top of stack into register B
+0000003B  58                      pop ax			;pop top of stack into register A
+0000003C  6699                    cdq 				;signed 32-bit value in the EAX register and sign-extends it into the 64-bit pair EDX:EAX
+0000003E  66F7FB                  idiv ebx			;divides the 64-bit value in EDX:EAX by EBX - quotient is stored in EAX -remainder is stored in EDX
+00000041  50                      push ax			;push register A on to the stack
 
-00000045  5B                      pop bx			;pop top of stack into register B
-00000046  58                      pop ax			;pop top of stack into register A
-00000047  6603C3                  add eax, ebx		;add registers A and B and store result in A
-0000004A  50                      push ax			;push register A on to the stack
+00000042  5B                      pop bx			;pop top of stack into register B
+00000043  58                      pop ax			;pop top of stack into register A
+00000044  6603C3                  add eax, ebx		;add registers A and B and store result in A
+00000047  50                      push ax			;push register A on to the stack
 
-0000004B  8946FE                  mov _c, ax		;move result of binary expression from register A to variable 'c'
+00000048  8946FE                  mov _c, ax		;move result of binary expression from register A to variable 'c'
                                 ;----------Handle Function Body Statements-----------
+0000004B  8B46FE                  mov ax, _c		;load parameter c
 0000004E  50                      push ax			;push register A on to stack
 
 0000004F                          ret 					;return from function
@@ -139,21 +141,23 @@ test2_16.asm
 00000073  8946FC                  mov _x, ax			;move result of invoke from register A to variable 'x'
 00000076  50                      push ax			;push the result in register A onto stack
                                 ;----------Handle Function Body Statements-----------
-00000077  50                      push ax			;push register A on to stack
+00000077  8B46FC                  mov ax, _x		;load parameter x
+0000007A  50                      push ax			;push register A on to stack
 
-00000078  50                      push ax			;push register A on to stack
+0000007B  8B46FE                  mov ax, _y		;load parameter y
+0000007E  50                      push ax			;push register A on to stack
 
-00000079  5B                      pop bx				;pop top of stack into register B
-0000007A  58                      pop ax				;pop top of stack into register A
-0000007B  03C3                    add ax, bx			;add registers A and B and store result in A
-0000007D                          ret 					;return from function
-0000007D  C9                *   leave
-0000007E  C3                *   retn
+0000007F  5B                      pop bx			;pop top of stack into register B
+00000080  58                      pop ax			;pop top of stack into register A
+00000081  03C3                    add ax, bx			;add registers A and B and store result in A
+00000083                          ret 					;return from function
+00000083  C9                *   leave
+00000084  C3                *   retn
                                 ;----------------------------------------------------
-0000007F                        _func3 ENDP
+00000085                        _func3 ENDP
 
                                 end
-0000007F                    *   _TEXT ends
+00000085                    *   _TEXT ends
 
 
 Macros:
@@ -171,7 +175,7 @@ Segments and Groups:
 
                 N a m e                 Size     Length   Align   Combine Class
 
-_TEXT  . . . . . . . . . . . . .        16 Bit   007F     Word    Public  'CODE'
+_TEXT  . . . . . . . . . . . . .        16 Bit   0085     Word    Public  'CODE'
 DGROUP . . . . . . . . . . . . .        GROUP
 _DATA  . . . . . . . . . . . . .        16 Bit   0002     Word    Public  'DATA'
 _BSS . . . . . . . . . . . . . .        16 Bit   0002     Word    Public  'BSS'
@@ -189,7 +193,7 @@ _func2 . . . . . . . . . . . . .        P Near   0028     _TEXT    0029 Public  
   _a . . . . . . . . . . . . . .        Word              bp + 0004
   _b . . . . . . . . . . . . . .        Word              bp + 0006
   _c . . . . . . . . . . . . . .        Word              bp - 0002
-_func3 . . . . . . . . . . . . .        P Near   0051     _TEXT    002E Public   C
+_func3 . . . . . . . . . . . . .        P Near   0051     _TEXT    0034 Public   C
   _y . . . . . . . . . . . . . .        Word              bp - 0002
   _x . . . . . . . . . . . . . .        Word              bp - 0004
 
@@ -207,7 +211,7 @@ Symbols:
 @FileName  . . . . . . . . . . .        Text   TEST2_16
 @Interface . . . . . . . . . . .        Number             1h 
 @Model . . . . . . . . . . . . .        Number             2h 
-@Time  . . . . . . . . . . . . .        Text   10:57:20
+@Time  . . . . . . . . . . . . .        Text   15:20:17
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   DGROUP
@@ -216,4 +220,4 @@ __JWASM__  . . . . . . . . . . .        Number            D4h
 m  . . . . . . . . . . . . . . .        Word               0h _BSS C
 x  . . . . . . . . . . . . . . .        Word               0h _DATA C
 
-test2_16.asm: 115 lines, 2 passes, 1 ms, 0 warnings, 0 errors
+test2_16.asm: 119 lines, 2 passes, 1 ms, 0 warnings, 0 errors

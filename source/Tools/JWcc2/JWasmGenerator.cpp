@@ -187,7 +187,7 @@ void JWasmGenerator::outputFunctionLocals(FunctionDeclaration& function)
 
 void JWasmGenerator::moveResultOfInvokeIntoRegisterA(VariableDeclaration* v)
 {
-	asmStatementMoveRegisterToVariable(v->type, v->name, "\t\t\t;move result of invoke from register A to variable '" + v->name + "'");
+	asmStatementMoveRegisterAToVariable(v->type, v->name, "\t\t\t;move result of invoke from register A to variable '" + v->name + "'");
 	asmStatementPushRegisterA("\t\t\t;push the result in register A onto stack");
 }
 
@@ -208,19 +208,26 @@ void JWasmGenerator::outputFunctionLocalsInitializationFunctionCall(CallExpressi
 	out << "\t;invoke function '" << exp->callee << "' with " << exp->args.size() << " arguments" << endl;
 }
 
-void JWasmGenerator::asmStatementMoveSignExtendVariableToRegister(string type, string name, string comment)
+void JWasmGenerator::asmStatementMoveSignExtendVariableToRegisterA(string type, string name, string comment)
 {
-	ind(); out << "movsxd " << regA(64) << ", _" << name << "\t\t;load and sign extend '" << name << "' in to register A\n";
+	ind(); out << "movsxd " << regA(64) << ", _" << name << comment << endl;
 }
 
-void JWasmGenerator::asmStatementMoveVariableToRegister(string type, string name, string comment)
+void JWasmGenerator::asmStatementMoveVariableToRegisterA(string type, string name, string comment)
 {
 	if (type == "int" && bits == 16) { ind(); out << "mov " << regA(16) << ", _" << name << comment << endl; }
 	if (type == "int" && bits == 32) { ind(); out << "mov " << regA(32) << ", _" << name << comment << endl; }
 	if (type == "int" && bits == 64) { ind(); out << "mov " << regA(32) << ", _" << name << comment << endl; }
 }
 
-void JWasmGenerator::asmStatementMoveRegisterToVariable(string type, string name, string comment)
+void JWasmGenerator::asmStatementMoveImmediateToRegisterA(string type, string name, string comment)
+{
+	if (type == "int" && bits == 16) { ind(); out << "mov " << regA(16) << ", " << name << comment << endl; }
+	if (type == "int" && bits == 32) { ind(); out << "mov " << regA(32) << ", " << name << comment << endl; }
+	if (type == "int" && bits == 64) { ind(); out << "mov " << regA(32) << ", " << name << comment << endl; }
+}
+
+void JWasmGenerator::asmStatementMoveRegisterAToVariable(string type, string name, string comment)
 {
 	if (type == "int" && bits == 16) { ind(); out << "mov _" << name << ", " << regA(16) << comment << endl; }
 	if (type == "int" && bits == 32) { ind(); out << "mov _" << name << ", " << regA(32) << comment << endl; }
@@ -251,7 +258,7 @@ void JWasmGenerator::outputFunctionLocalsInitialization(FunctionDeclaration& fun
 					{
 						exp->accept(*this);
 					}
-					asmStatementMoveRegisterToVariable(variableDeclaration->type, variableDeclaration->name, "\t\t;move result of binary expression from register A to variable '" + variableDeclaration->name + "'");
+					asmStatementMoveRegisterAToVariable(variableDeclaration->type, variableDeclaration->name, "\t\t;move result of binary expression from register A to variable '" + variableDeclaration->name + "'");
 				}
 			}
 		}
@@ -298,8 +305,8 @@ void JWasmGenerator::outputReturnBinaryExpression(BinaryExpression* be)
 {
 	be->leftHandSide->accept(*this);
 	be->rightHandSide->accept(*this);
-	ind();  out << "pop " << regB(bits) << "\t\t\t\t;pop top of stack into register B\n";
-	ind();  out << "pop " << regA(bits) << "\t\t\t\t;pop top of stack into register A\n";
+	asmStatementPopRegisterB("\t\t\t;pop top of stack into register B");
+	asmStatementPopRegisterA("\t\t\t;pop top of stack into register A");
 	if (be->operator1 == '+')
 	{
 		ind(); out << "add " << regA(bits) << ", " << regB(bits) << "\t\t\t;add registers A and B and store result in A\n";
@@ -349,12 +356,17 @@ void JWasmGenerator::visit(NumberExpression& n)
 	// push immediate into register/stack
 	if (bits == 64)
 	{
-		ind(); out << "mov " << regA(64) << ", " << n.value << "\t\t;load immediate into register\n";
+		asmStatementMoveImmediateToRegisterA("int", to_string(n.value), "\t\t;load immediate into register");
+		asmStatementPushRegisterA("\t\t\t;push register A on to the stack\n");
+	}
+	else if (bits == 32)
+	{
+		asmStatementMoveImmediateToRegisterA("int", to_string(n.value), "\t\t;load immediate into register");
 		asmStatementPushRegisterA("\t\t\t;push register A on to the stack\n");
 	}
 	else
 	{
-		ind(); out << "mov " << regA(32) << ", " << n.value << "\t\t;load immediate into register\n";
+		asmStatementMoveImmediateToRegisterA("int", to_string(n.value), "\t\t;load immediate into register");
 		asmStatementPushRegisterA("\t\t\t;push register A on to the stack\n");
 	}
 }
@@ -367,25 +379,25 @@ void JWasmGenerator::visit(VariableExpression& expression)
 	{
 		if (it->second.type == "int" && bits == 64)
 		{
-			asmStatementMoveSignExtendVariableToRegister(it->second.type, it->first, "\t\t;load and sign extend '" + it->first + "' in to register A");
+			asmStatementMoveSignExtendVariableToRegisterA(it->second.type, it->first, "\t\t;load and sign extend '" + it->first + "' in to register A");
 			asmStatementPushRegisterA("\t\t\t;push register A on to stack\n");
 		}
 		else
 		{
-			asmStatementMoveVariableToRegister(it->second.type, it->first, "\t\t;load parameter " + it->first);
+			asmStatementMoveVariableToRegisterA(it->second.type, it->first, "\t\t;load parameter " + it->first);
 			asmStatementPushRegisterA("\t\t\t;push register A on to stack\n");
 		}
 	}
 	else if (itLocal != localIndex.end())
 	{
-		if (it->second.type == "int" && bits == 64)
+		if (itLocal->second.type == "int" && bits == 64)
 		{
-			asmStatementMoveSignExtendVariableToRegister(it->second.type, it->first, "\t\t;load and sign extend '" + it->first + "' in to register A");
+			asmStatementMoveSignExtendVariableToRegisterA(it->second.type, itLocal->first, "\t\t;load and sign extend '" + itLocal->first + "' in to register A");
 			asmStatementPushRegisterA("\t\t\t;push register A on to stack\n");
 		}
 		else
 		{
-			asmStatementMoveVariableToRegister(it->second.type, it->first, "\t\t;load parameter " + it->first);
+			asmStatementMoveVariableToRegisterA(itLocal->second.type, itLocal->first, "\t\t;load parameter " + itLocal->first);
 			asmStatementPushRegisterA("\t\t\t;push register A on to stack\n");
 		}
 	}
@@ -495,12 +507,12 @@ void JWasmGenerator::visit(AssignExpression& n)
 	auto itLocal = localIndex.find(n.name);
 	if (it != paramIndex.end())
 	{
-		asmStatementMoveRegisterToVariable(it->second.type, it->first, "\t\t;store parameter " + it->first);
+		asmStatementMoveRegisterAToVariable(it->second.type, it->first, "\t\t;store parameter " + it->first);
 		out << "mov " << n.name << ", " << regA(bits) << "\t\t\t; store parameter" << n.name << "\n";
 	}
 	else if (itLocal != localIndex.end())
 	{
-		asmStatementMoveRegisterToVariable(itLocal->second.type, itLocal->first, "\t\t;store local " + itLocal->first);
+		asmStatementMoveRegisterAToVariable(itLocal->second.type, itLocal->first, "\t\t;store local " + itLocal->first);
 		out << "mov _" << n.name << ", " << regA(bits) << "\t\t\t; store local " << n.name << "\n";
 	}
 	else

@@ -1,7 +1,7 @@
 PEDUMP - Win32/Win64 COFF EXE/OBJ/LIB file dumper v1.0 (C) Copyright 2025-2026 Christopher D. Wade.
 All Rights Reserved
 Dump of file test2_16.obj
-File Size 315 bytes
+File Size 321 bytes
 File Type: 16-bit DOS\Windows OBJECT
 
 Type 0x80 (THEADR) : length 0x000E (14)
@@ -13,7 +13,7 @@ Type 0x96 (LNAMES) : length 0x0028 (40)
 00000034  53 53 04 5f 42 53 53 d1                           SS._BSS.
 
 Type 0x98 (SEGDEF) : length 0x0007 (7)
-0000003f  48 7f 00 03 02 01 94                              H......
+0000003f  48 85 00 03 02 01 8e                              H......
 
 Type 0x88 (COMENT) : length 0x0005 (5)
 00000049  80 fe 4f 01 a5                                    ..O..
@@ -38,20 +38,20 @@ Type 0x88 (COMENT) : length 0x0004 (4)
 Type 0xA0 (LEDATA) : length 0x0006 (6)
 0000009c  02 00 00 03 00 55                                 .....U
 
-Type 0xA0 (LEDATA) : length 0x0083 (131)
+Type 0xA0 (LEDATA) : length 0x0089 (137)
 000000a5  01 00 00 55 8b ec 83 ec  02 8b 46 04 50 8b 46 06  ...U......F.P.F.
-000000b5  50 66 b8 05 00 00 00 50  5b 58 66 0f af c3 50 5b  Pf.....P[Xf...P[
-000000c5  58 66 03 c3 50 89 46 fe  50 c9 c3 55 8b ec 83 ec  Xf..P.F.P..U....
-000000d5  02 8b 46 04 50 8b 46 06  50 66 b8 03 00 00 00 50  ..F.P.F.Pf.....P
-000000e5  5b 58 66 99 66 f7 fb 50  5b 58 66 03 c3 50 89 46  [Xf.f..P[Xf..P.F
+000000b5  50 b8 05 00 50 5b 58 66  0f af c3 50 5b 58 66 03  P...P[Xf...P[Xf.
+000000c5  c3 50 89 46 fe 8b 46 fe  50 c9 c3 55 8b ec 83 ec  .P.F..F.P..U....
+000000d5  02 8b 46 04 50 8b 46 06  50 b8 03 00 50 5b 58 66  ..F.P.F.P...P[Xf
+000000e5  99 66 f7 fb 50 5b 58 66  03 c3 50 89 46 fe 8b 46  .f..P[Xf..P.F..F
 000000f5  fe 50 c9 c3 55 8b ec 83  ec 04 6a 04 ff 36 00 00  .P..U.....j..6..
 00000105  e8 a0 ff 83 c4 04 89 46  fe 50 6a 06 ff 36 00 00  .......F.Pj..6..
-00000115  e8 b8 ff 83 c4 04 89 46  fc 50 50 50 5b 58 03 c3  .......F.PPP[X..
-00000125  c9 c3 d2                                          ...
+00000115  e8 b8 ff 83 c4 04 89 46  fc 50 8b 46 fc 50 8b 46  .......F.P.F.P.F
+00000125  fe 50 5b 58 03 c3 c9 c3  5e                       .P[X....^
 
 Type 0x9C (FIXUPP) : length 0x000B (11)
-0000012b  c4 5b 14 01 02 c4 6b 14  01 03 dc                 .[....k....
+00000131  c4 5b 14 01 02 c4 6b 14  01 03 dc                 .[....k....
 
 Type 0x8A : length 0x0002 (2)
-00000139  00 74                                             .t
+0000013f  00 74                                             .t
 

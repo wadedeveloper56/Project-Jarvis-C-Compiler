@@ -84,7 +84,7 @@ Symbols:
 @Interface . . . . . . . . . . .        Number             7h 
 @Model . . . . . . . . . . . . .        Number             7h 
 @ReservedStack . . . . . . . . .        Number             0h 
-@Time  . . . . . . . . . . . . .        Text   10:57:18
+@Time  . . . . . . . . . . . . .        Text   15:20:14
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT
@@ -94,4 +94,4 @@ _var1  . . . . . . . . . . . . .        Byte               0h _BSS FASTCALL
 _var2  . . . . . . . . . . . . .        Word               1h _BSS FASTCALL
 _var3  . . . . . . . . . . . . .        DWord              3h _BSS FASTCALL
 
-C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\64bit\test1.asm: 19 lines, 2 passes, 1 ms, 0 warnings, 0 errors
+C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\64bit\test1.asm: 19 lines, 2 passes, 0 ms, 0 warnings, 0 errors

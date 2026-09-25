@@ -44,10 +44,11 @@ private:
 	void asmStatementPopRegisterA(string comment);
 	void asmStatementPushRegisterB(string comment);
 	void asmStatementPopRegisterB(string comment);
-	void asmStatementMoveVariableToRegister(string type, string name, string comment);
-	void asmStatementMoveSignExtendVariableToRegister(string type, string name, string comment);
-	void asmStatementMoveRegisterToVariable(string type, string name, string comment);
+	void asmStatementMoveVariableToRegisterA(string type, string name, string comment);
+	void asmStatementMoveSignExtendVariableToRegisterA(string type, string name, string comment);
+	void asmStatementMoveRegisterAToVariable(string type, string name, string comment);
 	void moveResultOfInvokeIntoRegisterA(VariableDeclaration* v);
+	void asmStatementMoveImmediateToRegisterA(string type, string name, string comment);
 
 	void outputFunctionComment(FunctionDeclaration& function);
 	void outputFunctionLocals(FunctionDeclaration& function);

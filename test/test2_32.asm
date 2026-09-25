@@ -41,6 +41,7 @@ _func1 PROC _a:SDWORD,_b:SDWORD
 
   mov _c, eax		;move result of binary expression from register A to variable 'c'
 ;----------Handle Function Body Statements-----------
+  mov eax, _c		;load parameter c
   push eax			;push register A on to stack
 
   ret 					;return from function
@@ -79,6 +80,7 @@ _func2 PROC _a:SDWORD,_b:SDWORD
 
   mov _c, eax		;move result of binary expression from register A to variable 'c'
 ;----------Handle Function Body Statements-----------
+  mov eax, _c		;load parameter c
   push eax			;push register A on to stack
 
   ret 					;return from function
@@ -101,12 +103,14 @@ _func3 PROC
   mov _x, eax			;move result of invoke from register A to variable 'x'
   push eax			;push the result in register A onto stack
 ;----------Handle Function Body Statements-----------
+  mov eax, _x		;load parameter x
   push eax			;push register A on to stack
 
+  mov eax, _y		;load parameter y
   push eax			;push register A on to stack
 
-  pop ebx				;pop top of stack into register B
-  pop eax				;pop top of stack into register A
+  pop ebx			;pop top of stack into register B
+  pop eax			;pop top of stack into register A
   add eax, ebx			;add registers A and B and store result in A
   ret 					;return from function
 ;----------------------------------------------------
