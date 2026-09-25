@@ -24,17 +24,18 @@ _func1 PROC a:SDWORD,b:SDWORD
   push rax			;push register A on to stack
   mov rax, 5		;load immediate into register
   push rax			;push register A on to the stack
-  pop ebx			;pop top of stack into register B
-  pop eax			;pop top of stack into register A
+  pop rbx			;pop top of stack into register B
+  pop rax			;pop top of stack into register A
   imul eax, ebx		;multiply registers A and B and store result in A
-  push eax			;push register A on to the stack
-  pop ebx			;pop top of stack into register B
-  pop eax			;pop top of stack into register A
+  push rax			;push register RAX on to the stack
+  pop rbx			;pop top of stack into register B
+  pop rax			;pop top of stack into register A
   add eax, ebx		;add registers A and B and store result in A
-  push eax			;push register A on to the stack
+  push rax			;push register RAX on to the stack
   mov _c, eax		;move result of binary expression from register A in to c
 ;----------Handle Function Body Statements-----------
-  mov eax, _c			;load local 'c' in to register A
+  movsxd rax, _c		;load and sign extend 'c' in to register A
+  push rax			;push register A on to stack
   ret 					;return from function
 ;----------------------------------------------------
 _func1 ENDP
@@ -55,18 +56,19 @@ _func2 PROC a:SDWORD,b:SDWORD
   push rax			;push register A on to stack
   mov rax, 3		;load immediate into register
   push rax			;push register A on to the stack
-  pop ebx			;pop top of stack into register B
-  pop eax			;pop top of stack into register A
-  cdq 				;extend eax to edx:eax for idiv
-  idiv ebx			;integer divide registers A and B and store result in A
-  push eax			;push register A on to the stack
-  pop ebx			;pop top of stack into register B
-  pop eax			;pop top of stack into register A
+  pop rbx			;pop top of stack into register B
+  pop rax			;pop top of stack into register A
+  cdq 				;signed 32-bit value in the EAX register and sign-extends it into the 64-bit pair EDX:EAX
+  idiv ebx			;divides the 64-bit value in EDX:EAX by EBX - quotient is stored in EAX -remainder is stored in EDX
+  push rax			;push register RAX on to the stack
+  pop rbx			;pop top of stack into register B
+  pop rax			;pop top of stack into register A
   add eax, ebx		;add registers A and B and store result in A
-  push eax			;push register A on to the stack
+  push rax			;push register RAX on to the stack
   mov _c, eax		;move result of binary expression from register A in to c
 ;----------Handle Function Body Statements-----------
-  mov eax, _c			;load local 'c' in to register A
+  movsxd rax, _c		;load and sign extend 'c' in to register A
+  push rax			;push register A on to stack
   ret 					;return from function
 ;----------------------------------------------------
 _func2 ENDP
@@ -85,8 +87,10 @@ _func3 PROC
   invoke _func2, m, 6	;invoke function 'func2' with 2 arguments
   mov _x, eax			;move result of invoke from register RAX to variable 'x'
 ;----------Handle Function Body Statements-----------
-  mov eax, _x			;load local 'x' in to register A
-  mov eax, _y			;load local 'y' in to register A
+  movsxd rax, _x		;load and sign extend 'x' in to register A
+  push rax			;push register A on to stack
+  movsxd rax, _y		;load and sign extend 'y' in to register A
+  push rax			;push register A on to stack
   pop rbx				;pop top of stack into register B
   pop rax				;pop top of stack into register A
   add rax, rbx			;add registers A and B and store result in A

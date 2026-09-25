@@ -29,14 +29,15 @@ _func1 PROC a:SDWORD,b:SDWORD
   pop ebx			;pop top of stack into register B
   pop eax			;pop top of stack into register A
   imul eax, ebx		;multiply registers A and B and store result in A
-  push eax			;push register A on to the stack
+  push eax			;push register EAX on to the stack
   pop ebx			;pop top of stack into register B
   pop eax			;pop top of stack into register A
   add eax, ebx		;add registers A and B and store result in A
-  push eax			;push register A on to the stack
+  push eax			;push register EAX on to the stack
   mov _c, eax		;move result of binary expression from register A in to c
 ;----------Handle Function Body Statements-----------
-  mov eax, _c			;load local 'c' in to register A
+  mov eax, _c			;load 'c' in to register A
+  push eax			;push register A on to stack
   ret 					;return from function
 ;----------------------------------------------------
 _func1 ENDP
@@ -59,16 +60,17 @@ _func2 PROC a:SDWORD,b:SDWORD
   push eax			;push register A on to the stack
   pop ebx			;pop top of stack into register B
   pop eax			;pop top of stack into register A
-  cdq 				;extend eax to edx:eax for idiv
-  idiv ebx			;integer divide registers A and B and store result in A
-  push eax			;push register A on to the stack
+  cdq 				;signed 32-bit value in the EAX register and sign-extends it into the 64-bit pair EDX:EAX
+  idiv ebx			;divides the 64-bit value in EDX:EAX by EBX - quotient is stored in EAX -remainder is stored in EDX
+  push eax			;push register EAX on to the stack
   pop ebx			;pop top of stack into register B
   pop eax			;pop top of stack into register A
   add eax, ebx		;add registers A and B and store result in A
-  push eax			;push register A on to the stack
+  push eax			;push register EAX on to the stack
   mov _c, eax		;move result of binary expression from register A in to c
 ;----------Handle Function Body Statements-----------
-  mov eax, _c			;load local 'c' in to register A
+  mov eax, _c			;load 'c' in to register A
+  push eax			;push register A on to stack
   ret 					;return from function
 ;----------------------------------------------------
 _func2 ENDP
@@ -89,8 +91,10 @@ _func3 PROC
   mov _x, eax			;move result of invoke from register EAX to variable 'x'
   push eax				;push the result in register A onto stack
 ;----------Handle Function Body Statements-----------
-  mov eax, _x			;load local 'x' in to register A
-  mov eax, _y			;load local 'y' in to register A
+  mov eax, _x			;load 'x' in to register A
+  push eax			;push register A on to stack
+  mov eax, _y			;load 'y' in to register A
+  push eax			;push register A on to stack
   pop bx				;pop top of stack into register B
   pop ax				;pop top of stack into register A
   add ax, bx			;add registers A and B and store result in A

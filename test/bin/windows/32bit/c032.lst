@@ -144,12 +144,12 @@ Symbols:
 @Cpu . . . . . . . . . . . . . .        Number           D5Fh 
 @CurSeg  . . . . . . . . . . . .        Text   
 @DataSize  . . . . . . . . . . .        Number             0h 
-@Date  . . . . . . . . . . . . .        Text   09/24/26
+@Date  . . . . . . . . . . . . .        Text   09/25/26
 @FileCur . . . . . . . . . . . .        Text   c032.asm
 @FileName  . . . . . . . . . . .        Text   C032
 @Interface . . . . . . . . . . .        Number             3h 
 @Model . . . . . . . . . . . . .        Number             7h 
-@Time  . . . . . . . . . . . . .        Text   18:41:39
+@Time  . . . . . . . . . . . . .        Text   08:03:14
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT

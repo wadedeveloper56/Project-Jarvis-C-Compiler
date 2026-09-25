@@ -376,14 +376,20 @@ void JWasmGenerator::visit(VariableExpression& expression)
 	}
 	else if (itLocal != localIndex.end())
 	{
-		if (itLocal->second.type == "int")
+		if (itLocal->second.type == "int" && bits == 64)
 		{
-			ind(); out << "mov " << regA(32) << ", _" << expression.name << "\t\t\t;load local '" << expression.name << "' in to register A\n";
+			ind(); out << "movsxd " << regA(64) << ", _" << expression.name << "\t\t;load and sign extend '" << expression.name << "' in to register A\n";
+			ind(); out << "push " << regA(64) << "\t\t\t;push register A on to stack\n";
+		}
+		else
+		{
+			ind(); out << "mov " << regA(32) << ", _" << expression.name << "\t\t\t;load '" << expression.name << "' in to register A\n";
+			ind(); out << "push " << regA(32) << "\t\t\t;push register A on to stack\n";
 		}
 	}
 	else
 	{
-		ind(); out << "mov " << regA(32) << ", " << expression.name << "\t\t\t;load global '" << expression.name << "' in to register A\n";
+		ind(); out << "mov " << regA(32) << ", _" << expression.name << "\t\t\t;load global '" << expression.name << "' in to register A\n";
 		ind(); out << "push " << regA(bits) << "\t\t\t;push register A on to the stack\n";
 	}
 }
@@ -392,8 +398,16 @@ void JWasmGenerator::visit(BinaryExpression& be)
 {
 	be.leftHandSide->accept(*this);
 	be.rightHandSide->accept(*this);
-	ind();  out << "pop " << regB(32) << "\t\t\t;pop top of stack into register B\n";
-	ind();  out << "pop " << regA(32) << "\t\t\t;pop top of stack into register A\n";
+	if (bits == 64)
+	{
+		ind();  out << "pop " << regB(64) << "\t\t\t;pop top of stack into register B\n";
+		ind();  out << "pop " << regA(64) << "\t\t\t;pop top of stack into register A\n";
+	}
+	else
+	{
+		ind();  out << "pop " << regB(32) << "\t\t\t;pop top of stack into register B\n";
+		ind();  out << "pop " << regA(32) << "\t\t\t;pop top of stack into register A\n";
+	}
 	if (be.operator1 == '+')
 	{
 		ind(); out << "add " << regA(32) << ", " << regB(32) << "\t\t;add registers A and B and store result in A\n";
@@ -408,10 +422,17 @@ void JWasmGenerator::visit(BinaryExpression& be)
 	}
 	else if (be.operator1 == '/')
 	{
-		ind(); out << "cdq \t\t\t\t;extend eax to edx:eax for idiv" << endl;
-		ind(); out << "idiv " << regB(32) << "\t\t\t;integer divide registers A and B and store result in A\n";
+		ind(); out << "cdq \t\t\t\t;signed 32-bit value in the EAX register and sign-extends it into the 64-bit pair EDX:EAX" << endl;
+		ind(); out << "idiv " << regB(32) << "\t\t\t;divides the 64-bit value in EDX:EAX by EBX - quotient is stored in EAX -remainder is stored in EDX\n";
 	}
-	ind(); 	out << "push " << regA(32) << "\t\t\t;push register A on to the stack\n";
+	if (bits == 64)
+	{
+		ind(); 	out << "push " << regA(64) << "\t\t\t;push register RAX on to the stack\n";
+	}
+	else
+	{
+		ind(); 	out << "push " << regA(32) << "\t\t\t;push register EAX on to the stack\n";
+	}
 }
 
 void JWasmGenerator::visit(AssignExpression& n)
