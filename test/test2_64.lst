@@ -18,7 +18,7 @@ test2_64.asm
 00000004                    *   _BSS ends
 00000000                    *   _DATA segment
                             *   assume cs:ERROR
-00000000  03000000              x SDWORD 3 ;global var x type = int value = 3
+00000000  03000000              x SDWORD 3 ;global var x type = int
 
 00000000                        .code
 00000004                    *   _DATA ends
@@ -31,35 +31,40 @@ test2_64.asm
                                 ; locals:
                                 ;   c : int
                                 ;-----------------
-00000000                        _func1 PROC a:SDWORD,b:SDWORD
+00000000                        _func1 PROC _a:SDWORD,_b:SDWORD
                                   LOCAL _c:SDWORD
                                 ;----------- Local variable initialization ----------
 00000000  55                *   push rbp
 00000001  488BEC            *   mov rbp, rsp
 00000004  4883EC08          *   sub rsp, 8
-00000008  48634510                movsxd rax, a		;load and sign extend 'a' in to register A
+00000008  48634510                movsxd rax, _a		;load and sign extend 'a' in to register A
 0000000C  50                      push rax			;push register A on to stack
-0000000D  48634518                movsxd rax, b		;load and sign extend 'b' in to register A
+
+0000000D  48634518                movsxd rax, _b		;load and sign extend 'b' in to register A
 00000011  50                      push rax			;push register A on to stack
+
 00000012  48C7C005000000          mov rax, 5		;load immediate into register
 00000019  50                      push rax			;push register A on to the stack
+
 0000001A  5B                      pop rbx			;pop top of stack into register B
 0000001B  58                      pop rax			;pop top of stack into register A
 0000001C  0FAFC3                  imul eax, ebx		;multiply registers A and B and store result in A
-0000001F  50                      push rax			;push register RAX on to the stack
+0000001F  50                      push rax			;push register A on to the stack
+
 00000020  5B                      pop rbx			;pop top of stack into register B
 00000021  58                      pop rax			;pop top of stack into register A
 00000022  03C3                    add eax, ebx		;add registers A and B and store result in A
-00000024  50                      push rax			;push register RAX on to the stack
-00000025  8945FC                  mov _c, eax		;move result of binary expression from register A in to c
+00000024  50                      push rax			;push register A on to the stack
+
+00000025  8945FC                  mov _c, eax		;move result of binary expression from register A to variable 'c'
                                 ;----------Handle Function Body Statements-----------
-00000028  486345FC                movsxd rax, _c		;load and sign extend 'c' in to register A
-0000002C  50                      push rax			;push register A on to stack
-0000002D                          ret 					;return from function
-0000002D  C9                *   leave
-0000002E  C3                *   retn 
+00000028  50                      push rax			;push register A on to stack
+
+00000029                          ret 					;return from function
+00000029  C9                *   leave
+0000002A  C3                *   retn 
                                 ;----------------------------------------------------
-0000002F                        _func1 ENDP
+0000002B                        _func1 ENDP
 
                                 ;-----------------
                                 ; params:
@@ -68,36 +73,41 @@ test2_64.asm
                                 ; locals:
                                 ;   c : int
                                 ;-----------------
-0000002F                        _func2 PROC a:SDWORD,b:SDWORD
+0000002B                        _func2 PROC _a:SDWORD,_b:SDWORD
                                   LOCAL _c:SDWORD
                                 ;----------- Local variable initialization ----------
-0000002F  55                *   push rbp
-00000030  488BEC            *   mov rbp, rsp
-00000033  4883EC08          *   sub rsp, 8
-00000037  48634510                movsxd rax, a		;load and sign extend 'a' in to register A
-0000003B  50                      push rax			;push register A on to stack
-0000003C  48634518                movsxd rax, b		;load and sign extend 'b' in to register A
-00000040  50                      push rax			;push register A on to stack
-00000041  48C7C003000000          mov rax, 3		;load immediate into register
-00000048  50                      push rax			;push register A on to the stack
-00000049  5B                      pop rbx			;pop top of stack into register B
-0000004A  58                      pop rax			;pop top of stack into register A
-0000004B  99                      cdq 				;signed 32-bit value in the EAX register and sign-extends it into the 64-bit pair EDX:EAX
-0000004C  F7FB                    idiv ebx			;divides the 64-bit value in EDX:EAX by EBX - quotient is stored in EAX -remainder is stored in EDX
-0000004E  50                      push rax			;push register RAX on to the stack
-0000004F  5B                      pop rbx			;pop top of stack into register B
-00000050  58                      pop rax			;pop top of stack into register A
-00000051  03C3                    add eax, ebx		;add registers A and B and store result in A
-00000053  50                      push rax			;push register RAX on to the stack
-00000054  8945FC                  mov _c, eax		;move result of binary expression from register A in to c
+0000002B  55                *   push rbp
+0000002C  488BEC            *   mov rbp, rsp
+0000002F  4883EC08          *   sub rsp, 8
+00000033  48634510                movsxd rax, _a		;load and sign extend 'a' in to register A
+00000037  50                      push rax			;push register A on to stack
+
+00000038  48634518                movsxd rax, _b		;load and sign extend 'b' in to register A
+0000003C  50                      push rax			;push register A on to stack
+
+0000003D  48C7C003000000          mov rax, 3		;load immediate into register
+00000044  50                      push rax			;push register A on to the stack
+
+00000045  5B                      pop rbx			;pop top of stack into register B
+00000046  58                      pop rax			;pop top of stack into register A
+00000047  99                      cdq 				;signed 32-bit value in the EAX register and sign-extends it into the 64-bit pair EDX:EAX
+00000048  F7FB                    idiv ebx			;divides the 64-bit value in EDX:EAX by EBX - quotient is stored in EAX -remainder is stored in EDX
+0000004A  50                      push rax			;push register A on to the stack
+
+0000004B  5B                      pop rbx			;pop top of stack into register B
+0000004C  58                      pop rax			;pop top of stack into register A
+0000004D  03C3                    add eax, ebx		;add registers A and B and store result in A
+0000004F  50                      push rax			;push register A on to the stack
+
+00000050  8945FC                  mov _c, eax		;move result of binary expression from register A to variable 'c'
                                 ;----------Handle Function Body Statements-----------
-00000057  486345FC                movsxd rax, _c		;load and sign extend 'c' in to register A
-0000005B  50                      push rax			;push register A on to stack
-0000005C                          ret 					;return from function
-0000005C  C9                *   leave
-0000005D  C3                *   retn 
+00000053  50                      push rax			;push register A on to stack
+
+00000054                          ret 					;return from function
+00000054  C9                *   leave
+00000055  C3                *   retn 
                                 ;----------------------------------------------------
-0000005E                        _func2 ENDP
+00000056                        _func2 ENDP
 
                                 ;-----------------
                                 ; params:
@@ -105,42 +115,44 @@ test2_64.asm
                                 ;   y : int
                                 ;   x : int
                                 ;-----------------
-0000005E                        _func3 PROC 
+00000056                        _func3 PROC 
                                   LOCAL _y:SDWORD,_x:SDWORD
                                 ;----------- Local variable initialization ----------
-0000005E  55                *   push rbp
-0000005F  488BEC            *   mov rbp, rsp
-00000062  4883EC08          *   sub rsp, 8
-00000066                          invoke _func1, x, 4	;invoke function 'func1' with 2 arguments
-00000066  4883EC20          *    sub rsp, 32
-0000006A  8B0D00000000      *    mov ecx, x
-00000070  BA04000000        *    mov edx, 4
-00000075  E886FFFFFF        *    call _func1
-0000007A  4883C420          *    add rsp, 32
-0000007E  8945FC                  mov _y, eax			;move result of invoke from register RAX to variable 'y'
-00000081                          invoke _func2, m, 6	;invoke function 'func2' with 2 arguments
-00000081  4883EC20          *    sub rsp, 32
-00000085  8B0D00000000      *    mov ecx, m
-0000008B  BA06000000        *    mov edx, 6
-00000090  E89AFFFFFF        *    call _func2
-00000095  4883C420          *    add rsp, 32
-00000099  8945F8                  mov _x, eax			;move result of invoke from register RAX to variable 'x'
+00000056  55                *   push rbp
+00000057  488BEC            *   mov rbp, rsp
+0000005A  4883EC08          *   sub rsp, 8
+0000005E                          invoke _func1, x, 4	;invoke function 'func1' with 2 arguments
+0000005E  4883EC20          *    sub rsp, 32
+00000062  8B0D00000000      *    mov ecx, x
+00000068  BA04000000        *    mov edx, 4
+0000006D  E88EFFFFFF        *    call _func1
+00000072  4883C420          *    add rsp, 32
+00000076  8945FC                  mov _y, eax			;move result of invoke from register A to variable 'y'
+00000079  50                      push rax			;push the result in register A onto stack
+0000007A                          invoke _func2, m, 6	;invoke function 'func2' with 2 arguments
+0000007A  4883EC20          *    sub rsp, 32
+0000007E  8B0D00000000      *    mov ecx, m
+00000084  BA06000000        *    mov edx, 6
+00000089  E89DFFFFFF        *    call _func2
+0000008E  4883C420          *    add rsp, 32
+00000092  8945F8                  mov _x, eax			;move result of invoke from register A to variable 'x'
+00000095  50                      push rax			;push the result in register A onto stack
                                 ;----------Handle Function Body Statements-----------
-0000009C  486345F8                movsxd rax, _x		;load and sign extend 'x' in to register A
-000000A0  50                      push rax			;push register A on to stack
-000000A1  486345FC                movsxd rax, _y		;load and sign extend 'y' in to register A
-000000A5  50                      push rax			;push register A on to stack
-000000A6  5B                      pop rbx				;pop top of stack into register B
-000000A7  58                      pop rax				;pop top of stack into register A
-000000A8  4803C3                  add rax, rbx			;add registers A and B and store result in A
-000000AB                          ret 					;return from function
-000000AB  C9                *   leave
-000000AC  C3                *   retn
+00000096  50                      push rax			;push register A on to stack
+
+00000097  50                      push rax			;push register A on to stack
+
+00000098  5B                      pop rbx				;pop top of stack into register B
+00000099  58                      pop rax				;pop top of stack into register A
+0000009A  4803C3                  add rax, rbx			;add registers A and B and store result in A
+0000009D                          ret 					;return from function
+0000009D  C9                *   leave
+0000009E  C3                *   retn
                                 ;----------------------------------------------------
-000000AD                        _func3 ENDP
+0000009F                        _func3 ENDP
 
                                 end
-000000AD                    *   _TEXT ends
+0000009F                    *   _TEXT ends
 
 
 Macros:
@@ -161,22 +173,22 @@ Segments and Groups:
 FLAT . . . . . . . . . . . . . .        GROUP
 _BSS . . . . . . . . . . . . . .        64 Bit   00000004 Para    Public  'BSS'
 _DATA  . . . . . . . . . . . . .        64 Bit   00000004 Para    Public  'DATA'
-_TEXT  . . . . . . . . . . . . .        64 Bit   000000AD Para    Public  'CODE'
+_TEXT  . . . . . . . . . . . . .        64 Bit   0000009F Para    Public  'CODE'
 
 
 Procedures, parameters and locals:
 
                 N a m e                 Type     Value    Segment  Length
 
-_func1 . . . . . . . . . . . . .        P Near   00000000 _TEXT    0000002F Public   FASTCALL
-  b  . . . . . . . . . . . . . .        DWord             rbp + 0018
-  a  . . . . . . . . . . . . . .        DWord             rbp + 0010
+_func1 . . . . . . . . . . . . .        P Near   00000000 _TEXT    0000002B Public   FASTCALL
+  _b . . . . . . . . . . . . . .        DWord             rbp + 0018
+  _a . . . . . . . . . . . . . .        DWord             rbp + 0010
   _c . . . . . . . . . . . . . .        DWord             rbp - 0004
-_func2 . . . . . . . . . . . . .        P Near   0000002F _TEXT    0000002F Public   FASTCALL
-  b  . . . . . . . . . . . . . .        DWord             rbp + 0018
-  a  . . . . . . . . . . . . . .        DWord             rbp + 0010
+_func2 . . . . . . . . . . . . .        P Near   0000002B _TEXT    0000002B Public   FASTCALL
+  _b . . . . . . . . . . . . . .        DWord             rbp + 0018
+  _a . . . . . . . . . . . . . .        DWord             rbp + 0010
   _c . . . . . . . . . . . . . .        DWord             rbp - 0004
-_func3 . . . . . . . . . . . . .        P Near   0000005E _TEXT    0000004F Public   FASTCALL
+_func3 . . . . . . . . . . . . .        P Near   00000056 _TEXT    00000049 Public   FASTCALL
   _y . . . . . . . . . . . . . .        DWord             rbp - 0004
   _x . . . . . . . . . . . . . .        DWord             rbp - 0008
 
@@ -195,7 +207,7 @@ Symbols:
 @Interface . . . . . . . . . . .        Number             7h 
 @Model . . . . . . . . . . . . .        Number             7h 
 @ReservedStack . . . . . . . . .        Number             0h 
-@Time  . . . . . . . . . . . . .        Text   08:03:15
+@Time  . . . . . . . . . . . . .        Text   10:57:20
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT
@@ -204,4 +216,4 @@ __JWASM__  . . . . . . . . . . .        Number            D4h
 m  . . . . . . . . . . . . . . .        DWord              0h _BSS FASTCALL
 x  . . . . . . . . . . . . . . .        DWord              0h _DATA FASTCALL
 
-test2_64.asm: 101 lines, 2 passes, 1 ms, 0 warnings, 0 errors
+test2_64.asm: 113 lines, 2 passes, 1 ms, 0 warnings, 0 errors

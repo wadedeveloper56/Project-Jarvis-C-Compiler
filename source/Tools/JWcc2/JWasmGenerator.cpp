@@ -65,7 +65,9 @@ void JWasmGenerator::outputProgramUninitializedData(Program& program)
 			auto init = dynamic_cast<Expression*>(gv->init.get());
 			if (init == nullptr)
 			{
-				if (gv->type == "int")	out << gv->name << " SDWORD ? ;global var " << gv->name << " type = " << gv->type << "\n";
+				if (gv->type == "int" && bits == 16)	out << gv->name << " SWORD ? ;global var " << gv->name << " type = " << gv->type << "\n";
+				if (gv->type == "int" && bits == 32)	out << gv->name << " SDWORD ? ;global var " << gv->name << " type = " << gv->type << "\n";
+				if (gv->type == "int" && bits == 64)	out << gv->name << " SDWORD ? ;global var " << gv->name << " type = " << gv->type << "\n";
 			}
 		}
 	}
@@ -83,7 +85,9 @@ void JWasmGenerator::outputProgramInitializedData(Program& program)
 			{
 				if (auto expr = dynamic_cast<NumberExpression*>(init))
 				{
-					if (gv->type == "int")	out << gv->name << " SDWORD " << expr->value << " ;global var " << gv->name << " type = " << gv->type << " value = " << expr->value << endl;
+					if (gv->type == "int" && bits == 16)	out << gv->name << " SWORD " << expr->value << " ;global var " << gv->name << " type = " << gv->type << "\n";
+					if (gv->type == "int" && bits == 32)	out << gv->name << " SDWORD " << expr->value << " ;global var " << gv->name << " type = " << gv->type << "\n";
+					if (gv->type == "int" && bits == 64)	out << gv->name << " SDWORD " << expr->value << " ;global var " << gv->name << " type = " << gv->type << "\n";
 				}
 			}
 		}
@@ -112,8 +116,7 @@ void JWasmGenerator::visit(Program& program)
 }
 
 void JWasmGenerator::visit(VariableDeclaration& n)
-{
-}
+{}
 
 void JWasmGenerator::outputFunctionComment(FunctionDeclaration& function)
 {
@@ -149,7 +152,9 @@ void JWasmGenerator::outputFunctionHeader(FunctionDeclaration& function)
 	out << "_" << function.name << " PROC ";
 	for (auto& p : function.params)
 	{
-		if (p.first == "int") out << p.second << ":SDWORD";
+		if (p.first == "int" && bits == 16) out << "_" << p.second << ":SWORD";
+		if (p.first == "int" && bits == 32) out << "_" << p.second << ":SDWORD";
+		if (p.first == "int" && bits == 64) out << "_" << p.second << ":SDWORD";
 		if (index < (int)function.params.size() - 1) out << ",";
 		index++;
 
@@ -169,7 +174,9 @@ void JWasmGenerator::outputFunctionLocals(FunctionDeclaration& function)
 			if (auto v = dynamic_cast<VariableDeclaration*>(ld.get()))
 			{
 				localIndex[v->name] = { v->type, idx++ };
-				if (v->type == "int") out << "_" << v->name << ":SDWORD";
+				if (v->type == "int" && bits == 16) out << "_" << v->name << ":SWORD";
+				if (v->type == "int" && bits == 32) out << "_" << v->name << ":SDWORD";
+				if (v->type == "int" && bits == 64) out << "_" << v->name << ":SDWORD";
 				if (index < size - 1) out << ",";
 				index++;
 			}
@@ -180,31 +187,8 @@ void JWasmGenerator::outputFunctionLocals(FunctionDeclaration& function)
 
 void JWasmGenerator::moveResultOfInvokeIntoRegisterA(VariableDeclaration* v)
 {
-	auto type = v->type;
-	if (processorBitType == ProcessorBitType::BIT16_8086 || processorBitType == ProcessorBitType::BIT16_186 || processorBitType == ProcessorBitType::BIT16_286)
-	{
-        auto reg = (type == "int") ? regA(32) : regA(16);
-		ind(); out << "mov _" << v->name << ", " << reg << "\t\t\t;move result of invoke from register AX to variable '" << v->name << "'" << endl;
-		ind(); out << "push " << reg << "\t\t\t\t;push the result in register A onto stack" << endl;
-	}
-	else if (processorBitType == ProcessorBitType::BIT16_386 || processorBitType == ProcessorBitType::BIT16_486 || processorBitType == ProcessorBitType::BIT16_586 || processorBitType == ProcessorBitType::BIT16_686)
-	{
-		auto reg = (type == "int") ? regA(32) : regA(16);
-		ind(); out << "mov _" << v->name << ", " << reg << "\t\t\t;move result of invoke from register EAX to variable '" << v->name << "'" << endl;
-		ind(); out << "push " << reg << "\t\t\t\t;push the result in register A onto stack" << endl;
-	}
-	else if (processorBitType == ProcessorBitType::BIT32_386 || processorBitType == ProcessorBitType::BIT32_486 || processorBitType == ProcessorBitType::BIT32_586 || processorBitType == ProcessorBitType::BIT32_686)
-	{
-		auto reg = (type == "int") ? regA(32) : regA(16);
-		ind(); out << "mov _" << v->name << ", " << reg << "\t\t\t;move result of invoke from register EAX to variable '" << v->name << "'" << endl;
-		ind(); out << "push " << reg << "\t\t\t\t;push the result in register A onto stack" << endl;
-	}
-	else if (processorBitType == ProcessorBitType::BIT64_x64)
-	{
-		auto reg = (type == "int") ? regA(32) : regA(16);
-		ind(); out << "mov _" << v->name << ", " << reg << "\t\t\t;move result of invoke from register RAX to variable '" << v->name << "'" << endl;
-		//ind(); out << "push " << regA(64) << "\t\t\t\t;push the result in register RAX onto stack" << endl;
-	}
+	asmStatementMoveRegisterToVariable(v->type, v->name, "\t\t\t;move result of invoke from register A to variable '" + v->name + "'");
+	asmStatementPushRegisterA("\t\t\t;push the result in register A onto stack");
 }
 
 void JWasmGenerator::outputFunctionLocalsInitializationFunctionCall(CallExpression* exp)
@@ -224,21 +208,40 @@ void JWasmGenerator::outputFunctionLocalsInitializationFunctionCall(CallExpressi
 	out << "\t;invoke function '" << exp->callee << "' with " << exp->args.size() << " arguments" << endl;
 }
 
+void JWasmGenerator::asmStatementMoveSignExtendVariableToRegister(string type, string name, string comment)
+{
+	ind(); out << "movsxd " << regA(64) << ", _" << name << "\t\t;load and sign extend '" << name << "' in to register A\n";
+}
+
+void JWasmGenerator::asmStatementMoveVariableToRegister(string type, string name, string comment)
+{
+	if (type == "int" && bits == 16) { ind(); out << "mov " << regA(16) << ", _" << name << comment << endl; }
+	if (type == "int" && bits == 32) { ind(); out << "mov " << regA(32) << ", _" << name << comment << endl; }
+	if (type == "int" && bits == 64) { ind(); out << "mov " << regA(32) << ", _" << name << comment << endl; }
+}
+
+void JWasmGenerator::asmStatementMoveRegisterToVariable(string type, string name, string comment)
+{
+	if (type == "int" && bits == 16) { ind(); out << "mov _" << name << ", " << regA(16) << comment << endl; }
+	if (type == "int" && bits == 32) { ind(); out << "mov _" << name << ", " << regA(32) << comment << endl; }
+	if (type == "int" && bits == 64) { ind(); out << "mov _" << name << ", " << regA(32) << comment << endl; }
+}
+
 void JWasmGenerator::outputFunctionLocalsInitialization(FunctionDeclaration& function)
 {
 	out << ";----------- Local variable initialization ----------" << endl;
-	if (auto comp = dynamic_cast<CompoundStatement*>(function.body.get()))
+	if (auto compoundStatement = dynamic_cast<CompoundStatement*>(function.body.get()))
 	{
-		for (auto& ld : comp->localDeclarations)
+		for (auto& localDeclaration : compoundStatement->localDeclarations)
 		{
-			if (auto v = dynamic_cast<VariableDeclaration*>(ld.get()))
+			if (auto variableDeclaration = dynamic_cast<VariableDeclaration*>(localDeclaration.get()))
 			{
-				if (auto exp = dynamic_cast<CallExpression*>(v->init.get()))
+				if (auto callExpression = dynamic_cast<CallExpression*>(variableDeclaration->init.get()))
 				{
-					outputFunctionLocalsInitializationFunctionCall(exp);
-					moveResultOfInvokeIntoRegisterA(v);
+					outputFunctionLocalsInitializationFunctionCall(callExpression);
+					moveResultOfInvokeIntoRegisterA(variableDeclaration);
 				}
-				else if (auto exp = dynamic_cast<Expression*>(v->init.get()))
+				else if (auto exp = dynamic_cast<Expression*>(variableDeclaration->init.get()))
 				{
 					if (auto be = dynamic_cast<BinaryExpression*>(exp))
 					{
@@ -248,7 +251,7 @@ void JWasmGenerator::outputFunctionLocalsInitialization(FunctionDeclaration& fun
 					{
 						exp->accept(*this);
 					}
-					if (v->type == "int") { ind(); out << "mov _" << v->name << ", " << regA(32) << "\t\t;move result of binary expression from register A in to " << v->name << endl; }
+					asmStatementMoveRegisterToVariable(variableDeclaration->type, variableDeclaration->name, "\t\t;move result of binary expression from register A to variable '" + variableDeclaration->name + "'");
 				}
 			}
 		}
@@ -289,8 +292,7 @@ void JWasmGenerator::visit(FunctionDeclaration& function)
 }
 
 void JWasmGenerator::visit(CompoundStatement& n)
-{
-}
+{}
 
 void JWasmGenerator::outputReturnBinaryExpression(BinaryExpression* be)
 {
@@ -348,12 +350,12 @@ void JWasmGenerator::visit(NumberExpression& n)
 	if (bits == 64)
 	{
 		ind(); out << "mov " << regA(64) << ", " << n.value << "\t\t;load immediate into register\n";
-		ind(); out << "push " << regA(64) << "\t\t\t;push register A on to the stack\n";
+		asmStatementPushRegisterA("\t\t\t;push register A on to the stack\n");
 	}
 	else
 	{
 		ind(); out << "mov " << regA(32) << ", " << n.value << "\t\t;load immediate into register\n";
-		ind(); out << "push " << regA(32) << "\t\t\t;push register A on to the stack\n";
+		asmStatementPushRegisterA("\t\t\t;push register A on to the stack\n");
 	}
 }
 
@@ -365,32 +367,95 @@ void JWasmGenerator::visit(VariableExpression& expression)
 	{
 		if (it->second.type == "int" && bits == 64)
 		{
-			ind(); out << "movsxd " << regA(64) << ", " << expression.name << "\t\t;load and sign extend '" << expression.name << "' in to register A\n";
-			ind(); out << "push " << regA(64) << "\t\t\t;push register A on to stack\n";
+			asmStatementMoveSignExtendVariableToRegister(it->second.type, it->first, "\t\t;load and sign extend '" + it->first + "' in to register A");
+			asmStatementPushRegisterA("\t\t\t;push register A on to stack\n");
 		}
 		else
 		{
-			ind(); out << "mov " << regA(32) << ", " << expression.name << "\t\t\t;load '" << expression.name << "' in to register A\n";
-			ind(); out << "push " << regA(32) << "\t\t\t;push register A on to stack\n";
+			asmStatementMoveVariableToRegister(it->second.type, it->first, "\t\t;load parameter " + it->first);
+			asmStatementPushRegisterA("\t\t\t;push register A on to stack\n");
 		}
 	}
 	else if (itLocal != localIndex.end())
 	{
-		if (itLocal->second.type == "int" && bits == 64)
+		if (it->second.type == "int" && bits == 64)
 		{
-			ind(); out << "movsxd " << regA(64) << ", _" << expression.name << "\t\t;load and sign extend '" << expression.name << "' in to register A\n";
-			ind(); out << "push " << regA(64) << "\t\t\t;push register A on to stack\n";
+			asmStatementMoveSignExtendVariableToRegister(it->second.type, it->first, "\t\t;load and sign extend '" + it->first + "' in to register A");
+			asmStatementPushRegisterA("\t\t\t;push register A on to stack\n");
 		}
 		else
 		{
-			ind(); out << "mov " << regA(32) << ", _" << expression.name << "\t\t\t;load '" << expression.name << "' in to register A\n";
-			ind(); out << "push " << regA(32) << "\t\t\t;push register A on to stack\n";
+			asmStatementMoveVariableToRegister(it->second.type, it->first, "\t\t;load parameter " + it->first);
+			asmStatementPushRegisterA("\t\t\t;push register A on to stack\n");
 		}
 	}
 	else
 	{
-		ind(); out << "mov " << regA(32) << ", _" << expression.name << "\t\t\t;load global '" << expression.name << "' in to register A\n";
-		ind(); out << "push " << regA(bits) << "\t\t\t;push register A on to the stack\n";
+		out << ";?? '" << expression.name << "'" << endl;
+	}
+}
+
+void JWasmGenerator::asmStatementPopRegisterA(string comment)
+{
+	if (bits == 64)
+	{
+		ind(); 	out << "pop " << regA(64) << comment << endl;
+	}
+	else if (bits == 32)
+	{
+		ind(); 	out << "pop " << regA(32) << comment << endl;
+	}
+	else
+	{
+		ind(); 	out << "pop " << regA(16) << comment << endl;
+	}
+}
+
+void JWasmGenerator::asmStatementPushRegisterA(string comment)
+{
+	if (bits == 64)
+	{
+		ind(); 	out << "push " << regA(64) << comment << endl;
+	}
+	else if (bits == 32)
+	{
+		ind(); 	out << "push " << regA(32) << comment << endl;
+	}
+	else
+	{
+		ind(); 	out << "push " << regA(16) << comment << endl;
+	}
+}
+
+void JWasmGenerator::asmStatementPopRegisterB(string comment)
+{
+	if (bits == 64)
+	{
+		ind(); 	out << "pop " << regB(64) << comment << endl;
+	}
+	else if (bits == 32)
+	{
+		ind(); 	out << "pop " << regB(32) << comment << endl;
+	}
+	else
+	{
+		ind(); 	out << "pop " << regB(16) << comment << endl;
+	}
+}
+
+void JWasmGenerator::asmStatementPushRegisterB(string comment)
+{
+	if (bits == 64)
+	{
+		ind(); 	out << "push " << regB(64) << comment << endl;
+	}
+	else if (bits == 32)
+	{
+		ind(); 	out << "push " << regB(32) << comment << endl;
+	}
+	else
+	{
+		ind(); 	out << "push " << regB(16) << comment << endl;
 	}
 }
 
@@ -398,16 +463,8 @@ void JWasmGenerator::visit(BinaryExpression& be)
 {
 	be.leftHandSide->accept(*this);
 	be.rightHandSide->accept(*this);
-	if (bits == 64)
-	{
-		ind();  out << "pop " << regB(64) << "\t\t\t;pop top of stack into register B\n";
-		ind();  out << "pop " << regA(64) << "\t\t\t;pop top of stack into register A\n";
-	}
-	else
-	{
-		ind();  out << "pop " << regB(32) << "\t\t\t;pop top of stack into register B\n";
-		ind();  out << "pop " << regA(32) << "\t\t\t;pop top of stack into register A\n";
-	}
+	asmStatementPopRegisterB("\t\t\t;pop top of stack into register B");
+	asmStatementPopRegisterA("\t\t\t;pop top of stack into register A");
 	if (be.operator1 == '+')
 	{
 		ind(); out << "add " << regA(32) << ", " << regB(32) << "\t\t;add registers A and B and store result in A\n";
@@ -425,14 +482,7 @@ void JWasmGenerator::visit(BinaryExpression& be)
 		ind(); out << "cdq \t\t\t\t;signed 32-bit value in the EAX register and sign-extends it into the 64-bit pair EDX:EAX" << endl;
 		ind(); out << "idiv " << regB(32) << "\t\t\t;divides the 64-bit value in EDX:EAX by EBX - quotient is stored in EAX -remainder is stored in EDX\n";
 	}
-	if (bits == 64)
-	{
-		ind(); 	out << "push " << regA(64) << "\t\t\t;push register RAX on to the stack\n";
-	}
-	else
-	{
-		ind(); 	out << "push " << regA(32) << "\t\t\t;push register EAX on to the stack\n";
-	}
+	asmStatementPushRegisterA("\t\t\t;push register A on to the stack\n");
 }
 
 void JWasmGenerator::visit(AssignExpression& n)
@@ -445,10 +495,12 @@ void JWasmGenerator::visit(AssignExpression& n)
 	auto itLocal = localIndex.find(n.name);
 	if (it != paramIndex.end())
 	{
+		asmStatementMoveRegisterToVariable(it->second.type, it->first, "\t\t;store parameter " + it->first);
 		out << "mov " << n.name << ", " << regA(bits) << "\t\t\t; store parameter" << n.name << "\n";
 	}
 	else if (itLocal != localIndex.end())
 	{
+		asmStatementMoveRegisterToVariable(itLocal->second.type, itLocal->first, "\t\t;store local " + itLocal->first);
 		out << "mov _" << n.name << ", " << regA(bits) << "\t\t\t; store local " << n.name << "\n";
 	}
 	else

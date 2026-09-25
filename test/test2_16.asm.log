@@ -1,7 +1,7 @@
 PEDUMP - Win32/Win64 COFF EXE/OBJ/LIB file dumper v1.0 (C) Copyright 2025-2026 Christopher D. Wade.
 All Rights Reserved
 Dump of file test2_16.obj
-File Size 369 bytes
+File Size 315 bytes
 File Type: 16-bit DOS\Windows OBJECT
 
 Type 0x80 (THEADR) : length 0x000E (14)
@@ -13,48 +13,45 @@ Type 0x96 (LNAMES) : length 0x0028 (40)
 00000034  53 53 04 5f 42 53 53 d1                           SS._BSS.
 
 Type 0x98 (SEGDEF) : length 0x0007 (7)
-0000003f  48 b3 00 03 02 01 60                              H.....`
+0000003f  48 7f 00 03 02 01 94                              H......
 
 Type 0x88 (COMENT) : length 0x0005 (5)
 00000049  80 fe 4f 01 a5                                    ..O..
 
 Type 0x98 (SEGDEF) : length 0x0007 (7)
-00000051  48 04 00 05 04 01 0b                              H......
+00000051  48 02 00 05 04 01 0d                              H......
 
 Type 0x98 (SEGDEF) : length 0x0007 (7)
-0000005b  48 04 00 08 07 01 05                              H......
+0000005b  48 02 00 08 07 01 07                              H......
 
 Type 0x9A : length 0x0006 (6)
 00000065  06 ff 02 ff 03 57                                 .....W
 
 Type 0x90 : length 0x0024 (36)
 0000006e  00 01 07 5f 5f 66 75 6e  63 31 00 00 00 07 5f 5f  ...__func1....__
-0000007e  66 75 6e 63 32 39 00 00  07 5f 5f 66 75 6e 63 33  func29...__func3
-0000008e  73 00 00 b6                                       s...
+0000007e  66 75 6e 63 32 28 00 00  07 5f 5f 66 75 6e 63 33  func2(...__func3
+0000008e  51 00 00 e9                                       Q...
 
 Type 0x88 (COMENT) : length 0x0004 (4)
 00000095  00 a2 01 d1                                       ....
 
-Type 0xA0 (LEDATA) : length 0x0008 (8)
-0000009c  02 00 00 03 00 00 00 53                           .......S
+Type 0xA0 (LEDATA) : length 0x0006 (6)
+0000009c  02 00 00 03 00 55                                 .....U
 
-Type 0xA0 (LEDATA) : length 0x00B7 (183)
-000000a7  01 00 00 55 8b ec 83 ec  04 66 8b 46 04 66 50 66  ...U.....f.F.fPf
-000000b7  8b 46 08 66 50 66 b8 05  00 00 00 66 50 66 5b 66  .F.fPf.....fPf[f
-000000c7  58 66 0f af c3 66 50 66  5b 66 58 66 03 c3 66 50  Xf...fPf[fXf..fP
-000000d7  66 89 46 fc 66 8b 46 fc  66 50 c9 c3 55 8b ec 83  f.F.f.F.fP..U...
-000000e7  ec 04 66 8b 46 04 66 50  66 8b 46 08 66 50 66 b8  ..f.F.fPf.F.fPf.
-000000f7  03 00 00 00 66 50 66 5b  66 58 66 99 66 f7 fb 66  ....fPf[fXf.f..f
-00000107  50 66 5b 66 58 66 03 c3  66 50 66 89 46 fc 66 8b  Pf[fXf..fPf.F.f.
-00000117  46 fc 66 50 c9 c3 55 8b  ec 83 ec 08 66 6a 04 66  F.fP..U.....fj.f
-00000127  ff 36 00 00 e8 7c ff 83  c4 08 66 89 46 fc 66 50  .6...|....f.F.fP
-00000137  66 6a 06 66 ff 36 00 00  e8 a1 ff 83 c4 08 66 89  fj.f.6........f.
-00000147  46 f8 66 50 66 8b 46 f8  66 50 66 8b 46 fc 66 50  F.fPf.F.fPf.F.fP
-00000157  5b 58 03 c3 c9 c3 af                              [X.....
+Type 0xA0 (LEDATA) : length 0x0083 (131)
+000000a5  01 00 00 55 8b ec 83 ec  02 8b 46 04 50 8b 46 06  ...U......F.P.F.
+000000b5  50 66 b8 05 00 00 00 50  5b 58 66 0f af c3 50 5b  Pf.....P[Xf...P[
+000000c5  58 66 03 c3 50 89 46 fe  50 c9 c3 55 8b ec 83 ec  Xf..P.F.P..U....
+000000d5  02 8b 46 04 50 8b 46 06  50 66 b8 03 00 00 00 50  ..F.P.F.Pf.....P
+000000e5  5b 58 66 99 66 f7 fb 50  5b 58 66 03 c3 50 89 46  [Xf.f..P[Xf..P.F
+000000f5  fe 50 c9 c3 55 8b ec 83  ec 04 6a 04 ff 36 00 00  .P..U.....j..6..
+00000105  e8 a0 ff 83 c4 04 89 46  fe 50 6a 06 ff 36 00 00  .......F.Pj..6..
+00000115  e8 b8 ff 83 c4 04 89 46  fc 50 50 50 5b 58 03 c3  .......F.PPP[X..
+00000125  c9 c3 d2                                          ...
 
 Type 0x9C (FIXUPP) : length 0x000B (11)
-00000161  c4 7f 14 01 02 c4 93 14  01 03 90                 ...........
+0000012b  c4 5b 14 01 02 c4 6b 14  01 03 dc                 .[....k....
 
 Type 0x8A : length 0x0002 (2)
-0000016f  00 74                                             .t
+00000139  00 74                                             .t
 

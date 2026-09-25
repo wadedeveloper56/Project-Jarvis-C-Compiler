@@ -39,9 +39,18 @@ public:
 	void visit(CallExpression& n) override;
 private:
 	void ind();
+
+	void asmStatementPushRegisterA(string comment);
+	void asmStatementPopRegisterA(string comment);
+	void asmStatementPushRegisterB(string comment);
+	void asmStatementPopRegisterB(string comment);
+	void asmStatementMoveVariableToRegister(string type, string name, string comment);
+	void asmStatementMoveSignExtendVariableToRegister(string type, string name, string comment);
+	void asmStatementMoveRegisterToVariable(string type, string name, string comment);
+	void moveResultOfInvokeIntoRegisterA(VariableDeclaration* v);
+
 	void outputFunctionComment(FunctionDeclaration& function);
 	void outputFunctionLocals(FunctionDeclaration& function);
-	void moveResultOfInvokeIntoRegisterA(VariableDeclaration* v);
 	void outputFunctionLocalsInitializationFunctionCall(CallExpression* exp);
 	void outputFunctionLocalsInitialization(FunctionDeclaration& function);
 	void outputFunctionHeader(FunctionDeclaration& function);
@@ -50,6 +59,7 @@ private:
 	void outputProgramUninitializedData(Program& program);
 	void outputProgramInitializedData(Program& program);
 	void outputProgramCode(Program& program);
+
 	string regA(int size) const;
 	string regB(int size) const;
 	string regC(int size) const;
