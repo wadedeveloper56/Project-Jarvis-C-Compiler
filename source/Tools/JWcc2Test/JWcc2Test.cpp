@@ -69,5 +69,39 @@ namespace JWcc2Test
 			Assert::IsNotNull(numExpr);
 			Assert::AreEqual(0, (int)numExpr->value);
 		}
+
+		TEST_METHOD(ParserTestBasic1Method1Parameter0Globals)
+		{
+			ostringstream ss;
+			ss << "int main(int argc) { return 0; }";
+			Parser parser(ss.str());
+			auto program = parser.parseProgram();
+			Assert::IsNotNull(program.get());
+			Assert::AreEqual(1, (int)program->declarations.size());
+			auto decl = dynamic_cast<FunctionDeclaration*>(program->declarations[0].get());
+			Assert::IsNotNull(decl);
+			Assert::AreEqual(string("int"), decl->retType);
+			Assert::AreEqual(string("main"), decl->name);
+
+			auto param = decl->params;
+			Assert::AreEqual(1, (int)param.size());
+			auto pair = param[0];
+			Assert::AreEqual(string("int"), pair.first);
+			Assert::AreEqual(string("argc"), pair.second);
+
+			Assert::IsNotNull(decl->body.get());
+			auto body = decl->body.get();
+			Assert::IsNotNull(body);
+			Assert::AreEqual(0, (int)body->localDeclarations.size());
+			Assert::AreEqual(1, (int)body->statements.size());
+
+			auto ret = dynamic_cast<ReturnStatement*>(body->statements[0].get());
+			Assert::IsNotNull(ret);
+
+			auto numExpr = dynamic_cast<NumberExpression*>(ret->expr.get());
+			Assert::IsNotNull(numExpr);
+			Assert::AreEqual(0, (int)numExpr->value);
+		}
+
 	};
 }
