@@ -41,7 +41,6 @@ class Lexer
     string src;
     size_t i = 0;
     int pos = 0;
-    //istream& in;
     unordered_set<string> keywords{ "int", "void", "return" };
     int line = 1;
     int column = 1;

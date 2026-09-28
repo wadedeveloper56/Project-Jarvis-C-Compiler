@@ -13,7 +13,6 @@ class Parser
 {
 	Lexer lexer;
 	Token cur;
-	//istream& in;
 	void next();
 	bool accept(TokenKind k);
 	void expect(TokenKind k, const char* msg = "");
