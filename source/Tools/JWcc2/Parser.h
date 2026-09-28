@@ -13,12 +13,12 @@ class Parser
 {
 	Lexer lexer;
 	Token cur;
-	istream& in;
+	//istream& in;
 	void next();
 	bool accept(TokenKind k);
 	void expect(TokenKind k, const char* msg = "");
 public:
-	Parser(string s, istream& in);
+	Parser(string s);
 	unique_ptr<Program> parseProgram();
 	unique_ptr<Declaration> parseDecl();
 	unique_ptr<CompoundStatement> parseCompoundStmt();

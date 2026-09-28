@@ -24,7 +24,7 @@ void Parser::expect(TokenKind k, const char* msg)
 	next();
 }
 
-Parser::Parser(string s, istream& in) : lexer(move(s), in), in(in) 
+Parser::Parser(string s) : lexer(move(s))
 {
 	next(); 
 }

@@ -164,7 +164,7 @@ int main(int argc, char* argv[])
 
 		try
 		{
-			Parser p(src, in);
+			Parser p(src);
 			auto prog = p.parseProgram();
 			SemanticAnalyzer sema;
 			bool ok = sema.analyze(*prog);

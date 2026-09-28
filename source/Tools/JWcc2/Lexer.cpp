@@ -3,7 +3,7 @@
 
 using namespace std;
 
-Lexer::Lexer(string s, istream& in) : src(move(s)), in(in) {}
+Lexer::Lexer(string s) : src(move(s)) {}
 
 Token Lexer::next()
 {
