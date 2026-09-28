@@ -22,30 +22,22 @@ _func1 PROC _a:SWORD,_b:SWORD
 ;----------- Local variable initialization ----------
   mov ax, _a		;load parameter a
   push ax			;push register A on to stack
-
   mov ax, _b		;load parameter b
   push ax			;push register A on to stack
-
   mov ax, 5		;load immediate into register
   push ax			;push register A on to the stack
-
   pop bx			;pop top of stack into register B
   pop ax			;pop top of stack into register A
   imul ax, bx			;multiply registers A and B and store result in A
-
   push ax			;push register A on to the stack
-
   pop bx			;pop top of stack into register B
   pop ax			;pop top of stack into register A
   add ax, bx			;add registers A and B and store result in A
-
   push ax			;push register A on to the stack
-
   mov _c, ax		;move result of binary expression from register A to variable 'c'
 ;----------Handle Function Body Statements-----------
   mov ax, _c		;load parameter c
   push ax			;push register A on to stack
-
   ret 					;return from function
 ;----------------------------------------------------
 _func1 ENDP
@@ -62,30 +54,23 @@ _func2 PROC _a:SWORD,_b:SWORD
 ;----------- Local variable initialization ----------
   mov ax, _a		;load parameter a
   push ax			;push register A on to stack
-
   mov ax, _b		;load parameter b
   push ax			;push register A on to stack
-
   mov ax, 3		;load immediate into register
   push ax			;push register A on to the stack
-
   pop bx			;pop top of stack into register B
   pop ax			;pop top of stack into register A
-  cwd 				;extend eax to edx:eax for idiv
-  idiv bx				;integer divide registers A and B and store result in A
+  cwd 				;extend ax to dx:ax for idiv
+  idiv bx				;integer divide registers AX and BX and store result in AX
   push ax			;push register A on to the stack
-
   pop bx			;pop top of stack into register B
   pop ax			;pop top of stack into register A
   add ax, bx			;add registers A and B and store result in A
-
   push ax			;push register A on to the stack
-
   mov _c, ax		;move result of binary expression from register A to variable 'c'
 ;----------Handle Function Body Statements-----------
   mov ax, _c		;load parameter c
   push ax			;push register A on to stack
-
   ret 					;return from function
 ;----------------------------------------------------
 _func2 ENDP
@@ -108,14 +93,11 @@ _func3 PROC
 ;----------Handle Function Body Statements-----------
   mov ax, _x		;load parameter x
   push ax			;push register A on to stack
-
   mov ax, _y		;load parameter y
   push ax			;push register A on to stack
-
   pop bx			;pop top of stack into register B
   pop ax			;pop top of stack into register A
   add ax, bx			;add registers A and B and store result in A
-
   ret 					;return from function
 ;----------------------------------------------------
 _func3 ENDP

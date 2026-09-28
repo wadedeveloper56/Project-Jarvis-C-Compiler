@@ -39,30 +39,22 @@ test2_64.asm
 00000004  4883EC08          *   sub rsp, 8
 00000008  48634510                movsxd rax, _a		;load and sign extend 'a' in to register A
 0000000C  50                      push rax			;push register A on to stack
-
 0000000D  48634518                movsxd rax, _b		;load and sign extend 'b' in to register A
 00000011  50                      push rax			;push register A on to stack
-
 00000012  B805000000              mov eax, 5		;load immediate into register
 00000017  50                      push rax			;push register A on to the stack
-
 00000018  5B                      pop rbx			;pop top of stack into register B
 00000019  58                      pop rax			;pop top of stack into register A
 0000001A  0FAFC3                  imul eax, ebx			;multiply registers A and B and store result in A
-
 0000001D  50                      push rax			;push register A on to the stack
-
 0000001E  5B                      pop rbx			;pop top of stack into register B
 0000001F  58                      pop rax			;pop top of stack into register A
 00000020  03C3                    add eax, ebx			;add registers A and B and store result in A
-
 00000022  50                      push rax			;push register A on to the stack
-
 00000023  8945FC                  mov _c, eax		;move result of binary expression from register A to variable 'c'
                                 ;----------Handle Function Body Statements-----------
 00000026  486345FC                movsxd rax, _c		;load and sign extend 'c' in to register A
 0000002A  50                      push rax			;push register A on to stack
-
 0000002B                          ret 					;return from function
 0000002B  C9                *   leave
 0000002C  C3                *   retn 
@@ -84,30 +76,23 @@ test2_64.asm
 00000031  4883EC08          *   sub rsp, 8
 00000035  48634510                movsxd rax, _a		;load and sign extend 'a' in to register A
 00000039  50                      push rax			;push register A on to stack
-
 0000003A  48634518                movsxd rax, _b		;load and sign extend 'b' in to register A
 0000003E  50                      push rax			;push register A on to stack
-
 0000003F  B803000000              mov eax, 3		;load immediate into register
 00000044  50                      push rax			;push register A on to the stack
-
 00000045  5B                      pop rbx			;pop top of stack into register B
 00000046  58                      pop rax			;pop top of stack into register A
 00000047  99                      cdq 				;extend eax to edx:eax for idiv
 00000048  F7FB                    idiv ebx				;integer divide registers A and B and store result in A
 0000004A  50                      push rax			;push register A on to the stack
-
 0000004B  5B                      pop rbx			;pop top of stack into register B
 0000004C  58                      pop rax			;pop top of stack into register A
 0000004D  03C3                    add eax, ebx			;add registers A and B and store result in A
-
 0000004F  50                      push rax			;push register A on to the stack
-
 00000050  8945FC                  mov _c, eax		;move result of binary expression from register A to variable 'c'
                                 ;----------Handle Function Body Statements-----------
 00000053  486345FC                movsxd rax, _c		;load and sign extend 'c' in to register A
 00000057  50                      push rax			;push register A on to stack
-
 00000058                          ret 					;return from function
 00000058  C9                *   leave
 00000059  C3                *   retn 
@@ -145,14 +130,11 @@ test2_64.asm
                                 ;----------Handle Function Body Statements-----------
 0000009A  486345F8                movsxd rax, _x		;load and sign extend 'x' in to register A
 0000009E  50                      push rax			;push register A on to stack
-
 0000009F  486345FC                movsxd rax, _y		;load and sign extend 'y' in to register A
 000000A3  50                      push rax			;push register A on to stack
-
 000000A4  5B                      pop rbx			;pop top of stack into register B
 000000A5  58                      pop rax			;pop top of stack into register A
 000000A6  03C3                    add eax, ebx			;add registers A and B and store result in A
-
 000000A8                          ret 					;return from function
 000000A8  C9                *   leave
 000000A9  C3                *   retn
@@ -215,7 +197,7 @@ Symbols:
 @Interface . . . . . . . . . . .        Number             7h 
 @Model . . . . . . . . . . . . .        Number             7h 
 @ReservedStack . . . . . . . . .        Number             0h 
-@Time  . . . . . . . . . . . . .        Text   16:00:19
+@Time  . . . . . . . . . . . . .        Text   16:22:00
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT
@@ -224,4 +206,4 @@ __JWASM__  . . . . . . . . . . .        Number            D4h
 m  . . . . . . . . . . . . . . .        DWord              0h _BSS FASTCALL
 x  . . . . . . . . . . . . . . .        DWord              0h _DATA FASTCALL
 
-test2_64.asm: 121 lines, 2 passes, 1 ms, 0 warnings, 0 errors
+test2_64.asm: 103 lines, 2 passes, 1 ms, 0 warnings, 0 errors
