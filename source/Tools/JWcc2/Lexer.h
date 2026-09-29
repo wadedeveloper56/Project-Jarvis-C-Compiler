@@ -15,12 +15,25 @@ using namespace std;
 
 enum class TokenKind
 {
-    End, Identifier, Number,
-    Int, Void, Return,
-    Plus, Minus, Star, Slash,
-    LParen, RParen, LBrace, RBrace,
-    Semicolon, Comma, Assign,
-    Unknown
+    EndToken,
+    IdentifierToken,
+    NumberToken,
+    IntToken,
+    VoidToken,
+    ReturnToken,
+    PlusToken,
+    MinusToken,
+    StarToken, 
+    SlashToken,
+    LParenToken, 
+    RParenToken, 
+    LBraceToken, 
+    RBraceToken,
+    SemicolonToken, 
+    CommaToken, 
+    AssignToken,
+    UnsignedToken,
+    UnknownToken
 };
 
 struct Token
