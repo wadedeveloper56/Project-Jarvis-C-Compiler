@@ -68,6 +68,9 @@ void JWasmGenerator::outputProgramUninitializedData(Program& program)
 				if (gv->type == "int" && bits == 16)	out << gv->name << " SWORD ? ;global var " << gv->name << " type = " << gv->type << endl;
 				if (gv->type == "int" && bits == 32)	out << gv->name << " SDWORD ? ;global var " << gv->name << " type = " << gv->type << endl;
 				if (gv->type == "int" && bits == 64)	out << gv->name << " SDWORD ? ;global var " << gv->name << " type = " << gv->type << endl;
+				if (gv->type == "unsigned int" && bits == 16)	out << gv->name << " WORD ? ;global var " << gv->name << " type = " << gv->type << endl;
+				if (gv->type == "unsigned int" && bits == 32)	out << gv->name << " DWORD ? ;global var " << gv->name << " type = " << gv->type << endl;
+				if (gv->type == "unsigned int" && bits == 64)	out << gv->name << " DWORD ? ;global var " << gv->name << " type = " << gv->type << endl;
 			}
 		}
 	}
@@ -88,6 +91,9 @@ void JWasmGenerator::outputProgramInitializedData(Program& program)
 					if (gv->type == "int" && bits == 16)	out << gv->name << " SWORD " << expr->value << " ;global var " << gv->name << " type = " << gv->type << endl;
 					if (gv->type == "int" && bits == 32)	out << gv->name << " SDWORD " << expr->value << " ;global var " << gv->name << " type = " << gv->type << endl;
 					if (gv->type == "int" && bits == 64)	out << gv->name << " SDWORD " << expr->value << " ;global var " << gv->name << " type = " << gv->type << endl;
+					if (gv->type == "unsigned int" && bits == 16)	out << gv->name << " WORD " << expr->value << " ;global var " << gv->name << " type = " << gv->type << endl;
+					if (gv->type == "unsigned int" && bits == 32)	out << gv->name << " DWORD " << expr->value << " ;global var " << gv->name << " type = " << gv->type << endl;
+					if (gv->type == "unsigned int" && bits == 64)	out << gv->name << " DWORD " << expr->value << " ;global var " << gv->name << " type = " << gv->type << endl;
 				}
 			}
 		}
