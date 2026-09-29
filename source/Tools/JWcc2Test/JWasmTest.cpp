@@ -8,7 +8,7 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace JWcc2Test
 {
-	TEST_CLASS(JWasmTest)
+	TEST_CLASS(JWasmBasicTest)
 	{
 	public:
 		TEST_METHOD(JWasmTestBasic16bitWindows)

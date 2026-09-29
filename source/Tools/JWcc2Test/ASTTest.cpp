@@ -7,7 +7,7 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace JWcc2Test
 {
-	TEST_CLASS(ASTTest)
+	TEST_CLASS(ASTBasicTest)
 	{
 	public:
 		
