@@ -1,5 +1,5 @@
 #pragma once
-
+#include <string>
 typedef enum class ProcessorBitType
 {
 	BIT16_8086, 
@@ -27,5 +27,5 @@ extern bool bit32;
 extern bool bit64;
 extern bool isWindows;
 extern bool isLinux;
-extern string processor;
+extern std::string processor;
 extern ProcessorBitType processorBitType;

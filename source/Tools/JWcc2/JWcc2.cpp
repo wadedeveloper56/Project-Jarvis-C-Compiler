@@ -9,17 +9,6 @@
 
 using namespace std;
 
-
-// defaults
-int bits = 32;
-bool bit16 = false;
-bool bit32 = true; // default to 32-bit
-bool bit64 = false;
-bool isWindows = true; // default to Windows calling convention for 64-bit
-bool isLinux = false;
-string processor = "386"; // default to 16/32-bit 80386
-ProcessorBitType processorBitType = ProcessorBitType::BIT32_386;
-
 int main(int argc, char* argv[])
 {
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);

@@ -174,20 +174,23 @@ void JWasmGenerator::outputFunctionLocals(FunctionDeclaration& function)
 	{
 		int index = 0, idx = 0;
 		int size = (int)comp->localDeclarations.size();
-		ind(); out << "LOCAL ";
-		for (auto& ld : comp->localDeclarations)
+		if (size > 0)
 		{
-			if (auto v = dynamic_cast<VariableDeclaration*>(ld.get()))
+			ind(); out << "LOCAL ";
+			for (auto& ld : comp->localDeclarations)
 			{
-				localIndex[v->name] = { v->type, idx++ };
-				if (v->type == "int" && bits == 16) out << "_" << v->name << ":SWORD";
-				if (v->type == "int" && bits == 32) out << "_" << v->name << ":SDWORD";
-				if (v->type == "int" && bits == 64) out << "_" << v->name << ":SDWORD";
-				if (index < size - 1) out << ",";
-				index++;
+				if (auto v = dynamic_cast<VariableDeclaration*>(ld.get()))
+				{
+					localIndex[v->name] = { v->type, idx++ };
+					if (v->type == "int" && bits == 16) out << "_" << v->name << ":SWORD";
+					if (v->type == "int" && bits == 32) out << "_" << v->name << ":SDWORD";
+					if (v->type == "int" && bits == 64) out << "_" << v->name << ":SDWORD";
+					if (index < size - 1) out << ",";
+					index++;
+				}
 			}
+			out << endl;
 		}
-		out << endl;
 	}
 }
 
