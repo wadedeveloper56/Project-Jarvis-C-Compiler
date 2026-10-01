@@ -86,7 +86,7 @@ void JWasmGenerator::outputProgramUninitializedData(Program& program)
 void JWasmGenerator::outputProgramInitializedData(Program& program)
 {
 	// initialized data section for globals
-	out << endl << ".data" << endl;
+	tree.addDirective(AsmDirective::NONE, ".data");
 	for (auto& d : program.declarations)
 	{
 		if (auto gv = dynamic_cast<VariableDeclaration*>(d.get()))
@@ -104,7 +104,7 @@ void JWasmGenerator::outputProgramInitializedData(Program& program)
 
 void JWasmGenerator::outputProgramCode(Program& program)
 {
-	out << endl << ".code" << endl;
+	tree.addDirective(AsmDirective::NONE, ".code");
 	for (auto& d : program.declarations)
 	{
 		if (auto gv = dynamic_cast<FunctionDeclaration*>(d.get()))
@@ -120,7 +120,7 @@ void JWasmGenerator::visit(Program& program)
 	outputProgramUninitializedData(program);
 	outputProgramInitializedData(program);
 	outputProgramCode(program);
-	out << "end" << endl;
+	tree.addDirective(AsmDirective::NONE, "end");
 }
 
 void JWasmGenerator::visit(VariableDeclaration& n)
@@ -128,16 +128,16 @@ void JWasmGenerator::visit(VariableDeclaration& n)
 
 void JWasmGenerator::outputFunctionComment(FunctionDeclaration& function)
 {
-	out << ";-----------------" << endl;
-	out << "; params:" << endl;
+	tree.addComment(";-----------------");
+	tree.addComment("; params:");
 	if (!function.params.empty())
 	{
 		for (auto& p : function.params)
 		{
-			out << ";   " << p.second << " : " << p.first << endl;
+			tree.addComment(";   " + p.second + " : " + p.first);
 		}
 	}
-	out << "; locals:" << endl;
+	tree.addComment("; locals:");
 	if (function.body)
 	{
 		if (auto comp = dynamic_cast<CompoundStatement*>(function.body.get()))
@@ -146,12 +146,22 @@ void JWasmGenerator::outputFunctionComment(FunctionDeclaration& function)
 			{
 				if (auto v = dynamic_cast<VariableDeclaration*>(ld.get()))
 				{
-					out << ";   " << v->name << " : " << v->type << endl;
+					tree.addComment(";   " + v->name + " : " + v->type);
 				}
 			}
 		}
 	}
-	out << ";-----------------" << endl;
+	tree.addComment(";-----------------");
+}
+
+void JWasmGenerator::asmOutputVariables(string type,string name)
+{
+	if (type == "int" && bits == 16) out << "_" << name << ":SWORD";
+	if (type == "int" && bits == 32) out << "_" << name << ":SDWORD";
+	if (type == "int" && bits == 64) out << "_" << name << ":SDWORD";
+	if (type == "unsigned int" && bits == 16) out << "_" << name << ":WORD";
+	if (type == "unsigned int" && bits == 32) out << "_" << name << ":DWORD";
+	if (type == "unsigned int" && bits == 64) out << "_" << name << ":DWORD";
 }
 
 void JWasmGenerator::outputFunctionHeader(FunctionDeclaration& function)
@@ -160,12 +170,7 @@ void JWasmGenerator::outputFunctionHeader(FunctionDeclaration& function)
 	out << "_" << function.name << " PROC ";
 	for (auto& p : function.params)
 	{
-		if (p.first == "int" && bits == 16) out << "_" << p.second << ":SWORD";
-		if (p.first == "int" && bits == 32) out << "_" << p.second << ":SDWORD";
-		if (p.first == "int" && bits == 64) out << "_" << p.second << ":SDWORD";
-		if (p.first == "unsigned int" && bits == 16) out << "_" << p.second << ":WORD";
-		if (p.first == "unsigned int" && bits == 32) out << "_" << p.second << ":DWORD";
-		if (p.first == "unsigned int" && bits == 64) out << "_" << p.second << ":DWORD";
+		asmOutputVariables(p.first, p.second);
 		if (index < (int)function.params.size() - 1) out << ",";
 		index++;
 
@@ -187,12 +192,7 @@ void JWasmGenerator::outputFunctionLocals(FunctionDeclaration& function)
 				if (auto v = dynamic_cast<VariableDeclaration*>(ld.get()))
 				{
 					localIndex[v->name] = { v->type, idx++ };
-					if (v->type == "int" && bits == 16) out << "_" << v->name << ":SWORD";
-					if (v->type == "int" && bits == 32) out << "_" << v->name << ":SDWORD";
-					if (v->type == "int" && bits == 64) out << "_" << v->name << ":SDWORD";
-					if (v->type == "unsigned int" && bits == 16) out << "_" << v->name << ":WORD";
-					if (v->type == "unsigned int" && bits == 32) out << "_" << v->name << ":DWORD";
-					if (v->type == "unsigned int" && bits == 64) out << "_" << v->name << ":DWORD";
+					asmOutputVariables(v->type, v->name);
 					if (index < size - 1) out << ",";
 					index++;
 				}

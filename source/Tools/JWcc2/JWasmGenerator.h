@@ -60,6 +60,7 @@ private:
 	void outputFunctionLocals(FunctionDeclaration& function);
 	void outputFunctionLocalsInitializationFunctionCall(CallExpression* exp);
 	void outputFunctionLocalsInitialization(FunctionDeclaration& function);
+	void asmOutputVariables(string type, string name);
 	void outputFunctionHeader(FunctionDeclaration& function);
 	void outputFunctionBody(FunctionDeclaration& function);
 	void outputProgramFileHeader();
