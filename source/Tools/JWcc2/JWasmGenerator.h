@@ -1,9 +1,10 @@
 #pragma once
 
-#include "AST.h"
 #include <ostream>
 #include <unordered_map>
 #include <string>
+#include "AST.h"
+#include "JWasmTree.h"
 
 using namespace std;
 
@@ -15,16 +16,16 @@ struct VarData
 
 class JWasmGenerator : ASTVisitor 
 {
-private:
 	ostream& out;
 	int indent;
 	int bits;
 	bool isWindows;
 	unordered_map<string,VarData> paramIndex;
 	unordered_map<string,VarData> localIndex;
+	JWasmTree tree;
 public:
 	JWasmGenerator(ostream& os, int bits = 32, bool isWindows = true);
-	void generate(Program& program) { program.accept(*this); }
+	void generate(Program& program);
 	void visit(Program& program) override;
 	void visit(VariableDeclaration& n) override;
 	void visit(FunctionDeclaration& function) override;
@@ -62,6 +63,7 @@ private:
 	void outputFunctionHeader(FunctionDeclaration& function);
 	void outputFunctionBody(FunctionDeclaration& function);
 	void outputProgramFileHeader();
+	void asmGlobalData(string name, string type, string value);
 	void outputProgramUninitializedData(Program& program);
 	void outputProgramInitializedData(Program& program);
 	void outputProgramCode(Program& program);

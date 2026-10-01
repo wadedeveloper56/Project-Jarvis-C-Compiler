@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <unordered_set>
 #include <format>
+#include <cstdarg>
 
 #ifdef _DEBUG
 #define DEBUG_PRINT(x) std::cout << std::format x;

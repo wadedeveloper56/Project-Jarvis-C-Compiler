@@ -7,6 +7,8 @@ using namespace std;
 
 JWasmGenerator::JWasmGenerator(ostream& os, int bits, bool isWindows) : out(os), bits(bits), indent(0), isWindows(isWindows) {}
 
+void JWasmGenerator::generate(Program& program) { program.accept(*this); }
+
 void JWasmGenerator::ind() { for (int i = 1; i <= indent; ++i) out << "  "; }
 
 string JWasmGenerator::regA(int size) const {
@@ -37,27 +39,37 @@ void JWasmGenerator::outputProgramFileHeader()
 {
 	if (bits == 16)
 	{
-		out << "." << processor << endl;
-		out << "option segment:use16" << endl;
-		out << ".model small, c;" << endl;
+		tree.addDirective(AsmDirective::NONE, "." + processor);
+		tree.addDirective(AsmDirective::NONE, "option segment:use16");
+		tree.addDirective(AsmDirective::NONE, ".model small, c;");
 	}
 	else if (bits == 32)
 	{
-		out << "." << processor << endl;
-		out << "option segment:use32" << endl;
-		out << ".model flat, c;" << endl;
+		tree.addDirective(AsmDirective::NONE, "." + processor);
+		tree.addDirective(AsmDirective::NONE, "option segment:use32");
+		tree.addDirective(AsmDirective::NONE, ".model flat, c;");
 	}
 	else
 	{
-		out << ".x64p" << endl;
+		tree.addDirective(AsmDirective::NONE, ".x64p");
 	}
-	out << "option casemap : none" << endl;
+	tree.addDirective(AsmDirective::NONE, "option casemap : none");
+}
+
+void JWasmGenerator::asmGlobalData(string name, string type, string value)
+{
+	if (type == "int" && bits == 16) tree.addData(name, "SWORD", value, ";global var " + name + " type = " + type);
+	if (type == "int" && bits == 32) tree.addData(name, "SDWORD", value, ";global var " + name + " type = " + type);
+	if (type == "int" && bits == 64) tree.addData(name, "SDWORD", value, ";global var " + name + " type = " + type);
+	if (type == "unsigned int" && bits == 16) tree.addData(name, "WORD", value, ";global var " + name + " type = " + type);
+	if (type == "unsigned int" && bits == 32) tree.addData(name, "DWORD", value, ";global var " + name + " type = " + type);
+	if (type == "unsigned int" && bits == 64) tree.addData(name, "DWORD", value, ";global var " + name + " type = " + type);
 }
 
 void JWasmGenerator::outputProgramUninitializedData(Program& program)
 {
 	// uninitialized data section for globals
-	out << endl << ".data?" << endl;
+	tree.addDirective(AsmDirective::NONE, ".data?");
 	for (auto& d : program.declarations)
 	{
 		if (auto gv = dynamic_cast<VariableDeclaration*>(d.get()))
@@ -65,12 +77,7 @@ void JWasmGenerator::outputProgramUninitializedData(Program& program)
 			auto init = dynamic_cast<Expression*>(gv->init.get());
 			if (init == nullptr)
 			{
-				if (gv->type == "int" && bits == 16)	out << gv->name << " SWORD ? ;global var " << gv->name << " type = " << gv->type << endl;
-				if (gv->type == "int" && bits == 32)	out << gv->name << " SDWORD ? ;global var " << gv->name << " type = " << gv->type << endl;
-				if (gv->type == "int" && bits == 64)	out << gv->name << " SDWORD ? ;global var " << gv->name << " type = " << gv->type << endl;
-				if (gv->type == "unsigned int" && bits == 16)	out << gv->name << " WORD ? ;global var " << gv->name << " type = " << gv->type << endl;
-				if (gv->type == "unsigned int" && bits == 32)	out << gv->name << " DWORD ? ;global var " << gv->name << " type = " << gv->type << endl;
-				if (gv->type == "unsigned int" && bits == 64)	out << gv->name << " DWORD ? ;global var " << gv->name << " type = " << gv->type << endl;
+				asmGlobalData(gv->name, gv->type, "?");
 			}
 		}
 	}
@@ -88,12 +95,7 @@ void JWasmGenerator::outputProgramInitializedData(Program& program)
 			{
 				if (auto expr = dynamic_cast<NumberExpression*>(init))
 				{
-					if (gv->type == "int" && bits == 16)	out << gv->name << " SWORD " << expr->value << " ;global var " << gv->name << " type = " << gv->type << endl;
-					if (gv->type == "int" && bits == 32)	out << gv->name << " SDWORD " << expr->value << " ;global var " << gv->name << " type = " << gv->type << endl;
-					if (gv->type == "int" && bits == 64)	out << gv->name << " SDWORD " << expr->value << " ;global var " << gv->name << " type = " << gv->type << endl;
-					if (gv->type == "unsigned int" && bits == 16)	out << gv->name << " WORD " << expr->value << " ;global var " << gv->name << " type = " << gv->type << endl;
-					if (gv->type == "unsigned int" && bits == 32)	out << gv->name << " DWORD " << expr->value << " ;global var " << gv->name << " type = " << gv->type << endl;
-					if (gv->type == "unsigned int" && bits == 64)	out << gv->name << " DWORD " << expr->value << " ;global var " << gv->name << " type = " << gv->type << endl;
+					asmGlobalData(gv->name, gv->type, expr->value + "");
 				}
 			}
 		}
@@ -126,8 +128,8 @@ void JWasmGenerator::visit(VariableDeclaration& n)
 
 void JWasmGenerator::outputFunctionComment(FunctionDeclaration& function)
 {
-	out << ";-----------------"<<endl;
-	out << "; params:"<<endl;
+	out << ";-----------------" << endl;
+	out << "; params:" << endl;
 	if (!function.params.empty())
 	{
 		for (auto& p : function.params)
@@ -135,7 +137,7 @@ void JWasmGenerator::outputFunctionComment(FunctionDeclaration& function)
 			out << ";   " << p.second << " : " << p.first << endl;
 		}
 	}
-	out << "; locals:"<<endl;
+	out << "; locals:" << endl;
 	if (function.body)
 	{
 		if (auto comp = dynamic_cast<CompoundStatement*>(function.body.get()))
@@ -149,7 +151,7 @@ void JWasmGenerator::outputFunctionComment(FunctionDeclaration& function)
 			}
 		}
 	}
-	out << ";-----------------"<<endl;
+	out << ";-----------------" << endl;
 }
 
 void JWasmGenerator::outputFunctionHeader(FunctionDeclaration& function)
@@ -161,6 +163,9 @@ void JWasmGenerator::outputFunctionHeader(FunctionDeclaration& function)
 		if (p.first == "int" && bits == 16) out << "_" << p.second << ":SWORD";
 		if (p.first == "int" && bits == 32) out << "_" << p.second << ":SDWORD";
 		if (p.first == "int" && bits == 64) out << "_" << p.second << ":SDWORD";
+		if (p.first == "unsigned int" && bits == 16) out << "_" << p.second << ":WORD";
+		if (p.first == "unsigned int" && bits == 32) out << "_" << p.second << ":DWORD";
+		if (p.first == "unsigned int" && bits == 64) out << "_" << p.second << ":DWORD";
 		if (index < (int)function.params.size() - 1) out << ",";
 		index++;
 
@@ -185,6 +190,9 @@ void JWasmGenerator::outputFunctionLocals(FunctionDeclaration& function)
 					if (v->type == "int" && bits == 16) out << "_" << v->name << ":SWORD";
 					if (v->type == "int" && bits == 32) out << "_" << v->name << ":SDWORD";
 					if (v->type == "int" && bits == 64) out << "_" << v->name << ":SDWORD";
+					if (v->type == "unsigned int" && bits == 16) out << "_" << v->name << ":WORD";
+					if (v->type == "unsigned int" && bits == 32) out << "_" << v->name << ":DWORD";
+					if (v->type == "unsigned int" && bits == 64) out << "_" << v->name << ":DWORD";
 					if (index < size - 1) out << ",";
 					index++;
 				}
@@ -227,6 +235,10 @@ void JWasmGenerator::asmStatementMoveVariableToRegisterA(string type, string nam
 	if (type == "int" && bits == 16) { ind(); out << "mov " << regA(16) << ", _" << name << comment << endl; }
 	if (type == "int" && bits == 32) { ind(); out << "mov " << regA(32) << ", _" << name << comment << endl; }
 	if (type == "int" && bits == 64) { ind(); out << "mov " << regA(32) << ", _" << name << comment << endl; }
+	if (type == "unsigned int" && bits == 16) { ind(); out << "mov " << regA(16) << ", _" << name << comment << endl; }
+	if (type == "unsigned int" && bits == 32) { ind(); out << "mov " << regA(32) << ", _" << name << comment << endl; }
+	if (type == "unsigned int" && bits == 64) { ind(); out << "mov " << regA(32) << ", _" << name << comment << endl; }
+
 }
 
 void JWasmGenerator::asmStatementMoveImmediateToRegisterA(string type, string name, string comment)
@@ -234,6 +246,10 @@ void JWasmGenerator::asmStatementMoveImmediateToRegisterA(string type, string na
 	if (type == "int" && bits == 16) { ind(); out << "mov " << regA(16) << ", " << name << comment << endl; }
 	if (type == "int" && bits == 32) { ind(); out << "mov " << regA(32) << ", " << name << comment << endl; }
 	if (type == "int" && bits == 64) { ind(); out << "mov " << regA(32) << ", " << name << comment << endl; }
+	if (type == "unsigned int" && bits == 16) { ind(); out << "mov " << regA(16) << ", " << name << comment << endl; }
+	if (type == "unsigned int" && bits == 32) { ind(); out << "mov " << regA(32) << ", " << name << comment << endl; }
+	if (type == "unsigned int" && bits == 64) { ind(); out << "mov " << regA(32) << ", " << name << comment << endl; }
+
 }
 
 void JWasmGenerator::asmStatementMoveRegisterAToVariable(string type, string name, string comment)
@@ -241,6 +257,9 @@ void JWasmGenerator::asmStatementMoveRegisterAToVariable(string type, string nam
 	if (type == "int" && bits == 16) { ind(); out << "mov _" << name << ", " << regA(16) << comment << endl; }
 	if (type == "int" && bits == 32) { ind(); out << "mov _" << name << ", " << regA(32) << comment << endl; }
 	if (type == "int" && bits == 64) { ind(); out << "mov _" << name << ", " << regA(32) << comment << endl; }
+	if (type == "unsigned int" && bits == 16) { ind(); out << "mov _" << name << ", " << regA(16) << comment << endl; }
+	if (type == "unsigned int" && bits == 32) { ind(); out << "mov _" << name << ", " << regA(32) << comment << endl; }
+	if (type == "unsigned int" && bits == 64) { ind(); out << "mov _" << name << ", " << regA(32) << comment << endl; }
 }
 
 void JWasmGenerator::outputFunctionLocalsInitialization(FunctionDeclaration& function)
@@ -336,17 +355,17 @@ void JWasmGenerator::asmStatementIdivRegisterAAndRegisterB()
 	if (bits == 64)
 	{
 		ind(); out << "cdq \t\t\t\t;extend eax to edx:eax for idiv" << endl;
-		ind(); out << "idiv " << regB(32) << "\t\t\t\t;integer divide registers A and B and store result in A"<<endl;
+		ind(); out << "idiv " << regB(32) << "\t\t\t\t;integer divide registers A and B and store result in A" << endl;
 	}
 	if (bits == 32)
 	{
 		ind(); out << "cdq \t\t\t\t;extend eax to edx:eax for idiv" << endl;
-		ind(); out << "idiv " << regB(32) << "\t\t\t\t;integer divide registers A and B and store result in A"<<endl;
+		ind(); out << "idiv " << regB(32) << "\t\t\t\t;integer divide registers A and B and store result in A" << endl;
 	}
 	if (bits == 16)
 	{
 		ind(); out << "cwd \t\t\t\t;extend ax to dx:ax for idiv" << endl;
-		ind(); out << "idiv " << regB(16) << "\t\t\t\t;integer divide registers AX and BX and store result in AX"<<endl;
+		ind(); out << "idiv " << regB(16) << "\t\t\t\t;integer divide registers AX and BX and store result in AX" << endl;
 	}
 }
 
