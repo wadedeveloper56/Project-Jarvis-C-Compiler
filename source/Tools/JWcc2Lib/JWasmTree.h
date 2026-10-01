@@ -15,6 +15,7 @@ typedef enum _AsmDataType
 
 typedef enum _AsmRegisters
 {
+	NONE,
 	//Registers 16 - and 32 - bit Modes
 	//8 - bit registers	
 	AL,
@@ -177,10 +178,9 @@ typedef enum _AsmRegisters
 
 typedef enum _AsmOperandType
 {
-	OPERAND_R_TO_R,
-	OPERAND_R_TO_M,
-	OPERAND_M_TO_R,
-	OPERAND_M_TO_M
+	OPERAND_MEMORY,
+	OPERAND_REGISTER,
+	OPERAND_IMMEDIATE
 }AsmOperandType;
 
 typedef struct _AsmOperand
@@ -190,11 +190,12 @@ typedef struct _AsmOperand
 	string variable;
 	long long immediate;
 	_AsmOperand() {};
+	_AsmOperand(AsmOperandType t, AsmRegisters r, string v, long long i) : type(t), registers(r), variable(v), immediate(i) {};
 } AsmOperand;
 
 typedef enum _AsmDirective
 {
-	NONE
+	NONE1
 	,p8086
 	, p186
 	, p286
@@ -381,6 +382,7 @@ typedef struct _AsmDirectiveData
 {
 	AsmDirective directive;
 	vector<string> directiveData;
+	string comment;
 }AsmDirectiveData;
 
 typedef struct _AsmData
@@ -409,8 +411,8 @@ public:
 	JWasmTree();
 	~JWasmTree();
 	void addInstruction(string instr, AsmOperand op1, AsmOperand op2, string comment);
-	void addDirective(AsmDirective directive, string data);
-	void addDirective(AsmDirective directive, string data1, string data2);
+	void addDirective(AsmDirective directive, string data, string comment);
+	void addDirective(AsmDirective directive, string data1, string data2, string comment);
 	void addComment(string comment);
 	void addData(string label, string type, string value, string comment);
 };

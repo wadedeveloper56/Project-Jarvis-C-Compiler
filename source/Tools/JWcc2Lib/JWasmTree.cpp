@@ -16,22 +16,24 @@ void JWasmTree::addInstruction(string instr, AsmOperand op1, AsmOperand op2, str
 	program.push_back(instruction);
 }
 
-void JWasmTree::addDirective(AsmDirective directive, string data)
+void JWasmTree::addDirective(AsmDirective directive, string data, string comment)
 {
 	JWasmData directiveData;
 	directiveData.type = AsmDataType::ASM_DATA_TYPE_DIRECTIVE;
 	directiveData.directive.directive = directive;
 	directiveData.directive.directiveData.push_back(data);
+	directiveData.directive.comment = comment;
 	program.push_back(directiveData);
 }
 
-void JWasmTree::addDirective(AsmDirective directive, string data1, string data2)
+void JWasmTree::addDirective(AsmDirective directive, string data1, string data2, string comment)
 {
 	JWasmData directiveData;
 	directiveData.type = AsmDataType::ASM_DATA_TYPE_DIRECTIVE;
 	directiveData.directive.directive = directive;
 	directiveData.directive.directiveData.push_back(data1);
 	directiveData.directive.directiveData.push_back(data2);
+	directiveData.directive.comment = comment;
 	program.push_back(directiveData);
 }
 

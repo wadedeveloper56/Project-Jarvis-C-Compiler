@@ -39,21 +39,21 @@ void JWasmGenerator::outputProgramFileHeader()
 {
 	if (bits == 16)
 	{
-		tree.addDirective(AsmDirective::NONE, "." + processor);
-		tree.addDirective(AsmDirective::NONE, "option segment:use16");
-		tree.addDirective(AsmDirective::NONE, ".model small, c;");
+		tree.addDirective(AsmDirective::NONE1, "." + processor,"");
+		tree.addDirective(AsmDirective::NONE1, "option segment:use16", "");
+		tree.addDirective(AsmDirective::NONE1, ".model small, c;", "");
 	}
 	else if (bits == 32)
 	{
-		tree.addDirective(AsmDirective::NONE, "." + processor);
-		tree.addDirective(AsmDirective::NONE, "option segment:use32");
-		tree.addDirective(AsmDirective::NONE, ".model flat, c;");
+		tree.addDirective(AsmDirective::NONE1, "." + processor,"");
+		tree.addDirective(AsmDirective::NONE1, "option segment:use32", "");
+		tree.addDirective(AsmDirective::NONE1, ".model flat, c;", "");
 	}
 	else
 	{
-		tree.addDirective(AsmDirective::NONE, ".x64p");
+		tree.addDirective(AsmDirective::NONE1, ".x64p", "");
 	}
-	tree.addDirective(AsmDirective::NONE, "option casemap : none");
+	tree.addDirective(AsmDirective::NONE1, "option casemap : none", "");
 }
 
 void JWasmGenerator::asmGlobalData(string name, string type, string value)
@@ -69,7 +69,7 @@ void JWasmGenerator::asmGlobalData(string name, string type, string value)
 void JWasmGenerator::outputProgramUninitializedData(Program& program)
 {
 	// uninitialized data section for globals
-	tree.addDirective(AsmDirective::NONE, ".data?");
+	tree.addDirective(AsmDirective::NONE1, ".data?", "");
 	for (auto& d : program.declarations)
 	{
 		if (auto gv = dynamic_cast<VariableDeclaration*>(d.get()))
@@ -86,7 +86,7 @@ void JWasmGenerator::outputProgramUninitializedData(Program& program)
 void JWasmGenerator::outputProgramInitializedData(Program& program)
 {
 	// initialized data section for globals
-	tree.addDirective(AsmDirective::NONE, ".data");
+	tree.addDirective(AsmDirective::NONE1, ".data", "");
 	for (auto& d : program.declarations)
 	{
 		if (auto gv = dynamic_cast<VariableDeclaration*>(d.get()))
@@ -104,7 +104,7 @@ void JWasmGenerator::outputProgramInitializedData(Program& program)
 
 void JWasmGenerator::outputProgramCode(Program& program)
 {
-	tree.addDirective(AsmDirective::NONE, ".code");
+	tree.addDirective(AsmDirective::NONE1, ".code", "");
 	for (auto& d : program.declarations)
 	{
 		if (auto gv = dynamic_cast<FunctionDeclaration*>(d.get()))
@@ -120,7 +120,7 @@ void JWasmGenerator::visit(Program& program)
 	outputProgramUninitializedData(program);
 	outputProgramInitializedData(program);
 	outputProgramCode(program);
-	tree.addDirective(AsmDirective::NONE, "end");
+	tree.addDirective(AsmDirective::NONE1, "end", "");
 }
 
 void JWasmGenerator::visit(VariableDeclaration& n)
@@ -210,61 +210,61 @@ void JWasmGenerator::moveResultOfInvokeIntoRegisterA(VariableDeclaration* v)
 
 void JWasmGenerator::outputFunctionLocalsInitializationFunctionCall(CallExpression* exp)
 {
-	ind(); out << "invoke _" << exp->callee;
+	ostringstream ss;
+	ss << "invoke _" << exp->callee;
 	for (auto& it : exp->args)
 	{
 		if (auto exp = dynamic_cast<VariableExpression*>(it.get()))
 		{
-			out << ", " << exp->name;
+			ss << ", " << exp->name;
 		}
 		else if (auto exp = dynamic_cast<NumberExpression*>(it.get()))
 		{
-			out << ", " << exp->value;
+			ss << ", " << exp->value;
 		}
 	}
-	out << "\t;invoke function '" << exp->callee << "' with " << exp->args.size() << " arguments" << endl;
+	tree.addDirective(AsmDirective::INVOKE, "_" + exp->callee, ss.str(), ";invoke function '" + exp->callee + "' with " + to_string(exp->args.size()) + " arguments");
 }
 
 void JWasmGenerator::asmStatementMoveSignExtendVariableToRegisterA(string type, string name, string comment)
 {
-	ind(); out << "movsxd " << regA(64) << ", _" << name << comment << endl;
+	tree.addInstruction("movsx", AsmOperand(OPERAND_REGISTER, AsmRegisters::RAX, "", 0), AsmOperand(OPERAND_MEMORY, AsmRegisters::NONE, "_" +name, 0), comment);
 }
 
 void JWasmGenerator::asmStatementMoveVariableToRegisterA(string type, string name, string comment)
 {
-	if (type == "int" && bits == 16) { ind(); out << "mov " << regA(16) << ", _" << name << comment << endl; }
-	if (type == "int" && bits == 32) { ind(); out << "mov " << regA(32) << ", _" << name << comment << endl; }
-	if (type == "int" && bits == 64) { ind(); out << "mov " << regA(32) << ", _" << name << comment << endl; }
-	if (type == "unsigned int" && bits == 16) { ind(); out << "mov " << regA(16) << ", _" << name << comment << endl; }
-	if (type == "unsigned int" && bits == 32) { ind(); out << "mov " << regA(32) << ", _" << name << comment << endl; }
-	if (type == "unsigned int" && bits == 64) { ind(); out << "mov " << regA(32) << ", _" << name << comment << endl; }
+	if (type == "int" && bits == 16) { tree.addInstruction("mov", AsmOperand(OPERAND_REGISTER, AsmRegisters::AX, "", 0), AsmOperand(OPERAND_MEMORY, AsmRegisters::NONE, "_" + name, 0), comment); }
+	if (type == "int" && bits == 32) { tree.addInstruction("mov", AsmOperand(OPERAND_REGISTER, AsmRegisters::EAX, "", 0), AsmOperand(OPERAND_MEMORY, AsmRegisters::NONE, "_" + name, 0), comment); }
+	if (type == "int" && bits == 64) { tree.addInstruction("mov", AsmOperand(OPERAND_REGISTER, AsmRegisters::EAX, "", 0), AsmOperand(OPERAND_MEMORY, AsmRegisters::NONE, "_" + name, 0), comment); }
+	if (type == "unsigned int" && bits == 16) { tree.addInstruction("mov", AsmOperand(OPERAND_REGISTER, AsmRegisters::AX, "", 0), AsmOperand(OPERAND_MEMORY, AsmRegisters::NONE, "_" + name, 0), comment); }
+	if (type == "unsigned int" && bits == 32) { tree.addInstruction("mov", AsmOperand(OPERAND_REGISTER, AsmRegisters::EAX, "", 0), AsmOperand(OPERAND_MEMORY, AsmRegisters::NONE, "_" + name, 0), comment); }
+	if (type == "unsigned int" && bits == 64) { tree.addInstruction("mov", AsmOperand(OPERAND_REGISTER, AsmRegisters::EAX, "", 0), AsmOperand(OPERAND_MEMORY, AsmRegisters::NONE, "_" + name, 0), comment); }
 
 }
 
 void JWasmGenerator::asmStatementMoveImmediateToRegisterA(string type, string name, string comment)
 {
-	if (type == "int" && bits == 16) { ind(); out << "mov " << regA(16) << ", " << name << comment << endl; }
-	if (type == "int" && bits == 32) { ind(); out << "mov " << regA(32) << ", " << name << comment << endl; }
-	if (type == "int" && bits == 64) { ind(); out << "mov " << regA(32) << ", " << name << comment << endl; }
-	if (type == "unsigned int" && bits == 16) { ind(); out << "mov " << regA(16) << ", " << name << comment << endl; }
-	if (type == "unsigned int" && bits == 32) { ind(); out << "mov " << regA(32) << ", " << name << comment << endl; }
-	if (type == "unsigned int" && bits == 64) { ind(); out << "mov " << regA(32) << ", " << name << comment << endl; }
-
+	if (type == "int" && bits == 16) { tree.addInstruction("mov", AsmOperand(OPERAND_REGISTER, AsmRegisters::AX, "", 0), AsmOperand(OPERAND_IMMEDIATE, AsmRegisters::NONE, "", stoll(name)), comment); }
+	if (type == "int" && bits == 32) { tree.addInstruction("mov", AsmOperand(OPERAND_REGISTER, AsmRegisters::EAX, "", 0), AsmOperand(OPERAND_IMMEDIATE, AsmRegisters::NONE, "", stoll(name)), comment); }
+	if (type == "int" && bits == 64) { tree.addInstruction("mov", AsmOperand(OPERAND_REGISTER, AsmRegisters::EAX, "", 0), AsmOperand(OPERAND_IMMEDIATE, AsmRegisters::NONE, "", stoll(name)), comment); }
+	if (type == "unsigned int" && bits == 16) { tree.addInstruction("mov", AsmOperand(OPERAND_REGISTER, AsmRegisters::AX, "", 0), AsmOperand(OPERAND_IMMEDIATE, AsmRegisters::NONE, "", stoll(name)), comment); }
+	if (type == "unsigned int" && bits == 32) { tree.addInstruction("mov", AsmOperand(OPERAND_REGISTER, AsmRegisters::EAX, "", 0), AsmOperand(OPERAND_IMMEDIATE, AsmRegisters::NONE, "", stoll(name)), comment); }
+	if (type == "unsigned int" && bits == 64) { tree.addInstruction("mov", AsmOperand(OPERAND_REGISTER, AsmRegisters::EAX, "", 0), AsmOperand(OPERAND_IMMEDIATE, AsmRegisters::NONE, "", stoll(name)), comment); }
 }
 
 void JWasmGenerator::asmStatementMoveRegisterAToVariable(string type, string name, string comment)
 {
-	if (type == "int" && bits == 16) { ind(); out << "mov _" << name << ", " << regA(16) << comment << endl; }
-	if (type == "int" && bits == 32) { ind(); out << "mov _" << name << ", " << regA(32) << comment << endl; }
-	if (type == "int" && bits == 64) { ind(); out << "mov _" << name << ", " << regA(32) << comment << endl; }
-	if (type == "unsigned int" && bits == 16) { ind(); out << "mov _" << name << ", " << regA(16) << comment << endl; }
-	if (type == "unsigned int" && bits == 32) { ind(); out << "mov _" << name << ", " << regA(32) << comment << endl; }
-	if (type == "unsigned int" && bits == 64) { ind(); out << "mov _" << name << ", " << regA(32) << comment << endl; }
+	if (type == "int" && bits == 16) { tree.addInstruction("mov", AsmOperand(OPERAND_MEMORY, AsmRegisters::NONE, "_" + name, 0), AsmOperand(OPERAND_REGISTER, AsmRegisters::AX, "", 0), comment); }
+	if (type == "int" && bits == 32) { tree.addInstruction("mov", AsmOperand(OPERAND_MEMORY, AsmRegisters::NONE, "_" + name, 0), AsmOperand(OPERAND_REGISTER, AsmRegisters::EAX, "", 0), comment); }
+	if (type == "int" && bits == 64) { tree.addInstruction("mov", AsmOperand(OPERAND_MEMORY, AsmRegisters::NONE, "_" + name, 0), AsmOperand(OPERAND_REGISTER, AsmRegisters::EAX, "", 0), comment); }
+	if (type == "unsigned int" && bits == 16) { tree.addInstruction("mov", AsmOperand(OPERAND_MEMORY, AsmRegisters::NONE, "_" + name, 0), AsmOperand(OPERAND_REGISTER, AsmRegisters::AX, "", 0), comment); }
+	if (type == "unsigned int" && bits == 32) { tree.addInstruction("mov", AsmOperand(OPERAND_MEMORY, AsmRegisters::NONE, "_" + name, 0), AsmOperand(OPERAND_REGISTER, AsmRegisters::EAX, "", 0), comment); }
+	if (type == "unsigned int" && bits == 64) { tree.addInstruction("mov", AsmOperand(OPERAND_MEMORY, AsmRegisters::NONE, "_" + name, 0), AsmOperand(OPERAND_REGISTER, AsmRegisters::EAX, "", 0), comment); }
 }
 
 void JWasmGenerator::outputFunctionLocalsInitialization(FunctionDeclaration& function)
 {
-	out << ";----------- Local variable initialization ----------" << endl;
+	tree.addComment(";----------- Local variable initialization ----------");
 	if (auto compoundStatement = dynamic_cast<CompoundStatement*>(function.body.get()))
 	{
 		for (auto& localDeclaration : compoundStatement->localDeclarations)
@@ -298,12 +298,12 @@ void JWasmGenerator::outputFunctionBody(FunctionDeclaration& function)
 	if (function.body)
 	{
 		auto& body = *function.body;
-		out << ";----------Handle Function Body Statements-----------" << endl;
+		tree.addComment(";----------Handle Function Body Statements-----------");
 		for (auto& statement : body.statements)
 		{
 			statement->accept(*this);
 		}
-		out << ";----------------------------------------------------" << endl;
+		tree.addComment(";----------------------------------------------------");
 	}
 }
 
@@ -323,7 +323,7 @@ void JWasmGenerator::visit(FunctionDeclaration& function)
 	outputFunctionLocalsInitialization(function);
 	outputFunctionBody(function);
 	indent--;
-	out << "_" << function.name << " ENDP" << endl << endl;
+	tree.addDirective(AsmDirective::ENDP, "_" + function.name, ";end of function " + function.name);
 }
 
 void JWasmGenerator::visit(CompoundStatement& n)
