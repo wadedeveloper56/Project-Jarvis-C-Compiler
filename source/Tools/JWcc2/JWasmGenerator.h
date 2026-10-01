@@ -16,7 +16,7 @@ struct VarData
 
 class JWasmGenerator : ASTVisitor 
 {
-	ostream& out;
+	//ostream& out;
 	int indent;
 	int bits;
 	bool isWindows;
@@ -41,7 +41,7 @@ public:
 	void visit(AssignExpression& n) override;
 	void visit(CallExpression& n) override;
 private:
-	void ind();
+	//void ind();
 
 	void asmStatementPushRegisterA(string comment);
 	void asmStatementPopRegisterA(string comment);
@@ -60,7 +60,8 @@ private:
 	void outputFunctionLocals(FunctionDeclaration& function);
 	void outputFunctionLocalsInitializationFunctionCall(CallExpression* exp);
 	void outputFunctionLocalsInitialization(FunctionDeclaration& function);
-	void asmOutputVariables(string type, string name);
+	void asmOutputParameterVariables(string type, string name);
+	void asmOutputLocalVariables(string type, string name);
 	void outputFunctionHeader(FunctionDeclaration& function);
 	void outputFunctionBody(FunctionDeclaration& function);
 	void outputProgramFileHeader();

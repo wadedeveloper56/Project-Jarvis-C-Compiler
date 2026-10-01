@@ -5,11 +5,11 @@
 
 using namespace std;
 
-JWasmGenerator::JWasmGenerator(ostream& os, int bits, bool isWindows) : out(os), bits(bits), indent(0), isWindows(isWindows) {}
+JWasmGenerator::JWasmGenerator(ostream& os, int bits, bool isWindows) : /*out(os),*/ bits(bits), indent(0), isWindows(isWindows) {}
 
 void JWasmGenerator::generate(Program& program) { program.accept(*this); }
 
-void JWasmGenerator::ind() { for (int i = 1; i <= indent; ++i) out << "  "; }
+//void JWasmGenerator::ind() { for (int i = 1; i <= indent; ++i) out << "  "; }
 
 string JWasmGenerator::regA(int size) const {
 	if (size == 64) return "rax";
@@ -39,13 +39,13 @@ void JWasmGenerator::outputProgramFileHeader()
 {
 	if (bits == 16)
 	{
-		tree.addDirective(AsmDirective::NONE1, "." + processor,"");
+		tree.addDirective(AsmDirective::NONE1, "." + processor, "");
 		tree.addDirective(AsmDirective::NONE1, "option segment:use16", "");
 		tree.addDirective(AsmDirective::NONE1, ".model small, c;", "");
 	}
 	else if (bits == 32)
 	{
-		tree.addDirective(AsmDirective::NONE1, "." + processor,"");
+		tree.addDirective(AsmDirective::NONE1, "." + processor, "");
 		tree.addDirective(AsmDirective::NONE1, "option segment:use32", "");
 		tree.addDirective(AsmDirective::NONE1, ".model flat, c;", "");
 	}
@@ -58,12 +58,12 @@ void JWasmGenerator::outputProgramFileHeader()
 
 void JWasmGenerator::asmGlobalData(string name, string type, string value)
 {
-	if (type == "int" && bits == 16) tree.addData(name, "SWORD", value, ";global var " + name + " type = " + type);
-	if (type == "int" && bits == 32) tree.addData(name, "SDWORD", value, ";global var " + name + " type = " + type);
-	if (type == "int" && bits == 64) tree.addData(name, "SDWORD", value, ";global var " + name + " type = " + type);
-	if (type == "unsigned int" && bits == 16) tree.addData(name, "WORD", value, ";global var " + name + " type = " + type);
-	if (type == "unsigned int" && bits == 32) tree.addData(name, "DWORD", value, ";global var " + name + " type = " + type);
-	if (type == "unsigned int" && bits == 64) tree.addData(name, "DWORD", value, ";global var " + name + " type = " + type);
+	if (type == "int" && bits == 16) tree.addGlobalData(name, "SWORD", value, ";global var " + name + " type = " + type);
+	if (type == "int" && bits == 32) tree.addGlobalData(name, "SDWORD", value, ";global var " + name + " type = " + type);
+	if (type == "int" && bits == 64) tree.addGlobalData(name, "SDWORD", value, ";global var " + name + " type = " + type);
+	if (type == "unsigned int" && bits == 16) tree.addGlobalData(name, "WORD", value, ";global var " + name + " type = " + type);
+	if (type == "unsigned int" && bits == 32) tree.addGlobalData(name, "DWORD", value, ";global var " + name + " type = " + type);
+	if (type == "unsigned int" && bits == 64) tree.addGlobalData(name, "DWORD", value, ";global var " + name + " type = " + type);
 }
 
 void JWasmGenerator::outputProgramUninitializedData(Program& program)
@@ -154,28 +154,34 @@ void JWasmGenerator::outputFunctionComment(FunctionDeclaration& function)
 	tree.addComment(";-----------------");
 }
 
-void JWasmGenerator::asmOutputVariables(string type,string name)
+void JWasmGenerator::asmOutputParameterVariables(string type, string name)
 {
-	if (type == "int" && bits == 16) out << "_" << name << ":SWORD";
-	if (type == "int" && bits == 32) out << "_" << name << ":SDWORD";
-	if (type == "int" && bits == 64) out << "_" << name << ":SDWORD";
-	if (type == "unsigned int" && bits == 16) out << "_" << name << ":WORD";
-	if (type == "unsigned int" && bits == 32) out << "_" << name << ":DWORD";
-	if (type == "unsigned int" && bits == 64) out << "_" << name << ":DWORD";
+	if (type == "int" && bits == 16) tree.addParameterData(name, "SWORD");
+	if (type == "int" && bits == 32) tree.addParameterData(name, "SDWORD");
+	if (type == "int" && bits == 64) tree.addParameterData(name, "SDWORD");
+	if (type == "unsigned int" && bits == 16) tree.addParameterData(name, "WORD");
+	if (type == "unsigned int" && bits == 32) tree.addParameterData(name, "DWORD");
+	if (type == "unsigned int" && bits == 64) tree.addParameterData(name, "DWORD");
+}
+
+void JWasmGenerator::asmOutputLocalVariables(string type, string name)
+{
+	if (type == "int" && bits == 16) tree.addLocalData("SWORD", name);
+	if (type == "int" && bits == 32) tree.addLocalData("SDWORD", name);
+	if (type == "int" && bits == 64) tree.addLocalData("SDWORD", name);
+	if (type == "unsigned int" && bits == 16) tree.addLocalData("WORD", name);
+	if (type == "unsigned int" && bits == 32) tree.addLocalData("DWORD", name);
+	if (type == "unsigned int" && bits == 64) tree.addLocalData("DWORD", name);
 }
 
 void JWasmGenerator::outputFunctionHeader(FunctionDeclaration& function)
 {
 	int index = 0;
-	out << "_" << function.name << " PROC ";
+	tree.addDirective(AsmDirective::PROC, "_" + function.name, ";function " + function.name + " with " + to_string(function.params.size()) + " parameters");
 	for (auto& p : function.params)
 	{
-		asmOutputVariables(p.first, p.second);
-		if (index < (int)function.params.size() - 1) out << ",";
-		index++;
-
+		asmOutputParameterVariables(p.first, p.second);
 	}
-	out << endl;
 }
 
 void JWasmGenerator::outputFunctionLocals(FunctionDeclaration& function)
@@ -186,18 +192,15 @@ void JWasmGenerator::outputFunctionLocals(FunctionDeclaration& function)
 		int size = (int)comp->localDeclarations.size();
 		if (size > 0)
 		{
-			ind(); out << "LOCAL ";
 			for (auto& ld : comp->localDeclarations)
 			{
 				if (auto v = dynamic_cast<VariableDeclaration*>(ld.get()))
 				{
 					localIndex[v->name] = { v->type, idx++ };
-					asmOutputVariables(v->type, v->name);
-					if (index < size - 1) out << ",";
+					asmOutputLocalVariables(v->type, v->name);
 					index++;
 				}
 			}
-			out << endl;
 		}
 	}
 }
@@ -228,7 +231,7 @@ void JWasmGenerator::outputFunctionLocalsInitializationFunctionCall(CallExpressi
 
 void JWasmGenerator::asmStatementMoveSignExtendVariableToRegisterA(string type, string name, string comment)
 {
-	tree.addInstruction("movsx", AsmOperand(OPERAND_REGISTER, AsmRegisters::RAX, "", 0), AsmOperand(OPERAND_MEMORY, AsmRegisters::NONE, "_" +name, 0), comment);
+	tree.addInstruction("movsx", AsmOperand(OPERAND_REGISTER, AsmRegisters::RAX, "", 0), AsmOperand(OPERAND_MEMORY, AsmRegisters::NONE, "_" + name, 0), comment);
 }
 
 void JWasmGenerator::asmStatementMoveVariableToRegisterA(string type, string name, string comment)
@@ -331,41 +334,42 @@ void JWasmGenerator::visit(CompoundStatement& n)
 
 void JWasmGenerator::asmStatementAddRegisterAAndRegisterB(string comment)
 {
-	if (bits == 64) { ind(); out << "add " << regA(32) << ", " << regB(32) << comment << endl; }
-	else if (bits == 32) { ind(); out << "add " << regA(32) << ", " << regB(32) << comment << endl; }
-	else if (bits == 16) { ind(); out << "add " << regA(16) << ", " << regB(16) << comment << endl; }
+
+	if (bits == 64) { tree.addInstruction("add", AsmOperand(OPERAND_REGISTER, AsmRegisters::EAX, "", 0), AsmOperand(OPERAND_REGISTER, AsmRegisters::EBX, "", 0), comment); }
+	else if (bits == 32) { tree.addInstruction("add", AsmOperand(OPERAND_REGISTER, AsmRegisters::EAX, "", 0), AsmOperand(OPERAND_REGISTER, AsmRegisters::EBX, "", 0), comment); }
+	else if (bits == 16) { tree.addInstruction("add", AsmOperand(OPERAND_REGISTER, AsmRegisters::AX, "", 0), AsmOperand(OPERAND_REGISTER, AsmRegisters::BX, "", 0), comment); }
 }
 
 void JWasmGenerator::asmStatementSubRegisterAAndRegisterB(string comment)
 {
-	if (bits == 64) { ind(); out << "sub " << regA(32) << ", " << regB(32) << comment << endl; }
-	else if (bits == 32) { ind(); out << "sub " << regA(32) << ", " << regB(32) << comment << endl; }
-	else if (bits == 16) { ind(); out << "sub " << regA(16) << ", " << regB(16) << comment << endl; }
+	if (bits == 64) { tree.addInstruction("sub", AsmOperand(OPERAND_REGISTER, AsmRegisters::EAX, "", 0), AsmOperand(OPERAND_REGISTER, AsmRegisters::EBX, "", 0), comment); }
+	else if (bits == 32) { tree.addInstruction("sub", AsmOperand(OPERAND_REGISTER, AsmRegisters::EAX, "", 0), AsmOperand(OPERAND_REGISTER, AsmRegisters::EBX, "", 0), comment); }
+	else if (bits == 16) { tree.addInstruction("sub", AsmOperand(OPERAND_REGISTER, AsmRegisters::AX, "", 0), AsmOperand(OPERAND_REGISTER, AsmRegisters::BX, "", 0), comment); }
 }
 
 void JWasmGenerator::asmStatementImulRegisterAAndRegisterB(string comment)
 {
-	if (bits == 64) { ind(); out << "imul " << regA(32) << ", " << regB(32) << comment << endl; }
-	else if (bits == 32) { ind(); out << "imul " << regA(32) << ", " << regB(32) << comment << endl; }
-	else if (bits == 16) { ind(); out << "imul " << regA(16) << ", " << regB(16) << comment << endl; }
+	if (bits == 64) { tree.addInstruction("imul", AsmOperand(OPERAND_REGISTER, AsmRegisters::EAX, "", 0), AsmOperand(OPERAND_REGISTER, AsmRegisters::EBX, "", 0), comment); }
+	else if (bits == 32) { tree.addInstruction("imul", AsmOperand(OPERAND_REGISTER, AsmRegisters::EAX, "", 0), AsmOperand(OPERAND_REGISTER, AsmRegisters::EBX, "", 0), comment); }
+	else if (bits == 16) { tree.addInstruction("imul", AsmOperand(OPERAND_REGISTER, AsmRegisters::AX, "", 0), AsmOperand(OPERAND_REGISTER, AsmRegisters::BX, "", 0), comment); }
 }
 
 void JWasmGenerator::asmStatementIdivRegisterAAndRegisterB()
 {
 	if (bits == 64)
 	{
-		ind(); out << "cdq \t\t\t\t;extend eax to edx:eax for idiv" << endl;
-		ind(); out << "idiv " << regB(32) << "\t\t\t\t;integer divide registers A and B and store result in A" << endl;
+		tree.addInstruction("cdq", AsmOperand(OPERAND_NONE, AsmRegisters::NONE, "", 0), AsmOperand(OPERAND_NONE, AsmRegisters::NONE, "", 0), ";extend eax to edx : eax for idiv");
+		tree.addInstruction("idiv", AsmOperand(OPERAND_REGISTER, AsmRegisters::EBX, "", 0), AsmOperand(OPERAND_NONE, AsmRegisters::NONE, "", 0), ";integer divide registers A and B and store result in A");
 	}
 	if (bits == 32)
 	{
-		ind(); out << "cdq \t\t\t\t;extend eax to edx:eax for idiv" << endl;
-		ind(); out << "idiv " << regB(32) << "\t\t\t\t;integer divide registers A and B and store result in A" << endl;
+		tree.addInstruction("cdq", AsmOperand(OPERAND_NONE, AsmRegisters::NONE, "", 0), AsmOperand(OPERAND_NONE, AsmRegisters::NONE, "", 0), ";extend eax to edx : eax for idiv");
+		tree.addInstruction("idiv", AsmOperand(OPERAND_REGISTER, AsmRegisters::EBX, "", 0), AsmOperand(OPERAND_NONE, AsmRegisters::NONE, "", 0), ";integer divide registers A and B and store result in A");
 	}
 	if (bits == 16)
 	{
-		ind(); out << "cwd \t\t\t\t;extend ax to dx:ax for idiv" << endl;
-		ind(); out << "idiv " << regB(16) << "\t\t\t\t;integer divide registers AX and BX and store result in AX" << endl;
+		tree.addInstruction("cwd", AsmOperand(OPERAND_NONE, AsmRegisters::NONE, "", 0), AsmOperand(OPERAND_NONE, AsmRegisters::NONE, "", 0), ";extend ax to dx : ax for idiv");
+		tree.addInstruction("idiv", AsmOperand(OPERAND_REGISTER, AsmRegisters::BX, "", 0), AsmOperand(OPERAND_NONE, AsmRegisters::NONE, "", 0), ";integer divide registers AX and BX and store result in AX");
 	}
 }
 
@@ -373,19 +377,19 @@ void JWasmGenerator::outputReturnBinaryExpression(BinaryExpression* be)
 {
 	be->leftHandSide->accept(*this);
 	be->rightHandSide->accept(*this);
-	asmStatementPopRegisterB("\t\t\t;pop top of stack into register B");
-	asmStatementPopRegisterA("\t\t\t;pop top of stack into register A");
+	asmStatementPopRegisterB(";pop top of stack into register B");
+	asmStatementPopRegisterA(";pop top of stack into register A");
 	if (be->operator1 == '+')
 	{
-		asmStatementAddRegisterAAndRegisterB("\t\t\t;add registers A and B and store result in A");
+		asmStatementAddRegisterAAndRegisterB(";add registers A and B and store result in A");
 	}
 	else if (be->operator1 == '-')
 	{
-		asmStatementSubRegisterAAndRegisterB("\t\t\t;subtract register B from A and store result in A");
+		asmStatementSubRegisterAAndRegisterB(";subtract register B from A and store result in A");
 	}
 	else if (be->operator1 == '*')
 	{
-		asmStatementImulRegisterAAndRegisterB("\t\t\t;multiply registers A and B and store result in A");
+		asmStatementImulRegisterAAndRegisterB(";multiply registers A and B and store result in A");
 	}
 	else if (be->operator1 == '/')
 	{
@@ -405,11 +409,12 @@ void JWasmGenerator::visit(ReturnStatement& n)
 		{
 			n.expr->accept(*this);
 		}
-		ind(); out << "ret \t\t\t\t\t;return from function" << endl;
+		tree.addInstruction("ret", AsmOperand(OPERAND_NONE, AsmRegisters::NONE, "", 0), AsmOperand(OPERAND_NONE, AsmRegisters::NONE, "", 0), ";return from function");
 	}
 	else
 	{
-		ind(); out << "ret \t\t\t\t;return from function" << endl;
+		tree.addInstruction("ret", AsmOperand(OPERAND_NONE, AsmRegisters::NONE, "", 0), AsmOperand(OPERAND_NONE, AsmRegisters::NONE, "", 0), ";return from function");
+
 	}
 }
 
@@ -423,18 +428,18 @@ void JWasmGenerator::visit(NumberExpression& n)
 	// push immediate into register/stack
 	if (bits == 64)
 	{
-		asmStatementMoveImmediateToRegisterA("int", to_string(n.value), "\t\t;load immediate into register");
-		asmStatementPushRegisterA("\t\t\t;push register A on to the stack");
+		asmStatementMoveImmediateToRegisterA("int", to_string(n.value), ";load immediate into register");
+		asmStatementPushRegisterA(";push register A on to the stack");
 	}
 	else if (bits == 32)
 	{
-		asmStatementMoveImmediateToRegisterA("int", to_string(n.value), "\t\t;load immediate into register");
-		asmStatementPushRegisterA("\t\t\t;push register A on to the stack");
+		asmStatementMoveImmediateToRegisterA("int", to_string(n.value), ";load immediate into register");
+		asmStatementPushRegisterA(";push register A on to the stack");
 	}
 	else
 	{
-		asmStatementMoveImmediateToRegisterA("int", to_string(n.value), "\t\t;load immediate into register");
-		asmStatementPushRegisterA("\t\t\t;push register A on to the stack");
+		asmStatementMoveImmediateToRegisterA("int", to_string(n.value), ";load immediate into register");
+		asmStatementPushRegisterA(";push register A on to the stack");
 	}
 }
 
@@ -446,31 +451,31 @@ void JWasmGenerator::visit(VariableExpression& expression)
 	{
 		if (it->second.type == "int" && bits == 64)
 		{
-			asmStatementMoveSignExtendVariableToRegisterA(it->second.type, it->first, "\t\t;load and sign extend '" + it->first + "' in to register A");
-			asmStatementPushRegisterA("\t\t\t;push register A on to stack");
+			asmStatementMoveSignExtendVariableToRegisterA(it->second.type, it->first, ";load and sign extend '" + it->first + "' in to register A");
+			asmStatementPushRegisterA(";push register A on to stack");
 		}
 		else
 		{
-			asmStatementMoveVariableToRegisterA(it->second.type, it->first, "\t\t;load parameter " + it->first);
-			asmStatementPushRegisterA("\t\t\t;push register A on to stack");
+			asmStatementMoveVariableToRegisterA(it->second.type, it->first, ";load parameter " + it->first);
+			asmStatementPushRegisterA(";push register A on to stack");
 		}
 	}
 	else if (itLocal != localIndex.end())
 	{
 		if (itLocal->second.type == "int" && bits == 64)
 		{
-			asmStatementMoveSignExtendVariableToRegisterA(it->second.type, itLocal->first, "\t\t;load and sign extend '" + itLocal->first + "' in to register A");
-			asmStatementPushRegisterA("\t\t\t;push register A on to stack");
+			asmStatementMoveSignExtendVariableToRegisterA(it->second.type, itLocal->first, ";load and sign extend '" + itLocal->first + "' in to register A");
+			asmStatementPushRegisterA(";push register A on to stack");
 		}
 		else
 		{
-			asmStatementMoveVariableToRegisterA(itLocal->second.type, itLocal->first, "\t\t;load parameter " + itLocal->first);
-			asmStatementPushRegisterA("\t\t\t;push register A on to stack");
+			asmStatementMoveVariableToRegisterA(itLocal->second.type, itLocal->first, ";load parameter " + itLocal->first);
+			asmStatementPushRegisterA(";push register A on to stack");
 		}
 	}
 	else
 	{
-		out << ";?? '" << expression.name << "'" << endl;
+		//out << ";?? '" << expression.name << "'" << endl;
 	}
 }
 
@@ -478,15 +483,15 @@ void JWasmGenerator::asmStatementPopRegisterA(string comment)
 {
 	if (bits == 64)
 	{
-		ind(); 	out << "pop " << regA(64) << comment << endl;
+		tree.addInstruction("pop", AsmOperand(OPERAND_REGISTER, AsmRegisters::RAX, "", 0), AsmOperand(OPERAND_NONE, AsmRegisters::NONE, "", 0), comment);
 	}
 	else if (bits == 32)
 	{
-		ind(); 	out << "pop " << regA(32) << comment << endl;
+		tree.addInstruction("pop", AsmOperand(OPERAND_REGISTER, AsmRegisters::EAX, "", 0), AsmOperand(OPERAND_NONE, AsmRegisters::NONE, "", 0), comment);
 	}
 	else
 	{
-		ind(); 	out << "pop " << regA(16) << comment << endl;
+		tree.addInstruction("pop", AsmOperand(OPERAND_REGISTER, AsmRegisters::AX, "", 0), AsmOperand(OPERAND_NONE, AsmRegisters::NONE, "", 0), comment);
 	}
 }
 
@@ -494,15 +499,15 @@ void JWasmGenerator::asmStatementPushRegisterA(string comment)
 {
 	if (bits == 64)
 	{
-		ind(); 	out << "push " << regA(64) << comment << endl;
+		tree.addInstruction("push", AsmOperand(OPERAND_REGISTER, AsmRegisters::RAX, "", 0), AsmOperand(OPERAND_NONE, AsmRegisters::NONE, "", 0), comment);
 	}
 	else if (bits == 32)
 	{
-		ind(); 	out << "push " << regA(32) << comment << endl;
+		tree.addInstruction("push", AsmOperand(OPERAND_REGISTER, AsmRegisters::EAX, "", 0), AsmOperand(OPERAND_NONE, AsmRegisters::NONE, "", 0), comment);
 	}
 	else
 	{
-		ind(); 	out << "push " << regA(16) << comment << endl;
+		tree.addInstruction("push", AsmOperand(OPERAND_REGISTER, AsmRegisters::AX, "", 0), AsmOperand(OPERAND_NONE, AsmRegisters::NONE, "", 0), comment);
 	}
 }
 
@@ -510,15 +515,15 @@ void JWasmGenerator::asmStatementPopRegisterB(string comment)
 {
 	if (bits == 64)
 	{
-		ind(); 	out << "pop " << regB(64) << comment << endl;
+		tree.addInstruction("pop", AsmOperand(OPERAND_REGISTER, AsmRegisters::RBX, "", 0), AsmOperand(OPERAND_NONE, AsmRegisters::NONE, "", 0), comment);
 	}
 	else if (bits == 32)
 	{
-		ind(); 	out << "pop " << regB(32) << comment << endl;
+		tree.addInstruction("pop", AsmOperand(OPERAND_REGISTER, AsmRegisters::EBX, "", 0), AsmOperand(OPERAND_NONE, AsmRegisters::NONE, "", 0), comment);
 	}
 	else
 	{
-		ind(); 	out << "pop " << regB(16) << comment << endl;
+		tree.addInstruction("pop", AsmOperand(OPERAND_REGISTER, AsmRegisters::BX, "", 0), AsmOperand(OPERAND_NONE, AsmRegisters::NONE, "", 0), comment);
 	}
 }
 
@@ -526,15 +531,15 @@ void JWasmGenerator::asmStatementPushRegisterB(string comment)
 {
 	if (bits == 64)
 	{
-		ind(); 	out << "push " << regB(64) << comment << endl;
+		tree.addInstruction("push", AsmOperand(OPERAND_REGISTER, AsmRegisters::RBX, "", 0), AsmOperand(OPERAND_NONE, AsmRegisters::NONE, "", 0), comment);
 	}
 	else if (bits == 32)
 	{
-		ind(); 	out << "push " << regB(32) << comment << endl;
+		tree.addInstruction("push", AsmOperand(OPERAND_REGISTER, AsmRegisters::EBX, "", 0), AsmOperand(OPERAND_NONE, AsmRegisters::NONE, "", 0), comment);
 	}
 	else
 	{
-		ind(); 	out << "push " << regB(16) << comment << endl;
+		tree.addInstruction("push", AsmOperand(OPERAND_REGISTER, AsmRegisters::BX, "", 0), AsmOperand(OPERAND_NONE, AsmRegisters::NONE, "", 0), comment);
 	}
 }
 
@@ -542,48 +547,53 @@ void JWasmGenerator::visit(BinaryExpression& be)
 {
 	be.leftHandSide->accept(*this);
 	be.rightHandSide->accept(*this);
-	asmStatementPopRegisterB("\t\t\t;pop top of stack into register B");
-	asmStatementPopRegisterA("\t\t\t;pop top of stack into register A");
+	asmStatementPopRegisterB(";pop top of stack into register B");
+	asmStatementPopRegisterA(";pop top of stack into register A");
 	if (be.operator1 == '+')
 	{
-		asmStatementAddRegisterAAndRegisterB("\t\t\t;add registers A and B and store result in A");
+		asmStatementAddRegisterAAndRegisterB(";add registers A and B and store result in A");
 	}
 	else if (be.operator1 == '-')
 	{
-		asmStatementSubRegisterAAndRegisterB("\t\t\t;subtract register B from A and store result in A");
+		asmStatementSubRegisterAAndRegisterB(";subtract register B from A and store result in A");
 	}
 	else if (be.operator1 == '*')
 	{
-		asmStatementImulRegisterAAndRegisterB("\t\t\t;multiply registers A and B and store result in A");
+		asmStatementImulRegisterAAndRegisterB(";multiply registers A and B and store result in A");
 	}
 	else if (be.operator1 == '/')
 	{
 		asmStatementIdivRegisterAAndRegisterB();
 	}
-	asmStatementPushRegisterA("\t\t\t;push register A on to the stack");
+	asmStatementPushRegisterA(";push register A on to the stack");
 }
 
 void JWasmGenerator::visit(AssignExpression& n)
 {
-	// evaluate value then set_local
-	n.value->accept(*this); // pushes value
-	// pop into regA and store
-	out << "pop " << regA(bits) << "\t\t\t;pop value into register 1" << endl;
+	n.value->accept(*this);
+	if (bits == 64) tree.addInstruction("pop", AsmOperand(OPERAND_REGISTER, AsmRegisters::RAX, "", 0), AsmOperand(OPERAND_NONE, AsmRegisters::NONE, "", 0), ";pop value into register 1");
+	else if (bits == 16) tree.addInstruction("pop", AsmOperand(OPERAND_REGISTER, AsmRegisters::AX, "", 0), AsmOperand(OPERAND_NONE, AsmRegisters::NONE, "", 0), ";pop value into register 1");
+	else tree.addInstruction("pop", AsmOperand(OPERAND_REGISTER, AsmRegisters::EAX, "", 0), AsmOperand(OPERAND_NONE, AsmRegisters::NONE, "", 0), ";pop value into register 1");
 	auto it = paramIndex.find(n.name);
 	auto itLocal = localIndex.find(n.name);
 	if (it != paramIndex.end())
 	{
-		asmStatementMoveRegisterAToVariable(it->second.type, it->first, "\t\t;store parameter " + it->first);
-		out << "mov " << n.name << ", " << regA(bits) << "\t\t\t; store parameter" << n.name << endl;
+		asmStatementMoveRegisterAToVariable(it->second.type, it->first, ";store parameter " + it->first);
+		if (bits == 64) tree.addInstruction("mov", AsmOperand(OPERAND_MEMORY, AsmRegisters::NONE, "_" + n.name, 0), AsmOperand(OPERAND_REGISTER, AsmRegisters::RAX, "", 0), ";pop value into register 1");
+		else if (bits == 16) tree.addInstruction("mov", AsmOperand(OPERAND_MEMORY, AsmRegisters::NONE, "_" + n.name, 0), AsmOperand(OPERAND_REGISTER, AsmRegisters::AX, "", 0), ";pop value into register 1");
+		else tree.addInstruction("mov", AsmOperand(OPERAND_MEMORY, AsmRegisters::NONE, "_" + n.name, 0), AsmOperand(OPERAND_REGISTER, AsmRegisters::EAX, "", 0), ";pop value into register A");
+
 	}
 	else if (itLocal != localIndex.end())
 	{
-		asmStatementMoveRegisterAToVariable(itLocal->second.type, itLocal->first, "\t\t;store local " + itLocal->first);
-		out << "mov _" << n.name << ", " << regA(bits) << "\t\t\t; store local " << n.name << endl;
+		asmStatementMoveRegisterAToVariable(itLocal->second.type, itLocal->first, ";store local " + itLocal->first);
+		if (bits == 64) tree.addInstruction("mov", AsmOperand(OPERAND_MEMORY, AsmRegisters::NONE, "_" + n.name, 0), AsmOperand(OPERAND_REGISTER, AsmRegisters::RAX, "", 0), ";pop value into register 1");
+		else if (bits == 16) tree.addInstruction("mov", AsmOperand(OPERAND_MEMORY, AsmRegisters::NONE, "_" + n.name, 0), AsmOperand(OPERAND_REGISTER, AsmRegisters::AX, "", 0), ";pop value into register 1");
+		else tree.addInstruction("mov", AsmOperand(OPERAND_MEMORY, AsmRegisters::NONE, "_" + n.name, 0), AsmOperand(OPERAND_REGISTER, AsmRegisters::EAX, "", 0), ";pop value into register A");
 	}
 	else
 	{
-		out << "; store to global " << n.name << endl;
+		//out << "; store to global " << n.name << endl;
 	}
 }
 

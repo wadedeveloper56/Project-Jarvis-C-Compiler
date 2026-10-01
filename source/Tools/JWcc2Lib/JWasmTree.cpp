@@ -45,13 +45,31 @@ void JWasmTree::addComment(string comment)
 	program.push_back(commentData);
 }
 
-void JWasmTree::addData(string label, string type, string value, string comment)
+void JWasmTree::addGlobalData(string label, string type, string value, string comment)
 {
 	JWasmData dataEntry;
-	dataEntry.type = AsmDataType::ASM_DATA_TYPE_DATA;
-	dataEntry.data.label = label;
-	dataEntry.data.type = type;
-	dataEntry.data.value = value;
-	dataEntry.data.comment = comment;
+	dataEntry.type = AsmDataType::ASM_DATA_TYPE_GLOBAL_DATA;
+	dataEntry.global.label = label;
+	dataEntry.global.type = type;
+	dataEntry.global.value = value;
+	dataEntry.global.comment = comment;
+	program.push_back(dataEntry);
+}
+
+void JWasmTree::addLocalData(string type, string value)
+{
+	JWasmData dataEntry;
+	dataEntry.type = AsmDataType::ASM_DATA_TYPE_LOCAL_DATA;
+	dataEntry.local.type = type;
+	dataEntry.local.value = value;
+	program.push_back(dataEntry);
+}
+
+void JWasmTree::addParameterData(string type, string value)
+{
+	JWasmData dataEntry;
+	dataEntry.type = AsmDataType::ASM_DATA_TYPE_PARAMETER_DATA;
+	dataEntry.parameter.type = type;
+	dataEntry.parameter.value = value;
 	program.push_back(dataEntry);
 }

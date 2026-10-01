@@ -10,7 +10,9 @@ typedef enum _AsmDataType
 	ASM_DATA_TYPE_INSTRUCTION,
 	ASM_DATA_TYPE_DIRECTIVE,
 	ASM_DATA_TYPE_COMMENT,
-	ASM_DATA_TYPE_DATA
+	ASM_DATA_TYPE_GLOBAL_DATA,
+	ASM_DATA_TYPE_LOCAL_DATA,
+	ASM_DATA_TYPE_PARAMETER_DATA
 } AsmDataType;
 
 typedef enum _AsmRegisters
@@ -178,6 +180,7 @@ typedef enum _AsmRegisters
 
 typedef enum _AsmOperandType
 {
+	OPERAND_NONE,
 	OPERAND_MEMORY,
 	OPERAND_REGISTER,
 	OPERAND_IMMEDIATE
@@ -392,16 +395,28 @@ typedef struct _AsmData
 	string value;
 	string comment;
 	_AsmData() {};
+	_AsmData(string l, string t, string v, string c) : label(l), type(t), value(v), comment(c) {};
 } AsmData;
+
+typedef struct _AsmParameterData
+{
+	string type;
+	string value;
+	_AsmParameterData() {};
+	_AsmParameterData(string t, string v) : type(t), value(v) {};
+} AsmParameterData;
 
 typedef struct _JWasmData
 {
 	AsmDataType type;
 	AsmDirectiveData directive;
 	AsmInstruction instruction;
-	AsmData data;
+	AsmData global;
+	AsmParameterData parameter;
+	AsmParameterData local;
 	string comment;
 	_JWasmData() {};
+	_JWasmData(AsmDataType t, AsmDirectiveData d, AsmInstruction i, AsmData g, AsmParameterData p, AsmParameterData l, string c) : type(t), directive(d), instruction(i), global(g), parameter(p), local(l), comment(c) {};
 } JWasmData;
 
 class JWasmTree
@@ -414,6 +429,8 @@ public:
 	void addDirective(AsmDirective directive, string data, string comment);
 	void addDirective(AsmDirective directive, string data1, string data2, string comment);
 	void addComment(string comment);
-	void addData(string label, string type, string value, string comment);
+	void addGlobalData(string label, string type, string value, string comment);
+	void addLocalData(string type, string value);
+	void addParameterData(string type, string value);
 };
 
