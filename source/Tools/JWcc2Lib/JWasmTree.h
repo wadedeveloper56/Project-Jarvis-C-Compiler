@@ -189,6 +189,7 @@ typedef enum _AsmOperandType
 typedef enum _AsmDirective
 {
 	NONE1
+	,ASSEMBLER
 	,p8086
 	, p186
 	, p286
@@ -367,7 +368,7 @@ typedef struct _AsmOperand
 	AsmRegisters registers;
 	string variable;
 	long long immediate;
-	_AsmOperand() {};
+	_AsmOperand() : type(OPERAND_NONE), registers(AsmRegisters::NONE), variable(""), immediate(0LL) {};
 	_AsmOperand(AsmOperandType t, AsmRegisters r, string v, long long i) : type(t), registers(r), variable(v), immediate(i) {};
 } AsmOperand;
 
@@ -378,7 +379,7 @@ typedef struct _AsmInstruction
 	AsmOperand op1;
 	AsmOperand op2;
 	vector<string> macro;
-	_AsmInstruction() {};
+	_AsmInstruction() : type(OPERAND_NONE), mnemonic(""), op1(), op2() {};
 	_AsmInstruction(string m, AsmOperand o1, AsmOperand o2) : type(OPERAND_NONE), mnemonic(m), op1(o1), op2(o2) {};
 } AsmInstruction;
 
@@ -388,7 +389,7 @@ typedef struct _AsmData
 	string type;
 	string value;
 	string comment;
-	_AsmData() {};
+	_AsmData() : label(""), type(""), value(""), comment("") {};
 	_AsmData(string l, string t, string v, string c) : label(l), type(t), value(v), comment(c) {};
 } AsmData;
 
@@ -398,7 +399,7 @@ typedef struct _AsmMethod
 	vector<pair<string, string>> parameters; // pair of type and name
 	vector<pair<string, string>> locals; // pair of type and name
 	vector<AsmInstruction> instructions;
-	_AsmMethod() {};
+	_AsmMethod() : name(""), parameters(), locals(), instructions() {};
 	_AsmMethod(string n, vector<pair<string, string>> p, vector<pair<string, string>> l, vector<AsmInstruction> i) : name(n), parameters(p), locals(l), instructions(i) {};
 } AsmMethod;
 
@@ -406,7 +407,7 @@ typedef struct _AsmDirectiveData
 {
 	AsmDirective directive;
 	vector<string> directiveData;
-	_AsmDirectiveData() {};
+	_AsmDirectiveData() : directive(AsmDirective::NONE1), directiveData() {};
 	_AsmDirectiveData(AsmDirective d, vector<string> dd) : directive(d), directiveData(dd) {};
 } AsmDirectiveData;
 
@@ -418,7 +419,7 @@ typedef struct _JWasmData
 	vector<AsmData> uninitData;
 	vector<AsmMethod> methods;
 	string comment;
-	_JWasmData() : type(ASM_DATA_TYPE_NONE) {};
+	_JWasmData() : type(ASM_DATA_TYPE_NONE), directive(), initData(), uninitData(), methods() {};
 	_JWasmData(AsmDataType t, AsmDirectiveData d, vector<AsmData> id, vector<AsmData> ud, vector<AsmMethod> m) : type(t), directive(d), initData(id), uninitData(ud), methods(m) {};
 } JWasmData;
 

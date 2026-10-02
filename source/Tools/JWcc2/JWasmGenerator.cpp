@@ -38,7 +38,7 @@ string JWasmGenerator::regD(int size) const {
 void JWasmGenerator::outputProgramFileHeader()
 {
 	AsmDirectiveData data;
-	data.directive = AsmDirective::NONE1;
+	data.directive = AsmDirective::ASSEMBLER;
 	if (bits == 16)
 	{
 		data.directiveData.push_back("." + processor);
@@ -101,7 +101,7 @@ void JWasmGenerator::outputProgramInitializedData(Program& program)
 			{
 				if (auto expr = dynamic_cast<NumberExpression*>(init))
 				{
-					asmGlobalData(gv->name, gv->type, expr->value + "");
+					asmGlobalData(gv->name, gv->type, to_string(expr->value));
 				}
 			}
 		}
