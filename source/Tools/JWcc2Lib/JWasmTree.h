@@ -7,12 +7,10 @@ using namespace std;
 typedef enum _AsmDataType
 {
 	ASM_DATA_TYPE_NONE,
-	ASM_DATA_TYPE_INSTRUCTION,
-	ASM_DATA_TYPE_DIRECTIVE,
-	ASM_DATA_TYPE_COMMENT,
-	ASM_DATA_TYPE_GLOBAL_DATA,
-	ASM_DATA_TYPE_LOCAL_DATA,
-	ASM_DATA_TYPE_PARAMETER_DATA
+	ASM_DATA_TYPE_DATA,
+	ASM_DATA_TYPE_METHOD,
+	ASM_DATA_DIRECTIVE,
+	ASM_DATA_TYPE_COMMENT
 } AsmDataType;
 
 typedef enum _AsmRegisters
@@ -183,18 +181,10 @@ typedef enum _AsmOperandType
 	OPERAND_NONE,
 	OPERAND_MEMORY,
 	OPERAND_REGISTER,
-	OPERAND_IMMEDIATE
+	OPERAND_IMMEDIATE,
+	OPERAND_LABEL,
+	OPERAND_MACRO,
 }AsmOperandType;
-
-typedef struct _AsmOperand
-{
-	AsmOperandType type;
-	AsmRegisters registers;
-	string variable;
-	long long immediate;
-	_AsmOperand() {};
-	_AsmOperand(AsmOperandType t, AsmRegisters r, string v, long long i) : type(t), registers(r), variable(v), immediate(i) {};
-} AsmOperand;
 
 typedef enum _AsmDirective
 {
@@ -371,22 +361,26 @@ typedef enum _AsmDirective
 	, PUSHCONTEXT
 }AsmDirective;
 
+typedef struct _AsmOperand
+{
+	AsmOperandType type;
+	AsmRegisters registers;
+	string variable;
+	long long immediate;
+	_AsmOperand() {};
+	_AsmOperand(AsmOperandType t, AsmRegisters r, string v, long long i) : type(t), registers(r), variable(v), immediate(i) {};
+} AsmOperand;
+
 typedef struct _AsmInstruction
 {
-	string label;
+	AsmOperandType type;
 	string mnemonic;
-	AsmOperand operand1;
-	AsmOperand operand2;
-	string comment;
+	AsmOperand op1;
+	AsmOperand op2;
+	vector<string> macro;
 	_AsmInstruction() {};
-}AsmInstruction;
-
-typedef struct _AsmDirectiveData
-{
-	AsmDirective directive;
-	vector<string> directiveData;
-	string comment;
-}AsmDirectiveData;
+	_AsmInstruction(string m, AsmOperand o1, AsmOperand o2) : type(OPERAND_NONE), mnemonic(m), op1(o1), op2(o2) {};
+} AsmInstruction;
 
 typedef struct _AsmData
 {
@@ -398,25 +392,34 @@ typedef struct _AsmData
 	_AsmData(string l, string t, string v, string c) : label(l), type(t), value(v), comment(c) {};
 } AsmData;
 
-typedef struct _AsmParameterData
+typedef struct _AsmMethod
 {
-	string type;
-	string value;
-	_AsmParameterData() {};
-	_AsmParameterData(string t, string v) : type(t), value(v) {};
-} AsmParameterData;
+	string name;
+	vector<pair<string, string>> parameters; // pair of type and name
+	vector<pair<string, string>> locals; // pair of type and name
+	vector<AsmInstruction> instructions;
+	_AsmMethod() {};
+	_AsmMethod(string n, vector<pair<string, string>> p, vector<pair<string, string>> l, vector<AsmInstruction> i) : name(n), parameters(p), locals(l), instructions(i) {};
+} AsmMethod;
+
+typedef struct _AsmDirectiveData
+{
+	AsmDirective directive;
+	vector<string> directiveData;
+	_AsmDirectiveData() {};
+	_AsmDirectiveData(AsmDirective d, vector<string> dd) : directive(d), directiveData(dd) {};
+} AsmDirectiveData;
 
 typedef struct _JWasmData
 {
 	AsmDataType type;
 	AsmDirectiveData directive;
-	AsmInstruction instruction;
-	AsmData global;
-	AsmParameterData parameter;
-	AsmParameterData local;
+	vector<AsmData> initData;
+	vector<AsmData> uninitData;
+	vector<AsmMethod> methods;
 	string comment;
-	_JWasmData() {};
-	_JWasmData(AsmDataType t, AsmDirectiveData d, AsmInstruction i, AsmData g, AsmParameterData p, AsmParameterData l, string c) : type(t), directive(d), instruction(i), global(g), parameter(p), local(l), comment(c) {};
+	_JWasmData() : type(ASM_DATA_TYPE_NONE) {};
+	_JWasmData(AsmDataType t, AsmDirectiveData d, vector<AsmData> id, vector<AsmData> ud, vector<AsmMethod> m) : type(t), directive(d), initData(id), uninitData(ud), methods(m) {};
 } JWasmData;
 
 class JWasmTree
@@ -425,12 +428,10 @@ class JWasmTree
 public:
 	JWasmTree();
 	~JWasmTree();
-	void addInstruction(string instr, AsmOperand op1, AsmOperand op2, string comment);
-	void addDirective(AsmDirective directive, string data, string comment);
-	void addDirective(AsmDirective directive, string data1, string data2, string comment);
-	void addComment(string comment);
-	void addGlobalData(string label, string type, string value, string comment);
-	void addLocalData(string type, string value);
-	void addParameterData(string type, string value);
+	void addMethod(AsmMethod method);
+	void addDirective(AsmDirectiveData directive);
+	void addInitData(AsmData initData);
+	void addUninitData(AsmData uninitData);
+	void addComment(string comment);	vector<JWasmData>& getProgram() { return program; }
 };
 

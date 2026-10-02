@@ -14,25 +14,25 @@ struct VarData
 	int index;
 };
 
-class JWasmGenerator : ASTVisitor 
+class JWasmGenerator : ASTVisitor
 {
 	//ostream& out;
 	int indent;
 	int bits;
 	bool isWindows;
-	unordered_map<string,VarData> paramIndex;
-	unordered_map<string,VarData> localIndex;
+	unordered_map<string, VarData> paramIndex;
+	unordered_map<string, VarData> localIndex;
 	JWasmTree tree;
+	AsmMethod *method;
 public:
 	JWasmGenerator(ostream& os, int bits = 32, bool isWindows = true);
 	void generate(Program& program);
+	void output();
+
 	void visit(Program& program) override;
 	void visit(VariableDeclaration& n) override;
 	void visit(FunctionDeclaration& function) override;
 	void visit(CompoundStatement& n) override;
-	void asmStatementAddRegisterAAndRegisterB();
-	void asmStatementIdivRegisterAAndRegisterB();
-	void outputReturnBinaryExpression(BinaryExpression* be);
 	void visit(ReturnStatement& n) override;
 	void visit(ExpressionStatement& n) override;
 	void visit(NumberExpression& n) override;
@@ -43,27 +43,29 @@ public:
 private:
 	//void ind();
 
-	void asmStatementPushRegisterA(string comment);
-	void asmStatementPopRegisterA(string comment);
-	void asmStatementPushRegisterB(string comment);
-	void asmStatementPopRegisterB(string comment);
-	void asmStatementMoveVariableToRegisterA(string type, string name, string comment);
-	void asmStatementMoveSignExtendVariableToRegisterA(string type, string name, string comment);
-	void asmStatementMoveRegisterAToVariable(string type, string name, string comment);
-	void moveResultOfInvokeIntoRegisterA(VariableDeclaration* v);
-	void asmStatementMoveImmediateToRegisterA(string type, string name, string comment);
-	void asmStatementAddRegisterAAndRegisterB(string comment);
-	void asmStatementSubRegisterAAndRegisterB(string comment);
-	void asmStatementImulRegisterAAndRegisterB(string comment);
+	void asmStatementIdivRegisterAAndRegisterB(AsmMethod* method);
+	void outputReturnBinaryExpression(AsmMethod *method, BinaryExpression* be);
+	void asmStatementPushRegisterA(AsmMethod* method, string comment);
+	void asmStatementPopRegisterA(AsmMethod* method, string comment);
+	void asmStatementPushRegisterB(AsmMethod* method, string comment);
+	void asmStatementPopRegisterB(AsmMethod* method, string comment);
+	void asmStatementMoveVariableToRegisterA(AsmMethod* method, string type, string name, string comment);
+	void asmStatementMoveSignExtendVariableToRegisterA(AsmMethod* method, string type, string name, string comment);
+	void asmStatementMoveRegisterAToVariable(AsmMethod* method, string type, string name, string comment);
+	void moveResultOfInvokeIntoRegisterA(AsmMethod* method, VariableDeclaration* v);
+	void asmStatementMoveImmediateToRegisterA(AsmMethod* method, string type, string name, string comment);
+	void asmStatementAddRegisterAAndRegisterB(AsmMethod* method, string comment);
+	void asmStatementSubRegisterAAndRegisterB(AsmMethod* method, string comment);
+	void asmStatementImulRegisterAAndRegisterB(AsmMethod* method, string comment);
 
 	void outputFunctionComment(FunctionDeclaration& function);
-	void outputFunctionLocals(FunctionDeclaration& function);
-	void outputFunctionLocalsInitializationFunctionCall(CallExpression* exp);
-	void outputFunctionLocalsInitialization(FunctionDeclaration& function);
-	void asmOutputParameterVariables(string type, string name);
-	void asmOutputLocalVariables(string type, string name);
-	void outputFunctionHeader(FunctionDeclaration& function);
-	void outputFunctionBody(FunctionDeclaration& function);
+	void outputFunctionLocals(AsmMethod* method, FunctionDeclaration& function);
+	void outputFunctionLocalsInitializationFunctionCall(AsmMethod* method, CallExpression* exp);
+	void outputFunctionLocalsInitialization(AsmMethod* method, FunctionDeclaration& function);
+	void asmOutputParameterVariables(AsmMethod* method, string type, string name);
+	void asmOutputLocalVariables(AsmMethod* method, string type, string name);
+	void outputFunctionHeader(AsmMethod* method, FunctionDeclaration& function);
+	void outputFunctionBody(AsmMethod* method, FunctionDeclaration& function);
 	void outputProgramFileHeader();
 	void asmGlobalData(string name, string type, string value);
 	void outputProgramUninitializedData(Program& program);

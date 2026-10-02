@@ -164,6 +164,7 @@ int main(int argc, char* argv[])
 			}
 			JWasmGenerator gen(out, bits, isWindows);
 			gen.generate(*prog);
+			gen.output();
 			//ASTPrinter printer;
 			//printer.visit(*prog);
 		}
