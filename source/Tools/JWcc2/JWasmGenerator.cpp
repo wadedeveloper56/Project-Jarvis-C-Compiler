@@ -77,6 +77,7 @@ void JWasmGenerator::asmGlobalData(string name, string type, string value)
 void JWasmGenerator::outputProgramUninitializedData(Program& program)
 {
 	// uninitialized data section for globals
+	tree.addDirective(AsmDirectiveData(AsmDirective::pDATA, { "\n.data?" }));
 	for (auto& d : program.declarations)
 	{
 		if (auto gv = dynamic_cast<VariableDeclaration*>(d.get()))
@@ -93,6 +94,7 @@ void JWasmGenerator::outputProgramUninitializedData(Program& program)
 void JWasmGenerator::outputProgramInitializedData(Program& program)
 {
 	// initialized data section for globals
+	tree.addDirective(AsmDirectiveData(AsmDirective::pDATA, { "\n.data" }));
 	for (auto& d : program.declarations)
 	{
 		if (auto gv = dynamic_cast<VariableDeclaration*>(d.get()))
@@ -110,7 +112,7 @@ void JWasmGenerator::outputProgramInitializedData(Program& program)
 
 void JWasmGenerator::outputProgramCode(Program& program)
 {
-	tree.addDirective(AsmDirectiveData(AsmDirective::pCODE, { ".code" }));
+	tree.addDirective(AsmDirectiveData(AsmDirective::pCODE, { "\n.code" }));
 	for (auto& d : program.declarations)
 	{
 		if (auto gv = dynamic_cast<FunctionDeclaration*>(d.get()))
@@ -160,9 +162,9 @@ void JWasmGenerator::outputFunctionComment(FunctionDeclaration& function)
 	tree.addComment(";-----------------");
 }
 
-void JWasmGenerator::asmOutputParameterVariables(AsmMethod *method, string type, string name)
+void JWasmGenerator::asmOutputParameterVariables(AsmMethod* method, string type, string name)
 {
-	if (type == "int" && bits == 16) method->parameters.push_back({name, "SWORD"});
+	if (type == "int" && bits == 16) method->parameters.push_back({ name, "SWORD" });
 	if (type == "int" && bits == 32) method->parameters.push_back({ name, "SDWORD" });
 	if (type == "int" && bits == 64) method->parameters.push_back({ name, "SDWORD" });
 	if (type == "unsigned int" && bits == 16) method->parameters.push_back({ name, "WORD" });
@@ -170,7 +172,7 @@ void JWasmGenerator::asmOutputParameterVariables(AsmMethod *method, string type,
 	if (type == "unsigned int" && bits == 64) method->parameters.push_back({ name, "DWORD" });
 }
 
-void JWasmGenerator::asmOutputLocalVariables(AsmMethod *method,string type, string name)
+void JWasmGenerator::asmOutputLocalVariables(AsmMethod* method, string type, string name)
 {
 	if (type == "int" && bits == 16) method->locals.push_back({ name, "SWORD" });
 	if (type == "int" && bits == 32) method->locals.push_back({ name, "SDWORD" });
@@ -180,7 +182,7 @@ void JWasmGenerator::asmOutputLocalVariables(AsmMethod *method,string type, stri
 	if (type == "unsigned int" && bits == 64) method->locals.push_back({ name, "DWORD" });
 }
 
-void JWasmGenerator::outputFunctionHeader(AsmMethod *method, FunctionDeclaration& function)
+void JWasmGenerator::outputFunctionHeader(AsmMethod* method, FunctionDeclaration& function)
 {
 	int index = 0;
 	for (auto& p : function.params)
@@ -382,11 +384,11 @@ void JWasmGenerator::asmStatementIdivRegisterAAndRegisterB(AsmMethod* method)
 	}
 }
 
-void JWasmGenerator::outputReturnBinaryExpression(AsmMethod *method, BinaryExpression* be)
+void JWasmGenerator::outputReturnBinaryExpression(AsmMethod* method, BinaryExpression* be)
 {
 	be->leftHandSide->accept(*this);
 	be->rightHandSide->accept(*this);
-	asmStatementPopRegisterB(method,";pop top of stack into register B");
+	asmStatementPopRegisterB(method, ";pop top of stack into register B");
 	asmStatementPopRegisterA(method, ";pop top of stack into register A");
 	if (be->operator1 == '+')
 	{
@@ -436,18 +438,18 @@ void JWasmGenerator::visit(NumberExpression& n)
 	// push immediate into register/stack
 	if (bits == 64)
 	{
-		asmStatementMoveImmediateToRegisterA(method,"int", to_string(n.value), ";load immediate into register");
-		asmStatementPushRegisterA(method,";push register A on to the stack");
+		asmStatementMoveImmediateToRegisterA(method, "int", to_string(n.value), ";load immediate into register");
+		asmStatementPushRegisterA(method, ";push register A on to the stack");
 	}
 	else if (bits == 32)
 	{
 		asmStatementMoveImmediateToRegisterA(method, "int", to_string(n.value), ";load immediate into register");
-		asmStatementPushRegisterA(method,";push register A on to the stack");
+		asmStatementPushRegisterA(method, ";push register A on to the stack");
 	}
 	else
 	{
 		asmStatementMoveImmediateToRegisterA(method, "int", to_string(n.value), ";load immediate into register");
-		asmStatementPushRegisterA(method,";push register A on to the stack");
+		asmStatementPushRegisterA(method, ";push register A on to the stack");
 	}
 }
 
@@ -487,7 +489,7 @@ void JWasmGenerator::visit(VariableExpression& expression)
 	}
 }
 
-void JWasmGenerator::asmStatementPopRegisterA(AsmMethod* method,string comment)
+void JWasmGenerator::asmStatementPopRegisterA(AsmMethod* method, string comment)
 {
 	if (bits == 64)
 	{
@@ -608,5 +610,87 @@ void JWasmGenerator::output()
 	ostream& out = cout;
 	for (auto& line : tree.getProgram())
 	{
+		switch (line.type)
+		{
+			case ASM_DATA_TYPE_NONE:
+				break;
+			case ASM_DATA_TYPE_INIT_DATA:
+				for (auto& d : line.initData)
+				{
+					out << d.label << " " << d.type << " " << d.value << " " << d.comment << endl;
+				}
+				break;
+			case ASM_DATA_TYPE_UNINIT_DATA:
+				for (auto& d : line.uninitData)
+				{
+					out << d.label << " " << d.type << " " << d.value << " " << d.comment << endl;
+				}
+				break;
+			case ASM_DATA_TYPE_METHOD:
+				for (auto& method : line.methods)
+				{
+					out << method.name << " PROC";
+					int size = (int)method.parameters.size();
+					if (size > 0)
+					{
+						int index = 0;
+						for (auto& p : method.parameters)
+						{
+							out << " " << p.first << " " << p.second;
+							if (index < size - 1) out << ", ";
+							index++;
+						}
+					}
+					out << endl;
+					size = (int)method.locals.size();
+					if (size > 0)
+					{
+						out << "LOCAL ";
+						int index = 0;
+						for (auto& p : method.locals)
+						{
+							out << " " << p.first << " " << p.second;
+							if (index < size - 1) out << ", ";
+							index++;
+						}
+						out << endl;
+					}
+					for (auto& instr : method.instructions)
+					{
+						if (instr.type == AsmOperandType::OPERAND_MACRO)
+						{
+							out << "\t" << instr.macro[0];
+							for (size_t i = 1; i < instr.macro.size(); ++i)
+							{
+								out << " " << instr.macro[i];
+							}
+							out << endl;
+						}
+						else
+						{
+							out << "\t" << instr.mnemonic;
+							if (instr.op1.type != OPERAND_NONE)
+							{
+								out << " " << instr.op1;
+							}
+							if (instr.op2.type != OPERAND_NONE)
+							{
+								out << ", " << instr.op2;
+							}
+							out << endl;
+						}
+					}
+					out << method.name << " ENDP" << endl << endl;
+				}
+				break;
+			case ASM_DATA_DIRECTIVE:
+				for (auto& d : line.directive.directiveData)
+				{
+					out << d << endl;
+				}
+				break;
+			case ASM_DATA_TYPE_COMMENT:
+				break;
+		}
 	}
 }

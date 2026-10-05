@@ -24,7 +24,7 @@ void JWasmTree::addDirective(AsmDirectiveData directive)
 void JWasmTree::addInitData(AsmData initData)
 {
 	JWasmData instruction;
-	instruction.type = AsmDataType::ASM_DATA_TYPE_DATA;
+	instruction.type = AsmDataType::ASM_DATA_TYPE_INIT_DATA;
 	instruction.initData.push_back(initData);
 	program.push_back(instruction);
 }
@@ -32,7 +32,7 @@ void JWasmTree::addInitData(AsmData initData)
 void JWasmTree::addUninitData(AsmData uninitData)
 {
 	JWasmData instruction;
-	instruction.type = AsmDataType::ASM_DATA_TYPE_DATA;
+	instruction.type = AsmDataType::ASM_DATA_TYPE_UNINIT_DATA;
 	instruction.uninitData.push_back(uninitData);
 	program.push_back(instruction);
 }
