@@ -16,7 +16,7 @@ struct VarData
 
 class JWasmGenerator : ASTVisitor
 {
-	//ostream& out;
+	ostream& out;
 	int indent;
 	int bits;
 	bool isWindows;
@@ -27,11 +27,6 @@ class JWasmGenerator : ASTVisitor
 public:
 	JWasmGenerator(ostream& os, int bits = 32, bool isWindows = true);
 	void generate(Program& program);
-	void outputMethodHeader(AsmMethod& method, std::ostream& out);
-	void outputMethodLocals(AsmMethod& method, std::ostream& out);
-	void outputMethodInstructionsMacro(std::ostream& out, AsmInstruction& instr);
-	void outputMethodInstructionsOperand(std::string mnemonic, AsmOperand& op, std::ostream& out, bool comma = true);
-	void outputMethodInstructions(AsmMethod& method, std::ostream& out);
 	void output();
 
 	void visit(Program& program) override;
@@ -48,7 +43,13 @@ public:
 private:
 	//void ind();
 
-	void asmStatementIdivRegisterAAndRegisterB(AsmMethod* method);
+	void outputMethodHeader(AsmMethod& method, ostream& out);
+	void outputMethodLocals(AsmMethod& method, ostream& out);
+	void outputMethodInstructionsMacro(ostream& out, AsmInstruction& instr);
+	string getRegister(AsmRegisters reg);
+	void outputMethodInstructions(AsmMethod& method, ostream& out);
+
+	void asmStatementIdivRegisterAAndRegisterB(AsmMethod* method, string comment);
 	void outputReturnBinaryExpression(AsmMethod *method, BinaryExpression* be);
 	void asmStatementPushRegisterA(AsmMethod* method, string comment);
 	void asmStatementPopRegisterA(AsmMethod* method, string comment);

@@ -7,7 +7,7 @@ File Type: 32-bit COFF OBJECT
 FILE HEADER VALUES
                14C Machine (Intel 386 or later processors and compatible processors)
                  3 (3) Number of Sections
-          6ABBDC6E TimeDateStamp ->  n/a
+          6AC5472E TimeDateStamp ->  n/a
                130 PointerToSymbolTable
                  D (13) NumberOfSymbols
                  0 (0) SizeOfOptionalHeader
@@ -71,8 +71,8 @@ SECTION HEADER #2 (2)
     .bss name
        0 physical address
        0 virtual address
-       4 (4) size of raw data
-       0 file pointer to raw data (00000000 to 00000003)
+       8 (8) size of raw data
+       0 file pointer to raw data (00000000 to 00000007)
        0 file pointer to relocation table
        0 file pointer to line numbers
        0 number of relocations
@@ -96,11 +96,11 @@ Indx Sectn   Value   Type  Storage Name
 0004     2 00000000  0000 STATIC   .data
      * Section: 0000  Len: 00004  Relocs: 0000  LineNums: 0000 checksum:00000000
 0006     3 00000000  0000 STATIC   .bss
-     * Section: 0000  Len: 00004  Relocs: 0000  LineNums: 0000 checksum:00000000
+     * Section: 0000  Len: 00008  Relocs: 0000  LineNums: 0000 checksum:00000000
 0008     1 00000000  0020 EXTERNAL __func1
 0009     1 00000028  0020 EXTERNAL __func2
 000A     1 00000050  0020 EXTERNAL __func3
 000B     2 00000000  0000 STATIC   _x
-000C     3 00000000  0000 STATIC   _m
+000C     3 00000004  0000 STATIC   _m
 
 String Table Size = 0x4 (4) bytes 0 entries

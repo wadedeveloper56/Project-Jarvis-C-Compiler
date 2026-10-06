@@ -185,7 +185,21 @@ typedef enum _AsmOperandType
 	OPERAND_IMMEDIATE,
 	OPERAND_LABEL,
 	OPERAND_MACRO,
+	OPERAND_COMMENT
 }AsmOperandType;
+
+typedef enum _AsmInstructionType
+{
+	INSTRUCTION_NONE,
+	INSTRUCTION_MEMORY_TO_REGISTER,
+	INSTRUCTION_REGISTER_TO_MEMORY,
+	INSTRUCTION_IMMEDIATE_TO_REGISTER,
+	INSTRUCTION_IMMEDIATE_TO_MEMORY,
+	INSTRUCTION_REGISTER_TO_REGISTER,
+	INSTRUCTION_REGISTER,
+	INSTRUCTION_MACRO,
+	INSTRUCTION_COMMENT
+}AsmInstructionType;
 
 typedef enum _AsmDirective
 {
@@ -369,19 +383,19 @@ typedef struct _AsmOperand
 	AsmRegisters registers;
 	string variable;
 	long long immediate;
-	_AsmOperand() : type(OPERAND_NONE), registers(AsmRegisters::NONE), variable(""), immediate(0LL) {};
-	_AsmOperand(AsmOperandType t, AsmRegisters r, string v, long long i) : type(t), registers(r), variable(v), immediate(i) {};
+	_AsmOperand(AsmOperandType t=OPERAND_NONE, AsmRegisters r=AsmRegisters::NONE, string v="", long long i=0LL) : type(t), registers(r), variable(v), immediate(i) {};
 } AsmOperand;
 
 typedef struct _AsmInstruction
 {
-	AsmOperandType type;
+	AsmInstructionType type;
 	string mnemonic;
 	AsmOperand op1;
 	AsmOperand op2;
 	vector<string> macro;
-	_AsmInstruction() : type(OPERAND_NONE), mnemonic(""), op1(), op2() {};
-	_AsmInstruction(string m, AsmOperand o1, AsmOperand o2) : type(OPERAND_NONE), mnemonic(m), op1(o1), op2(o2) {};
+	string comment;
+	_AsmInstruction() : type(INSTRUCTION_NONE), mnemonic(""), op1(), op2(), comment("") {};
+	_AsmInstruction(AsmInstructionType t, string m, AsmOperand o1, AsmOperand o2, string c) : type(t), mnemonic(m), op1(o1), op2(o2), comment(c) {};
 } AsmInstruction;
 
 typedef struct _AsmData
