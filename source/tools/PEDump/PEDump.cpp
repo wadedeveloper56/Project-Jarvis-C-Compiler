@@ -39,7 +39,7 @@ int ProcessCommandLine(int argc, char* argv[])
 	const char* progname = "PEDump";
 	int exitcode = 0, nerrors = 0;
 	void* argtable[] = { all, base, hex, import, line,  pdata, resources, machine, symbol, help, version, infile, end };
-	printf("PEDUMP - Win32/Win64 COFF EXE/OBJ/LIB file dumper v1.0 (C) Copyright 2025-2026 Christopher D. Wade.\n");
+	printf("PEDUMP - 16/32/64 bit  OMF/COFF EXE/OBJ/LIB file dumper v1.0 (C) Copyright 2025-2026 Christopher D. Wade.\n");
 	printf("All Rights Reserved\n");
 
 	if (argNullCheck(argtable) != 0)
