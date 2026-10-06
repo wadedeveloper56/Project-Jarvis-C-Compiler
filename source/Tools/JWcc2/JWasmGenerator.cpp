@@ -222,8 +222,8 @@ void JWasmGenerator::outputFunctionLocalsInitializationFunctionCall(AsmMethod* m
 {
 	AsmInstruction instr;
 	instr.type = AsmOperandType::OPERAND_MACRO;
-	instr.macro.push_back("invoke _");
-	instr.macro.push_back(exp->callee);
+	instr.macro.push_back("invoke ");
+	instr.macro.push_back("_" + exp->callee);
 	for (auto& it : exp->args)
 	{
 		if (auto exp = dynamic_cast<VariableExpression*>(it.get()))
@@ -605,6 +605,119 @@ void JWasmGenerator::visit(AssignExpression& n)
 	}
 }
 
+void JWasmGenerator::outputMethodHeader(AsmMethod& method, std::ostream& out)
+{
+	int size = (int)method.parameters.size();
+	out << method.name << " PROC";
+	if (size > 0)
+	{
+		int index = 0;
+		for (auto& p : method.parameters)
+		{
+			out << " " << p.first << ":" << p.second;
+			if (index < size - 1) out << ", ";
+			index++;
+		}
+	}
+	out << endl;
+}
+
+void JWasmGenerator::outputMethodLocals(AsmMethod& method, std::ostream& out)
+{
+	int size = (int)method.locals.size();
+	if (size > 0)
+	{
+		out << "LOCAL ";
+		int index = 0;
+		for (auto& p : method.locals)
+		{
+			out << " " << p.first << ":" << p.second;
+			if (index < size - 1) out << ", ";
+			index++;
+		}
+		out << endl;
+	}
+}
+
+void JWasmGenerator::outputMethodInstructionsMacro(std::ostream& out, AsmInstruction& instr)
+{
+	out << instr.macro[0];
+	int size = (int)instr.macro.size();
+	int index = 0;
+	for (size_t i = 1; i < size; i++)
+	{
+		out << " " << instr.macro[i];
+		if (index < size - 2) out << ", ";
+		index++;
+	}
+	out << endl;
+}
+
+void JWasmGenerator::outputMethodInstructionsOperand(std::string mnemonic, AsmOperand& op, std::ostream& out, bool comma)
+{
+	switch (op.type)
+	{
+		case OPERAND_REGISTER:
+			switch (op.registers)
+			{
+				case AsmRegisters::RAX:
+					out << " rax";
+					break;
+				case AsmRegisters::RBX:
+					out << " rbx";
+					break;
+				case AsmRegisters::RCX:
+					out << " rcx";
+					break;
+				case AsmRegisters::RDX:
+					out << " rdx";
+					break;
+				case AsmRegisters::EAX:
+					out << " eax";
+					break;
+				case AsmRegisters::EBX:
+					out << " ebx";
+					break;
+				case AsmRegisters::ECX:
+					out << " ecx";
+					break;
+				case AsmRegisters::EDX:
+					out << " edx";
+					break;
+				default:
+					break;
+			}
+			break;
+		case OPERAND_MEMORY:
+			out << " " << op.variable;
+			break;
+		case OPERAND_IMMEDIATE:
+			out << " " << op.immediate;
+			break;
+		default:
+			break;
+	}
+	if (comma && (mnemonic != "push" && mnemonic != "pop" && mnemonic != "ret")) out << ",";
+}
+
+void JWasmGenerator::outputMethodInstructions(AsmMethod& method, std::ostream& out)
+{
+	for (auto& instr : method.instructions)
+	{
+		if (instr.type == AsmOperandType::OPERAND_MACRO)
+		{
+			outputMethodInstructionsMacro(out, instr);
+		}
+		else
+		{
+			out << instr.mnemonic;
+			outputMethodInstructionsOperand(instr.mnemonic, instr.op1, out);
+			outputMethodInstructionsOperand(instr.mnemonic, instr.op2, out, false);
+			out << endl;
+		}
+	}
+}
+
 void JWasmGenerator::output()
 {
 	ostream& out = cout;
@@ -629,57 +742,9 @@ void JWasmGenerator::output()
 			case ASM_DATA_TYPE_METHOD:
 				for (auto& method : line.methods)
 				{
-					out << method.name << " PROC";
-					int size = (int)method.parameters.size();
-					if (size > 0)
-					{
-						int index = 0;
-						for (auto& p : method.parameters)
-						{
-							out << " " << p.first << " " << p.second;
-							if (index < size - 1) out << ", ";
-							index++;
-						}
-					}
-					out << endl;
-					size = (int)method.locals.size();
-					if (size > 0)
-					{
-						out << "LOCAL ";
-						int index = 0;
-						for (auto& p : method.locals)
-						{
-							out << " " << p.first << " " << p.second;
-							if (index < size - 1) out << ", ";
-							index++;
-						}
-						out << endl;
-					}
-					for (auto& instr : method.instructions)
-					{
-						if (instr.type == AsmOperandType::OPERAND_MACRO)
-						{
-							out << "\t" << instr.macro[0];
-							for (size_t i = 1; i < instr.macro.size(); ++i)
-							{
-								out << " " << instr.macro[i];
-							}
-							out << endl;
-						}
-						else
-						{
-							out << "\t" << instr.mnemonic;
-							if (instr.op1.type != OPERAND_NONE)
-							{
-								out << " " << instr.op1;
-							}
-							if (instr.op2.type != OPERAND_NONE)
-							{
-								out << ", " << instr.op2;
-							}
-							out << endl;
-						}
-					}
+					outputMethodHeader(method, out);
+					outputMethodLocals(method, out);
+					outputMethodInstructions(method, out);
 					out << method.name << " ENDP" << endl << endl;
 				}
 				break;
@@ -690,6 +755,7 @@ void JWasmGenerator::output()
 				}
 				break;
 			case ASM_DATA_TYPE_COMMENT:
+				out << line.comment << endl;
 				break;
 		}
 	}

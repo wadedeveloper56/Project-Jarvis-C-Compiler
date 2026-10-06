@@ -27,6 +27,11 @@ class JWasmGenerator : ASTVisitor
 public:
 	JWasmGenerator(ostream& os, int bits = 32, bool isWindows = true);
 	void generate(Program& program);
+	void outputMethodHeader(AsmMethod& method, std::ostream& out);
+	void outputMethodLocals(AsmMethod& method, std::ostream& out);
+	void outputMethodInstructionsMacro(std::ostream& out, AsmInstruction& instr);
+	void outputMethodInstructionsOperand(std::string mnemonic, AsmOperand& op, std::ostream& out, bool comma = true);
+	void outputMethodInstructions(AsmMethod& method, std::ostream& out);
 	void output();
 
 	void visit(Program& program) override;
