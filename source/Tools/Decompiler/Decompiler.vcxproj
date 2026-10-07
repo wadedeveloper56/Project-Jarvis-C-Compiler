@@ -74,27 +74,31 @@
     <OutDir>..\..\..\bin\libraries\$(Configuration)\$(Platform)\</OutDir>
     <IntDir>..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
     <RunCodeAnalysis>true</RunCodeAnalysis>
+    <IncludePath>.\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>..\..\..\bin\libraries\$(Configuration)\$(Platform)\</OutDir>
     <IntDir>..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
     <RunCodeAnalysis>true</RunCodeAnalysis>
+    <IncludePath>.\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>..\..\..\bin\libraries\$(Configuration)\$(Platform)\</OutDir>
     <IntDir>..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
     <RunCodeAnalysis>true</RunCodeAnalysis>
+    <IncludePath>.\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>..\..\..\bin\libraries\$(Configuration)\$(Platform)\</OutDir>
     <IntDir>..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
     <RunCodeAnalysis>true</RunCodeAnalysis>
+    <IncludePath>.\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions);WIN32;_WINDOWS;CAPSTONE_USE_SYS_DYN_MEM;CAPSTONE_ARM_SUPPORT;CAPSTONE_AARCH64_SUPPORT;CAPSTONE_M68K_SUPPORT;CAPSTONE_MIPS_SUPPORT;CAPSTONE_PPC_SUPPORT;CAPSTONE_SPARC_SUPPORT;CAPSTONE_SYSTEMZ_SUPPORT;CAPSTONE_XCORE_SUPPORT;CAPSTONE_X86_SUPPORT;CAPSTONE_TMS320C64X_SUPPORT;CAPSTONE_M680X_SUPPORT;CAPSTONE_EVM_SUPPORT;CAPSTONE_MOS65XX_SUPPORT;CAPSTONE_WASM_SUPPORT;CAPSTONE_BPF_SUPPORT;CAPSTONE_RISCV_SUPPORT;CAPSTONE_SH_SUPPORT;CAPSTONE_TRICORE_SUPPORT;CAPSTONE_ALPHA_SUPPORT;CAPSTONE_HPPA_SUPPORT;CAPSTONE_LOONGARCH_SUPPORT;CAPSTONE_XTENSA_SUPPORT;CAPSTONE_ARC_SUPPORT;CAPSTONE_HAS_ARM;CAPSTONE_HAS_AARCH64;CAPSTONE_HAS_MIPS;CAPSTONE_HAS_POWERPC;CAPSTONE_HAS_X86;CAPSTONE_HAS_SPARC;CAPSTONE_HAS_SYSTEMZ;CAPSTONE_HAS_XCORE;CAPSTONE_HAS_M68K;CAPSTONE_HAS_TMS320C64X;CAPSTONE_HAS_M680X;CAPSTONE_HAS_EVM;CAPSTONE_HAS_WASM;CAPSTONE_HAS_MOS65XX;CAPSTONE_HAS_BPF;CAPSTONE_HAS_RISCV;CAPSTONE_HAS_SH;CAPSTONE_HAS_TRICORE;CAPSTONE_HAS_ALPHA;CAPSTONE_HAS_HPPA;CAPSTONE_HAS_LOONGARCH;CAPSTONE_HAS_XTENSA;CAPSTONE_HAS_ARC;CMAKE_INTDIR="Debug"</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -117,7 +121,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;CAPSTONE_USE_SYS_DYN_MEM;CAPSTONE_ARM_SUPPORT;CAPSTONE_AARCH64_SUPPORT;CAPSTONE_M68K_SUPPORT;CAPSTONE_MIPS_SUPPORT;CAPSTONE_PPC_SUPPORT;CAPSTONE_SPARC_SUPPORT;CAPSTONE_SYSTEMZ_SUPPORT;CAPSTONE_XCORE_SUPPORT;CAPSTONE_X86_SUPPORT;CAPSTONE_TMS320C64X_SUPPORT;CAPSTONE_M680X_SUPPORT;CAPSTONE_EVM_SUPPORT;CAPSTONE_MOS65XX_SUPPORT;CAPSTONE_WASM_SUPPORT;CAPSTONE_BPF_SUPPORT;CAPSTONE_RISCV_SUPPORT;CAPSTONE_SH_SUPPORT;CAPSTONE_TRICORE_SUPPORT;CAPSTONE_ALPHA_SUPPORT;CAPSTONE_HPPA_SUPPORT;CAPSTONE_LOONGARCH_SUPPORT;CAPSTONE_XTENSA_SUPPORT;CAPSTONE_ARC_SUPPORT;CAPSTONE_HAS_ARM;CAPSTONE_HAS_AARCH64;CAPSTONE_HAS_MIPS;CAPSTONE_HAS_POWERPC;CAPSTONE_HAS_X86;CAPSTONE_HAS_SPARC;CAPSTONE_HAS_SYSTEMZ;CAPSTONE_HAS_XCORE;CAPSTONE_HAS_M68K;CAPSTONE_HAS_TMS320C64X;CAPSTONE_HAS_M680X;CAPSTONE_HAS_EVM;CAPSTONE_HAS_WASM;CAPSTONE_HAS_MOS65XX;CAPSTONE_HAS_BPF;CAPSTONE_HAS_RISCV;CAPSTONE_HAS_SH;CAPSTONE_HAS_TRICORE;CAPSTONE_HAS_ALPHA;CAPSTONE_HAS_HPPA;CAPSTONE_HAS_LOONGARCH;CAPSTONE_HAS_XTENSA;CAPSTONE_HAS_ARC;CMAKE_INTDIR="Release"</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -138,7 +142,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions);WIN32;_WINDOWS;CAPSTONE_USE_SYS_DYN_MEM;CAPSTONE_ARM_SUPPORT;CAPSTONE_AARCH64_SUPPORT;CAPSTONE_M68K_SUPPORT;CAPSTONE_MIPS_SUPPORT;CAPSTONE_PPC_SUPPORT;CAPSTONE_SPARC_SUPPORT;CAPSTONE_SYSTEMZ_SUPPORT;CAPSTONE_XCORE_SUPPORT;CAPSTONE_X86_SUPPORT;CAPSTONE_TMS320C64X_SUPPORT;CAPSTONE_M680X_SUPPORT;CAPSTONE_EVM_SUPPORT;CAPSTONE_MOS65XX_SUPPORT;CAPSTONE_WASM_SUPPORT;CAPSTONE_BPF_SUPPORT;CAPSTONE_RISCV_SUPPORT;CAPSTONE_SH_SUPPORT;CAPSTONE_TRICORE_SUPPORT;CAPSTONE_ALPHA_SUPPORT;CAPSTONE_HPPA_SUPPORT;CAPSTONE_LOONGARCH_SUPPORT;CAPSTONE_XTENSA_SUPPORT;CAPSTONE_ARC_SUPPORT;CAPSTONE_HAS_ARM;CAPSTONE_HAS_AARCH64;CAPSTONE_HAS_MIPS;CAPSTONE_HAS_POWERPC;CAPSTONE_HAS_X86;CAPSTONE_HAS_SPARC;CAPSTONE_HAS_SYSTEMZ;CAPSTONE_HAS_XCORE;CAPSTONE_HAS_M68K;CAPSTONE_HAS_TMS320C64X;CAPSTONE_HAS_M680X;CAPSTONE_HAS_EVM;CAPSTONE_HAS_WASM;CAPSTONE_HAS_MOS65XX;CAPSTONE_HAS_BPF;CAPSTONE_HAS_RISCV;CAPSTONE_HAS_SH;CAPSTONE_HAS_TRICORE;CAPSTONE_HAS_ALPHA;CAPSTONE_HAS_HPPA;CAPSTONE_HAS_LOONGARCH;CAPSTONE_HAS_XTENSA;CAPSTONE_HAS_ARC;CMAKE_INTDIR="Debug"</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -161,7 +165,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;CAPSTONE_USE_SYS_DYN_MEM;CAPSTONE_ARM_SUPPORT;CAPSTONE_AARCH64_SUPPORT;CAPSTONE_M68K_SUPPORT;CAPSTONE_MIPS_SUPPORT;CAPSTONE_PPC_SUPPORT;CAPSTONE_SPARC_SUPPORT;CAPSTONE_SYSTEMZ_SUPPORT;CAPSTONE_XCORE_SUPPORT;CAPSTONE_X86_SUPPORT;CAPSTONE_TMS320C64X_SUPPORT;CAPSTONE_M680X_SUPPORT;CAPSTONE_EVM_SUPPORT;CAPSTONE_MOS65XX_SUPPORT;CAPSTONE_WASM_SUPPORT;CAPSTONE_BPF_SUPPORT;CAPSTONE_RISCV_SUPPORT;CAPSTONE_SH_SUPPORT;CAPSTONE_TRICORE_SUPPORT;CAPSTONE_ALPHA_SUPPORT;CAPSTONE_HPPA_SUPPORT;CAPSTONE_LOONGARCH_SUPPORT;CAPSTONE_XTENSA_SUPPORT;CAPSTONE_ARC_SUPPORT;CAPSTONE_HAS_ARM;CAPSTONE_HAS_AARCH64;CAPSTONE_HAS_MIPS;CAPSTONE_HAS_POWERPC;CAPSTONE_HAS_X86;CAPSTONE_HAS_SPARC;CAPSTONE_HAS_SYSTEMZ;CAPSTONE_HAS_XCORE;CAPSTONE_HAS_M68K;CAPSTONE_HAS_TMS320C64X;CAPSTONE_HAS_M680X;CAPSTONE_HAS_EVM;CAPSTONE_HAS_WASM;CAPSTONE_HAS_MOS65XX;CAPSTONE_HAS_BPF;CAPSTONE_HAS_RISCV;CAPSTONE_HAS_SH;CAPSTONE_HAS_TRICORE;CAPSTONE_HAS_ALPHA;CAPSTONE_HAS_HPPA;CAPSTONE_HAS_LOONGARCH;CAPSTONE_HAS_XTENSA;CAPSTONE_HAS_ARC;CMAKE_INTDIR="Release"</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -179,17 +183,62 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="arch\AArch64\AArch64AddressingModes.h" />
+    <ClInclude Include="arch\AArch64\AArch64BaseInfo.h" />
+    <ClInclude Include="arch\AArch64\AArch64DisassemblerExtension.h" />
+    <ClInclude Include="arch\AArch64\AArch64InstPrinter.h" />
+    <ClInclude Include="arch\AArch64\AArch64Linkage.h" />
+    <ClInclude Include="arch\AArch64\AArch64Mapping.h" />
+    <ClInclude Include="arch\AArch64\AArch64Module.h" />
+    <ClInclude Include="arch\Alpha\AlphaDisassembler.h" />
+    <ClInclude Include="arch\Alpha\AlphaLinkage.h" />
+    <ClInclude Include="arch\Alpha\AlphaMapping.h" />
+    <ClInclude Include="arch\Alpha\AlphaModule.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Decompiler.cpp" />
-    <ClCompile Include="pch.cpp">
+    <ClCompile Include="arch\AArch64\AArch64BaseInfo.c" />
+    <ClCompile Include="arch\AArch64\AArch64Disassembler.c" />
+    <ClCompile Include="arch\AArch64\AArch64DisassemblerExtension.c" />
+    <ClCompile Include="arch\AArch64\AArch64InstPrinter.c" />
+    <ClCompile Include="arch\AArch64\AArch64Mapping.c" />
+    <ClCompile Include="arch\AArch64\AArch64Module.c" />
+    <ClCompile Include="arch\Alpha\AlphaDisassembler.c" />
+    <ClCompile Include="arch\Alpha\AlphaInstPrinter.c" />
+    <ClCompile Include="arch\Alpha\AlphaMapping.c" />
+    <ClCompile Include="arch\Alpha\AlphaModule.c" />
+    <ClCompile Include="Decompiler.c" />
+    <ClCompile Include="pch.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="arch\AArch64\AArch64GenAsmWriter.inc" />
+    <None Include="arch\AArch64\AArch64GenCSAliasMnemMap.inc" />
+    <None Include="arch\AArch64\AArch64GenCSFeatureName.inc" />
+    <None Include="arch\AArch64\AArch64GenCSMappingInsn.inc" />
+    <None Include="arch\AArch64\AArch64GenCSMappingInsnName.inc" />
+    <None Include="arch\AArch64\AArch64GenCSMappingInsnOp.inc" />
+    <None Include="arch\AArch64\AArch64GenCSOpGroup.inc" />
+    <None Include="arch\AArch64\AArch64GenDisassemblerTables.inc" />
+    <None Include="arch\AArch64\AArch64GenInstrInfo.inc" />
+    <None Include="arch\AArch64\AArch64GenRegisterInfo.inc" />
+    <None Include="arch\AArch64\AArch64GenSubtargetInfo.inc" />
+    <None Include="arch\AArch64\AArch64GenSystemOperands.inc" />
+    <None Include="arch\AArch64\AArch64GenSystemRegister.inc" />
+    <None Include="arch\Alpha\AlphaGenAsmWriter.inc" />
+    <None Include="arch\Alpha\AlphaGenCSMappingInsn.inc" />
+    <None Include="arch\Alpha\AlphaGenCSMappingInsnName.inc" />
+    <None Include="arch\Alpha\AlphaGenCSMappingInsnOp.inc" />
+    <None Include="arch\Alpha\AlphaGenCSOpGroup.inc" />
+    <None Include="arch\Alpha\AlphaGenDisassemblerTables.inc" />
+    <None Include="arch\Alpha\AlphaGenInstrInfo.inc" />
+    <None Include="arch\Alpha\AlphaGenRegisterInfo.inc" />
+    <None Include="arch\Alpha\AlphaGenSubtargetInfo.inc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

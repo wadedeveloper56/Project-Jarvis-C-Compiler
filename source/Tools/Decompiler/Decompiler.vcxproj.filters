@@ -13,6 +13,18 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\Alpha">
+      <UniqueIdentifier>{605a1579-6894-4e09-b50f-a3b280bcbf6e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Alpha">
+      <UniqueIdentifier>{cbafb921-08c7-43cf-8e13-817134c054af}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\AArch64">
+      <UniqueIdentifier>{638e1d00-197c-4336-9a9b-ae9a02535ded}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\AArch64">
+      <UniqueIdentifier>{cf9db406-7156-4769-a46f-61ab10459a19}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -21,13 +33,144 @@
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="arch\AArch64\AArch64AddressingModes.h">
+      <Filter>Header Files\AArch64</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\AArch64\AArch64BaseInfo.h">
+      <Filter>Header Files\AArch64</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\AArch64\AArch64DisassemblerExtension.h">
+      <Filter>Header Files\AArch64</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\AArch64\AArch64InstPrinter.h">
+      <Filter>Header Files\AArch64</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\AArch64\AArch64Linkage.h">
+      <Filter>Header Files\AArch64</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\AArch64\AArch64Mapping.h">
+      <Filter>Header Files\AArch64</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\AArch64\AArch64Module.h">
+      <Filter>Header Files\AArch64</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\Alpha\AlphaDisassembler.h">
+      <Filter>Header Files\Alpha</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\Alpha\AlphaLinkage.h">
+      <Filter>Header Files\Alpha</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\Alpha\AlphaMapping.h">
+      <Filter>Header Files\Alpha</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\Alpha\AlphaModule.h">
+      <Filter>Header Files\Alpha</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Decompiler.cpp">
+    <ClCompile Include="Decompiler.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="pch.cpp">
+    <ClCompile Include="pch.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="arch\AArch64\AArch64BaseInfo.c">
+      <Filter>Source Files\AArch64</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\AArch64\AArch64Disassembler.c">
+      <Filter>Source Files\AArch64</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\AArch64\AArch64DisassemblerExtension.c">
+      <Filter>Source Files\AArch64</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\AArch64\AArch64InstPrinter.c">
+      <Filter>Source Files\AArch64</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\AArch64\AArch64Mapping.c">
+      <Filter>Source Files\AArch64</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\AArch64\AArch64Module.c">
+      <Filter>Source Files\AArch64</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Alpha\AlphaDisassembler.c">
+      <Filter>Source Files\Alpha</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Alpha\AlphaInstPrinter.c">
+      <Filter>Source Files\Alpha</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Alpha\AlphaMapping.c">
+      <Filter>Source Files\Alpha</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Alpha\AlphaModule.c">
+      <Filter>Source Files\Alpha</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="arch\AArch64\AArch64GenAsmWriter.inc">
+      <Filter>Header Files\AArch64</Filter>
+    </None>
+    <None Include="arch\AArch64\AArch64GenCSAliasMnemMap.inc">
+      <Filter>Header Files\AArch64</Filter>
+    </None>
+    <None Include="arch\AArch64\AArch64GenCSFeatureName.inc">
+      <Filter>Header Files\AArch64</Filter>
+    </None>
+    <None Include="arch\AArch64\AArch64GenCSMappingInsn.inc">
+      <Filter>Header Files\AArch64</Filter>
+    </None>
+    <None Include="arch\AArch64\AArch64GenCSMappingInsnName.inc">
+      <Filter>Header Files\AArch64</Filter>
+    </None>
+    <None Include="arch\AArch64\AArch64GenCSMappingInsnOp.inc">
+      <Filter>Header Files\AArch64</Filter>
+    </None>
+    <None Include="arch\AArch64\AArch64GenCSOpGroup.inc">
+      <Filter>Header Files\AArch64</Filter>
+    </None>
+    <None Include="arch\AArch64\AArch64GenDisassemblerTables.inc">
+      <Filter>Header Files\AArch64</Filter>
+    </None>
+    <None Include="arch\AArch64\AArch64GenInstrInfo.inc">
+      <Filter>Header Files\AArch64</Filter>
+    </None>
+    <None Include="arch\AArch64\AArch64GenRegisterInfo.inc">
+      <Filter>Header Files\AArch64</Filter>
+    </None>
+    <None Include="arch\AArch64\AArch64GenSubtargetInfo.inc">
+      <Filter>Header Files\AArch64</Filter>
+    </None>
+    <None Include="arch\AArch64\AArch64GenSystemOperands.inc">
+      <Filter>Header Files\AArch64</Filter>
+    </None>
+    <None Include="arch\AArch64\AArch64GenSystemRegister.inc">
+      <Filter>Header Files\AArch64</Filter>
+    </None>
+    <None Include="arch\Alpha\AlphaGenAsmWriter.inc">
+      <Filter>Header Files\Alpha</Filter>
+    </None>
+    <None Include="arch\Alpha\AlphaGenCSMappingInsn.inc">
+      <Filter>Header Files\Alpha</Filter>
+    </None>
+    <None Include="arch\Alpha\AlphaGenCSMappingInsnName.inc">
+      <Filter>Header Files\Alpha</Filter>
+    </None>
+    <None Include="arch\Alpha\AlphaGenCSMappingInsnOp.inc">
+      <Filter>Header Files\Alpha</Filter>
+    </None>
+    <None Include="arch\Alpha\AlphaGenCSOpGroup.inc">
+      <Filter>Header Files\Alpha</Filter>
+    </None>
+    <None Include="arch\Alpha\AlphaGenDisassemblerTables.inc">
+      <Filter>Header Files\Alpha</Filter>
+    </None>
+    <None Include="arch\Alpha\AlphaGenInstrInfo.inc">
+      <Filter>Header Files\Alpha</Filter>
+    </None>
+    <None Include="arch\Alpha\AlphaGenRegisterInfo.inc">
+      <Filter>Header Files\Alpha</Filter>
+    </None>
+    <None Include="arch\Alpha\AlphaGenSubtargetInfo.inc">
+      <Filter>Header Files\Alpha</Filter>
+    </None>
   </ItemGroup>
 </Project>
