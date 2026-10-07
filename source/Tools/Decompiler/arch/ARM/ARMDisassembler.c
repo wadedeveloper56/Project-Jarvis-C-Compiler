@@ -6008,8 +6008,8 @@ static DecodeStatus DecodeIT(MCInst *Inst, unsigned Insn, uint64_t Address,
 	// condition code is 1, then we have to flip all the bits above the
 	// terminating bit (which is the lowest 1 bit).
 	if (pred & 1) {
-		unsigned LowBit = mask & -mask;
-		unsigned BitsAboveLowBit = 0xF & (-LowBit << 1);
+		unsigned LowBit = mask & -(signed)mask;
+		unsigned BitsAboveLowBit = 0xF & (-((signed)LowBit) << 1);
 		mask ^= BitsAboveLowBit;
 	}
 
@@ -6115,7 +6115,7 @@ static DecodeStatus DecodeT2Adr(MCInst *Inst, uint32_t Insn, uint64_t Address,
 			MCInst_setOpcode(Inst, (ARM_t2SUBri12));
 			MCOperand_CreateReg0(Inst, (ARM_PC));
 		} else
-			Val = -Val;
+			Val = -((signed)Val);
 	}
 	MCOperand_CreateImm0(Inst, (Val));
 	return S;
@@ -6477,7 +6477,7 @@ static DecodeStatus DecodeForVMRSandVMSR(MCInst *Inst, unsigned Val,
 		if (!tryAddingSymbolicOperand(Address, Address + DecVal + 4, \
 					      true, 4, Inst, Decoder)) \
 			MCOperand_CreateImm0(Inst, \
-					     (isNeg ? -DecVal : DecVal)); \
+					     (isNeg ? -(int64_t)DecVal : DecVal)); \
 		return S; \
 	}
 DEFINE_DecodeBFLabelOperand(false, false, false, 4);

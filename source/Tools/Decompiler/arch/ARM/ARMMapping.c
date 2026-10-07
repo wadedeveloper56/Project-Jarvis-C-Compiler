@@ -2209,8 +2209,8 @@ void ARM_set_detail_op_mem(MCInst *MI, unsigned OpNum, bool is_index_reg,
 		CS_ASSERT_RET(secondary_type == CS_OP_IMM);
 		if (((int32_t)Val) < 0)
 			ARM_get_detail_op(MI, 0)->subtracted = true;
-		ARM_get_detail_op(MI, 0)->mem.disp = ((int64_t)Val < 0) ? -Val :
-									  Val;
+		ARM_get_detail_op(MI, 0)->mem.disp = ((int64_t)Val < 0) ? -(int64_t)Val :
+									  (int64_t)Val;
 		break;
 	}
 	}

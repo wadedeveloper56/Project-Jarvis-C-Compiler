@@ -272,11 +272,11 @@ static inline unsigned ARM_AM_getSOImmTwoPartSecond(unsigned V)
 static inline bool ARM_AM_isSOImmTwoPartValNeg(unsigned V)
 {
 	unsigned First;
-	if (!ARM_AM_isSOImmTwoPartVal(-V))
+	if (!ARM_AM_isSOImmTwoPartVal(-((signed)V)))
 		return false;
 	// Return false if ~(-First) is not a SoImmval.
-	First = ARM_AM_getSOImmTwoPartFirst(-V);
-	First = ~(-First);
+	First = ARM_AM_getSOImmTwoPartFirst(-((signed)V));
+	First = ~(-((signed)First));
 	return !(ARM_AM_rotr32(~255U, ARM_AM_getSOImmValRotate(First)) & First);
 }
 
