@@ -61,6 +61,102 @@
     <Filter Include="Source Files\Base">
       <UniqueIdentifier>{b7b9c332-f2e2-401c-86c3-19b97dc7bd51}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\LoongArch">
+      <UniqueIdentifier>{a6170ff0-dd9a-470e-a334-fa56d823a47d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\M68K">
+      <UniqueIdentifier>{b05a8142-3c9d-4f8c-b8f5-24880908bc59}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\M680K">
+      <UniqueIdentifier>{0adc0684-ff2e-40e4-aa3e-cc41b918bb85}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\MIPS">
+      <UniqueIdentifier>{4b432833-e33a-4192-9652-586e8add40ae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\MOS65XX">
+      <UniqueIdentifier>{82848d86-c1a5-439f-877b-5ac16ed06d15}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\SH">
+      <UniqueIdentifier>{cd83b6ab-7618-46c7-9667-72779abf3060}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\PowerPC">
+      <UniqueIdentifier>{fa85eae8-d012-418b-b2e9-26e1f3566df2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\RISCV">
+      <UniqueIdentifier>{0fd278bb-82db-4f9f-984f-57dfafb90f71}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Sparc">
+      <UniqueIdentifier>{04b12bdf-f250-4485-ae43-4f0ab7691f43}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\SystemZ">
+      <UniqueIdentifier>{c36a9a30-1a8f-46cc-852f-d75dd2fdbb94}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\TMS320C64x">
+      <UniqueIdentifier>{2207c8a1-ac05-411c-bb85-fbcdac8c3f2d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\TriCore">
+      <UniqueIdentifier>{796a9b8e-9317-42a0-9d2e-2e3493c06313}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\WASM">
+      <UniqueIdentifier>{535fb4d7-1423-4ee8-980e-0a86c6db8d34}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\X86">
+      <UniqueIdentifier>{e7cc6de6-92fc-4ec2-b314-731b00686509}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\XCore">
+      <UniqueIdentifier>{737a5eee-ee20-433b-a451-5f7f7e943fdc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\XTensa">
+      <UniqueIdentifier>{2d59fc72-3fa7-4188-aae5-10cd517b26b5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\LoongArch">
+      <UniqueIdentifier>{29cd4697-3e68-484b-9f84-70c3bfc9a020}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\M68K">
+      <UniqueIdentifier>{bb7ecc31-aa58-49c0-b6f8-b93beada6709}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\M680K">
+      <UniqueIdentifier>{cc6b36fc-79c9-438a-b6d6-1b89be34c984}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Mips">
+      <UniqueIdentifier>{471130ae-3612-4fba-8851-be864dddd568}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\MOS65XX">
+      <UniqueIdentifier>{659472a5-9187-4e58-a607-eca018acbec1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\RISCV">
+      <UniqueIdentifier>{dac860ca-4843-49e9-8215-21bbe037d502}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\PowerPC">
+      <UniqueIdentifier>{5ad94791-0640-498d-a307-f6fc2088bc60}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\SH">
+      <UniqueIdentifier>{af20e80b-965b-4187-9889-df82979f0bc7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Sparc">
+      <UniqueIdentifier>{76e8e544-2cdd-48aa-a79c-776a77fd890d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\SystemZ">
+      <UniqueIdentifier>{f7ab4463-5435-44f3-b654-7cf873cf96de}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\TMS320C64x">
+      <UniqueIdentifier>{27f0a94c-6bab-497c-ad78-526e68b9bdc9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\TriCore">
+      <UniqueIdentifier>{1a8b7b66-867c-4a0e-ad43-d0a4397985c9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\WASM">
+      <UniqueIdentifier>{2de2ade5-eae5-42d8-9efd-57bbbb4c2a11}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\X86">
+      <UniqueIdentifier>{24c85b45-57b4-4fc3-89b6-8da3cab56c5d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\XCore">
+      <UniqueIdentifier>{bf05ceb5-352d-4d07-a948-e9a9da417a1d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\XTensa">
+      <UniqueIdentifier>{4f92ce63-2f44-4559-9609-b3d34a18fd1f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="arch\AArch64\AArch64AddressingModes.h">
