@@ -1,6 +1,7 @@
 /* Capstone Disassembly Engine */
 /* By billow <billow.fun@gmail.com>, 2024 */
 
+#include "pch.h"
 #include <capstone/xtensa.h>
 
 #include "../../MCRegisterInfo.h"

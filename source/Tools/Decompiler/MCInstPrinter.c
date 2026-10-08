@@ -1,6 +1,7 @@
 /* Capstone Disassembly Engine */
 /* By Rot127 <unisono@quyllur.org>, 2023 */
 
+#include "pch.h"
 #include "MCInstPrinter.h"
 #include "cs_priv.h"
 #include <capstone/platform.h>

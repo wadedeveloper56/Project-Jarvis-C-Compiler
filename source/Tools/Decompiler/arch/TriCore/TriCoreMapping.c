@@ -1,6 +1,7 @@
 /* Capstone Disassembly Engine */
 /* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2014 */
 
+#include "pch.h"
 #ifdef CAPSTONE_HAS_TRICORE
 
 #include <stdio.h> // debug

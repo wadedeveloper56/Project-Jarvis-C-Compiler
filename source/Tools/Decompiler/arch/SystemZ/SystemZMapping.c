@@ -1,6 +1,7 @@
 /* Capstone Disassembly Engine */
 /* By Rot127 <unisono@quyllur.org> 2022-2023 */
 
+#include "pch.h"
 #ifdef CAPSTONE_HAS_SYSTEMZ
 
 #include <stdio.h> // debug

@@ -1,6 +1,7 @@
 /* Capstone Disassembly Engine */
 /* By Spike, xwings 2019 */
 
+#include "pch.h"
 #ifdef CAPSTONE_HAS_WASM
 
 #include <string.h>

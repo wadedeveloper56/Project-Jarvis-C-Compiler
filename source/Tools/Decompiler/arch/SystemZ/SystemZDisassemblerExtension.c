@@ -1,6 +1,7 @@
 /* Capstone Disassembly Engine */
 /* By Rot127 <unisono@quyllur.org>, 2022-2023 */
 
+#include "pch.h"
 #include <capstone/systemz.h>
 #include "SystemZDisassemblerExtension.h"
 #include "../../utils.h"
