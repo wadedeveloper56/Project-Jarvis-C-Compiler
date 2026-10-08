@@ -39,7 +39,7 @@ int ProcessCommandLine(int argc, char* argv[])
 	const char* progname = "PEDump";
 	int exitcode = 0, nerrors = 0;
 	void* argtable[] = { all, base, hex, import, line,  pdata, resources, machine, symbol, help, version, infile, end };
-	printf("PEDUMP - Win32/Win64 COFF EXE/OBJ/LIB file dumper v1.0 (C) Copyright 2025-2026 Christopher D. Wade.\n");
+	printf("PEDUMP - 16/32/64 bit  OMF/COFF EXE/OBJ/LIB file dumper v1.0 (C) Copyright 2025-2026 Christopher D. Wade.\n");
 	printf("All Rights Reserved\n");
 
 	if (argNullCheck(argtable) != 0)
@@ -120,7 +120,7 @@ int main(int argc, char* argv[])
 			for (int i = 0; i < data->sectionTable.size(); i++)
 			{
 				OBJSectionPtr ptr = data->sectionTable[i];
-				DumpSection(i, ptr);
+				DumpSection(i, ptr, data->FileHeader.Machine);
 			}
 			if (data->exportDirectory != nullptr)
 			{
@@ -143,7 +143,7 @@ int main(int argc, char* argv[])
 			for (int i = 0; i < data->sectionTable.size(); i++)
 			{
 				OBJSectionPtr ptr = data->sectionTable[i];
-				DumpSection(i, ptr);
+				DumpSection(i, ptr, data->FileHeader.Machine);
 			}
 			if (data->exportDirectory != nullptr)
 			{
@@ -165,7 +165,7 @@ int main(int argc, char* argv[])
 			for (int i = 0; i < data->sectionTable.size(); i++)
 			{
 				OBJSectionPtr ptr = data->sectionTable[i];
-				DumpSection(i, ptr);
+				DumpSection(i, ptr, data->header.Machine);
 			}
 			DumpSymbolTable(data->symbolTable);
 			printf("\nString Table Size = 0x%0X (%ld) bytes %lld entries\n", data->stringTableSize, data->stringTableSize, (LONGLONG)data->stringTable.size());
@@ -185,7 +185,7 @@ int main(int argc, char* argv[])
 			for (int i = 0; i < data->sectionTable.size(); i++)
 			{
 				OBJSectionPtr ptr = data->sectionTable[i];
-				DumpSection(i, ptr);
+				DumpSection(i, ptr, data->header.Machine);
 			}
 			DumpSymbolTable(data->symbolTable);
 			printf("\nString Table Size = 0x%0X (%ld) bytes %lld entries\n", data->stringTableSize, data->stringTableSize, (LONGLONG)data->stringTable.size());

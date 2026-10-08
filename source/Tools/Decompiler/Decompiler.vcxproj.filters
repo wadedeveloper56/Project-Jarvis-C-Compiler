@@ -1,0 +1,1496 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files\Alpha">
+      <UniqueIdentifier>{605a1579-6894-4e09-b50f-a3b280bcbf6e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Alpha">
+      <UniqueIdentifier>{cbafb921-08c7-43cf-8e13-817134c054af}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\AArch64">
+      <UniqueIdentifier>{638e1d00-197c-4336-9a9b-ae9a02535ded}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\AArch64">
+      <UniqueIdentifier>{cf9db406-7156-4769-a46f-61ab10459a19}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ARC">
+      <UniqueIdentifier>{31d118af-f3b4-422b-b8bf-5bc85330830f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ARC">
+      <UniqueIdentifier>{1c8cb155-e362-4740-94e5-e929f39f201f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ARM">
+      <UniqueIdentifier>{20d51ec7-9b86-4e15-86f2-f6e669e18796}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ARM">
+      <UniqueIdentifier>{039419bf-97f8-42b1-bb0d-17238a1c7d5c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\BPF">
+      <UniqueIdentifier>{7ef132af-6efa-4673-bf85-f3f2c112ef11}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\BPF">
+      <UniqueIdentifier>{85b3655a-4727-432d-9b34-ac0c3bb1f790}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\EVM">
+      <UniqueIdentifier>{96401a24-84ce-4a3a-a576-2b46e092eb6b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\EVM">
+      <UniqueIdentifier>{27bb0f22-0b68-4491-9f79-eb8669383283}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\HPPA">
+      <UniqueIdentifier>{be4dc775-132c-4597-a887-dcc7fc1a0baa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\HPPA">
+      <UniqueIdentifier>{e37b0621-c9d1-47e5-a053-d99570b45690}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Base">
+      <UniqueIdentifier>{9b48f2ec-6bc1-4341-bc6c-47be08bcf5a3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Base">
+      <UniqueIdentifier>{b7b9c332-f2e2-401c-86c3-19b97dc7bd51}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\LoongArch">
+      <UniqueIdentifier>{a6170ff0-dd9a-470e-a334-fa56d823a47d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\M68K">
+      <UniqueIdentifier>{b05a8142-3c9d-4f8c-b8f5-24880908bc59}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\M680K">
+      <UniqueIdentifier>{0adc0684-ff2e-40e4-aa3e-cc41b918bb85}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\MIPS">
+      <UniqueIdentifier>{4b432833-e33a-4192-9652-586e8add40ae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\MOS65XX">
+      <UniqueIdentifier>{82848d86-c1a5-439f-877b-5ac16ed06d15}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\SH">
+      <UniqueIdentifier>{cd83b6ab-7618-46c7-9667-72779abf3060}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\PowerPC">
+      <UniqueIdentifier>{fa85eae8-d012-418b-b2e9-26e1f3566df2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\RISCV">
+      <UniqueIdentifier>{0fd278bb-82db-4f9f-984f-57dfafb90f71}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Sparc">
+      <UniqueIdentifier>{04b12bdf-f250-4485-ae43-4f0ab7691f43}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\SystemZ">
+      <UniqueIdentifier>{c36a9a30-1a8f-46cc-852f-d75dd2fdbb94}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\TMS320C64x">
+      <UniqueIdentifier>{2207c8a1-ac05-411c-bb85-fbcdac8c3f2d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\TriCore">
+      <UniqueIdentifier>{796a9b8e-9317-42a0-9d2e-2e3493c06313}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\WASM">
+      <UniqueIdentifier>{535fb4d7-1423-4ee8-980e-0a86c6db8d34}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\X86">
+      <UniqueIdentifier>{e7cc6de6-92fc-4ec2-b314-731b00686509}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\XCore">
+      <UniqueIdentifier>{737a5eee-ee20-433b-a451-5f7f7e943fdc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\XTensa">
+      <UniqueIdentifier>{2d59fc72-3fa7-4188-aae5-10cd517b26b5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\LoongArch">
+      <UniqueIdentifier>{29cd4697-3e68-484b-9f84-70c3bfc9a020}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\M68K">
+      <UniqueIdentifier>{bb7ecc31-aa58-49c0-b6f8-b93beada6709}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\M680K">
+      <UniqueIdentifier>{cc6b36fc-79c9-438a-b6d6-1b89be34c984}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Mips">
+      <UniqueIdentifier>{471130ae-3612-4fba-8851-be864dddd568}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\MOS65XX">
+      <UniqueIdentifier>{659472a5-9187-4e58-a607-eca018acbec1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\RISCV">
+      <UniqueIdentifier>{dac860ca-4843-49e9-8215-21bbe037d502}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\PowerPC">
+      <UniqueIdentifier>{5ad94791-0640-498d-a307-f6fc2088bc60}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\SH">
+      <UniqueIdentifier>{af20e80b-965b-4187-9889-df82979f0bc7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Sparc">
+      <UniqueIdentifier>{76e8e544-2cdd-48aa-a79c-776a77fd890d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\SystemZ">
+      <UniqueIdentifier>{f7ab4463-5435-44f3-b654-7cf873cf96de}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\TMS320C64x">
+      <UniqueIdentifier>{27f0a94c-6bab-497c-ad78-526e68b9bdc9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\TriCore">
+      <UniqueIdentifier>{1a8b7b66-867c-4a0e-ad43-d0a4397985c9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\WASM">
+      <UniqueIdentifier>{2de2ade5-eae5-42d8-9efd-57bbbb4c2a11}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\X86">
+      <UniqueIdentifier>{24c85b45-57b4-4fc3-89b6-8da3cab56c5d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\XCore">
+      <UniqueIdentifier>{bf05ceb5-352d-4d07-a948-e9a9da417a1d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\XTensa">
+      <UniqueIdentifier>{4f92ce63-2f44-4559-9609-b3d34a18fd1f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="arch\AArch64\AArch64AddressingModes.h">
+      <Filter>Header Files\AArch64</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\AArch64\AArch64BaseInfo.h">
+      <Filter>Header Files\AArch64</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\AArch64\AArch64DisassemblerExtension.h">
+      <Filter>Header Files\AArch64</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\AArch64\AArch64InstPrinter.h">
+      <Filter>Header Files\AArch64</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\AArch64\AArch64Linkage.h">
+      <Filter>Header Files\AArch64</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\AArch64\AArch64Mapping.h">
+      <Filter>Header Files\AArch64</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\AArch64\AArch64Module.h">
+      <Filter>Header Files\AArch64</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\Alpha\AlphaDisassembler.h">
+      <Filter>Header Files\Alpha</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\Alpha\AlphaLinkage.h">
+      <Filter>Header Files\Alpha</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\Alpha\AlphaMapping.h">
+      <Filter>Header Files\Alpha</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\Alpha\AlphaModule.h">
+      <Filter>Header Files\Alpha</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\ARC\ARCInfo.h">
+      <Filter>Header Files\ARC</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\ARC\ARCInstPrinter.h">
+      <Filter>Header Files\ARC</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\ARC\ARCLinkage.h">
+      <Filter>Header Files\ARC</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\ARC\ARCMapping.h">
+      <Filter>Header Files\ARC</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\ARC\ARCModule.h">
+      <Filter>Header Files\ARC</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\ARM\ARMAddressingModes.h">
+      <Filter>Header Files\ARM</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\ARM\ARMBaseInfo.h">
+      <Filter>Header Files\ARM</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\ARM\ARMDisassemblerExtension.h">
+      <Filter>Header Files\ARM</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\ARM\ARMInstPrinter.h">
+      <Filter>Header Files\ARM</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\ARM\ARMLinkage.h">
+      <Filter>Header Files\ARM</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\ARM\ARMMapping.h">
+      <Filter>Header Files\ARM</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\ARM\ARMModule.h">
+      <Filter>Header Files\ARM</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\BPF\BPFConstants.h">
+      <Filter>Header Files\BPF</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\BPF\BPFDisassembler.h">
+      <Filter>Header Files\BPF</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\BPF\BPFInstPrinter.h">
+      <Filter>Header Files\BPF</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\BPF\BPFMapping.h">
+      <Filter>Header Files\BPF</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\BPF\BPFModule.h">
+      <Filter>Header Files\BPF</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\EVM\EVMDisassembler.h">
+      <Filter>Header Files\EVM</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\EVM\EVMInstPrinter.h">
+      <Filter>Header Files\EVM</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\EVM\EVMMapping.h">
+      <Filter>Header Files\EVM</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\EVM\EVMModule.h">
+      <Filter>Header Files\EVM</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\HPPA\HPPAConstants.h">
+      <Filter>Header Files\HPPA</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\HPPA\HPPADisassembler.h">
+      <Filter>Header Files\HPPA</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\HPPA\HPPAInstPrinter.h">
+      <Filter>Header Files\HPPA</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\HPPA\HPPAMapping.h">
+      <Filter>Header Files\HPPA</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\HPPA\HPPAModule.h">
+      <Filter>Header Files\HPPA</Filter>
+    </ClInclude>
+    <ClInclude Include="cs_priv.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="cs_simple_types.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="framework.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="LEB128.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="Mapping.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="MathExtras.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="MCAsmInfo.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="MCDisassembler.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="MCFixedLenDisassembler.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="MCInst.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="MCInstPrinter.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="MCInstrDesc.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="MCRegisterInfo.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="SStream.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="utils.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\LoongArch\LoongArchDisassemblerExtension.h">
+      <Filter>Header Files\LoongArch</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\LoongArch\LoongArchInstPrinter.h">
+      <Filter>Header Files\LoongArch</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\LoongArch\LoongArchLinkage.h">
+      <Filter>Header Files\LoongArch</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\LoongArch\LoongArchMapping.h">
+      <Filter>Header Files\LoongArch</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\LoongArch\LoongArchModule.h">
+      <Filter>Header Files\LoongArch</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\M68K\M68KDisassembler.h">
+      <Filter>Header Files\M68K</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\M68K\M68KInstPrinter.h">
+      <Filter>Header Files\M68K</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\M68K\M68KModule.h">
+      <Filter>Header Files\M68K</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\M680X\M680XDisassembler.h">
+      <Filter>Header Files\M680K</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\M680X\M680XDisassemblerInternals.h">
+      <Filter>Header Files\M680K</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\M680X\M680XInstPrinter.h">
+      <Filter>Header Files\M680K</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\M680X\M680XModule.h">
+      <Filter>Header Files\M680K</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\Mips\MipsCP0RegisterMap.h">
+      <Filter>Header Files\MIPS</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\Mips\MipsDisassembler.h">
+      <Filter>Header Files\MIPS</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\Mips\MipsInstPrinter.h">
+      <Filter>Header Files\MIPS</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\Mips\MipsLinkage.h">
+      <Filter>Header Files\MIPS</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\Mips\MipsMapping.h">
+      <Filter>Header Files\MIPS</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\Mips\MipsModule.h">
+      <Filter>Header Files\MIPS</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\MOS65XX\MOS65XXDisassembler.h">
+      <Filter>Header Files\MOS65XX</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\MOS65XX\MOS65XXDisassemblerInternals.h">
+      <Filter>Header Files\MOS65XX</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\MOS65XX\MOS65XXModule.h">
+      <Filter>Header Files\MOS65XX</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\PowerPC\PPCInstrInfo.h">
+      <Filter>Header Files\PowerPC</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\PowerPC\PPCLinkage.h">
+      <Filter>Header Files\PowerPC</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\PowerPC\PPCMapping.h">
+      <Filter>Header Files\PowerPC</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\PowerPC\PPCMCTargetDesc.h">
+      <Filter>Header Files\PowerPC</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\PowerPC\PPCModule.h">
+      <Filter>Header Files\PowerPC</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\PowerPC\PPCPredicates.h">
+      <Filter>Header Files\PowerPC</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\PowerPC\PPCRegisterInfo.h">
+      <Filter>Header Files\PowerPC</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\RISCV\RISCVBaseInfo.h">
+      <Filter>Header Files\RISCV</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\RISCV\RISCVDisassembler.h">
+      <Filter>Header Files\RISCV</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\RISCV\RISCVDisassemblerExtension.h">
+      <Filter>Header Files\RISCV</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\RISCV\RISCVInstPrinter.h">
+      <Filter>Header Files\RISCV</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\RISCV\RISCVLinkage.h">
+      <Filter>Header Files\RISCV</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\RISCV\RISCVMapping.h">
+      <Filter>Header Files\RISCV</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\RISCV\RISCVModule.h">
+      <Filter>Header Files\RISCV</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\SH\SHDisassembler.h">
+      <Filter>Header Files\SH</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\SH\SHInstPrinter.h">
+      <Filter>Header Files\SH</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\SH\SHModule.h">
+      <Filter>Header Files\SH</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\Sparc\SparcDisassemblerExtension.h">
+      <Filter>Header Files\Sparc</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\Sparc\SparcInstPrinter.h">
+      <Filter>Header Files\Sparc</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\Sparc\SparcLinkage.h">
+      <Filter>Header Files\Sparc</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\Sparc\SparcMapping.h">
+      <Filter>Header Files\Sparc</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\Sparc\SparcMCTargetDesc.h">
+      <Filter>Header Files\Sparc</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\Sparc\SparcModule.h">
+      <Filter>Header Files\Sparc</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\SystemZ\SystemZDisassemblerExtension.h">
+      <Filter>Header Files\SystemZ</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\SystemZ\SystemZInstPrinter.h">
+      <Filter>Header Files\SystemZ</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\SystemZ\SystemZLinkage.h">
+      <Filter>Header Files\SystemZ</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\SystemZ\SystemZMapping.h">
+      <Filter>Header Files\SystemZ</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\SystemZ\SystemZMCTargetDesc.h">
+      <Filter>Header Files\SystemZ</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\SystemZ\SystemZModule.h">
+      <Filter>Header Files\SystemZ</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\TMS320C64x\TMS320C64xDisassembler.h">
+      <Filter>Header Files\TMS320C64x</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\TMS320C64x\TMS320C64xInstPrinter.h">
+      <Filter>Header Files\TMS320C64x</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\TMS320C64x\TMS320C64xMapping.h">
+      <Filter>Header Files\TMS320C64x</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\TMS320C64x\TMS320C64xModule.h">
+      <Filter>Header Files\TMS320C64x</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\TriCore\TriCoreDisassembler.h">
+      <Filter>Header Files\TriCore</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\TriCore\TriCoreLinkage.h">
+      <Filter>Header Files\TriCore</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\TriCore\TriCoreMapping.h">
+      <Filter>Header Files\TriCore</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\TriCore\TriCoreModule.h">
+      <Filter>Header Files\TriCore</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\WASM\WASMDisassembler.h">
+      <Filter>Header Files\WASM</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\WASM\WASMInstPrinter.h">
+      <Filter>Header Files\WASM</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\WASM\WASMMapping.h">
+      <Filter>Header Files\WASM</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\WASM\WASMModule.h">
+      <Filter>Header Files\WASM</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\X86\X86BaseInfo.h">
+      <Filter>Header Files\X86</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\X86\X86Disassembler.h">
+      <Filter>Header Files\X86</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\X86\X86DisassemblerDecoder.h">
+      <Filter>Header Files\X86</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\X86\X86DisassemblerDecoderCommon.h">
+      <Filter>Header Files\X86</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\X86\X86InstPrinter.h">
+      <Filter>Header Files\X86</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\X86\X86InstPrinterCommon.h">
+      <Filter>Header Files\X86</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\X86\X86Mapping.h">
+      <Filter>Header Files\X86</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\X86\X86Module.h">
+      <Filter>Header Files\X86</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\XCore\XCoreDisassembler.h">
+      <Filter>Header Files\XCore</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\XCore\XCoreInstPrinter.h">
+      <Filter>Header Files\XCore</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\XCore\XCoreMapping.h">
+      <Filter>Header Files\XCore</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\XCore\XCoreModule.h">
+      <Filter>Header Files\XCore</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\Xtensa\priv.h">
+      <Filter>Header Files\XTensa</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\Xtensa\XtensaDisassembler.h">
+      <Filter>Header Files\XTensa</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\Xtensa\XtensaInstPrinter.h">
+      <Filter>Header Files\XTensa</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\Xtensa\XtensaMapping.h">
+      <Filter>Header Files\XTensa</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\Xtensa\XtensaModule.h">
+      <Filter>Header Files\XTensa</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="arch\AArch64\AArch64BaseInfo.c">
+      <Filter>Source Files\AArch64</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\AArch64\AArch64Disassembler.c">
+      <Filter>Source Files\AArch64</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\AArch64\AArch64DisassemblerExtension.c">
+      <Filter>Source Files\AArch64</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\AArch64\AArch64InstPrinter.c">
+      <Filter>Source Files\AArch64</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\AArch64\AArch64Mapping.c">
+      <Filter>Source Files\AArch64</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\AArch64\AArch64Module.c">
+      <Filter>Source Files\AArch64</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Alpha\AlphaDisassembler.c">
+      <Filter>Source Files\Alpha</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Alpha\AlphaInstPrinter.c">
+      <Filter>Source Files\Alpha</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Alpha\AlphaMapping.c">
+      <Filter>Source Files\Alpha</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Alpha\AlphaModule.c">
+      <Filter>Source Files\Alpha</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\ARC\ARCDisassembler.c">
+      <Filter>Source Files\ARC</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\ARC\ARCInstPrinter.c">
+      <Filter>Source Files\ARC</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\ARC\ARCMapping.c">
+      <Filter>Source Files\ARC</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\ARC\ARCModule.c">
+      <Filter>Source Files\ARC</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\ARM\ARMBaseInfo.c">
+      <Filter>Source Files\ARC</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\ARM\ARMDisassemblerExtension.c">
+      <Filter>Source Files\ARM</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\ARM\ARMDisassembler.c">
+      <Filter>Source Files\ARM</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\ARM\ARMInstPrinter.c">
+      <Filter>Source Files\ARM</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\ARM\ARMMapping.c">
+      <Filter>Source Files\ARM</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\ARM\ARMModule.c">
+      <Filter>Source Files\ARM</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\BPF\BPFDisassembler.c">
+      <Filter>Source Files\BPF</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\BPF\BPFInstPrinter.c">
+      <Filter>Source Files\BPF</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\BPF\BPFMapping.c">
+      <Filter>Source Files\BPF</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\BPF\BPFModule.c">
+      <Filter>Source Files\BPF</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\EVM\EVMDisassembler.c">
+      <Filter>Source Files\EVM</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\EVM\EVMMapping.c">
+      <Filter>Source Files\EVM</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\EVM\EVMModule.c">
+      <Filter>Source Files\EVM</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\EVM\EVMInstPrinter.c">
+      <Filter>Source Files\EVM</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\HPPA\HPPADisassembler.c">
+      <Filter>Source Files\HPPA</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\HPPA\HPPAInstPrinter.c">
+      <Filter>Source Files\HPPA</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\HPPA\HPPAMapping.c">
+      <Filter>Source Files\HPPA</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\HPPA\HPPAModule.c">
+      <Filter>Source Files\HPPA</Filter>
+    </ClCompile>
+    <ClCompile Include="cs.c">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="Decompiler.c">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="Mapping.c">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="MCInst.c">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="MCInstPrinter.c">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="MCInstrDesc.c">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="MCRegisterInfo.c">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.c">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="SStream.c">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="utils.c">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\LoongArch\LoongArchDisassembler.c">
+      <Filter>Source Files\LoongArch</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\LoongArch\LoongArchDisassemblerExtension.c">
+      <Filter>Source Files\LoongArch</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\LoongArch\LoongArchInstPrinter.c">
+      <Filter>Source Files\LoongArch</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\LoongArch\LoongArchMapping.c">
+      <Filter>Source Files\LoongArch</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\LoongArch\LoongArchModule.c">
+      <Filter>Source Files\LoongArch</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\M68K\M68KDisassembler.c">
+      <Filter>Source Files\M68K</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\M68K\M68KInstPrinter.c">
+      <Filter>Source Files\M68K</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\M68K\M68KModule.c">
+      <Filter>Source Files\M68K</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\M680X\M680XDisassembler.c">
+      <Filter>Source Files\M680K</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\M680X\M680XInstPrinter.c">
+      <Filter>Source Files\M680K</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\M680X\M680XModule.c">
+      <Filter>Source Files\M680K</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Mips\MipsDisassembler.c">
+      <Filter>Source Files\Mips</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Mips\MipsInstPrinter.c">
+      <Filter>Source Files\Mips</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Mips\MipsMapping.c">
+      <Filter>Source Files\Mips</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Mips\MipsModule.c">
+      <Filter>Source Files\Mips</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\MOS65XX\MOS65XXDisassembler.c">
+      <Filter>Source Files\MOS65XX</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\MOS65XX\MOS65XXModule.c">
+      <Filter>Source Files\MOS65XX</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Xtensa\XtensaDisassembler.c">
+      <Filter>Source Files\XTensa</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Xtensa\XtensaInstPrinter.c">
+      <Filter>Source Files\XTensa</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Xtensa\XtensaMapping.c">
+      <Filter>Source Files\XTensa</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Xtensa\XtensaModule.c">
+      <Filter>Source Files\XTensa</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\XCore\XCoreDisassembler.c">
+      <Filter>Source Files\XCore</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\XCore\XCoreInstPrinter.c">
+      <Filter>Source Files\XCore</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\XCore\XCoreMapping.c">
+      <Filter>Source Files\XCore</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\XCore\XCoreModule.c">
+      <Filter>Source Files\XCore</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\X86\X86ATTInstPrinter.c">
+      <Filter>Source Files\X86</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\X86\X86Disassembler.c">
+      <Filter>Source Files\X86</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\X86\X86DisassemblerDecoder.c">
+      <Filter>Source Files\X86</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\X86\X86InstPrinterCommon.c">
+      <Filter>Source Files\X86</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\X86\X86IntelInstPrinter.c">
+      <Filter>Source Files\X86</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\X86\X86Mapping.c">
+      <Filter>Source Files\X86</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\X86\X86Module.c">
+      <Filter>Source Files\X86</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\PowerPC\PPCDisassembler.c">
+      <Filter>Source Files\PowerPC</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\PowerPC\PPCInstPrinter.c">
+      <Filter>Source Files\PowerPC</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\PowerPC\PPCMapping.c">
+      <Filter>Source Files\PowerPC</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\PowerPC\PPCModule.c">
+      <Filter>Source Files\PowerPC</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\RISCV\RISCVBaseInfo.c">
+      <Filter>Source Files\RISCV</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\RISCV\RISCVDisassembler.c">
+      <Filter>Source Files\RISCV</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\RISCV\RISCVDisassemblerExtension.c">
+      <Filter>Source Files\RISCV</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\RISCV\RISCVInstPrinter.c">
+      <Filter>Source Files\RISCV</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\RISCV\RISCVMapping.c">
+      <Filter>Source Files\RISCV</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\RISCV\RISCVModule.c">
+      <Filter>Source Files\RISCV</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\SH\SHDisassembler.c">
+      <Filter>Source Files\SH</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\SH\SHInstPrinter.c">
+      <Filter>Source Files\SH</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\SH\SHModule.c">
+      <Filter>Source Files\SH</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Sparc\SparcDisassembler.c">
+      <Filter>Source Files\Sparc</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Sparc\SparcDisassemblerExtension.c">
+      <Filter>Source Files\Sparc</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Sparc\SparcInstPrinter.c">
+      <Filter>Source Files\Sparc</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Sparc\SparcMapping.c">
+      <Filter>Source Files\Sparc</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Sparc\SparcModule.c">
+      <Filter>Source Files\Sparc</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\SystemZ\SystemZDisassembler.c">
+      <Filter>Source Files\SystemZ</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\SystemZ\SystemZDisassemblerExtension.c">
+      <Filter>Source Files\SystemZ</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\SystemZ\SystemZInstPrinter.c">
+      <Filter>Source Files\SystemZ</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\SystemZ\SystemZMapping.c">
+      <Filter>Source Files\SystemZ</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\SystemZ\SystemZMCTargetDesc.c">
+      <Filter>Source Files\SystemZ</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\SystemZ\SystemZModule.c">
+      <Filter>Source Files\SystemZ</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\TMS320C64x\TMS320C64xDisassembler.c">
+      <Filter>Source Files\TMS320C64x</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\TMS320C64x\TMS320C64xInstPrinter.c">
+      <Filter>Source Files\TMS320C64x</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\TMS320C64x\TMS320C64xMapping.c">
+      <Filter>Source Files\TMS320C64x</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\TMS320C64x\TMS320C64xModule.c">
+      <Filter>Source Files\TMS320C64x</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\TriCore\TriCoreDisassembler.c">
+      <Filter>Source Files\TriCore</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\TriCore\TriCoreInstPrinter.c">
+      <Filter>Source Files\TriCore</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\TriCore\TriCoreMapping.c">
+      <Filter>Source Files\TriCore</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\TriCore\TriCoreModule.c">
+      <Filter>Source Files\TriCore</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\WASM\WASMDisassembler.c">
+      <Filter>Source Files\WASM</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\WASM\WASMInstPrinter.c">
+      <Filter>Source Files\WASM</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\WASM\WASMMapping.c">
+      <Filter>Source Files\WASM</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\WASM\WASMModule.c">
+      <Filter>Source Files\WASM</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="arch\AArch64\AArch64GenAsmWriter.inc">
+      <Filter>Header Files\AArch64</Filter>
+    </None>
+    <None Include="arch\AArch64\AArch64GenCSAliasMnemMap.inc">
+      <Filter>Header Files\AArch64</Filter>
+    </None>
+    <None Include="arch\AArch64\AArch64GenCSFeatureName.inc">
+      <Filter>Header Files\AArch64</Filter>
+    </None>
+    <None Include="arch\AArch64\AArch64GenCSMappingInsn.inc">
+      <Filter>Header Files\AArch64</Filter>
+    </None>
+    <None Include="arch\AArch64\AArch64GenCSMappingInsnName.inc">
+      <Filter>Header Files\AArch64</Filter>
+    </None>
+    <None Include="arch\AArch64\AArch64GenCSMappingInsnOp.inc">
+      <Filter>Header Files\AArch64</Filter>
+    </None>
+    <None Include="arch\AArch64\AArch64GenCSOpGroup.inc">
+      <Filter>Header Files\AArch64</Filter>
+    </None>
+    <None Include="arch\AArch64\AArch64GenDisassemblerTables.inc">
+      <Filter>Header Files\AArch64</Filter>
+    </None>
+    <None Include="arch\AArch64\AArch64GenInstrInfo.inc">
+      <Filter>Header Files\AArch64</Filter>
+    </None>
+    <None Include="arch\AArch64\AArch64GenRegisterInfo.inc">
+      <Filter>Header Files\AArch64</Filter>
+    </None>
+    <None Include="arch\AArch64\AArch64GenSubtargetInfo.inc">
+      <Filter>Header Files\AArch64</Filter>
+    </None>
+    <None Include="arch\AArch64\AArch64GenSystemOperands.inc">
+      <Filter>Header Files\AArch64</Filter>
+    </None>
+    <None Include="arch\AArch64\AArch64GenSystemRegister.inc">
+      <Filter>Header Files\AArch64</Filter>
+    </None>
+    <None Include="arch\Alpha\AlphaGenAsmWriter.inc">
+      <Filter>Header Files\Alpha</Filter>
+    </None>
+    <None Include="arch\Alpha\AlphaGenCSMappingInsn.inc">
+      <Filter>Header Files\Alpha</Filter>
+    </None>
+    <None Include="arch\Alpha\AlphaGenCSMappingInsnName.inc">
+      <Filter>Header Files\Alpha</Filter>
+    </None>
+    <None Include="arch\Alpha\AlphaGenCSMappingInsnOp.inc">
+      <Filter>Header Files\Alpha</Filter>
+    </None>
+    <None Include="arch\Alpha\AlphaGenCSOpGroup.inc">
+      <Filter>Header Files\Alpha</Filter>
+    </None>
+    <None Include="arch\Alpha\AlphaGenDisassemblerTables.inc">
+      <Filter>Header Files\Alpha</Filter>
+    </None>
+    <None Include="arch\Alpha\AlphaGenInstrInfo.inc">
+      <Filter>Header Files\Alpha</Filter>
+    </None>
+    <None Include="arch\Alpha\AlphaGenRegisterInfo.inc">
+      <Filter>Header Files\Alpha</Filter>
+    </None>
+    <None Include="arch\Alpha\AlphaGenSubtargetInfo.inc">
+      <Filter>Header Files\Alpha</Filter>
+    </None>
+    <None Include="arch\ARC\ARCGenAsmWriter.inc">
+      <Filter>Header Files\ARC</Filter>
+    </None>
+    <None Include="arch\ARC\ARCGenCSInsnEnum.inc">
+      <Filter>Header Files\ARC</Filter>
+    </None>
+    <None Include="arch\ARC\ARCGenCSMappingInsn.inc">
+      <Filter>Header Files\ARC</Filter>
+    </None>
+    <None Include="arch\ARC\ARCGenCSMappingInsnName.inc">
+      <Filter>Header Files\ARC</Filter>
+    </None>
+    <None Include="arch\ARC\ARCGenCSMappingInsnOp.inc">
+      <Filter>Header Files\ARC</Filter>
+    </None>
+    <None Include="arch\ARC\ARCGenCSOpGroup.inc">
+      <Filter>Header Files\ARC</Filter>
+    </None>
+    <None Include="arch\ARC\ARCGenCSRegEnum.inc">
+      <Filter>Header Files\ARC</Filter>
+    </None>
+    <None Include="arch\ARC\ARCGenDisassemblerTables.inc">
+      <Filter>Header Files\ARC</Filter>
+    </None>
+    <None Include="arch\ARC\ARCGenInstrInfo.inc">
+      <Filter>Header Files\ARC</Filter>
+    </None>
+    <None Include="arch\ARC\ARCGenRegisterInfo.inc">
+      <Filter>Header Files\ARC</Filter>
+    </None>
+    <None Include="arch\ARC\ARCGenSubtargetInfo.inc">
+      <Filter>Header Files\ARC</Filter>
+    </None>
+    <None Include="arch\ARM\ARMFeatureEnum.inc">
+      <Filter>Header Files\ARM</Filter>
+    </None>
+    <None Include="arch\ARM\ARMGenCSAliasMnemMap.inc">
+      <Filter>Header Files\ARM</Filter>
+    </None>
+    <None Include="arch\ARM\ARMGenAsmWriter.inc">
+      <Filter>Header Files\ARM</Filter>
+    </None>
+    <None Include="arch\ARM\ARMGenCSFeatureName.inc">
+      <Filter>Header Files\ARM</Filter>
+    </None>
+    <None Include="arch\ARM\ARMGenCSMappingInsn.inc">
+      <Filter>Header Files\ARM</Filter>
+    </None>
+    <None Include="arch\ARM\ARMGenCSMappingInsnName.inc">
+      <Filter>Header Files\ARM</Filter>
+    </None>
+    <None Include="arch\ARM\ARMGenCSMappingInsnOp.inc">
+      <Filter>Header Files\ARM</Filter>
+    </None>
+    <None Include="arch\ARM\ARMGenCSOpGroup.inc">
+      <Filter>Header Files\ARM</Filter>
+    </None>
+    <None Include="arch\ARM\ARMGenDisassemblerTables.inc">
+      <Filter>Header Files\ARM</Filter>
+    </None>
+    <None Include="arch\ARM\ARMGenInstrInfo.inc">
+      <Filter>Header Files\ARM</Filter>
+    </None>
+    <None Include="arch\ARM\ARMGenRegisterInfo.inc">
+      <Filter>Header Files\ARM</Filter>
+    </None>
+    <None Include="arch\ARM\ARMGenSubtargetInfo.inc">
+      <Filter>Header Files\ARM</Filter>
+    </None>
+    <None Include="arch\ARM\ARMGenSystemRegister.inc">
+      <Filter>Header Files\ARM</Filter>
+    </None>
+    <None Include="arch\ARM\ARMInsnEnum.inc">
+      <Filter>Header Files\ARM</Filter>
+    </None>
+    <None Include="arch\EVM\EVMMappingInsn.inc">
+      <Filter>Header Files\EVM</Filter>
+    </None>
+    <None Include="arch\LoongArch\LoongArchGenAsmWriter.inc">
+      <Filter>Header Files\LoongArch</Filter>
+    </None>
+    <None Include="arch\LoongArch\LoongArchGenCSAliasEnum.inc">
+      <Filter>Header Files\LoongArch</Filter>
+    </None>
+    <None Include="arch\LoongArch\LoongArchGenCSAliasMnemMap.inc">
+      <Filter>Header Files\LoongArch</Filter>
+    </None>
+    <None Include="arch\LoongArch\LoongArchGenCSFeatureName.inc">
+      <Filter>Header Files\LoongArch</Filter>
+    </None>
+    <None Include="arch\LoongArch\LoongArchGenCSMappingInsn.inc">
+      <Filter>Header Files\LoongArch</Filter>
+    </None>
+    <None Include="arch\LoongArch\LoongArchGenCSMappingInsnName.inc">
+      <Filter>Header Files\LoongArch</Filter>
+    </None>
+    <None Include="arch\LoongArch\LoongArchGenCSMappingInsnOp.inc">
+      <Filter>Header Files\LoongArch</Filter>
+    </None>
+    <None Include="arch\LoongArch\LoongArchGenCSOpGroup.inc">
+      <Filter>Header Files\LoongArch</Filter>
+    </None>
+    <None Include="arch\LoongArch\LoongArchGenDisassemblerTables.inc">
+      <Filter>Header Files\LoongArch</Filter>
+    </None>
+    <None Include="arch\LoongArch\LoongArchGenInstrInfo.inc">
+      <Filter>Header Files\LoongArch</Filter>
+    </None>
+    <None Include="arch\LoongArch\LoongArchGenRegisterInfo.inc">
+      <Filter>Header Files\LoongArch</Filter>
+    </None>
+    <None Include="arch\LoongArch\LoongArchGenSubtargetInfo.inc">
+      <Filter>Header Files\LoongArch</Filter>
+    </None>
+    <None Include="arch\M68K\M68KInstructionTable.inc">
+      <Filter>Header Files\M68K</Filter>
+    </None>
+    <None Include="arch\M680X\cpu12.inc">
+      <Filter>Header Files\M680K</Filter>
+    </None>
+    <None Include="arch\M680X\hcs08.inc">
+      <Filter>Header Files\M680K</Filter>
+    </None>
+    <None Include="arch\M680X\hcs12x.inc">
+      <Filter>Header Files\M680K</Filter>
+    </None>
+    <None Include="arch\M680X\hd6301.inc">
+      <Filter>Header Files\M680K</Filter>
+    </None>
+    <None Include="arch\M680X\hd6309.inc">
+      <Filter>Header Files\M680K</Filter>
+    </None>
+    <None Include="arch\M680X\insn_props.inc">
+      <Filter>Header Files\M680K</Filter>
+    </None>
+    <None Include="arch\M680X\m6800.inc">
+      <Filter>Header Files\M680K</Filter>
+    </None>
+    <None Include="arch\M680X\m6801.inc">
+      <Filter>Header Files\M680K</Filter>
+    </None>
+    <None Include="arch\M680X\m6805.inc">
+      <Filter>Header Files\M680K</Filter>
+    </None>
+    <None Include="arch\M680X\m6808.inc">
+      <Filter>Header Files\M680K</Filter>
+    </None>
+    <None Include="arch\M680X\m6809.inc">
+      <Filter>Header Files\M680K</Filter>
+    </None>
+    <None Include="arch\M680X\m6811.inc">
+      <Filter>Header Files\M680K</Filter>
+    </None>
+    <None Include="arch\M680X\rs08.inc">
+      <Filter>Header Files\M680K</Filter>
+    </None>
+    <None Include="arch\Mips\MipsGenAsmWriter.inc">
+      <Filter>Header Files\MIPS</Filter>
+    </None>
+    <None Include="arch\Mips\MipsGenCSAliasEnum.inc">
+      <Filter>Header Files\MIPS</Filter>
+    </None>
+    <None Include="arch\Mips\MipsGenCSAliasMnemMap.inc">
+      <Filter>Header Files\MIPS</Filter>
+    </None>
+    <None Include="arch\Mips\MipsGenCSFeatureEnum.inc">
+      <Filter>Header Files\MIPS</Filter>
+    </None>
+    <None Include="arch\Mips\MipsGenCSFeatureName.inc">
+      <Filter>Header Files\MIPS</Filter>
+    </None>
+    <None Include="arch\Mips\MipsGenCSInsnEnum.inc">
+      <Filter>Header Files\MIPS</Filter>
+    </None>
+    <None Include="arch\Mips\MipsGenCSMappingInsn.inc">
+      <Filter>Header Files\MIPS</Filter>
+    </None>
+    <None Include="arch\Mips\MipsGenCSMappingInsnName.inc">
+      <Filter>Header Files\MIPS</Filter>
+    </None>
+    <None Include="arch\Mips\MipsGenCSMappingInsnOp.inc">
+      <Filter>Header Files\MIPS</Filter>
+    </None>
+    <None Include="arch\Mips\MipsGenCSOpGroup.inc">
+      <Filter>Header Files\MIPS</Filter>
+    </None>
+    <None Include="arch\Mips\MipsGenCSRegEnum.inc">
+      <Filter>Header Files\MIPS</Filter>
+    </None>
+    <None Include="arch\Mips\MipsGenDisassemblerTables.inc">
+      <Filter>Header Files\MIPS</Filter>
+    </None>
+    <None Include="arch\Mips\MipsGenInstrInfo.inc">
+      <Filter>Header Files\MIPS</Filter>
+    </None>
+    <None Include="arch\Mips\MipsGenRegisterInfo.inc">
+      <Filter>Header Files\MIPS</Filter>
+    </None>
+    <None Include="arch\Mips\MipsGenSubtargetInfo.inc">
+      <Filter>Header Files\MIPS</Filter>
+    </None>
+    <None Include="arch\Mips\MipsMappingInsn.inc">
+      <Filter>Header Files\MIPS</Filter>
+    </None>
+    <None Include="arch\MOS65XX\instruction_info.inc">
+      <Filter>Header Files\MOS65XX</Filter>
+    </None>
+    <None Include="arch\MOS65XX\m65c02.inc">
+      <Filter>Header Files\MOS65XX</Filter>
+    </None>
+    <None Include="arch\MOS65XX\m6502.inc">
+      <Filter>Header Files\MOS65XX</Filter>
+    </None>
+    <None Include="arch\MOS65XX\m65816.inc">
+      <Filter>Header Files\MOS65XX</Filter>
+    </None>
+    <None Include="arch\MOS65XX\mw65c02.inc">
+      <Filter>Header Files\MOS65XX</Filter>
+    </None>
+    <None Include="arch\PowerPC\PPCGenAsmWriter.inc">
+      <Filter>Header Files\PowerPC</Filter>
+    </None>
+    <None Include="arch\PowerPC\PPCGenCSAliasMnemMap.inc">
+      <Filter>Header Files\PowerPC</Filter>
+    </None>
+    <None Include="arch\PowerPC\PPCGenCSFeatureName.inc">
+      <Filter>Header Files\PowerPC</Filter>
+    </None>
+    <None Include="arch\PowerPC\PPCGenCSMappingInsn.inc">
+      <Filter>Header Files\PowerPC</Filter>
+    </None>
+    <None Include="arch\PowerPC\PPCGenCSMappingInsnName.inc">
+      <Filter>Header Files\PowerPC</Filter>
+    </None>
+    <None Include="arch\PowerPC\PPCGenCSMappingInsnOp.inc">
+      <Filter>Header Files\PowerPC</Filter>
+    </None>
+    <None Include="arch\PowerPC\PPCGenCSOpGroup.inc">
+      <Filter>Header Files\PowerPC</Filter>
+    </None>
+    <None Include="arch\PowerPC\PPCGenDisassemblerTables.inc">
+      <Filter>Header Files\PowerPC</Filter>
+    </None>
+    <None Include="arch\PowerPC\PPCGenInstrInfo.inc">
+      <Filter>Header Files\PowerPC</Filter>
+    </None>
+    <None Include="arch\PowerPC\PPCGenRegisterInfo.inc">
+      <Filter>Header Files\PowerPC</Filter>
+    </None>
+    <None Include="arch\PowerPC\PPCGenSubtargetInfo.inc">
+      <Filter>Header Files\PowerPC</Filter>
+    </None>
+    <None Include="arch\RISCV\RISCVGenAsmWriter.inc">
+      <Filter>Header Files\RISCV</Filter>
+    </None>
+    <None Include="arch\RISCV\RISCVGenCompressedInstructionsInfo.inc">
+      <Filter>Header Files\RISCV</Filter>
+    </None>
+    <None Include="arch\RISCV\RISCVGenCSAliasEnum.inc">
+      <Filter>Header Files\RISCV</Filter>
+    </None>
+    <None Include="arch\RISCV\RISCVGenCSAliasMnemMap.inc">
+      <Filter>Header Files\RISCV</Filter>
+    </None>
+    <None Include="arch\RISCV\RISCVGenCSFeatureEnum.inc">
+      <Filter>Header Files\RISCV</Filter>
+    </None>
+    <None Include="arch\RISCV\RISCVGenCSFeatureName.inc">
+      <Filter>Header Files\RISCV</Filter>
+    </None>
+    <None Include="arch\RISCV\RISCVGenCSInsnEnum.inc">
+      <Filter>Header Files\RISCV</Filter>
+    </None>
+    <None Include="arch\RISCV\RISCVGenCSMappingInsn.inc">
+      <Filter>Header Files\RISCV</Filter>
+    </None>
+    <None Include="arch\RISCV\RISCVGenCSMappingInsnName.inc">
+      <Filter>Header Files\RISCV</Filter>
+    </None>
+    <None Include="arch\RISCV\RISCVGenCSMappingInsnOp.inc">
+      <Filter>Header Files\RISCV</Filter>
+    </None>
+    <None Include="arch\RISCV\RISCVGenCSOpGroup.inc">
+      <Filter>Header Files\RISCV</Filter>
+    </None>
+    <None Include="arch\RISCV\RISCVGenCSRegEnum.inc">
+      <Filter>Header Files\RISCV</Filter>
+    </None>
+    <None Include="arch\RISCV\RISCVGenCSSystemOperandsEnum.inc">
+      <Filter>Header Files\RISCV</Filter>
+    </None>
+    <None Include="arch\RISCV\RISCVGenDisassemblerTables.inc">
+      <Filter>Header Files\RISCV</Filter>
+    </None>
+    <None Include="arch\RISCV\RISCVGenInstrInfo.inc">
+      <Filter>Header Files\RISCV</Filter>
+    </None>
+    <None Include="arch\RISCV\RISCVGenRegisterInfo.inc">
+      <Filter>Header Files\RISCV</Filter>
+    </None>
+    <None Include="arch\RISCV\RISCVGenSubtargetInfo.inc">
+      <Filter>Header Files\RISCV</Filter>
+    </None>
+    <None Include="arch\RISCV\RISCVGenSystemOperands.inc">
+      <Filter>Header Files\RISCV</Filter>
+    </None>
+    <None Include="arch\SH\SHInsnTable.inc">
+      <Filter>Header Files\SH</Filter>
+    </None>
+    <None Include="arch\SH\mktable.rb">
+      <Filter>Header Files\SH</Filter>
+    </None>
+    <None Include="arch\Sparc\SparcGenAsmWriter.inc">
+      <Filter>Header Files\Sparc</Filter>
+    </None>
+    <None Include="arch\Sparc\SparcGenCSAliasMnemMap.inc">
+      <Filter>Header Files\Sparc</Filter>
+    </None>
+    <None Include="arch\Sparc\SparcGenCSFeatureName.inc">
+      <Filter>Header Files\Sparc</Filter>
+    </None>
+    <None Include="arch\Sparc\SparcGenCSMappingInsn.inc">
+      <Filter>Header Files\Sparc</Filter>
+    </None>
+    <None Include="arch\Sparc\SparcGenCSMappingInsnName.inc">
+      <Filter>Header Files\Sparc</Filter>
+    </None>
+    <None Include="arch\Sparc\SparcGenCSMappingInsnOp.inc">
+      <Filter>Header Files\Sparc</Filter>
+    </None>
+    <None Include="arch\Sparc\SparcGenCSOpGroup.inc">
+      <Filter>Header Files\Sparc</Filter>
+    </None>
+    <None Include="arch\Sparc\SparcGenDisassemblerTables.inc">
+      <Filter>Header Files\Sparc</Filter>
+    </None>
+    <None Include="arch\Sparc\SparcGenInstrInfo.inc">
+      <Filter>Header Files\Sparc</Filter>
+    </None>
+    <None Include="arch\Sparc\SparcGenRegisterInfo.inc">
+      <Filter>Header Files\Sparc</Filter>
+    </None>
+    <None Include="arch\Sparc\SparcGenSubtargetInfo.inc">
+      <Filter>Header Files\Sparc</Filter>
+    </None>
+    <None Include="arch\Sparc\SparcGenSystemOperands.inc">
+      <Filter>Header Files\Sparc</Filter>
+    </None>
+    <None Include="arch\SystemZ\SystemZGenAsmWriter.inc">
+      <Filter>Header Files\SystemZ</Filter>
+    </None>
+    <None Include="arch\SystemZ\SystemZGenCSAliasMnemMap.inc">
+      <Filter>Header Files\SystemZ</Filter>
+    </None>
+    <None Include="arch\SystemZ\SystemZGenCSFeatureName.inc">
+      <Filter>Header Files\SystemZ</Filter>
+    </None>
+    <None Include="arch\SystemZ\SystemZGenCSMappingInsn.inc">
+      <Filter>Header Files\SystemZ</Filter>
+    </None>
+    <None Include="arch\SystemZ\SystemZGenCSMappingInsnName.inc">
+      <Filter>Header Files\SystemZ</Filter>
+    </None>
+    <None Include="arch\SystemZ\SystemZGenCSMappingInsnOp.inc">
+      <Filter>Header Files\SystemZ</Filter>
+    </None>
+    <None Include="arch\SystemZ\SystemZGenCSOpGroup.inc">
+      <Filter>Header Files\SystemZ</Filter>
+    </None>
+    <None Include="arch\SystemZ\SystemZGenDisassemblerTables.inc">
+      <Filter>Header Files\SystemZ</Filter>
+    </None>
+    <None Include="arch\SystemZ\SystemZGenInstrInfo.inc">
+      <Filter>Header Files\SystemZ</Filter>
+    </None>
+    <None Include="arch\SystemZ\SystemZGenRegisterInfo.inc">
+      <Filter>Header Files\SystemZ</Filter>
+    </None>
+    <None Include="arch\SystemZ\SystemZGenSubtargetInfo.inc">
+      <Filter>Header Files\SystemZ</Filter>
+    </None>
+    <None Include="arch\TMS320C64x\TMS320C64xGenAsmWriter.inc">
+      <Filter>Header Files\TMS320C64x</Filter>
+    </None>
+    <None Include="arch\TMS320C64x\TMS320C64xGenDisassemblerTables.inc">
+      <Filter>Header Files\TMS320C64x</Filter>
+    </None>
+    <None Include="arch\TMS320C64x\TMS320C64xGenInstrInfo.inc">
+      <Filter>Header Files\TMS320C64x</Filter>
+    </None>
+    <None Include="arch\TMS320C64x\TMS320C64xGenRegisterInfo.inc">
+      <Filter>Header Files\TMS320C64x</Filter>
+    </None>
+    <None Include="arch\TriCore\TriCoreGenAsmWriter.inc">
+      <Filter>Header Files\TriCore</Filter>
+    </None>
+    <None Include="arch\TriCore\TriCoreGenCSFeatureName.inc">
+      <Filter>Header Files\TriCore</Filter>
+    </None>
+    <None Include="arch\TriCore\TriCoreGenCSMappingInsn.inc">
+      <Filter>Header Files\TriCore</Filter>
+    </None>
+    <None Include="arch\TriCore\TriCoreGenCSMappingInsnName.inc">
+      <Filter>Header Files\TriCore</Filter>
+    </None>
+    <None Include="arch\TriCore\TriCoreGenCSMappingInsnOp.inc">
+      <Filter>Header Files\TriCore</Filter>
+    </None>
+    <None Include="arch\TriCore\TriCoreGenCSOpGroup.inc">
+      <Filter>Header Files\TriCore</Filter>
+    </None>
+    <None Include="arch\TriCore\TriCoreGenDisassemblerTables.inc">
+      <Filter>Header Files\TriCore</Filter>
+    </None>
+    <None Include="arch\TriCore\TriCoreGenInstrInfo.inc">
+      <Filter>Header Files\TriCore</Filter>
+    </None>
+    <None Include="arch\TriCore\TriCoreGenRegisterInfo.inc">
+      <Filter>Header Files\TriCore</Filter>
+    </None>
+    <None Include="arch\TriCore\TriCoreGenSubtargetInfo.inc">
+      <Filter>Header Files\TriCore</Filter>
+    </None>
+    <None Include="arch\X86\X86GenAsmWriter.inc">
+      <Filter>Header Files\X86</Filter>
+    </None>
+    <None Include="arch\X86\X86GenAsmWriter_reduce.inc">
+      <Filter>Header Files\X86</Filter>
+    </None>
+    <None Include="arch\X86\X86GenAsmWriter1.inc">
+      <Filter>Header Files\X86</Filter>
+    </None>
+    <None Include="arch\X86\X86GenAsmWriter1_reduce.inc">
+      <Filter>Header Files\X86</Filter>
+    </None>
+    <None Include="arch\X86\X86GenDisassemblerTables.inc">
+      <Filter>Header Files\X86</Filter>
+    </None>
+    <None Include="arch\X86\X86GenDisassemblerTables_reduce.inc">
+      <Filter>Header Files\X86</Filter>
+    </None>
+    <None Include="arch\X86\X86GenDisassemblerTables_reduce2.inc">
+      <Filter>Header Files\X86</Filter>
+    </None>
+    <None Include="arch\X86\X86GenDisassemblerTables2.inc">
+      <Filter>Header Files\X86</Filter>
+    </None>
+    <None Include="arch\X86\X86GenInstrInfo.inc">
+      <Filter>Header Files\X86</Filter>
+    </None>
+    <None Include="arch\X86\X86GenInstrInfo_reduce.inc">
+      <Filter>Header Files\X86</Filter>
+    </None>
+    <None Include="arch\X86\X86GenRegisterInfo.inc">
+      <Filter>Header Files\X86</Filter>
+    </None>
+    <None Include="arch\X86\X86GenRegisterName.inc">
+      <Filter>Header Files\X86</Filter>
+    </None>
+    <None Include="arch\X86\X86GenRegisterName1.inc">
+      <Filter>Header Files\X86</Filter>
+    </None>
+    <None Include="arch\X86\X86ImmSize.inc">
+      <Filter>Header Files\X86</Filter>
+    </None>
+    <None Include="arch\X86\X86Lookup16.inc">
+      <Filter>Header Files\X86</Filter>
+    </None>
+    <None Include="arch\X86\X86Lookup16_reduce.inc">
+      <Filter>Header Files\X86</Filter>
+    </None>
+    <None Include="arch\X86\X86MappingInsn.inc">
+      <Filter>Header Files\X86</Filter>
+    </None>
+    <None Include="arch\X86\X86MappingInsn_reduce.inc">
+      <Filter>Header Files\X86</Filter>
+    </None>
+    <None Include="arch\X86\X86MappingInsnName.inc">
+      <Filter>Header Files\X86</Filter>
+    </None>
+    <None Include="arch\X86\X86MappingInsnName_reduce.inc">
+      <Filter>Header Files\X86</Filter>
+    </None>
+    <None Include="arch\X86\X86MappingInsnOp.inc">
+      <Filter>Header Files\X86</Filter>
+    </None>
+    <None Include="arch\X86\X86MappingInsnOp_reduce.inc">
+      <Filter>Header Files\X86</Filter>
+    </None>
+    <None Include="arch\X86\X86MappingReg.inc">
+      <Filter>Header Files\X86</Filter>
+    </None>
+    <None Include="arch\XCore\XCoreGenAsmWriter.inc">
+      <Filter>Header Files\XCore</Filter>
+    </None>
+    <None Include="arch\XCore\XCoreGenDisassemblerTables.inc">
+      <Filter>Header Files\XCore</Filter>
+    </None>
+    <None Include="arch\XCore\XCoreGenInstrInfo.inc">
+      <Filter>Header Files\XCore</Filter>
+    </None>
+    <None Include="arch\XCore\XCoreGenRegisterInfo.inc">
+      <Filter>Header Files\XCore</Filter>
+    </None>
+    <None Include="arch\XCore\XCoreMappingInsn.inc">
+      <Filter>Header Files\XCore</Filter>
+    </None>
+    <None Include="arch\Xtensa\XtensaGenAsmWriter.inc">
+      <Filter>Header Files\XTensa</Filter>
+    </None>
+    <None Include="arch\Xtensa\XtensaGenCSFeatureName.inc">
+      <Filter>Header Files\XTensa</Filter>
+    </None>
+    <None Include="arch\Xtensa\XtensaGenCSMappingInsn.inc">
+      <Filter>Header Files\XTensa</Filter>
+    </None>
+    <None Include="arch\Xtensa\XtensaGenCSMappingInsnName.inc">
+      <Filter>Header Files\XTensa</Filter>
+    </None>
+    <None Include="arch\Xtensa\XtensaGenCSMappingInsnOp.inc">
+      <Filter>Header Files\XTensa</Filter>
+    </None>
+    <None Include="arch\Xtensa\XtensaGenCSOpGroup.inc">
+      <Filter>Header Files\XTensa</Filter>
+    </None>
+    <None Include="arch\Xtensa\XtensaGenDisassemblerTables.inc">
+      <Filter>Header Files\XTensa</Filter>
+    </None>
+    <None Include="arch\Xtensa\XtensaGenInstrInfo.inc">
+      <Filter>Header Files\XTensa</Filter>
+    </None>
+    <None Include="arch\Xtensa\XtensaGenRegisterInfo.inc">
+      <Filter>Header Files\XTensa</Filter>
+    </None>
+    <None Include="arch\Xtensa\XtensaGenSubtargetInfo.inc">
+      <Filter>Header Files\XTensa</Filter>
+    </None>
+  </ItemGroup>
+</Project>

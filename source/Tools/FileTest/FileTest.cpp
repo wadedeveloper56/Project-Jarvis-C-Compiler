@@ -16,7 +16,7 @@ namespace FileTest
 	{
 	public:
 
-		TEST_METHOD(OpenFile_NotNull)
+		TEST_METHOD(OpenFile2_NotNull)
 		{
 			f_handle fh = OpenFile2("test.txt", _O_RDWR | _O_CREAT, _S_IREAD | _S_IWRITE);
 			Assert::AreNotEqual((f_handle) - 1, fh);

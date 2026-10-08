@@ -22,7 +22,7 @@ Token Lexer::next()
 
 	if (i >= src.size())
 	{
-		Token t; t.kind = TokenKind::End; t.text = "<EOF>"; t.number = 0;
+		Token t; t.kind = TokenKind::EndToken; t.text = "<EOF>"; t.number = 0;
 		t.pos = (int)i; t.endPos = (int)i; t.line = line; t.column = column; t.endLine = line; t.endColumn = column;
 		return t;
 	}
@@ -39,10 +39,11 @@ Token Lexer::next()
 		size_t s = i;
 		while (i < src.size() && (isalnum((unsigned char)src[i]) || src[i] == '_')) { ++i; ++pos; ++column; }
 		t.text = src.substr(s, i - s);
-		if (t.text == "int") t.kind = TokenKind::Int;
-		else if (t.text == "void") t.kind = TokenKind::Void;
-		else if (t.text == "return") t.kind = TokenKind::Return;
-		else t.kind = TokenKind::Identifier;
+		if (t.text == "int") t.kind = TokenKind::IntToken;
+		else if (t.text == "void") t.kind = TokenKind::VoidToken;
+		else if (t.text == "return") t.kind = TokenKind::ReturnToken;
+		else if (t.text == "unsigned") t.kind = TokenKind::UnsignedToken;
+		else t.kind = TokenKind::IdentifierToken;
 		t.endPos = (int)i - 1; t.endLine = line; t.endColumn = column - 1;
 		return t;
 	}
@@ -54,7 +55,7 @@ Token Lexer::next()
 		while (i < src.size() && isdigit((unsigned char)src[i])) { ++i; ++pos; ++column; }
 		t.text = src.substr(s, i - s);
 		t.number = stoi(t.text);
-		t.kind = TokenKind::Number;
+		t.kind = TokenKind::NumberToken;
 		t.endPos = (int)i - 1; t.endLine = line; t.endColumn = column - 1;
 		return t;
 	}
@@ -63,9 +64,9 @@ Token Lexer::next()
 	++i; ++pos; ++column;
 	switch (c)
 	{
-		case '+': t.kind = TokenKind::Plus; t.text = "+"; break;
-		case '-': t.kind = TokenKind::Minus; t.text = "-"; break;
-		case '*': t.kind = TokenKind::Star; t.text = "*"; break;
+		case '+': t.kind = TokenKind::PlusToken; t.text = "+"; break;
+		case '-': t.kind = TokenKind::MinusToken; t.text = "-"; break;
+		case '*': t.kind = TokenKind::StarToken; t.text = "*"; break;
 		case '/':
 			if (i < src.size() && src[i] == '/')
 			{ // line comment
@@ -84,16 +85,16 @@ Token Lexer::next()
 				if (i + 1 < src.size()) { i += 2; pos += 2; column += 2; }
 				return next();
 			}
-			t.kind = TokenKind::Slash; break;
-		case '(': t.kind = TokenKind::LParen; t.text = "("; break;
-		case ')': t.kind = TokenKind::RParen; t.text = ")"; break;
-		case '{': t.kind = TokenKind::LBrace; t.text = "{"; break;
-		case '}': t.kind = TokenKind::RBrace; t.text = "}"; break;
-		case ';': t.kind = TokenKind::Semicolon; t.text = ";"; break;
-		case ',': t.kind = TokenKind::Comma; t.text = ","; break;
-		case '=': t.kind = TokenKind::Assign; t.text = "="; break;
+			t.kind = TokenKind::SlashToken; break;
+		case '(': t.kind = TokenKind::LParenToken; t.text = "("; break;
+		case ')': t.kind = TokenKind::RParenToken; t.text = ")"; break;
+		case '{': t.kind = TokenKind::LBraceToken; t.text = "{"; break;
+		case '}': t.kind = TokenKind::RBraceToken; t.text = "}"; break;
+		case ';': t.kind = TokenKind::SemicolonToken; t.text = ";"; break;
+		case ',': t.kind = TokenKind::CommaToken; t.text = ","; break;
+		case '=': t.kind = TokenKind::AssignToken; t.text = "="; break;
 		default:
-			t.kind = TokenKind::Unknown;
+			t.kind = TokenKind::UnknownToken;
 			t.text = string(1, c);
 			break;
 	}

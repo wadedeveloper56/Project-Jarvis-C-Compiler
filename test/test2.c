@@ -1,3 +1,4 @@
+unsigned int u;
 int x = 3;
 int m;
 

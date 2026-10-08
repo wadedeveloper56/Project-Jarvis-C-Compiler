@@ -6,30 +6,31 @@
 
 using namespace std;
 
-struct ASTVisitor;
+class ASTVisitor;
 
-struct Node
+class Node
 {
+public:
     virtual ~Node() = default;
     virtual void accept(ASTVisitor& v) = 0;
     struct SourceLoc { int startPos = 0; int endPos = 0; int startLine = 1; int startColumn = 1; int endLine = 1; int endColumn = 1; } loc;
 };
 
-using Ptr = unique_ptr<Node>;
+class Expression : public Node {};
+class Statement : public Node {};
+class Declaration : public Node {};
 
-struct Expression : Node {};
-struct Statement : Node {};
-struct Declaration : Node {};
-
-struct Program : Node
+class Program : public Node
 {
+public:
     vector<unique_ptr<Declaration>> declarations;
     void accept(ASTVisitor& v) override;
 };
 
 // Declarations
-struct VariableDeclaration : Declaration
+class VariableDeclaration : public Declaration
 {
+public:
     string type;
     string name;
     unique_ptr<Expression> init; // optional
@@ -37,15 +38,17 @@ struct VariableDeclaration : Declaration
 };
 
 // Statements
-struct CompoundStatement: Statement
+class CompoundStatement: public Statement
 {
+public:
     vector<unique_ptr<Declaration>> localDeclarations;
     vector<unique_ptr<Statement>> statements;
     void accept(ASTVisitor& v) override;
 };
 
-struct FunctionDeclaration : Declaration
+class FunctionDeclaration : public Declaration
 {
+public:
     string retType;
     string name;
     vector<pair<string, string>> params; // (type,name)
@@ -53,51 +56,58 @@ struct FunctionDeclaration : Declaration
     void accept(ASTVisitor& v) override;
 };
 
-struct ReturnStatement: Statement
+class ReturnStatement: public Statement
 {
+public:
     unique_ptr<Expression> expr; // optional
     void accept(ASTVisitor& v) override;
 };
 
-struct ExpressionStatement : Statement
+class ExpressionStatement : public Statement
 {
+public:
     unique_ptr<Expression> expr; // optional
     void accept(ASTVisitor& v) override;
 };
 
 // Expressions
-struct NumberExpression : Expression
+class NumberExpression : public Expression
 {
+public:
     int value;
     NumberExpression(int v) : value(v) {}
     void accept(ASTVisitor& v) override;
 };
 
-struct VariableExpression : Expression
+class VariableExpression : public Expression
 {
+public:
     string name;
     VariableExpression(string n) : name(move(n)) {}
     void accept(ASTVisitor& v) override;
 };
 
-struct BinaryExpression : Expression
+class BinaryExpression : public Expression
 {
+public:
     char operator1;
     unique_ptr<Expression> leftHandSide, rightHandSide;
     BinaryExpression(char o, unique_ptr<Expression> l, unique_ptr<Expression> r): operator1(o), leftHandSide(move(l)), rightHandSide(move(r)) {}
     void accept(ASTVisitor& v) override;
 };
 
-struct AssignExpression : Expression
+class AssignExpression : public Expression
 {
+public:
     string name;
     unique_ptr<Expression> value;
     AssignExpression(string n, unique_ptr<Expression> v): name(move(n)), value(move(v)) {}
     void accept(ASTVisitor& v) override;
 };
 
-struct CallExpression : Expression
+class CallExpression : public Expression
 {
+public:
     string callee;
     vector<unique_ptr<Expression>> args;
     CallExpression(string c) : callee(move(c)) {}
@@ -105,8 +115,9 @@ struct CallExpression : Expression
 };
 
 // Visitor interface
-struct ASTVisitor
+class ASTVisitor
 {
+public:
     virtual ~ASTVisitor() = default;
     virtual void visit(Program& n) = 0;
     virtual void visit(VariableDeclaration& n) = 0;

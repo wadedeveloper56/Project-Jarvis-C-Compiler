@@ -228,6 +228,9 @@ copy "$(OutputPath)$(ProjectName).exe" "..\..\..\build\$(Configuration)\$(Platfo
     <ProjectReference Include="..\BinaryFormats\BinaryFormat.vcxproj">
       <Project>{14f5d769-bb02-4abf-a2d1-128749f72458}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\Decompiler\Decompiler.vcxproj">
+      <Project>{d7f05722-71eb-4163-b34c-e3024878b935}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

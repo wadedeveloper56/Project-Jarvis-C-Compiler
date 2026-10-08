@@ -1,4 +1,4 @@
-PEDUMP - Win32/Win64 COFF EXE/OBJ/LIB file dumper v1.0 (C) Copyright 2025-2026 Christopher D. Wade.
+PEDUMP - 16/32/64 bit  OMF/COFF EXE/OBJ/LIB file dumper v1.0 (C) Copyright 2025-2026 Christopher D. Wade.
 All Rights Reserved
 Dump of file test2_32.obj
 File Size 542 bytes
@@ -7,7 +7,7 @@ File Type: 32-bit COFF OBJECT
 FILE HEADER VALUES
                14C Machine (Intel 386 or later processors and compatible processors)
                  3 (3) Number of Sections
-          6AB6E5F8 TimeDateStamp ->  n/a
+          6AC80FBC TimeDateStamp ->  n/a
                130 PointerToSymbolTable
                  D (13) NumberOfSymbols
                  0 (0) SizeOfOptionalHeader
@@ -32,15 +32,75 @@ SECTION HEADER #0 (0)
          Readable
 
 RAW DATA #0 (0)
-00000000  55 8b ec 83 ec 04 8b 45  08 50 8b 45 0c 50 b8 05  U......E.P.E.P..
-00000010  00 00 00 50 5b 58 0f af  c3 50 5b 58 03 c3 50 89  ...P[X...P[X..P.
-00000020  45 fc 8b 45 fc 50 c9 c3  55 8b ec 83 ec 04 8b 45  E..E.P..U......E
-00000030  08 50 8b 45 0c 50 b8 03  00 00 00 50 5b 58 99 f7  .P.E.P.....P[X..
-00000040  fb 50 5b 58 03 c3 50 89  45 fc 8b 45 fc 50 c9 c3  .P[X..P.E..E.P..
-00000050  55 8b ec 83 ec 08 6a 04  ff 35 00 00 00 00 e8 9d  U.....j..5......
-00000060  ff ff ff 83 c4 08 89 45  fc 50 6a 06 ff 35 00 00  .......E.Pj..5..
-00000070  00 00 e8 b1 ff ff ff 83  c4 08 89 45 f8 50 8b 45  ...........E.P.E
-00000080  f8 50 8b 45 fc 50 5b 58  03 c3 c9 c3              .P.E.P[X....
+RAW DATA #0 (0) - 140 bytes
+0x0:	push	ebp
+0x1:	mov	ebp, esp
+0x3:	sub	esp, 4
+0x6:	mov	eax, dword ptr [ebp + 8]
+0x9:	push	eax
+0xa:	mov	eax, dword ptr [ebp + 0xc]
+0xd:	push	eax
+0xe:	mov	eax, 5
+0x13:	push	eax
+0x14:	pop	ebx
+0x15:	pop	eax
+0x16:	imul	eax, ebx
+0x19:	push	eax
+0x1a:	pop	ebx
+0x1b:	pop	eax
+0x1c:	add	eax, ebx
+0x1e:	push	eax
+0x1f:	mov	dword ptr [ebp - 4], eax
+0x22:	mov	eax, dword ptr [ebp - 4]
+0x25:	push	eax
+0x26:	leave	
+0x27:	ret	
+0x28:	push	ebp
+0x29:	mov	ebp, esp
+0x2b:	sub	esp, 4
+0x2e:	mov	eax, dword ptr [ebp + 8]
+0x31:	push	eax
+0x32:	mov	eax, dword ptr [ebp + 0xc]
+0x35:	push	eax
+0x36:	mov	eax, 3
+0x3b:	push	eax
+0x3c:	pop	ebx
+0x3d:	pop	eax
+0x3e:	cdq	
+0x3f:	idiv	ebx
+0x41:	push	eax
+0x42:	pop	ebx
+0x43:	pop	eax
+0x44:	add	eax, ebx
+0x46:	push	eax
+0x47:	mov	dword ptr [ebp - 4], eax
+0x4a:	mov	eax, dword ptr [ebp - 4]
+0x4d:	push	eax
+0x4e:	leave	
+0x4f:	ret	
+0x50:	push	ebp
+0x51:	mov	ebp, esp
+0x53:	sub	esp, 8
+0x56:	push	4
+0x58:	push	dword ptr [0]
+0x5e:	call	0
+0x63:	add	esp, 8
+0x66:	mov	dword ptr [ebp - 4], eax
+0x69:	push	eax
+0x6a:	push	6
+0x6c:	push	dword ptr [0]
+0x72:	call	0x28
+0x77:	add	esp, 8
+0x7a:	mov	dword ptr [ebp - 8], eax
+0x7d:	push	eax
+0x7e:	mov	eax, dword ptr [ebp - 8]
+0x81:	push	eax
+0x82:	mov	eax, dword ptr [ebp - 4]
+0x85:	push	eax
+0x86:	pop	ebx
+0x87:	pop	eax
+0x88:	add	eax, ebx
+0x8a:	leave	
 SECTION HEADER #0 (0) RELOCATIONS
   Address: 0000005A  SymIndex: 0000000B  Type: DIR32
   Address: 0000006E  SymIndex: 0000000C  Type: DIR32
@@ -71,8 +131,8 @@ SECTION HEADER #2 (2)
     .bss name
        0 physical address
        0 virtual address
-       4 (4) size of raw data
-       0 file pointer to raw data (00000000 to 00000003)
+       8 (8) size of raw data
+       0 file pointer to raw data (00000000 to 00000007)
        0 file pointer to relocation table
        0 file pointer to line numbers
        0 number of relocations
@@ -96,11 +156,11 @@ Indx Sectn   Value   Type  Storage Name
 0004     2 00000000  0000 STATIC   .data
      * Section: 0000  Len: 00004  Relocs: 0000  LineNums: 0000 checksum:00000000
 0006     3 00000000  0000 STATIC   .bss
-     * Section: 0000  Len: 00004  Relocs: 0000  LineNums: 0000 checksum:00000000
+     * Section: 0000  Len: 00008  Relocs: 0000  LineNums: 0000 checksum:00000000
 0008     1 00000000  0020 EXTERNAL __func1
 0009     1 00000028  0020 EXTERNAL __func2
 000A     1 00000050  0020 EXTERNAL __func3
 000B     2 00000000  0000 STATIC   _x
-000C     3 00000000  0000 STATIC   _m
+000C     3 00000004  0000 STATIC   _m
 
 String Table Size = 0x4 (4) bytes 0 entries
