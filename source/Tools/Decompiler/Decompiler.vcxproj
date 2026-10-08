@@ -183,6 +183,11 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="arch\HPPA\HPPAConstants.h" />
+    <ClInclude Include="arch\HPPA\HPPADisassembler.h" />
+    <ClInclude Include="arch\HPPA\HPPAInstPrinter.h" />
+    <ClInclude Include="arch\HPPA\HPPAMapping.h" />
+    <ClInclude Include="arch\HPPA\HPPAModule.h" />
     <ClInclude Include="arch\AArch64\AArch64AddressingModes.h" />
     <ClInclude Include="arch\AArch64\AArch64BaseInfo.h" />
     <ClInclude Include="arch\AArch64\AArch64DisassemblerExtension.h" />
@@ -233,6 +238,10 @@
     <ClInclude Include="utils.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="arch\HPPA\HPPADisassembler.c" />
+    <ClCompile Include="arch\HPPA\HPPAInstPrinter.c" />
+    <ClCompile Include="arch\HPPA\HPPAMapping.c" />
+    <ClCompile Include="arch\HPPA\HPPAModule.c" />
     <ClCompile Include="arch\AArch64\AArch64BaseInfo.c" />
     <ClCompile Include="arch\AArch64\AArch64Disassembler.c" />
     <ClCompile Include="arch\AArch64\AArch64DisassemblerExtension.c" />
