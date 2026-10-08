@@ -1,5 +1,6 @@
 /* Capstone Disassembly Engine */
 /* By Nguyen Anh Quynh, 2018 */
+#include "pch.h"
 
 #ifdef CAPSTONE_HAS_EVM
 

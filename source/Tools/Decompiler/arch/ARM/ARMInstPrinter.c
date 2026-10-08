@@ -23,6 +23,7 @@
 // This class prints an ARM MCInst to a .s file.
 //
 //===----------------------------------------------------------------------===//
+#include "pch.h"
 
 #include <capstone/arm.h>
 

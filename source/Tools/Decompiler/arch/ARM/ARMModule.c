@@ -1,5 +1,6 @@
 /* Capstone Disassembly Engine */
 /* By Dang Hoang Vu <danghvu@gmail.com> 2013 */
+#include "pch.h"
 
 #include "capstone/capstone.h"
 #ifdef CAPSTONE_HAS_ARM

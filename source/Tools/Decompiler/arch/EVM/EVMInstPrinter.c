@@ -1,6 +1,7 @@
 /* Capstone Disassembly Engine */
 /* By Nguyen Anh Quynh, 2018 */
 
+#include "pch.h"
 #include "EVMInstPrinter.h"
 #include "EVMMapping.h"
 

@@ -1,6 +1,7 @@
 /* Capstone Disassembly Engine */
 /* MOS65XX Backend by Sebastian Macke <sebastian@macke.de> 2018 */
 
+#include "pch.h"
 #include "capstone/mos65xx.h"
 #include "MOS65XXDisassembler.h"
 #include "MOS65XXDisassemblerInternals.h"

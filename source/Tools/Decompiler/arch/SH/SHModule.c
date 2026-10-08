@@ -1,6 +1,7 @@
 /* Capstone Disassembly Engine */
 /* By Yoshinori Sato 2022 */
 
+#include "pch.h"
 #ifdef CAPSTONE_HAS_SH
 
 #include "../../cs_priv.h"

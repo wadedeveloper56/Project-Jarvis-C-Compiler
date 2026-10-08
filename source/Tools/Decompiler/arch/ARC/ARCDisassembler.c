@@ -24,6 +24,7 @@
 /// This file is part of the ARC Disassembler.
 ///
 //===----------------------------------------------------------------------===//
+#include "pch.h"
 
 #ifdef CAPSTONE_HAS_ARC
 

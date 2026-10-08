@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "RISCVDisassemblerExtension.h"
 
 #define GET_SUBTARGETINFO_ENUM

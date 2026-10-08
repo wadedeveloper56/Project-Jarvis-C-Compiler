@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "capstone/cs_operand.h"
 #include "capstone/riscv.h"
 #include <stdint.h>

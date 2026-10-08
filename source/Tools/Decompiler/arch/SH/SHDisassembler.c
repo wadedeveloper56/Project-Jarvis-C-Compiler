@@ -1,6 +1,7 @@
 /* Capstone Disassembly Engine */
 /* By Yoshinori Sato, 2022 */
 
+#include "pch.h"
 #include <string.h>
 #include <stdarg.h>
 #include "../../cs_priv.h"

@@ -1,5 +1,6 @@
 /* Capstone Disassembly Engine */
 /* BPF Backend by david942j <david942j@gmail.com>, 2019 */
+#include "pch.h"
 
 #ifdef CAPSTONE_HAS_BPF
 

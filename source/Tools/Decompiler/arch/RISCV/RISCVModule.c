@@ -2,6 +2,7 @@
 /* RISC-V Backend By Rodrigo Cortes Porto <porto703@gmail.com> & 
    Shawn Chang <citypw@gmail.com>, HardenedLinux@2018 */
 
+#include "pch.h"
 #ifdef CAPSTONE_HAS_RISCV
 
 #include "../../utils.h"

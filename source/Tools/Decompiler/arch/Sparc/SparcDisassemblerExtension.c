@@ -1,6 +1,7 @@
 /* Capstone Disassembly Engine */
 /* By Rot127 <unisono@quyllur.org>, 2025 */
 
+#include "pch.h"
 #include "SparcDisassemblerExtension.h"
 #include "SparcMCTargetDesc.h"
 
