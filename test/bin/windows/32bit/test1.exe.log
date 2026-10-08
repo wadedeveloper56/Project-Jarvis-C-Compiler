@@ -91,6 +91,7 @@ SECTION HEADER #0 (0)
          Executable
          Readable
 
+RAW DATA #0 (0)
 RAW DATA #0 (0) - 512 bytes
 0x0:	push	ebp
 0x1:	mov	ebp, esp

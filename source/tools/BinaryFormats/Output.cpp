@@ -144,6 +144,7 @@ void DumpSection(int i, OBJSectionPtr ptr, WORD machine)
 	printf("\n");
 	if (section->PointerToRawData > 0 && section->SizeOfRawData > 0 && ptr->sectionBuffer != nullptr)
 	{
+		printf("RAW DATA #%X (%d)\n", i, i);
 		if (strcmp((const char*)section->Name, ".text") == 0)
 		{
 			if (machine == IMAGE_FILE_MACHINE_AMD64)
@@ -211,7 +212,6 @@ void DumpSection(int i, OBJSectionPtr ptr, WORD machine)
 		}
 		else
 		{
-			printf("RAW DATA #%X (%d)\n", i, i);
 			hexdump(ptr->sectionBuffer, section->SizeOfRawData, 0);
 		}
 	}
