@@ -206,6 +206,15 @@
     <ClInclude Include="arch\ARM\ARMLinkage.h" />
     <ClInclude Include="arch\ARM\ARMMapping.h" />
     <ClInclude Include="arch\ARM\ARMModule.h" />
+    <ClInclude Include="arch\BPF\BPFConstants.h" />
+    <ClInclude Include="arch\BPF\BPFDisassembler.h" />
+    <ClInclude Include="arch\BPF\BPFInstPrinter.h" />
+    <ClInclude Include="arch\BPF\BPFMapping.h" />
+    <ClInclude Include="arch\BPF\BPFModule.h" />
+    <ClInclude Include="arch\EVM\EVMDisassembler.h" />
+    <ClInclude Include="arch\EVM\EVMInstPrinter.h" />
+    <ClInclude Include="arch\EVM\EVMMapping.h" />
+    <ClInclude Include="arch\EVM\EVMModule.h" />
     <ClInclude Include="cs_priv.h" />
     <ClInclude Include="cs_simple_types.h" />
     <ClInclude Include="framework.h" />
@@ -244,6 +253,14 @@
     <ClCompile Include="arch\ARM\ARMInstPrinter.c" />
     <ClCompile Include="arch\ARM\ARMMapping.c" />
     <ClCompile Include="arch\ARM\ARMModule.c" />
+    <ClCompile Include="arch\BPF\BPFDisassembler.c" />
+    <ClCompile Include="arch\BPF\BPFInstPrinter.c" />
+    <ClCompile Include="arch\BPF\BPFMapping.c" />
+    <ClCompile Include="arch\BPF\BPFModule.c" />
+    <ClCompile Include="arch\EVM\EVMDisassembler.c" />
+    <ClCompile Include="arch\EVM\EVMInstPrinter.c" />
+    <ClCompile Include="arch\EVM\EVMMapping.c" />
+    <ClCompile Include="arch\EVM\EVMModule.c" />
     <ClCompile Include="cs.c" />
     <ClCompile Include="Decompiler.c" />
     <ClCompile Include="Mapping.c" />
@@ -308,6 +325,7 @@
     <None Include="arch\ARM\ARMGenSubtargetInfo.inc" />
     <None Include="arch\ARM\ARMGenSystemRegister.inc" />
     <None Include="arch\ARM\ARMInsnEnum.inc" />
+    <None Include="arch\EVM\EVMMappingInsn.inc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
