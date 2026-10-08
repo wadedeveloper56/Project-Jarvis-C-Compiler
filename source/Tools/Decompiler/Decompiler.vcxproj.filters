@@ -446,6 +446,210 @@
     <ClCompile Include="utils.c">
       <Filter>Source Files\Base</Filter>
     </ClCompile>
+    <ClCompile Include="arch\LoongArch\LoongArchDisassembler.c">
+      <Filter>Source Files\LoongArch</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\LoongArch\LoongArchDisassemblerExtension.c">
+      <Filter>Source Files\LoongArch</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\LoongArch\LoongArchInstPrinter.c">
+      <Filter>Source Files\LoongArch</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\LoongArch\LoongArchMapping.c">
+      <Filter>Source Files\LoongArch</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\LoongArch\LoongArchModule.c">
+      <Filter>Source Files\LoongArch</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\M68K\M68KDisassembler.c">
+      <Filter>Source Files\M68K</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\M68K\M68KInstPrinter.c">
+      <Filter>Source Files\M68K</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\M68K\M68KModule.c">
+      <Filter>Source Files\M68K</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\M680X\M680XDisassembler.c">
+      <Filter>Source Files\M680K</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\M680X\M680XInstPrinter.c">
+      <Filter>Source Files\M680K</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\M680X\M680XModule.c">
+      <Filter>Source Files\M680K</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Mips\MipsDisassembler.c">
+      <Filter>Source Files\Mips</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Mips\MipsInstPrinter.c">
+      <Filter>Source Files\Mips</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Mips\MipsMapping.c">
+      <Filter>Source Files\Mips</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Mips\MipsModule.c">
+      <Filter>Source Files\Mips</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\MOS65XX\MOS65XXDisassembler.c">
+      <Filter>Source Files\MOS65XX</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\MOS65XX\MOS65XXModule.c">
+      <Filter>Source Files\MOS65XX</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Xtensa\XtensaDisassembler.c">
+      <Filter>Source Files\XTensa</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Xtensa\XtensaInstPrinter.c">
+      <Filter>Source Files\XTensa</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Xtensa\XtensaMapping.c">
+      <Filter>Source Files\XTensa</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Xtensa\XtensaModule.c">
+      <Filter>Source Files\XTensa</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\XCore\XCoreDisassembler.c">
+      <Filter>Source Files\XCore</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\XCore\XCoreInstPrinter.c">
+      <Filter>Source Files\XCore</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\XCore\XCoreMapping.c">
+      <Filter>Source Files\XCore</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\XCore\XCoreModule.c">
+      <Filter>Source Files\XCore</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\X86\X86ATTInstPrinter.c">
+      <Filter>Source Files\X86</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\X86\X86Disassembler.c">
+      <Filter>Source Files\X86</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\X86\X86DisassemblerDecoder.c">
+      <Filter>Source Files\X86</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\X86\X86InstPrinterCommon.c">
+      <Filter>Source Files\X86</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\X86\X86IntelInstPrinter.c">
+      <Filter>Source Files\X86</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\X86\X86Mapping.c">
+      <Filter>Source Files\X86</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\X86\X86Module.c">
+      <Filter>Source Files\X86</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\PowerPC\PPCDisassembler.c">
+      <Filter>Source Files\PowerPC</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\PowerPC\PPCInstPrinter.c">
+      <Filter>Source Files\PowerPC</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\PowerPC\PPCMapping.c">
+      <Filter>Source Files\PowerPC</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\PowerPC\PPCModule.c">
+      <Filter>Source Files\PowerPC</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\RISCV\RISCVBaseInfo.c">
+      <Filter>Source Files\RISCV</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\RISCV\RISCVDisassembler.c">
+      <Filter>Source Files\RISCV</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\RISCV\RISCVDisassemblerExtension.c">
+      <Filter>Source Files\RISCV</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\RISCV\RISCVInstPrinter.c">
+      <Filter>Source Files\RISCV</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\RISCV\RISCVMapping.c">
+      <Filter>Source Files\RISCV</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\RISCV\RISCVModule.c">
+      <Filter>Source Files\RISCV</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\SH\SHDisassembler.c">
+      <Filter>Source Files\SH</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\SH\SHInstPrinter.c">
+      <Filter>Source Files\SH</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\SH\SHModule.c">
+      <Filter>Source Files\SH</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Sparc\SparcDisassembler.c">
+      <Filter>Source Files\Sparc</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Sparc\SparcDisassemblerExtension.c">
+      <Filter>Source Files\Sparc</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Sparc\SparcInstPrinter.c">
+      <Filter>Source Files\Sparc</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Sparc\SparcMapping.c">
+      <Filter>Source Files\Sparc</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\Sparc\SparcModule.c">
+      <Filter>Source Files\Sparc</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\SystemZ\SystemZDisassembler.c">
+      <Filter>Source Files\SystemZ</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\SystemZ\SystemZDisassemblerExtension.c">
+      <Filter>Source Files\SystemZ</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\SystemZ\SystemZInstPrinter.c">
+      <Filter>Source Files\SystemZ</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\SystemZ\SystemZMapping.c">
+      <Filter>Source Files\SystemZ</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\SystemZ\SystemZMCTargetDesc.c">
+      <Filter>Source Files\SystemZ</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\SystemZ\SystemZModule.c">
+      <Filter>Source Files\SystemZ</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\TMS320C64x\TMS320C64xDisassembler.c">
+      <Filter>Source Files\TMS320C64x</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\TMS320C64x\TMS320C64xInstPrinter.c">
+      <Filter>Source Files\TMS320C64x</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\TMS320C64x\TMS320C64xMapping.c">
+      <Filter>Source Files\TMS320C64x</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\TMS320C64x\TMS320C64xModule.c">
+      <Filter>Source Files\TMS320C64x</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\TriCore\TriCoreDisassembler.c">
+      <Filter>Source Files\TriCore</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\TriCore\TriCoreInstPrinter.c">
+      <Filter>Source Files\TriCore</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\TriCore\TriCoreMapping.c">
+      <Filter>Source Files\TriCore</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\TriCore\TriCoreModule.c">
+      <Filter>Source Files\TriCore</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\WASM\WASMDisassembler.c">
+      <Filter>Source Files\WASM</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\WASM\WASMInstPrinter.c">
+      <Filter>Source Files\WASM</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\WASM\WASMMapping.c">
+      <Filter>Source Files\WASM</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\WASM\WASMModule.c">
+      <Filter>Source Files\WASM</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="arch\AArch64\AArch64GenAsmWriter.inc">
