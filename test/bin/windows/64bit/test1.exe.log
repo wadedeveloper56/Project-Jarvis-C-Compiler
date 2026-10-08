@@ -1,4 +1,4 @@
-PEDUMP - Win32/Win64 COFF EXE/OBJ/LIB file dumper v1.0 (C) Copyright 2025-2026 Christopher D. Wade.
+PEDUMP - 16/32/64 bit  OMF/COFF EXE/OBJ/LIB file dumper v1.0 (C) Copyright 2025-2026 Christopher D. Wade.
 All Rights Reserved
 Dump of file C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\64bit\test1.exe
 File Size 2560 bytes
@@ -92,39 +92,239 @@ SECTION HEADER #0 (0)
          Executable
          Readable
 
-RAW DATA #0 (0)
-00000000  55 48 8b ec b8 05 00 00  00 c9 c3 00 00 00 00 00  UH..............
-00000010  48 83 ec 38 e8 51 00 00  00 48 8b c8 48 8d 54 24  H..8.Q...H..H.T$
-00000020  30 e8 3e 00 00 00 48 89  44 24 28 8b 4c 24 30 48  0.>...H.D$(.L$0H
-00000030  8b 54 24 28 e8 c7 ff ff  ff 89 44 24 30 48 8b 4c  .T$(......D$0H.L
-00000040  24 28 e8 17 00 00 00 8b  4c 24 30 e8 08 00 00 00  $(......L$0.....
-00000050  48 83 c4 38 c3 00 00 00  ff 25 22 10 00 00 ff 25  H..8.....%"....%
-00000060  2c 10 00 00 ff 25 06 10  00 00 ff 25 18 10 00 00  ,....%.....%....
-00000070  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  ................
-00000080  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  ................
-00000090  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  ................
-000000a0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  ................
-000000b0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  ................
-000000c0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  ................
-000000d0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  ................
-000000e0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  ................
-000000f0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  ................
-00000100  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  ................
-00000110  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  ................
-00000120  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  ................
-00000130  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  ................
-00000140  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  ................
-00000150  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  ................
-00000160  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  ................
-00000170  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  ................
-00000180  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  ................
-00000190  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  ................
-000001a0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  ................
-000001b0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  ................
-000001c0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  ................
-000001d0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  ................
-000001e0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  ................
-000001f0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  ................
+RAW DATA #0 (0) - 512 bytes
+0x0:	push	rbp
+0x1:	mov	rbp, rsp
+0x4:	mov	eax, 5
+0x9:	leave	
+0xa:	ret	
+0xb:	add	byte ptr [rax], al
+0xd:	add	byte ptr [rax], al
+0xf:	add	byte ptr [rax - 0x7d], cl
+0x12:	in	al, dx
+0x13:	cmp	al, ch
+0x15:	push	rcx
+0x16:	add	byte ptr [rax], al
+0x18:	add	byte ptr [rax - 0x75], cl
+0x1b:	enter	-0x72b8, 0x54
+0x1f:	and	al, 0x30
+0x21:	call	0x64
+0x26:	mov	qword ptr [rsp + 0x28], rax
+0x2b:	mov	ecx, dword ptr [rsp + 0x30]
+0x2f:	mov	rdx, qword ptr [rsp + 0x28]
+0x34:	call	0
+0x39:	mov	dword ptr [rsp + 0x30], eax
+0x3d:	mov	rcx, qword ptr [rsp + 0x28]
+0x42:	call	0x5e
+0x47:	mov	ecx, dword ptr [rsp + 0x30]
+0x4b:	call	0x58
+0x50:	add	rsp, 0x38
+0x54:	ret	
+0x55:	add	byte ptr [rax], al
+0x57:	add	bh, bh
+0x59:	and	eax, 0x1022
+0x5e:	jmp	qword ptr [rip + 0x102c]
+0x64:	jmp	qword ptr [rip + 0x1006]
+0x6a:	jmp	qword ptr [rip + 0x1018]
+0x70:	add	byte ptr [rax], al
+0x72:	add	byte ptr [rax], al
+0x74:	add	byte ptr [rax], al
+0x76:	add	byte ptr [rax], al
+0x78:	add	byte ptr [rax], al
+0x7a:	add	byte ptr [rax], al
+0x7c:	add	byte ptr [rax], al
+0x7e:	add	byte ptr [rax], al
+0x80:	add	byte ptr [rax], al
+0x82:	add	byte ptr [rax], al
+0x84:	add	byte ptr [rax], al
+0x86:	add	byte ptr [rax], al
+0x88:	add	byte ptr [rax], al
+0x8a:	add	byte ptr [rax], al
+0x8c:	add	byte ptr [rax], al
+0x8e:	add	byte ptr [rax], al
+0x90:	add	byte ptr [rax], al
+0x92:	add	byte ptr [rax], al
+0x94:	add	byte ptr [rax], al
+0x96:	add	byte ptr [rax], al
+0x98:	add	byte ptr [rax], al
+0x9a:	add	byte ptr [rax], al
+0x9c:	add	byte ptr [rax], al
+0x9e:	add	byte ptr [rax], al
+0xa0:	add	byte ptr [rax], al
+0xa2:	add	byte ptr [rax], al
+0xa4:	add	byte ptr [rax], al
+0xa6:	add	byte ptr [rax], al
+0xa8:	add	byte ptr [rax], al
+0xaa:	add	byte ptr [rax], al
+0xac:	add	byte ptr [rax], al
+0xae:	add	byte ptr [rax], al
+0xb0:	add	byte ptr [rax], al
+0xb2:	add	byte ptr [rax], al
+0xb4:	add	byte ptr [rax], al
+0xb6:	add	byte ptr [rax], al
+0xb8:	add	byte ptr [rax], al
+0xba:	add	byte ptr [rax], al
+0xbc:	add	byte ptr [rax], al
+0xbe:	add	byte ptr [rax], al
+0xc0:	add	byte ptr [rax], al
+0xc2:	add	byte ptr [rax], al
+0xc4:	add	byte ptr [rax], al
+0xc6:	add	byte ptr [rax], al
+0xc8:	add	byte ptr [rax], al
+0xca:	add	byte ptr [rax], al
+0xcc:	add	byte ptr [rax], al
+0xce:	add	byte ptr [rax], al
+0xd0:	add	byte ptr [rax], al
+0xd2:	add	byte ptr [rax], al
+0xd4:	add	byte ptr [rax], al
+0xd6:	add	byte ptr [rax], al
+0xd8:	add	byte ptr [rax], al
+0xda:	add	byte ptr [rax], al
+0xdc:	add	byte ptr [rax], al
+0xde:	add	byte ptr [rax], al
+0xe0:	add	byte ptr [rax], al
+0xe2:	add	byte ptr [rax], al
+0xe4:	add	byte ptr [rax], al
+0xe6:	add	byte ptr [rax], al
+0xe8:	add	byte ptr [rax], al
+0xea:	add	byte ptr [rax], al
+0xec:	add	byte ptr [rax], al
+0xee:	add	byte ptr [rax], al
+0xf0:	add	byte ptr [rax], al
+0xf2:	add	byte ptr [rax], al
+0xf4:	add	byte ptr [rax], al
+0xf6:	add	byte ptr [rax], al
+0xf8:	add	byte ptr [rax], al
+0xfa:	add	byte ptr [rax], al
+0xfc:	add	byte ptr [rax], al
+0xfe:	add	byte ptr [rax], al
+0x100:	add	byte ptr [rax], al
+0x102:	add	byte ptr [rax], al
+0x104:	add	byte ptr [rax], al
+0x106:	add	byte ptr [rax], al
+0x108:	add	byte ptr [rax], al
+0x10a:	add	byte ptr [rax], al
+0x10c:	add	byte ptr [rax], al
+0x10e:	add	byte ptr [rax], al
+0x110:	add	byte ptr [rax], al
+0x112:	add	byte ptr [rax], al
+0x114:	add	byte ptr [rax], al
+0x116:	add	byte ptr [rax], al
+0x118:	add	byte ptr [rax], al
+0x11a:	add	byte ptr [rax], al
+0x11c:	add	byte ptr [rax], al
+0x11e:	add	byte ptr [rax], al
+0x120:	add	byte ptr [rax], al
+0x122:	add	byte ptr [rax], al
+0x124:	add	byte ptr [rax], al
+0x126:	add	byte ptr [rax], al
+0x128:	add	byte ptr [rax], al
+0x12a:	add	byte ptr [rax], al
+0x12c:	add	byte ptr [rax], al
+0x12e:	add	byte ptr [rax], al
+0x130:	add	byte ptr [rax], al
+0x132:	add	byte ptr [rax], al
+0x134:	add	byte ptr [rax], al
+0x136:	add	byte ptr [rax], al
+0x138:	add	byte ptr [rax], al
+0x13a:	add	byte ptr [rax], al
+0x13c:	add	byte ptr [rax], al
+0x13e:	add	byte ptr [rax], al
+0x140:	add	byte ptr [rax], al
+0x142:	add	byte ptr [rax], al
+0x144:	add	byte ptr [rax], al
+0x146:	add	byte ptr [rax], al
+0x148:	add	byte ptr [rax], al
+0x14a:	add	byte ptr [rax], al
+0x14c:	add	byte ptr [rax], al
+0x14e:	add	byte ptr [rax], al
+0x150:	add	byte ptr [rax], al
+0x152:	add	byte ptr [rax], al
+0x154:	add	byte ptr [rax], al
+0x156:	add	byte ptr [rax], al
+0x158:	add	byte ptr [rax], al
+0x15a:	add	byte ptr [rax], al
+0x15c:	add	byte ptr [rax], al
+0x15e:	add	byte ptr [rax], al
+0x160:	add	byte ptr [rax], al
+0x162:	add	byte ptr [rax], al
+0x164:	add	byte ptr [rax], al
+0x166:	add	byte ptr [rax], al
+0x168:	add	byte ptr [rax], al
+0x16a:	add	byte ptr [rax], al
+0x16c:	add	byte ptr [rax], al
+0x16e:	add	byte ptr [rax], al
+0x170:	add	byte ptr [rax], al
+0x172:	add	byte ptr [rax], al
+0x174:	add	byte ptr [rax], al
+0x176:	add	byte ptr [rax], al
+0x178:	add	byte ptr [rax], al
+0x17a:	add	byte ptr [rax], al
+0x17c:	add	byte ptr [rax], al
+0x17e:	add	byte ptr [rax], al
+0x180:	add	byte ptr [rax], al
+0x182:	add	byte ptr [rax], al
+0x184:	add	byte ptr [rax], al
+0x186:	add	byte ptr [rax], al
+0x188:	add	byte ptr [rax], al
+0x18a:	add	byte ptr [rax], al
+0x18c:	add	byte ptr [rax], al
+0x18e:	add	byte ptr [rax], al
+0x190:	add	byte ptr [rax], al
+0x192:	add	byte ptr [rax], al
+0x194:	add	byte ptr [rax], al
+0x196:	add	byte ptr [rax], al
+0x198:	add	byte ptr [rax], al
+0x19a:	add	byte ptr [rax], al
+0x19c:	add	byte ptr [rax], al
+0x19e:	add	byte ptr [rax], al
+0x1a0:	add	byte ptr [rax], al
+0x1a2:	add	byte ptr [rax], al
+0x1a4:	add	byte ptr [rax], al
+0x1a6:	add	byte ptr [rax], al
+0x1a8:	add	byte ptr [rax], al
+0x1aa:	add	byte ptr [rax], al
+0x1ac:	add	byte ptr [rax], al
+0x1ae:	add	byte ptr [rax], al
+0x1b0:	add	byte ptr [rax], al
+0x1b2:	add	byte ptr [rax], al
+0x1b4:	add	byte ptr [rax], al
+0x1b6:	add	byte ptr [rax], al
+0x1b8:	add	byte ptr [rax], al
+0x1ba:	add	byte ptr [rax], al
+0x1bc:	add	byte ptr [rax], al
+0x1be:	add	byte ptr [rax], al
+0x1c0:	add	byte ptr [rax], al
+0x1c2:	add	byte ptr [rax], al
+0x1c4:	add	byte ptr [rax], al
+0x1c6:	add	byte ptr [rax], al
+0x1c8:	add	byte ptr [rax], al
+0x1ca:	add	byte ptr [rax], al
+0x1cc:	add	byte ptr [rax], al
+0x1ce:	add	byte ptr [rax], al
+0x1d0:	add	byte ptr [rax], al
+0x1d2:	add	byte ptr [rax], al
+0x1d4:	add	byte ptr [rax], al
+0x1d6:	add	byte ptr [rax], al
+0x1d8:	add	byte ptr [rax], al
+0x1da:	add	byte ptr [rax], al
+0x1dc:	add	byte ptr [rax], al
+0x1de:	add	byte ptr [rax], al
+0x1e0:	add	byte ptr [rax], al
+0x1e2:	add	byte ptr [rax], al
+0x1e4:	add	byte ptr [rax], al
+0x1e6:	add	byte ptr [rax], al
+0x1e8:	add	byte ptr [rax], al
+0x1ea:	add	byte ptr [rax], al
+0x1ec:	add	byte ptr [rax], al
+0x1ee:	add	byte ptr [rax], al
+0x1f0:	add	byte ptr [rax], al
+0x1f2:	add	byte ptr [rax], al
+0x1f4:	add	byte ptr [rax], al
+0x1f6:	add	byte ptr [rax], al
+0x1f8:	add	byte ptr [rax], al
+0x1fa:	add	byte ptr [rax], al
+0x1fc:	add	byte ptr [rax], al
 
 
 SECTION HEADER #1 (1)

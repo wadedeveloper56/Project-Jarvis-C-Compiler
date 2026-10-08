@@ -1,4 +1,4 @@
-JWasm v2.12pre, Oct  4 2026
+JWasm v2.12pre, Oct  6 2026
 test2_32.asm
                                 .386
                                 option segment:use32
@@ -191,12 +191,12 @@ Symbols:
 @Cpu . . . . . . . . . . . . . .        Number           D0Fh 
 @CurSeg  . . . . . . . . . . . .        Text   
 @DataSize  . . . . . . . . . . .        Number             0h 
-@Date  . . . . . . . . . . . . .        Text   10/06/26
+@Date  . . . . . . . . . . . . .        Text   10/08/26
 @FileCur . . . . . . . . . . . .        Text   test2_32.asm
 @FileName  . . . . . . . . . . .        Text   TEST2_32
 @Interface . . . . . . . . . . .        Number             1h 
 @Model . . . . . . . . . . . . .        Number             7h 
-@Time  . . . . . . . . . . . . .        Text   14:08:30
+@Time  . . . . . . . . . . . . .        Text   16:37:07
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT

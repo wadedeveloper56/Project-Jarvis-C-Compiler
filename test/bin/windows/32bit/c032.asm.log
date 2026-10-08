@@ -1,4 +1,4 @@
-PEDUMP - Win32/Win64 COFF EXE/OBJ/LIB file dumper v1.0 (C) Copyright 2025-2026 Christopher D. Wade.
+PEDUMP - 16/32/64 bit  OMF/COFF EXE/OBJ/LIB file dumper v1.0 (C) Copyright 2025-2026 Christopher D. Wade.
 All Rights Reserved
 Dump of file C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\32bit\c032.obj
 File Size 742 bytes
@@ -7,7 +7,7 @@ File Type: 32-bit COFF OBJECT
 FILE HEADER VALUES
                14C Machine (Intel 386 or later processors and compatible processors)
                  4 (4) Number of Sections
-          6AC5472D TimeDateStamp ->  n/a
+          6AC80D01 TimeDateStamp ->  n/a
                178 PointerToSymbolTable
                 11 (17) NumberOfSymbols
                  0 (0) SizeOfOptionalHeader
@@ -31,13 +31,36 @@ SECTION HEADER #0 (0)
          Executable
          Readable
 
-RAW DATA #0 (0)
-00000000  e8 00 00 00 00 a3 00 00  00 00 33 c9 8b 35 00 00  ..........3..5..
-00000010  00 00 8d 3d 00 00 00 00  8a 06 3c 00 74 1c 3c 20  ...=......<.t.< 
-00000020  75 03 46 eb f3 89 34 8f  41 46 8a 06 3c 00 74 0a  u.F...4.AF..<.t.
-00000030  3c 20 75 f5 c6 06 00 46  eb de 89 0d 00 00 00 00  < u....F........
-00000040  68 00 00 00 00 ff 35 00  00 00 00 e8 00 00 00 00  h.....5.........
-00000050  83 c4 08 50 e8 00 00 00  00                       ...P.....
+RAW DATA #0 (0) - 89 bytes
+0x0:	call	5
+0x5:	mov	dword ptr [0], eax
+0xa:	xor	ecx, ecx
+0xc:	mov	esi, dword ptr [0]
+0x12:	lea	edi, [0]
+0x18:	mov	al, byte ptr [esi]
+0x1a:	cmp	al, 0
+0x1c:	je	0x3a
+0x1e:	cmp	al, 0x20
+0x20:	jne	0x25
+0x22:	inc	esi
+0x23:	jmp	0x18
+0x25:	mov	dword ptr [edi + ecx*4], esi
+0x28:	inc	ecx
+0x29:	inc	esi
+0x2a:	mov	al, byte ptr [esi]
+0x2c:	cmp	al, 0
+0x2e:	je	0x3a
+0x30:	cmp	al, 0x20
+0x32:	jne	0x29
+0x34:	mov	byte ptr [esi], 0
+0x37:	inc	esi
+0x38:	jmp	0x18
+0x3a:	mov	dword ptr [0], ecx
+0x40:	push	0
+0x45:	push	dword ptr [0]
+0x4b:	call	0x50
+0x50:	add	esp, 8
+0x53:	push	eax
 SECTION HEADER #0 (0) RELOCATIONS
   Address: 00000001  SymIndex: 0000000A  Type: REL32
   Address: 00000006  SymIndex: 0000000E  Type: DIR32

@@ -1,4 +1,4 @@
-PEDUMP - Win32/Win64 COFF EXE/OBJ/LIB file dumper v1.0 (C) Copyright 2025-2026 Christopher D. Wade.
+PEDUMP - 16/32/64 bit  OMF/COFF EXE/OBJ/LIB file dumper v1.0 (C) Copyright 2025-2026 Christopher D. Wade.
 All Rights Reserved
 Dump of file test2_64.obj
 File Size 564 bytes
@@ -7,7 +7,7 @@ File Type: 64-bit COFF OBJECT
 FILE HEADER VALUES
               8664 Machine (x64)
                  3 (3) Number of Sections
-          6AC5472E TimeDateStamp ->  n/a
+          6AC80D03 TimeDateStamp ->  n/a
                146 PointerToSymbolTable
                  D (13) NumberOfSymbols
                  0 (0) SizeOfOptionalHeader
@@ -31,18 +31,77 @@ SECTION HEADER #0 (0)
          Executable
          Readable
 
-RAW DATA #0 (0)
-00000000  55 48 8b ec 48 83 ec 08  8b 45 10 50 8b 45 18 50  UH..H....E.P.E.P
-00000010  b8 05 00 00 00 50 5b 58  0f af c3 50 5b 58 03 c3  .....P[X...P[X..
-00000020  50 89 45 fc 8b 45 fc 50  c9 c3 55 48 8b ec 48 83  P.E..E.P..UH..H.
-00000030  ec 08 8b 45 10 50 8b 45  18 50 b8 03 00 00 00 50  ...E.P.E.P.....P
-00000040  5b 58 99 f7 fb 50 5b 58  03 c3 50 89 45 fc 8b 45  [X...P[X..P.E..E
-00000050  fc 50 c9 c3 55 48 8b ec  48 83 ec 08 48 83 ec 20  .P..UH..H...H.. 
-00000060  8b 0d 00 00 00 00 ba 04  00 00 00 e8 90 ff ff ff  ................
-00000070  48 83 c4 20 89 45 fc 50  48 83 ec 20 8b 0d 00 00  H.. .E.PH.. ....
-00000080  00 00 ba 06 00 00 00 e8  9e ff ff ff 48 83 c4 20  ............H.. 
-00000090  89 45 f8 50 8b 45 f8 50  8b 45 fc 50 5b 58 03 c3  .E.P.E.P.E.P[X..
-000000a0  c9 c3                                             ..
+RAW DATA #0 (0) - 162 bytes
+0x0:	push	rbp
+0x1:	mov	rbp, rsp
+0x4:	sub	rsp, 8
+0x8:	mov	eax, dword ptr [rbp + 0x10]
+0xb:	push	rax
+0xc:	mov	eax, dword ptr [rbp + 0x18]
+0xf:	push	rax
+0x10:	mov	eax, 5
+0x15:	push	rax
+0x16:	pop	rbx
+0x17:	pop	rax
+0x18:	imul	eax, ebx
+0x1b:	push	rax
+0x1c:	pop	rbx
+0x1d:	pop	rax
+0x1e:	add	eax, ebx
+0x20:	push	rax
+0x21:	mov	dword ptr [rbp - 4], eax
+0x24:	mov	eax, dword ptr [rbp - 4]
+0x27:	push	rax
+0x28:	leave	
+0x29:	ret	
+0x2a:	push	rbp
+0x2b:	mov	rbp, rsp
+0x2e:	sub	rsp, 8
+0x32:	mov	eax, dword ptr [rbp + 0x10]
+0x35:	push	rax
+0x36:	mov	eax, dword ptr [rbp + 0x18]
+0x39:	push	rax
+0x3a:	mov	eax, 3
+0x3f:	push	rax
+0x40:	pop	rbx
+0x41:	pop	rax
+0x42:	cdq	
+0x43:	idiv	ebx
+0x45:	push	rax
+0x46:	pop	rbx
+0x47:	pop	rax
+0x48:	add	eax, ebx
+0x4a:	push	rax
+0x4b:	mov	dword ptr [rbp - 4], eax
+0x4e:	mov	eax, dword ptr [rbp - 4]
+0x51:	push	rax
+0x52:	leave	
+0x53:	ret	
+0x54:	push	rbp
+0x55:	mov	rbp, rsp
+0x58:	sub	rsp, 8
+0x5c:	sub	rsp, 0x20
+0x60:	mov	ecx, dword ptr [rip]
+0x66:	mov	edx, 4
+0x6b:	call	0
+0x70:	add	rsp, 0x20
+0x74:	mov	dword ptr [rbp - 4], eax
+0x77:	push	rax
+0x78:	sub	rsp, 0x20
+0x7c:	mov	ecx, dword ptr [rip]
+0x82:	mov	edx, 6
+0x87:	call	0x2a
+0x8c:	add	rsp, 0x20
+0x90:	mov	dword ptr [rbp - 8], eax
+0x93:	push	rax
+0x94:	mov	eax, dword ptr [rbp - 8]
+0x97:	push	rax
+0x98:	mov	eax, dword ptr [rbp - 4]
+0x9b:	push	rax
+0x9c:	pop	rbx
+0x9d:	pop	rax
+0x9e:	add	eax, ebx
+0xa0:	leave	
 SECTION HEADER #0 (0) RELOCATIONS
   Address: 00000062  SymIndex: 0000000B  Type: ???_4
   Address: 0000007E  SymIndex: 0000000C  Type: ???_4

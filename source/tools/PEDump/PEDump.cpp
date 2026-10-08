@@ -120,7 +120,7 @@ int main(int argc, char* argv[])
 			for (int i = 0; i < data->sectionTable.size(); i++)
 			{
 				OBJSectionPtr ptr = data->sectionTable[i];
-				DumpSection(i, ptr);
+				DumpSection(i, ptr, data->FileHeader.Machine);
 			}
 			if (data->exportDirectory != nullptr)
 			{
@@ -143,7 +143,7 @@ int main(int argc, char* argv[])
 			for (int i = 0; i < data->sectionTable.size(); i++)
 			{
 				OBJSectionPtr ptr = data->sectionTable[i];
-				DumpSection(i, ptr);
+				DumpSection(i, ptr, data->FileHeader.Machine);
 			}
 			if (data->exportDirectory != nullptr)
 			{
@@ -165,7 +165,7 @@ int main(int argc, char* argv[])
 			for (int i = 0; i < data->sectionTable.size(); i++)
 			{
 				OBJSectionPtr ptr = data->sectionTable[i];
-				DumpSection(i, ptr);
+				DumpSection(i, ptr, data->header.Machine);
 			}
 			DumpSymbolTable(data->symbolTable);
 			printf("\nString Table Size = 0x%0X (%ld) bytes %lld entries\n", data->stringTableSize, data->stringTableSize, (LONGLONG)data->stringTable.size());
@@ -185,7 +185,7 @@ int main(int argc, char* argv[])
 			for (int i = 0; i < data->sectionTable.size(); i++)
 			{
 				OBJSectionPtr ptr = data->sectionTable[i];
-				DumpSection(i, ptr);
+				DumpSection(i, ptr, data->header.Machine);
 			}
 			DumpSymbolTable(data->symbolTable);
 			printf("\nString Table Size = 0x%0X (%ld) bytes %lld entries\n", data->stringTableSize, data->stringTableSize, (LONGLONG)data->stringTable.size());

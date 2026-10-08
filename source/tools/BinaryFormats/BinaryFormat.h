@@ -415,7 +415,7 @@ BINARYFORMATS_API EXEFilePtr loadWin3264ExeFile(FileType fileType, char* buffer,
 BINARYFORMATS_API LIBFilePtr loadLibFile(FileType fileType, char* buffer, LONGLONG fileSize);
 //Output.cpp functions
 BINARYFORMATS_API void GetObjRelocationName(WORD type, PSTR buffer, DWORD cBytes);
-BINARYFORMATS_API void DumpSection(int i, OBJSectionPtr ptr);
+BINARYFORMATS_API void DumpSection(int i, OBJSectionPtr ptr, WORD machine);
 BINARYFORMATS_API void GetSectionName(WORD section, PSTR buffer, unsigned cbBuffer);
 BINARYFORMATS_API void DumpSymbolTable(COFFSymbolTable* pSymTab);
 BINARYFORMATS_API void DumpDOSHeader(DosHeaderPtr dosHeader);

@@ -1,96 +1,97 @@
 #include "pch.h"
 #include "framework.h"
 #include "BinaryFormat.h"
+#include "capstone/capstone.h"
 
 using namespace std;
 
 WORD_FLAG_DESCRIPTIONS ImageFileHeaderCharacteristics[] =
 {
-	{IMAGE_FILE_RELOCS_STRIPPED, "Relocation info stripped from file"},
-	{IMAGE_FILE_EXECUTABLE_IMAGE, "Executable"},
-	{IMAGE_FILE_LINE_NUMS_STRIPPED, "LINE_NUMS_STRIPPED"},
-	{IMAGE_FILE_LOCAL_SYMS_STRIPPED, "LOCAL_SYMS_STRIPPED"},
-	{IMAGE_FILE_AGGRESIVE_WS_TRIM, "AGGRESIVE_WS_TRIM"},
-	{IMAGE_FILE_LARGE_ADDRESS_AWARE, "Application can handle large (>2GB) addresses"},
-	{IMAGE_FILE_BYTES_REVERSED_LO, "BYTES_REVERSED_LO"},
-	{IMAGE_FILE_32BIT_MACHINE, "32-Bit Machine"},
-	{IMAGE_FILE_DEBUG_STRIPPED, "DEBUG_STRIPPED"},
-	{IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP, "REMOVABLE_RUN_FROM_SWAP"},
-	{IMAGE_FILE_NET_RUN_FROM_SWAP, "NET_RUN_FROM_SWAP"},
-	{IMAGE_FILE_SYSTEM, "SYSTEM"},
-	{IMAGE_FILE_DLL, "DLL"},
-	{IMAGE_FILE_UP_SYSTEM_ONLY, "UP_SYSTEM_ONLY"},
-	{IMAGE_FILE_BYTES_REVERSED_HI, "BYTES_REVERSED_HI"}
+	{ IMAGE_FILE_RELOCS_STRIPPED, "Relocation info stripped from file" },
+	{ IMAGE_FILE_EXECUTABLE_IMAGE, "Executable" },
+	{ IMAGE_FILE_LINE_NUMS_STRIPPED, "LINE_NUMS_STRIPPED" },
+	{ IMAGE_FILE_LOCAL_SYMS_STRIPPED, "LOCAL_SYMS_STRIPPED" },
+	{ IMAGE_FILE_AGGRESIVE_WS_TRIM, "AGGRESIVE_WS_TRIM" },
+	{ IMAGE_FILE_LARGE_ADDRESS_AWARE, "Application can handle large (>2GB) addresses" },
+	{ IMAGE_FILE_BYTES_REVERSED_LO, "BYTES_REVERSED_LO" },
+	{ IMAGE_FILE_32BIT_MACHINE, "32-Bit Machine" },
+	{ IMAGE_FILE_DEBUG_STRIPPED, "DEBUG_STRIPPED" },
+	{ IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP, "REMOVABLE_RUN_FROM_SWAP" },
+	{ IMAGE_FILE_NET_RUN_FROM_SWAP, "NET_RUN_FROM_SWAP" },
+	{ IMAGE_FILE_SYSTEM, "SYSTEM" },
+	{ IMAGE_FILE_DLL, "DLL" },
+	{ IMAGE_FILE_UP_SYSTEM_ONLY, "UP_SYSTEM_ONLY" },
+	{ IMAGE_FILE_BYTES_REVERSED_HI, "BYTES_REVERSED_HI" }
 };
 
 #define NUMBER_IMAGE_HEADER_FLAGS (sizeof(ImageFileHeaderCharacteristics) / sizeof(WORD_FLAG_DESCRIPTIONS))
 
 WORD_FLAG_DESCRIPTIONS DllCharacteristics[] =
 {
-   {IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA,"Image can handle a high entropy 64-bit virtual address space"},
-   {IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE,"DLL can move"},
-   {IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY,"CODE_INTEGRITY"},
-   {IMAGE_DLLCHARACTERISTICS_NX_COMPAT,"NX Compatible"},
-   {IMAGE_DLLCHARACTERISTICS_NO_ISOLATION,"NO_ISOLATION"},
-   {IMAGE_DLLCHARACTERISTICS_NO_SEH,"NO_SEH"},
-   {IMAGE_DLLCHARACTERISTICS_NO_BIND,"NO_BIND"},
-   {IMAGE_DLLCHARACTERISTICS_APPCONTAINER,"APP_CONTAINER"},
-   {IMAGE_DLLCHARACTERISTICS_WDM_DRIVER, "WDM_DRIVER" },
-   {IMAGE_DLLCHARACTERISTICS_GUARD_CF,"CONTROL_FLOW_GUARD"},
-   {IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE,"TERMINAL_SERVER_AWARE"}
+   { IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA,"Image can handle a high entropy 64-bit virtual address space" },
+   { IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE,"DLL can move" },
+   { IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY,"CODE_INTEGRITY" },
+   { IMAGE_DLLCHARACTERISTICS_NX_COMPAT,"NX Compatible" },
+   { IMAGE_DLLCHARACTERISTICS_NO_ISOLATION,"NO_ISOLATION" },
+   { IMAGE_DLLCHARACTERISTICS_NO_SEH,"NO_SEH" },
+   { IMAGE_DLLCHARACTERISTICS_NO_BIND,"NO_BIND" },
+   { IMAGE_DLLCHARACTERISTICS_APPCONTAINER,"APP_CONTAINER" },
+   { IMAGE_DLLCHARACTERISTICS_WDM_DRIVER, "WDM_DRIVER" },
+   { IMAGE_DLLCHARACTERISTICS_GUARD_CF,"CONTROL_FLOW_GUARD" },
+   { IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE,"TERMINAL_SERVER_AWARE" }
 };
 #define NUMBER_DLL_CHARACTERISTICS (sizeof(DllCharacteristics) / sizeof(WORD_FLAG_DESCRIPTIONS))
 
 i386RelocTypes i386Relocations[] =
 {
-	{IMAGE_REL_I386_ABSOLUTE, "ABSOLUTE"},
-	{IMAGE_REL_I386_DIR16, "DIR16"},
-	{IMAGE_REL_I386_REL16, "REL16"},
-	{IMAGE_REL_I386_DIR32, "DIR32"},
-	{IMAGE_REL_I386_DIR32NB, "DIR32NB"},
-	{IMAGE_REL_I386_SEG12, "SEG12"},
-	{IMAGE_REL_I386_SECTION, "SECTION"},
-	{IMAGE_REL_I386_SECREL, "SECREL"},
-	{IMAGE_REL_I386_REL32, "REL32"}
+	{ IMAGE_REL_I386_ABSOLUTE, "ABSOLUTE" },
+	{ IMAGE_REL_I386_DIR16, "DIR16" },
+	{ IMAGE_REL_I386_REL16, "REL16" },
+	{ IMAGE_REL_I386_DIR32, "DIR32" },
+	{ IMAGE_REL_I386_DIR32NB, "DIR32NB" },
+	{ IMAGE_REL_I386_SEG12, "SEG12" },
+	{ IMAGE_REL_I386_SECTION, "SECTION" },
+	{ IMAGE_REL_I386_SECREL, "SECREL" },
+	{ IMAGE_REL_I386_REL32, "REL32" }
 };
 #define I386RELOCTYPECOUNT (sizeof(i386Relocations) / sizeof(i386RelocTypes))
 
 DWORD_FLAG_DESCRIPTIONS SectionCharacteristics[] =
 {
-	{IMAGE_SCN_TYPE_NO_PAD, "No Padding"},
-	{IMAGE_SCN_CNT_CODE, "Code"},
-	{IMAGE_SCN_CNT_INITIALIZED_DATA, "Initialized Data"},
-	{IMAGE_SCN_CNT_UNINITIALIZED_DATA, "Unnitialized Data"},
-	{IMAGE_SCN_LNK_OTHER, "Other"},
-	{IMAGE_SCN_LNK_INFO, "Informataion"},
-	{IMAGE_SCN_LNK_REMOVE, "Remove"},
-	{IMAGE_SCN_LNK_COMDAT, "COMDAT"},
-	{IMAGE_SCN_GPREL, "Global Pointer"},
-	{IMAGE_SCN_MEM_PURGEABLE, "Purgeable"},
-	{IMAGE_SCN_MEM_LOCKED, "Locked"},
-	{IMAGE_SCN_MEM_PRELOAD, "Preload"},
-	{IMAGE_SCN_ALIGN_1BYTES,"1_BYTE_ALIGN"},
-	{IMAGE_SCN_ALIGN_2BYTES,"2_BYTE_ALIGN"},
-	{IMAGE_SCN_ALIGN_4BYTES,"4_BYTE_ALIGN"},
-	{IMAGE_SCN_ALIGN_8BYTES,"8_BYTE_ALIGN"},
-	{IMAGE_SCN_ALIGN_16BYTES,"16_BYTE_ALIGN"},
-	{IMAGE_SCN_ALIGN_32BYTES,"32_BYTE_ALIGN"},
-	{IMAGE_SCN_ALIGN_64BYTES,"64_BYTE_ALIGN"},
-	{IMAGE_SCN_ALIGN_128BYTES,"128_BYTE_ALIGN"},
-	{IMAGE_SCN_ALIGN_256BYTES,"256_BYTE_ALIGN"},
-	{IMAGE_SCN_ALIGN_512BYTES,"512_BYTE_ALIGN"},
-	{IMAGE_SCN_ALIGN_1024BYTES,"1024_BYTE_ALIGN"},
-	{IMAGE_SCN_ALIGN_2048BYTES,"2048_BYTE_ALIGN"},
-	{IMAGE_SCN_ALIGN_4096BYTES,"4096_BYTE_ALIGN"},
-	{IMAGE_SCN_ALIGN_8192BYTES,"8192_BYTE_ALIGN"},
-	{IMAGE_SCN_LNK_NRELOC_OVFL,"EXTENDED_RELOCATIONS" },
-	{IMAGE_SCN_MEM_DISCARDABLE,"Discardable" },
-	{IMAGE_SCN_MEM_NOT_CACHED,"NO_CACHE" },
-	{IMAGE_SCN_MEM_NOT_PAGED,"NOTPAGEABLE" },
-	{IMAGE_SCN_MEM_SHARED,"Shared" },
-	{IMAGE_SCN_MEM_EXECUTE,"Executable" },
-	{IMAGE_SCN_MEM_READ,"Readable" },
-	{IMAGE_SCN_MEM_WRITE,"Writeable" },
+	{ IMAGE_SCN_TYPE_NO_PAD, "No Padding" },
+	{ IMAGE_SCN_CNT_CODE, "Code" },
+	{ IMAGE_SCN_CNT_INITIALIZED_DATA, "Initialized Data" },
+	{ IMAGE_SCN_CNT_UNINITIALIZED_DATA, "Unnitialized Data" },
+	{ IMAGE_SCN_LNK_OTHER, "Other" },
+	{ IMAGE_SCN_LNK_INFO, "Informataion" },
+	{ IMAGE_SCN_LNK_REMOVE, "Remove" },
+	{ IMAGE_SCN_LNK_COMDAT, "COMDAT" },
+	{ IMAGE_SCN_GPREL, "Global Pointer" },
+	{ IMAGE_SCN_MEM_PURGEABLE, "Purgeable" },
+	{ IMAGE_SCN_MEM_LOCKED, "Locked" },
+	{ IMAGE_SCN_MEM_PRELOAD, "Preload" },
+	{ IMAGE_SCN_ALIGN_1BYTES,"1_BYTE_ALIGN" },
+	{ IMAGE_SCN_ALIGN_2BYTES,"2_BYTE_ALIGN" },
+	{ IMAGE_SCN_ALIGN_4BYTES,"4_BYTE_ALIGN" },
+	{ IMAGE_SCN_ALIGN_8BYTES,"8_BYTE_ALIGN" },
+	{ IMAGE_SCN_ALIGN_16BYTES,"16_BYTE_ALIGN" },
+	{ IMAGE_SCN_ALIGN_32BYTES,"32_BYTE_ALIGN" },
+	{ IMAGE_SCN_ALIGN_64BYTES,"64_BYTE_ALIGN" },
+	{ IMAGE_SCN_ALIGN_128BYTES,"128_BYTE_ALIGN" },
+	{ IMAGE_SCN_ALIGN_256BYTES,"256_BYTE_ALIGN" },
+	{ IMAGE_SCN_ALIGN_512BYTES,"512_BYTE_ALIGN" },
+	{ IMAGE_SCN_ALIGN_1024BYTES,"1024_BYTE_ALIGN" },
+	{ IMAGE_SCN_ALIGN_2048BYTES,"2048_BYTE_ALIGN" },
+	{ IMAGE_SCN_ALIGN_4096BYTES,"4096_BYTE_ALIGN" },
+	{ IMAGE_SCN_ALIGN_8192BYTES,"8192_BYTE_ALIGN" },
+	{ IMAGE_SCN_LNK_NRELOC_OVFL,"EXTENDED_RELOCATIONS" },
+	{ IMAGE_SCN_MEM_DISCARDABLE,"Discardable" },
+	{ IMAGE_SCN_MEM_NOT_CACHED,"NO_CACHE" },
+	{ IMAGE_SCN_MEM_NOT_PAGED,"NOTPAGEABLE" },
+	{ IMAGE_SCN_MEM_SHARED,"Shared" },
+	{ IMAGE_SCN_MEM_EXECUTE,"Executable" },
+	{ IMAGE_SCN_MEM_READ,"Readable" },
+	{ IMAGE_SCN_MEM_WRITE,"Writeable" },
 };
 
 #define NUMBER_SECTION_CHARACTERISTICS (sizeof(SectionCharacteristics) / sizeof(DWORD_FLAG_DESCRIPTIONS))
@@ -110,7 +111,7 @@ void GetObjRelocationName(WORD type, PSTR buffer, DWORD cBytes)
 	sprintf(buffer, "???_%X", type);
 }
 
-void DumpSection(int i, OBJSectionPtr ptr)
+void DumpSection(int i, OBJSectionPtr ptr, WORD machine)
 {
 	NTSectionHeaderPtr section = &ptr->header;
 	printf("SECTION HEADER #%X (%d)\n", i, i);
@@ -143,8 +144,76 @@ void DumpSection(int i, OBJSectionPtr ptr)
 	printf("\n");
 	if (section->PointerToRawData > 0 && section->SizeOfRawData > 0 && ptr->sectionBuffer != nullptr)
 	{
-		printf("RAW DATA #%X (%d)\n", i, i);
-		hexdump(ptr->sectionBuffer, section->SizeOfRawData, 0);
+		if (strcmp((const char*)section->Name, ".text") == 0)
+		{
+			if (machine == IMAGE_FILE_MACHINE_AMD64)
+			{
+				printf("RAW DATA #%X (%d) - %ld bytes\n", i, i, section->SizeOfRawData);
+				csh handle;
+				cs_insn* insn;
+				size_t count;
+
+				// Initialize Capstone for X86 64-bit
+				if (cs_open(CS_ARCH_X86, CS_MODE_64, &handle) != CS_ERR_OK)
+					return;
+
+				// Disassemble the code buffer
+				count = cs_disasm(handle, (unsigned char*)ptr->sectionBuffer, section->SizeOfRawData - 1, 0x0000, 0, &insn);
+				if (count > 0)
+				{
+					size_t j;
+					for (j = 0; j < count; j++)
+					{
+						printf("0x%lx:\t%s\t%s\n", (unsigned long)insn[j].address, insn[j].mnemonic, insn[j].op_str);
+					}
+					// Free allocated memory for instructions
+					cs_free(insn, count);
+				}
+				else
+				{
+					printf("Failed to disassemble given code!\n");
+				}
+
+				// Close the handle
+				cs_close(&handle);
+			}
+			if (machine == IMAGE_FILE_MACHINE_I386)
+			{
+				printf("RAW DATA #%X (%d) - %ld bytes\n", i, i, section->SizeOfRawData);
+				csh handle;
+				cs_insn* insn;
+				size_t count;
+
+				// Initialize Capstone for X86 32-bit
+				if (cs_open(CS_ARCH_X86, CS_MODE_32, &handle) != CS_ERR_OK)
+					return;
+
+				// Disassemble the code buffer
+				count = cs_disasm(handle, (unsigned char*)ptr->sectionBuffer, section->SizeOfRawData - 1, 0x0000, 0, &insn);
+				if (count > 0)
+				{
+					size_t j;
+					for (j = 0; j < count; j++)
+					{
+						printf("0x%lx:\t%s\t%s\n", (unsigned long)insn[j].address, insn[j].mnemonic, insn[j].op_str);
+					}
+					// Free allocated memory for instructions
+					cs_free(insn, count);
+				}
+				else
+				{
+					printf("Failed to disassemble given code!\n");
+				}
+
+				// Close the handle
+				cs_close(&handle);
+			}
+		}
+		else
+		{
+			printf("RAW DATA #%X (%d)\n", i, i);
+			hexdump(ptr->sectionBuffer, section->SizeOfRawData, 0);
+		}
 	}
 	if (section->PointerToRelocations > 0 && section->NumberOfRelocations > 0 && ptr->relocation != nullptr)
 	{
@@ -248,7 +317,7 @@ void DumpFileHeader(NTFileHeaderPtr pImageFileHeader)
 	printf("FILE HEADER VALUES\n");
 	printf("  % 16X Machine (%s)\n", pImageFileHeader->Machine, mt);
 	printf("  % 16X (%d) Number of Sections\n", pImageFileHeader->NumberOfSections, pImageFileHeader->NumberOfSections);
-	printf("  % 16X TimeDateStamp ->  %s", pImageFileHeader->TimeDateStamp, (time==NULL)?("n/a\n") : (time));
+	printf("  % 16X TimeDateStamp ->  %s", pImageFileHeader->TimeDateStamp, (time == NULL) ? ("n/a\n") : (time));
 	printf("  % 16X PointerToSymbolTable\n", pImageFileHeader->PointerToSymbolTable);
 	printf("  % 16X (%d) NumberOfSymbols\n", pImageFileHeader->NumberOfSymbols, pImageFileHeader->NumberOfSymbols);
 	printf("  % 16X (%d) SizeOfOptionalHeader\n", pImageFileHeader->SizeOfOptionalHeader, pImageFileHeader->SizeOfOptionalHeader);
@@ -257,7 +326,8 @@ void DumpFileHeader(NTFileHeaderPtr pImageFileHeader)
 	for (int i = 0; i < NUMBER_IMAGE_HEADER_FLAGS; i++)
 	{
 		WORD flag = ImageFileHeaderCharacteristics[i].flag;
-		if (Chars & flag) {
+		if (Chars & flag)
+		{
 			printf("                   %s\n", ImageFileHeaderCharacteristics[i].name);
 			Chars &= ~flag;
 			if (Chars == 0)
@@ -500,13 +570,14 @@ void DumpResourcesDirectory(ResourcesPtr resources)
 	printf("\n");
 }
 
-void DumpBaseRelocationsDirectory(vector<RelocsPtr> *relocs)
+void DumpBaseRelocationsDirectory(vector<RelocsPtr>* relocs)
 {
 	if (relocs->size() == 0)
 	{
 		printf("No relocations table present.\n");
 	}
-	else {
+	else
+	{
 		printf("Relocations table:\n");
 		for (RelocsPtr ptr : *relocs)
 		{
@@ -539,14 +610,14 @@ void DumpDebugDirectory(DebugPtr debug)
 	for (DebugEntryPtr ptr : debug->entries)
 	{
 		printf("  %-15s %08X %08X %08X %08X %08X %u.%02u     %s",
-			ptr->debugFormat, 
+			ptr->debugFormat,
 			ptr->entry.Type,
 			ptr->entry.SizeOfData,
 			ptr->entry.AddressOfRawData,
 			ptr->entry.PointerToRawData,
 			ptr->entry.Characteristics,
 			ptr->entry.MajorVersion,
-			ptr->entry.MinorVersion, 
+			ptr->entry.MinorVersion,
 			get_ctime_stg((time_t*)&ptr->entry.TimeDateStamp)
 		);
 	}
@@ -559,7 +630,8 @@ void DumpLoadConfig32Directory(NTLoadConfigDirectory32Ptr load32)
 	{
 		printf("No LoadConfig32 table present.\n");
 	}
-	else {
+	else
+	{
 		printf("LoadConfig32 table:\n");
 		printf("%08lX Size\n", load32->Size);
 		printf("%08X TimeDateStamp\n", load32->TimeDateStamp);
@@ -614,11 +686,12 @@ void DumpLoadConfig32Directory(NTLoadConfigDirectory32Ptr load32)
 
 void DumpLoadConfig64Directory(NTLoadConfigDirectory64Ptr load64)
 {
-	if (load64==NULL)
+	if (load64 == NULL)
 	{
 		printf("No LoadConfig64 table present.\n");
 	}
-	else {
+	else
+	{
 		printf("LoadConfig64 table:\n");
 		printf("%08X Size\n", load64->Size);
 		printf("%08X TimeDateStamp\n", load64->TimeDateStamp);
@@ -686,7 +759,7 @@ void DumpArchiveMemberHeader(PIMAGE_ARCHIVE_MEMBER_HEADER pArchHeader)
 	printf("  Size:     %.10s\n", pArchHeader->Size);
 }
 
-void DumpFirstLinkerMember(vector<LIBFileLinkerMembersPtr> *list)
+void DumpFirstLinkerMember(vector<LIBFileLinkerMembersPtr>* list)
 {
 	printf("First Linker Member:\n");
 #ifdef _WIN64
@@ -695,7 +768,7 @@ void DumpFirstLinkerMember(vector<LIBFileLinkerMembersPtr> *list)
 	printf("  Symbols:         %08lX\n", list->size());
 #endif
 	printf("  MbrOffs   Name\n  --------  ----\n");
-	for(LIBFileLinkerMembersPtr ptr : *list)
+	for (LIBFileLinkerMembersPtr ptr : *list)
 	{
 		printf("  %08lX  %s\n", ptr->offset, ptr->pSymbolName);
 	}
@@ -753,7 +826,7 @@ void DumpLibFile(LIBFilePtr lib)
 				for (int i = 0; i < ptr->objFile->sectionTable.size(); i++)
 				{
 					OBJSectionPtr section = ptr->objFile->sectionTable[i];
-					DumpSection(i, section);
+					DumpSection(i, section, ptr->objFile->header.Machine);
 				}
 				DumpSymbolTable(ptr->objFile->symbolTable);
 				printf("\nString Table Size = 0x%0X (%ld) bytes %lld entries\n", ptr->objFile->stringTableSize, ptr->objFile->stringTableSize, (LONGLONG)ptr->objFile->stringTable.size());
@@ -780,7 +853,7 @@ void DumpDOSObjFile(DOSOBJFilePtr obj)
 				break;
 			case LHEADR:
 				printf("Type 0x%02X (LHEADR) : length 0x%04lX (%ld)\n", ptr->rectype, ptr->reclength, ptr->reclength);
-	            break;
+				break;
 			case COMENT:
 				printf("Type 0x%02X (COMENT) : length 0x%04lX (%ld)\n", ptr->rectype, ptr->reclength, ptr->reclength);
 				break;
