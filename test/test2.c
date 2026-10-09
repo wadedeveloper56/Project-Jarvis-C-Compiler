@@ -15,7 +15,9 @@ int func2(int a, int b) {
 }
 
 int func3() {
-	int y = func1(x, 4);
-	int x = func2(m, 6);
-	return x + y;
+	int a;
+	int b;
+	a = func1(x, 4);
+	b = func2(m, 6);
+	return a+b;
 }

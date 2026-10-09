@@ -1,14 +1,14 @@
 PEDUMP - 16/32/64 bit  OMF/COFF EXE/OBJ/LIB file dumper v1.0 (C) Copyright 2025-2026 Christopher D. Wade.
 All Rights Reserved
 Dump of file test2_32.obj
-File Size 357 bytes
+File Size 370 bytes
 File Type: 32-bit COFF OBJECT
 
 FILE HEADER VALUES
                14C Machine (Intel 386 or later processors and compatible processors)
                  3 (3) Number of Sections
-          6AC901FD TimeDateStamp ->  n/a
-                9B PointerToSymbolTable
+          6AC90A59 TimeDateStamp ->  n/a
+                A8 PointerToSymbolTable
                  B (11) NumberOfSymbols
                  0 (0) SizeOfOptionalHeader
                  0 Flags
@@ -18,8 +18,8 @@ SECTION HEADER #0 (0)
    .text name
        0 physical address
        0 virtual address
-       B (11) size of raw data
-      8C file pointer to raw data (0000008C to 00000096)
+      18 (24) size of raw data
+      8C file pointer to raw data (0000008C to 000000A3)
        0 file pointer to relocation table
        0 file pointer to line numbers
        0 number of relocations
@@ -32,15 +32,21 @@ SECTION HEADER #0 (0)
          Readable
 
 RAW DATA #0 (0)
-RAW DATA #0 (0) - 11 bytes
+RAW DATA #0 (0) - 24 bytes
 0x0:	push	ebp
 0x1:	mov	ebp, esp
-0x3:	leave	
-0x4:	ret	
-0x5:	push	ebp
-0x6:	mov	ebp, esp
-0x8:	leave	
-0x9:	ret	
+0x3:	sub	esp, 4
+0x6:	leave	
+0x7:	ret	
+0x8:	push	ebp
+0x9:	mov	ebp, esp
+0xb:	sub	esp, 4
+0xe:	leave	
+0xf:	ret	
+0x10:	push	ebp
+0x11:	mov	ebp, esp
+0x13:	sub	esp, 8
+0x16:	leave	
 
 
 SECTION HEADER #1 (1)
@@ -48,7 +54,7 @@ SECTION HEADER #1 (1)
        0 physical address
        0 virtual address
        4 (4) size of raw data
-      97 file pointer to raw data (00000097 to 0000009A)
+      A4 file pointer to raw data (000000A4 to 000000A7)
        0 file pointer to relocation table
        0 file pointer to line numbers
        0 number of relocations
@@ -89,13 +95,13 @@ Indx Sectn   Value   Type  Storage Name
 0000 DEBUG 00000000  0000 FILE     .file
      * test2_32.asm
 0002     1 00000000  0000 STATIC   .text
-     * Section: 0000  Len: 0000B  Relocs: 0000  LineNums: 0000 checksum:00000000
+     * Section: 0000  Len: 00018  Relocs: 0000  LineNums: 0000 checksum:00000000
 0004     2 00000000  0000 STATIC   .data
      * Section: 0000  Len: 00004  Relocs: 0000  LineNums: 0000 checksum:00000000
 0006     3 00000000  0000 STATIC   .bss
      * Section: 0000  Len: 00008  Relocs: 0000  LineNums: 0000 checksum:00000000
 0008     1 00000000  0020 EXTERNAL __func1
-0009     1 00000005  0020 EXTERNAL __func2
-000A     1 0000000A  0020 EXTERNAL __func3
+0009     1 00000008  0020 EXTERNAL __func2
+000A     1 00000010  0020 EXTERNAL __func3
 
 String Table Size = 0x4 (4) bytes 0 entries

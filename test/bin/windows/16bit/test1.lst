@@ -25,8 +25,8 @@ Symbols:
 @Date  . . . . . . . . . . . . .        Text   10/09/26
 @FileCur . . . . . . . . . . . .        Text   C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\16bit\test1.asm
 @FileName  . . . . . . . . . . .        Text   TEST1
-@Time  . . . . . . . . . . . . .        Text   10:02:20
+@Time  . . . . . . . . . . . . .        Text   10:38:00
 @Version . . . . . . . . . . . .        Text   800
 __JWASM__  . . . . . . . . . . .        Number            D4h 
 
-C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\16bit\test1.asm: 1 lines, 1 passes, 2 ms, 0 warnings, 2 errors
+C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\16bit\test1.asm: 1 lines, 1 passes, 1 ms, 0 warnings, 2 errors

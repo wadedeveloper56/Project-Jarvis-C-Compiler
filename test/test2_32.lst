@@ -31,27 +31,36 @@ test2_32.asm
                                 _func3 PROTO C;
 
 00000000                        _func1 PROC C, _a:SDWORD , _b:SDWORD 
+                                	LOCAL _c:SDWORD
 00000000  55                *   push ebp
 00000001  8BEC              *   mov ebp, esp
-00000003                        	ret
-00000003  C9                *   leave
-00000004  C3                *   retn 
-00000005                        _func1 endp
+00000003  83EC04            *   sub esp, 4
+00000006                        	ret
+00000006  C9                *   leave
+00000007  C3                *   retn 
+00000008                        _func1 endp
 
-00000005                        _func2 PROC C, _a:SDWORD , _b:SDWORD 
-00000005  55                *   push ebp
-00000006  8BEC              *   mov ebp, esp
-00000008                        	ret
-00000008  C9                *   leave
-00000009  C3                *   retn 
-0000000A                        _func2 endp
+00000008                        _func2 PROC C, _a:SDWORD , _b:SDWORD 
+                                	LOCAL _c:SDWORD
+00000008  55                *   push ebp
+00000009  8BEC              *   mov ebp, esp
+0000000B  83EC04            *   sub esp, 4
+0000000E                        	ret
+0000000E  C9                *   leave
+0000000F  C3                *   retn 
+00000010                        _func2 endp
 
-0000000A                        _func3 PROC C
-0000000A                        	ret
-0000000A  C3                *   retn
-0000000B                        _func3 endp
+00000010                        _func3 PROC C
+                                	LOCAL _a:SDWORD, _b:SDWORD
+00000010  55                *   push ebp
+00000011  8BEC              *   mov ebp, esp
+00000013  83EC08            *   sub esp, 8
+00000016                        	ret
+00000016  C9                *   leave
+00000017  C3                *   retn
+00000018                        _func3 endp
                                 end
-0000000B                    *   _TEXT ends
+00000018                    *   _TEXT ends
 
 
 Macros:
@@ -72,20 +81,24 @@ Segments and Groups:
 FLAT . . . . . . . . . . . . . .        GROUP
 _BSS . . . . . . . . . . . . . .        32 Bit   00000008 DWord   Public  'BSS'
 _DATA  . . . . . . . . . . . . .        32 Bit   00000004 DWord   Public  'DATA'
-_TEXT  . . . . . . . . . . . . .        32 Bit   0000000B DWord   Public  'CODE'
+_TEXT  . . . . . . . . . . . . .        32 Bit   00000018 DWord   Public  'CODE'
 
 
 Procedures, parameters and locals:
 
                 N a m e                 Type     Value    Segment  Length
 
-_func1 . . . . . . . . . . . . .        P Near   00000000 _TEXT    00000005 Public   C
+_func1 . . . . . . . . . . . . .        P Near   00000000 _TEXT    00000008 Public   C
   _a . . . . . . . . . . . . . .        DWord             ebp + 0008
   _b . . . . . . . . . . . . . .        DWord             ebp + 000C
-_func2 . . . . . . . . . . . . .        P Near   00000005 _TEXT    00000005 Public   C
+  _c . . . . . . . . . . . . . .        DWord             ebp - 0004
+_func2 . . . . . . . . . . . . .        P Near   00000008 _TEXT    00000008 Public   C
   _a . . . . . . . . . . . . . .        DWord             ebp + 0008
   _b . . . . . . . . . . . . . .        DWord             ebp + 000C
-_func3 . . . . . . . . . . . . .        P Near   0000000A _TEXT    00000001 Public   C
+  _c . . . . . . . . . . . . . .        DWord             ebp - 0004
+_func3 . . . . . . . . . . . . .        P Near   00000010 _TEXT    00000008 Public   C
+  _a . . . . . . . . . . . . . .        DWord             ebp - 0004
+  _b . . . . . . . . . . . . . .        DWord             ebp - 0008
 
 
 Symbols:
@@ -101,7 +114,7 @@ Symbols:
 @FileName  . . . . . . . . . . .        Text   TEST2_32
 @Interface . . . . . . . . . . .        Number             1h 
 @Model . . . . . . . . . . . . .        Number             7h 
-@Time  . . . . . . . . . . . . .        Text   10:02:21
+@Time  . . . . . . . . . . . . .        Text   10:38:01
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT
@@ -111,4 +124,4 @@ _m . . . . . . . . . . . . . . .        DWord              4h _BSS C
 _u . . . . . . . . . . . . . . .        DWord              0h _BSS C
 _x . . . . . . . . . . . . . . .        DWord              0h _DATA C
 
-test2_32.asm: 29 lines, 2 passes, 1 ms, 0 warnings, 0 errors
+test2_32.asm: 32 lines, 2 passes, 1 ms, 0 warnings, 0 errors

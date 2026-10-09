@@ -26,6 +26,10 @@ namespace WadeSpace
 		MasmCodeGenerator& operator=(MasmCodeGenerator&& other) noexcept;
 
 	private:
+		// thread-local pointers used during expression evaluation to resolve identifiers
+		static thread_local shared_ptr<vector<shared_ptr<VariableData>>> g_current_locals;
+		static thread_local shared_ptr<vector<shared_ptr<VariableData>>> g_current_params;
+
 		void handleIndividualFunction(ostream& out, shared_ptr<FunctionData> ptr);
 		void handleInitializedVariable(ostream& out, shared_ptr<VariableData> ptr);
 		void handleUUninitializedVariable(ostream& out, shared_ptr<VariableData> ptr);

@@ -15,6 +15,52 @@ using namespace std;
 MasmCodeGenerator::MasmCodeGenerator(shared_ptr<vector<shared_ptr<VariableData>>> variableTable, shared_ptr<vector<shared_ptr<FunctionData>>> functionTable): BaseCodeGenerator(variableTable, functionTable)
 {}
 
+// provide file-local thread_local references to avoid access to private static members
+thread_local shared_ptr<vector<shared_ptr<VariableData>>> masm_current_locals = nullptr;
+thread_local shared_ptr<vector<shared_ptr<VariableData>>> masm_current_params = nullptr;
+
+static void asmResolveIdentifier(ostream& out, shared_ptr<TreeNodeData> left, shared_ptr<TreeNodeData> right, shared_ptr<TreeNodeData> current)
+{
+	if (current == nullptr) return;
+	if (current->getType() == NT_VAR_ACCESS && current->hasIdentifier())
+	{
+		string name = current->getIdentifier()->getSymbolName();
+		// search locals first
+		if (masm_current_locals)
+		{
+			for (auto &lv : *masm_current_locals)
+			{
+				if (lv->name == name)
+				{
+					if (bit16) out << "\tmov ax, " << name << endl;
+					else if (bit32) out << "\tmov eax, " << name << endl;
+					else out << "\tmov rax, " << name << endl;
+					return;
+				}
+			}
+		}
+		// then params
+		if (masm_current_params)
+		{
+			for (auto &p : *masm_current_params)
+			{
+				if (p->name == name)
+				{
+					if (bit16) out << "\tmov ax, _" << name << endl;
+					else if (bit32) out << "\tmov eax, _" << name << endl;
+					else out << "\tmov rax, _" << name << endl;
+					return;
+				}
+			}
+		}
+		// fallback to global
+		if (masm_current_locals == nullptr && masm_current_params == nullptr)
+		{
+			// fall-through, expression evaluator will handle other node types
+		}
+	}
+}
+
 string MasmCodeGenerator::vectorToCommaSeparatedList(const vector<string>& vec)
 {
 	string result;
@@ -144,6 +190,7 @@ void MasmCodeGenerator::handleIndividualFunction(ostream& out, shared_ptr<Functi
 	optional<TokenType> returnType = ptr->type;
 	shared_ptr<vector<shared_ptr<VariableData>>> parameters = ptr->parameters;
 	shared_ptr<BaseStatement> statements = ptr->statements;
+	// emit PROC and LOCAL/parameter declarations
 	if (parameters != nullptr && !parameters->empty())
 	{
 		handleFunctionWithParameters(out, ptr->name, parameters);
@@ -152,7 +199,39 @@ void MasmCodeGenerator::handleIndividualFunction(ostream& out, shared_ptr<Functi
 	{
 		out << "_" << ptr->name << " PROC C" << endl;
 	}
+
+	// emit LOCAL directive for locals, MASM syntax: LOCAL name:TYPE, ...
+	if (ptr->localVariables && !ptr->localVariables->empty())
+	{
+		vector<string> localDecls;
+		for (auto& lv : *ptr->localVariables)
+		{
+			bool isPointer = lv->pointer;
+			bool isUnsigned = lv->unsign;
+			string asmType = getAsmType(lv->type.value_or(UNKNOWN), isPointer, isUnsigned);
+			string lname = lv->name;
+			// MASM LOCAL expects the type without trailing space sometimes; use trimmed
+			if (!asmType.empty())
+			{
+				// remove trailing space
+				if (asmType.back() == ' ') asmType.pop_back();
+			}
+			localDecls.push_back("_" + lname + ":" + asmType);
+		}
+		if (!localDecls.empty())
+		{
+			out << "\tLOCAL " << vectorToCommaSeparatedList(localDecls) << endl;
+		}
+	}
+
+	// evaluate statements, resolving locals/params/globals by name
+	// set thread-local references for helper resolution
+	masm_current_locals = ptr->localVariables;
+	masm_current_params = parameters;
 	handleIndividualFunctionStatements(out, returnType.value(), statements);
+	masm_current_locals = nullptr;
+	masm_current_params = nullptr;
+
 	out << "_" << ptr->name << " endp" << endl;
 }
 

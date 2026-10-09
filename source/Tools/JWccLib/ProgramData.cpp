@@ -18,6 +18,98 @@ ProgramData::ProgramData()
 	generator = nullptr;
 }
 
+void ProgramData::collectLocalDeclarations(shared_ptr<BaseStatement> stmt, shared_ptr<vector<shared_ptr<VariableData>>> locals)
+{
+	if (!stmt || !locals) return;
+
+	// collect declarations attached directly to this statement
+	auto declList = stmt->getDeclarationList();
+	if (declList != nullptr)
+	{
+		for (shared_ptr<Declaration> decl : *declList)
+		{
+			auto initList = decl->getVectorInitDeclarator();
+			if (initList != nullptr)
+			{
+				for (shared_ptr<InitDeclarator> init : *initList)
+				{
+					shared_ptr<VariableData> vdata = make_shared<VariableData>();
+					vdata->name = init->getVariableName();
+					vdata->type = decl->getDeclarationSpecifiers() ? getDeclarationSpecifiersType(decl->getDeclarationSpecifiers()) : UNKNOWN;
+					vdata->pointer = (init->getDeclarator() != nullptr) ? init->getDeclarator()->hasPointer() : false;
+					vdata->initializer = nullptr;
+					vdata->arraySize = 1;
+					vdata->unsign = false;
+					vdata->plist = nullptr;
+
+					// fill unsigned/struct info
+					auto declSpecifiers = decl->getDeclarationSpecifiers();
+					if (declSpecifiers != nullptr)
+					{
+						auto list = declSpecifiers->getDeclarationSpecifiersNodeList();
+						if (list != nullptr)
+						{
+							for (auto node : *list)
+							{
+								if (node->getTypeSpecifier() != nullptr)
+								{
+									TokenType tt = node->getTypeSpecifier()->getType().value();
+									if (tt == STRUCT || tt == UNION)
+									{
+										vdata->structName = node->getTypeSpecifier()->getStructOrUnionSpecifier()->getName()->getSymbolName();
+										vdata->suSpec = compiler->findStruct(vdata->structName);
+									}
+									else if (tt == UNSIGNED)
+									{
+										vdata->unsign = true;
+									}
+								}
+								else if (node->getStorageClassSpecifier() != nullptr)
+								{
+									// ignore storage for locals (auto by default)
+								}
+							}
+						}
+					}
+
+					if (init->hasInitializer() && init->getInitializer() != nullptr)
+					{
+						vdata->initializer = make_shared<Initializer>(*init->getInitializer());
+					}
+					auto declr = init->getDeclarator();
+					if (declr != nullptr)
+					{
+						auto dd = declr->getDirectDeclarator();
+						if (dd != nullptr && dd->hasConstantExpression())
+						{
+							vdata->arraySize = dd->getConstantExpression()->getData()->getConstant()->getIConst()->getIntegerConst();
+						}
+					}
+					locals->push_back(vdata);
+				}
+			}
+		}
+	}
+
+	// recurse into nested statements
+	auto stmtList = stmt->getStatementList();
+	if (stmtList != nullptr)
+	{
+		for (auto child : *stmtList)
+		{
+			if (child != nullptr)
+			{
+				collectLocalDeclarations(child, locals);
+			}
+		}
+	}
+	// also recurse into single nested statement pointer
+	if (stmt->getStatement() != nullptr)
+	{
+		collectLocalDeclarations(stmt->getStatement(), locals);
+	}
+}
+
 void ProgramData::addExternalDeclaration(shared_ptr<ExternalDeclaration> data)
 {
 	program->push_back(data);
@@ -79,6 +171,7 @@ void ProgramData::handleFunction(shared_ptr<FunctionDefinition> declaration, sha
 	shared_ptr<FunctionData> data = make_shared<FunctionData>();
 	auto stmt = declaration->getBaseStatement();
 	data->statements = make_shared<BaseStatement>(*stmt);
+	data->localVariables = make_shared<vector<shared_ptr<VariableData>>>();
 	shared_ptr<DeclarationSpecifiers> declaration_specifiers = declaration->getDeclarationSpecifiers();
 	if (declaration_specifiers != nullptr && declaration_specifiers->getDeclarationSpecifiersNodeList() != nullptr)
 	{
@@ -100,6 +193,12 @@ void ProgramData::handleFunction(shared_ptr<FunctionDefinition> declaration, sha
 		}
 		functionTable->push_back(data);
 		//compiler->getFunctionList()->push_back("_"+data->name);
+
+		// collect local variable declarations recursively from function body
+		if (stmt != nullptr)
+		{
+			collectLocalDeclarations(stmt, data->localVariables);
+		}
 	}
 }
 
