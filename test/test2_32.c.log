@@ -1,0 +1,660 @@
+Compiler (x86/x64) v1.0 (C) Copyright 2025-2026 Christopher D. Wade.
+All Rights Reserved
+unsigned int u ;
+int x = 3 ;
+int m ;
+
+int func1 ( int a , int b ) {
+int c = a + b * 5 ;
+return c ;
+}
+
+int func2 ( int a , int b ) {
+int c = a + b / 3 ;
+return c ;
+}
+
+int func3 ( ) {
+int y = func1 ( x , 4 ) ;
+int x = func2 ( m , 6 ) ;
+return x + y ;
+}
+
+increaseLocation(): 8, total = 8
+Scanner: token [unsigned]
+UNIGNED REDUCE to type_specifier
+increaseLocation(): 1, total = 9
+increaseLocation(): 3, total = 12
+Scanner: token [int]
+INT REDUCE to type_specifier
+increaseLocation(): 1, total = 13
+increaseLocation(): 1, total = 14
+Scanner: identifier [u]
+type_specifier REDUCE to declaration_specifiers
+type_specifier declaration_specifiers REDUCE to declaration_specifiers
+IDENTIFIER REDUCE to direct_declarator
+increaseLocation(): 1, total = 15
+increaseLocation(): 1, total = 16
+Scanner: token [;]
+direct_declarator REDUCE to declarator
+declarator REDUCE to init_declarator
+init_declarator REDUCE to init_declarator_list
+declaration_specifiers init_declarator_list SEMICOLON REDUCE to declaration
+declaration REDUCE to external_declaration
+external_declaration REDUCE to translation_unit
+
+increaseLocation(): 1, total = 17
+increaseLocation(): 3, total = 20
+Scanner: token [int]
+INT REDUCE to type_specifier
+increaseLocation(): 1, total = 21
+increaseLocation(): 1, total = 22
+Scanner: identifier [x]
+type_specifier REDUCE to declaration_specifiers
+IDENTIFIER REDUCE to direct_declarator
+increaseLocation(): 1, total = 23
+increaseLocation(): 1, total = 24
+Scanner: token [=]
+direct_declarator REDUCE to declarator
+increaseLocation(): 1, total = 25
+increaseLocation(): 1, total = 26
+Scanner: decimal number: 3
+I_CONST REDUCE to constant 
+constant REDUCE to primary_expression
+primary_expression REDUCE to postfix_expression
+increaseLocation(): 1, total = 27
+increaseLocation(): 1, total = 28
+Scanner: token [;]
+postfix_expression REDUCE unary_expression
+unary_expression REDUCE to cast_expression
+cast_expression REDUCE to multiplicative_expression
+multiplicative_expression REDUCE to additive_expression
+additive_expression REDUCE to shift_expression
+shift_expression REDUCE to relational_expression
+relational_expression REDUCE to equality_expression
+equality_expression REDUCE to and_expression
+and_expression REDUCE to exclusive_or_expression
+exclusive_or_expression REDUCE to inclusive_or_expression
+inclusive_or_expression REDUCE to logical_and_expression
+inclusive_and_expression REDUCE to logical_or_expression
+logical_or_expression REDUCE to conditional_expression
+conditional_expression REDUCE to assignment_expression
+assignment_expression REDUCE to initializer
+declarator EQUAL initializer REDUCE to init_declarator
+init_declarator REDUCE to init_declarator_list
+declaration_specifiers init_declarator_list SEMICOLON REDUCE to declaration
+declaration REDUCE to external_declaration
+translation_unit external_declaration REDUCE to translation_unit
+
+increaseLocation(): 1, total = 29
+increaseLocation(): 3, total = 32
+Scanner: token [int]
+INT REDUCE to type_specifier
+increaseLocation(): 1, total = 33
+increaseLocation(): 1, total = 34
+Scanner: identifier [m]
+type_specifier REDUCE to declaration_specifiers
+IDENTIFIER REDUCE to direct_declarator
+increaseLocation(): 1, total = 35
+increaseLocation(): 1, total = 36
+Scanner: token [;]
+direct_declarator REDUCE to declarator
+declarator REDUCE to init_declarator
+init_declarator REDUCE to init_declarator_list
+declaration_specifiers init_declarator_list SEMICOLON REDUCE to declaration
+declaration REDUCE to external_declaration
+translation_unit external_declaration REDUCE to translation_unit
+
+increaseLocation(): 1, total = 37
+increaseLocation(): 1, total = 38
+increaseLocation(): 3, total = 41
+Scanner: token [int]
+INT REDUCE to type_specifier
+increaseLocation(): 1, total = 42
+increaseLocation(): 5, total = 47
+Scanner: identifier [func1]
+type_specifier REDUCE to declaration_specifiers
+IDENTIFIER REDUCE to direct_declarator
+increaseLocation(): 1, total = 48
+increaseLocation(): 1, total = 49
+Scanner: token [(]
+increaseLocation(): 1, total = 50
+increaseLocation(): 3, total = 53
+Scanner: token [int]
+INT REDUCE to type_specifier
+increaseLocation(): 1, total = 54
+increaseLocation(): 1, total = 55
+Scanner: identifier [a]
+type_specifier REDUCE to declaration_specifiers
+IDENTIFIER REDUCE to direct_declarator
+increaseLocation(): 1, total = 56
+increaseLocation(): 1, total = 57
+Scanner: token [,]
+direct_declarator REDUCE to declarator
+declaration_specifiers declarator REDUCE to parameter_declaration
+parameter_declaration REDUCE to parameter_list
+increaseLocation(): 1, total = 58
+increaseLocation(): 3, total = 61
+Scanner: token [int]
+INT REDUCE to type_specifier
+increaseLocation(): 1, total = 62
+increaseLocation(): 1, total = 63
+Scanner: identifier [b]
+type_specifier REDUCE to declaration_specifiers
+IDENTIFIER REDUCE to direct_declarator
+increaseLocation(): 1, total = 64
+increaseLocation(): 1, total = 65
+Scanner: token [)]
+direct_declarator REDUCE to declarator
+declaration_specifiers declarator REDUCE to parameter_declaration
+parameter_list COMMA parameter_declaration REDUCE to parameter_list
+parameter_list REDUCE to parameter_type_list
+direct_declarator OPAREN parameter_type_list CPAREN to direct_declarator
+increaseLocation(): 1, total = 66
+increaseLocation(): 1, total = 67
+Scanner: token [{]
+direct_declarator REDUCE to declarator
+increaseLocation(): 1, total = 68
+increaseLocation(): 3, total = 71
+Scanner: token [int]
+INT REDUCE to type_specifier
+increaseLocation(): 1, total = 72
+increaseLocation(): 1, total = 73
+Scanner: identifier [c]
+type_specifier REDUCE to declaration_specifiers
+IDENTIFIER REDUCE to direct_declarator
+increaseLocation(): 1, total = 74
+increaseLocation(): 1, total = 75
+Scanner: token [=]
+direct_declarator REDUCE to declarator
+increaseLocation(): 1, total = 76
+increaseLocation(): 1, total = 77
+Scanner: identifier [a]
+IDENTIFIER REDUCE to primary_expression
+primary_expression REDUCE to postfix_expression
+increaseLocation(): 1, total = 78
+increaseLocation(): 1, total = 79
+Scanner: token [+]
+postfix_expression REDUCE unary_expression
+unary_expression REDUCE to cast_expression
+cast_expression REDUCE to multiplicative_expression
+multiplicative_expression REDUCE to additive_expression
+increaseLocation(): 1, total = 80
+increaseLocation(): 1, total = 81
+Scanner: identifier [b]
+IDENTIFIER REDUCE to primary_expression
+primary_expression REDUCE to postfix_expression
+increaseLocation(): 1, total = 82
+increaseLocation(): 1, total = 83
+Scanner: token [*]
+postfix_expression REDUCE unary_expression
+unary_expression REDUCE to cast_expression
+cast_expression REDUCE to multiplicative_expression
+increaseLocation(): 1, total = 84
+increaseLocation(): 1, total = 85
+Scanner: decimal number: 5
+I_CONST REDUCE to constant 
+constant REDUCE to primary_expression
+primary_expression REDUCE to postfix_expression
+increaseLocation(): 1, total = 86
+increaseLocation(): 1, total = 87
+Scanner: token [;]
+postfix_expression REDUCE unary_expression
+unary_expression REDUCE to cast_expression
+multiplicative_expression TIMES_OP cast_expression REDUCE to multiplicative_expression
+additive_expression REDUCE to multiplicative_expression
+additive_expression REDUCE to shift_expression
+shift_expression REDUCE to relational_expression
+relational_expression REDUCE to equality_expression
+equality_expression REDUCE to and_expression
+and_expression REDUCE to exclusive_or_expression
+exclusive_or_expression REDUCE to inclusive_or_expression
+inclusive_or_expression REDUCE to logical_and_expression
+inclusive_and_expression REDUCE to logical_or_expression
+logical_or_expression REDUCE to conditional_expression
+conditional_expression REDUCE to assignment_expression
+assignment_expression REDUCE to initializer
+declarator EQUAL initializer REDUCE to init_declarator
+init_declarator REDUCE to init_declarator_list
+declaration_specifiers init_declarator_list SEMICOLON REDUCE to declaration
+declaration REDUCE to declaration_list
+increaseLocation(): 1, total = 88
+increaseLocation(): 6, total = 94
+Scanner: token [return]
+increaseLocation(): 1, total = 95
+increaseLocation(): 1, total = 96
+Scanner: identifier [c]
+IDENTIFIER REDUCE to primary_expression
+primary_expression REDUCE to postfix_expression
+increaseLocation(): 1, total = 97
+increaseLocation(): 1, total = 98
+Scanner: token [;]
+postfix_expression REDUCE unary_expression
+unary_expression REDUCE to cast_expression
+cast_expression REDUCE to multiplicative_expression
+multiplicative_expression REDUCE to additive_expression
+additive_expression REDUCE to shift_expression
+shift_expression REDUCE to relational_expression
+relational_expression REDUCE to equality_expression
+equality_expression REDUCE to and_expression
+and_expression REDUCE to exclusive_or_expression
+exclusive_or_expression REDUCE to inclusive_or_expression
+inclusive_or_expression REDUCE to logical_and_expression
+inclusive_and_expression REDUCE to logical_or_expression
+logical_or_expression REDUCE to conditional_expression
+conditional_expression REDUCE to assignment_expression
+asignment_expression REDUCE to expression
+RETURN expression SEMICOLON REDUCE to jump_statement
+jump_statement REDUCE to statement
+statement REDUCE to statement_list
+increaseLocation(): 1, total = 99
+increaseLocation(): 1, total = 100
+Scanner: token [}]
+OCURLY declaration_list statement_list CCURLY REDUCE to compound_statement
+declaration_specifiers declarator compound_statement REDUCE to function_definition
+function_definition REDUCE to external_declaration
+translation_unit external_declaration REDUCE to translation_unit
+
+increaseLocation(): 1, total = 101
+increaseLocation(): 1, total = 102
+increaseLocation(): 3, total = 105
+Scanner: token [int]
+INT REDUCE to type_specifier
+increaseLocation(): 1, total = 106
+increaseLocation(): 5, total = 111
+Scanner: identifier [func2]
+type_specifier REDUCE to declaration_specifiers
+IDENTIFIER REDUCE to direct_declarator
+increaseLocation(): 1, total = 112
+increaseLocation(): 1, total = 113
+Scanner: token [(]
+increaseLocation(): 1, total = 114
+increaseLocation(): 3, total = 117
+Scanner: token [int]
+INT REDUCE to type_specifier
+increaseLocation(): 1, total = 118
+increaseLocation(): 1, total = 119
+Scanner: identifier [a]
+type_specifier REDUCE to declaration_specifiers
+IDENTIFIER REDUCE to direct_declarator
+increaseLocation(): 1, total = 120
+increaseLocation(): 1, total = 121
+Scanner: token [,]
+direct_declarator REDUCE to declarator
+declaration_specifiers declarator REDUCE to parameter_declaration
+parameter_declaration REDUCE to parameter_list
+increaseLocation(): 1, total = 122
+increaseLocation(): 3, total = 125
+Scanner: token [int]
+INT REDUCE to type_specifier
+increaseLocation(): 1, total = 126
+increaseLocation(): 1, total = 127
+Scanner: identifier [b]
+type_specifier REDUCE to declaration_specifiers
+IDENTIFIER REDUCE to direct_declarator
+increaseLocation(): 1, total = 128
+increaseLocation(): 1, total = 129
+Scanner: token [)]
+direct_declarator REDUCE to declarator
+declaration_specifiers declarator REDUCE to parameter_declaration
+parameter_list COMMA parameter_declaration REDUCE to parameter_list
+parameter_list REDUCE to parameter_type_list
+direct_declarator OPAREN parameter_type_list CPAREN to direct_declarator
+increaseLocation(): 1, total = 130
+increaseLocation(): 1, total = 131
+Scanner: token [{]
+direct_declarator REDUCE to declarator
+increaseLocation(): 1, total = 132
+increaseLocation(): 3, total = 135
+Scanner: token [int]
+INT REDUCE to type_specifier
+increaseLocation(): 1, total = 136
+increaseLocation(): 1, total = 137
+Scanner: identifier [c]
+type_specifier REDUCE to declaration_specifiers
+IDENTIFIER REDUCE to direct_declarator
+increaseLocation(): 1, total = 138
+increaseLocation(): 1, total = 139
+Scanner: token [=]
+direct_declarator REDUCE to declarator
+increaseLocation(): 1, total = 140
+increaseLocation(): 1, total = 141
+Scanner: identifier [a]
+IDENTIFIER REDUCE to primary_expression
+primary_expression REDUCE to postfix_expression
+increaseLocation(): 1, total = 142
+increaseLocation(): 1, total = 143
+Scanner: token [+]
+postfix_expression REDUCE unary_expression
+unary_expression REDUCE to cast_expression
+cast_expression REDUCE to multiplicative_expression
+multiplicative_expression REDUCE to additive_expression
+increaseLocation(): 1, total = 144
+increaseLocation(): 1, total = 145
+Scanner: identifier [b]
+IDENTIFIER REDUCE to primary_expression
+primary_expression REDUCE to postfix_expression
+increaseLocation(): 1, total = 146
+increaseLocation(): 1, total = 147
+Scanner: token [/]
+postfix_expression REDUCE unary_expression
+unary_expression REDUCE to cast_expression
+cast_expression REDUCE to multiplicative_expression
+increaseLocation(): 1, total = 148
+increaseLocation(): 1, total = 149
+Scanner: decimal number: 3
+I_CONST REDUCE to constant 
+constant REDUCE to primary_expression
+primary_expression REDUCE to postfix_expression
+increaseLocation(): 1, total = 150
+increaseLocation(): 1, total = 151
+Scanner: token [;]
+postfix_expression REDUCE unary_expression
+unary_expression REDUCE to cast_expression
+multiplicative_expression DIV_OP cast_expression REDUCE to multiplicative_expression
+additive_expression REDUCE to multiplicative_expression
+additive_expression REDUCE to shift_expression
+shift_expression REDUCE to relational_expression
+relational_expression REDUCE to equality_expression
+equality_expression REDUCE to and_expression
+and_expression REDUCE to exclusive_or_expression
+exclusive_or_expression REDUCE to inclusive_or_expression
+inclusive_or_expression REDUCE to logical_and_expression
+inclusive_and_expression REDUCE to logical_or_expression
+logical_or_expression REDUCE to conditional_expression
+conditional_expression REDUCE to assignment_expression
+assignment_expression REDUCE to initializer
+declarator EQUAL initializer REDUCE to init_declarator
+init_declarator REDUCE to init_declarator_list
+declaration_specifiers init_declarator_list SEMICOLON REDUCE to declaration
+declaration REDUCE to declaration_list
+increaseLocation(): 1, total = 152
+increaseLocation(): 6, total = 158
+Scanner: token [return]
+increaseLocation(): 1, total = 159
+increaseLocation(): 1, total = 160
+Scanner: identifier [c]
+IDENTIFIER REDUCE to primary_expression
+primary_expression REDUCE to postfix_expression
+increaseLocation(): 1, total = 161
+increaseLocation(): 1, total = 162
+Scanner: token [;]
+postfix_expression REDUCE unary_expression
+unary_expression REDUCE to cast_expression
+cast_expression REDUCE to multiplicative_expression
+multiplicative_expression REDUCE to additive_expression
+additive_expression REDUCE to shift_expression
+shift_expression REDUCE to relational_expression
+relational_expression REDUCE to equality_expression
+equality_expression REDUCE to and_expression
+and_expression REDUCE to exclusive_or_expression
+exclusive_or_expression REDUCE to inclusive_or_expression
+inclusive_or_expression REDUCE to logical_and_expression
+inclusive_and_expression REDUCE to logical_or_expression
+logical_or_expression REDUCE to conditional_expression
+conditional_expression REDUCE to assignment_expression
+asignment_expression REDUCE to expression
+RETURN expression SEMICOLON REDUCE to jump_statement
+jump_statement REDUCE to statement
+statement REDUCE to statement_list
+increaseLocation(): 1, total = 163
+increaseLocation(): 1, total = 164
+Scanner: token [}]
+OCURLY declaration_list statement_list CCURLY REDUCE to compound_statement
+declaration_specifiers declarator compound_statement REDUCE to function_definition
+function_definition REDUCE to external_declaration
+translation_unit external_declaration REDUCE to translation_unit
+
+increaseLocation(): 1, total = 165
+increaseLocation(): 1, total = 166
+increaseLocation(): 3, total = 169
+Scanner: token [int]
+INT REDUCE to type_specifier
+increaseLocation(): 1, total = 170
+increaseLocation(): 5, total = 175
+Scanner: identifier [func3]
+type_specifier REDUCE to declaration_specifiers
+IDENTIFIER REDUCE to direct_declarator
+increaseLocation(): 1, total = 176
+increaseLocation(): 1, total = 177
+Scanner: token [(]
+increaseLocation(): 1, total = 178
+increaseLocation(): 1, total = 179
+Scanner: token [)]
+direct_declarator OPAREN CPAREN REDUCE to direct_declarator
+increaseLocation(): 1, total = 180
+increaseLocation(): 1, total = 181
+Scanner: token [{]
+direct_declarator REDUCE to declarator
+increaseLocation(): 1, total = 182
+increaseLocation(): 3, total = 185
+Scanner: token [int]
+INT REDUCE to type_specifier
+increaseLocation(): 1, total = 186
+increaseLocation(): 1, total = 187
+Scanner: identifier [y]
+type_specifier REDUCE to declaration_specifiers
+IDENTIFIER REDUCE to direct_declarator
+increaseLocation(): 1, total = 188
+increaseLocation(): 1, total = 189
+Scanner: token [=]
+direct_declarator REDUCE to declarator
+increaseLocation(): 1, total = 190
+increaseLocation(): 5, total = 195
+Scanner: identifier [func1]
+IDENTIFIER REDUCE to primary_expression
+primary_expression REDUCE to postfix_expression
+increaseLocation(): 1, total = 196
+increaseLocation(): 1, total = 197
+Scanner: token [(]
+increaseLocation(): 1, total = 198
+increaseLocation(): 1, total = 199
+Scanner: identifier [x]
+IDENTIFIER REDUCE to primary_expression
+primary_expression REDUCE to postfix_expression
+increaseLocation(): 1, total = 200
+increaseLocation(): 1, total = 201
+Scanner: token [,]
+postfix_expression REDUCE unary_expression
+unary_expression REDUCE to cast_expression
+cast_expression REDUCE to multiplicative_expression
+multiplicative_expression REDUCE to additive_expression
+additive_expression REDUCE to shift_expression
+shift_expression REDUCE to relational_expression
+relational_expression REDUCE to equality_expression
+equality_expression REDUCE to and_expression
+and_expression REDUCE to exclusive_or_expression
+exclusive_or_expression REDUCE to inclusive_or_expression
+inclusive_or_expression REDUCE to logical_and_expression
+inclusive_and_expression REDUCE to logical_or_expression
+logical_or_expression REDUCE to conditional_expression
+conditional_expression REDUCE to assignment_expression
+assignment_expression REDUCE argument_expression_list
+increaseLocation(): 1, total = 202
+increaseLocation(): 1, total = 203
+Scanner: decimal number: 4
+I_CONST REDUCE to constant 
+constant REDUCE to primary_expression
+primary_expression REDUCE to postfix_expression
+increaseLocation(): 1, total = 204
+increaseLocation(): 1, total = 205
+Scanner: token [)]
+postfix_expression REDUCE unary_expression
+unary_expression REDUCE to cast_expression
+cast_expression REDUCE to multiplicative_expression
+multiplicative_expression REDUCE to additive_expression
+additive_expression REDUCE to shift_expression
+shift_expression REDUCE to relational_expression
+relational_expression REDUCE to equality_expression
+equality_expression REDUCE to and_expression
+and_expression REDUCE to exclusive_or_expression
+exclusive_or_expression REDUCE to inclusive_or_expression
+inclusive_or_expression REDUCE to logical_and_expression
+inclusive_and_expression REDUCE to logical_or_expression
+logical_or_expression REDUCE to conditional_expression
+conditional_expression REDUCE to assignment_expression
+argument_expression_list COMMA assignment_expression REDUCE argument_expression_list
+postfix_expression OPAREN argument_expression_list CPAREN REDUCE to postfix_expression
+increaseLocation(): 1, total = 206
+increaseLocation(): 1, total = 207
+Scanner: token [;]
+postfix_expression REDUCE unary_expression
+unary_expression REDUCE to cast_expression
+cast_expression REDUCE to multiplicative_expression
+multiplicative_expression REDUCE to additive_expression
+additive_expression REDUCE to shift_expression
+shift_expression REDUCE to relational_expression
+relational_expression REDUCE to equality_expression
+equality_expression REDUCE to and_expression
+and_expression REDUCE to exclusive_or_expression
+exclusive_or_expression REDUCE to inclusive_or_expression
+inclusive_or_expression REDUCE to logical_and_expression
+inclusive_and_expression REDUCE to logical_or_expression
+logical_or_expression REDUCE to conditional_expression
+conditional_expression REDUCE to assignment_expression
+assignment_expression REDUCE to initializer
+declarator EQUAL initializer REDUCE to init_declarator
+init_declarator REDUCE to init_declarator_list
+declaration_specifiers init_declarator_list SEMICOLON REDUCE to declaration
+declaration REDUCE to declaration_list
+increaseLocation(): 1, total = 208
+increaseLocation(): 3, total = 211
+Scanner: token [int]
+INT REDUCE to type_specifier
+increaseLocation(): 1, total = 212
+increaseLocation(): 1, total = 213
+Scanner: identifier [x]
+type_specifier REDUCE to declaration_specifiers
+IDENTIFIER REDUCE to direct_declarator
+increaseLocation(): 1, total = 214
+increaseLocation(): 1, total = 215
+Scanner: token [=]
+direct_declarator REDUCE to declarator
+increaseLocation(): 1, total = 216
+increaseLocation(): 5, total = 221
+Scanner: identifier [func2]
+IDENTIFIER REDUCE to primary_expression
+primary_expression REDUCE to postfix_expression
+increaseLocation(): 1, total = 222
+increaseLocation(): 1, total = 223
+Scanner: token [(]
+increaseLocation(): 1, total = 224
+increaseLocation(): 1, total = 225
+Scanner: identifier [m]
+IDENTIFIER REDUCE to primary_expression
+primary_expression REDUCE to postfix_expression
+increaseLocation(): 1, total = 226
+increaseLocation(): 1, total = 227
+Scanner: token [,]
+postfix_expression REDUCE unary_expression
+unary_expression REDUCE to cast_expression
+cast_expression REDUCE to multiplicative_expression
+multiplicative_expression REDUCE to additive_expression
+additive_expression REDUCE to shift_expression
+shift_expression REDUCE to relational_expression
+relational_expression REDUCE to equality_expression
+equality_expression REDUCE to and_expression
+and_expression REDUCE to exclusive_or_expression
+exclusive_or_expression REDUCE to inclusive_or_expression
+inclusive_or_expression REDUCE to logical_and_expression
+inclusive_and_expression REDUCE to logical_or_expression
+logical_or_expression REDUCE to conditional_expression
+conditional_expression REDUCE to assignment_expression
+assignment_expression REDUCE argument_expression_list
+increaseLocation(): 1, total = 228
+increaseLocation(): 1, total = 229
+Scanner: decimal number: 6
+I_CONST REDUCE to constant 
+constant REDUCE to primary_expression
+primary_expression REDUCE to postfix_expression
+increaseLocation(): 1, total = 230
+increaseLocation(): 1, total = 231
+Scanner: token [)]
+postfix_expression REDUCE unary_expression
+unary_expression REDUCE to cast_expression
+cast_expression REDUCE to multiplicative_expression
+multiplicative_expression REDUCE to additive_expression
+additive_expression REDUCE to shift_expression
+shift_expression REDUCE to relational_expression
+relational_expression REDUCE to equality_expression
+equality_expression REDUCE to and_expression
+and_expression REDUCE to exclusive_or_expression
+exclusive_or_expression REDUCE to inclusive_or_expression
+inclusive_or_expression REDUCE to logical_and_expression
+inclusive_and_expression REDUCE to logical_or_expression
+logical_or_expression REDUCE to conditional_expression
+conditional_expression REDUCE to assignment_expression
+argument_expression_list COMMA assignment_expression REDUCE argument_expression_list
+postfix_expression OPAREN argument_expression_list CPAREN REDUCE to postfix_expression
+increaseLocation(): 1, total = 232
+increaseLocation(): 1, total = 233
+Scanner: token [;]
+postfix_expression REDUCE unary_expression
+unary_expression REDUCE to cast_expression
+cast_expression REDUCE to multiplicative_expression
+multiplicative_expression REDUCE to additive_expression
+additive_expression REDUCE to shift_expression
+shift_expression REDUCE to relational_expression
+relational_expression REDUCE to equality_expression
+equality_expression REDUCE to and_expression
+and_expression REDUCE to exclusive_or_expression
+exclusive_or_expression REDUCE to inclusive_or_expression
+inclusive_or_expression REDUCE to logical_and_expression
+inclusive_and_expression REDUCE to logical_or_expression
+logical_or_expression REDUCE to conditional_expression
+conditional_expression REDUCE to assignment_expression
+assignment_expression REDUCE to initializer
+declarator EQUAL initializer REDUCE to init_declarator
+init_declarator REDUCE to init_declarator_list
+declaration_specifiers init_declarator_list SEMICOLON REDUCE to declaration
+declaration_list declaration REDUCE to declaration_list
+increaseLocation(): 1, total = 234
+increaseLocation(): 6, total = 240
+Scanner: token [return]
+increaseLocation(): 1, total = 241
+increaseLocation(): 1, total = 242
+Scanner: identifier [x]
+IDENTIFIER REDUCE to primary_expression
+primary_expression REDUCE to postfix_expression
+increaseLocation(): 1, total = 243
+increaseLocation(): 1, total = 244
+Scanner: token [+]
+postfix_expression REDUCE unary_expression
+unary_expression REDUCE to cast_expression
+cast_expression REDUCE to multiplicative_expression
+multiplicative_expression REDUCE to additive_expression
+increaseLocation(): 1, total = 245
+increaseLocation(): 1, total = 246
+Scanner: identifier [y]
+IDENTIFIER REDUCE to primary_expression
+primary_expression REDUCE to postfix_expression
+increaseLocation(): 1, total = 247
+increaseLocation(): 1, total = 248
+Scanner: token [;]
+postfix_expression REDUCE unary_expression
+unary_expression REDUCE to cast_expression
+cast_expression REDUCE to multiplicative_expression
+additive_expression REDUCE to multiplicative_expression
+additive_expression REDUCE to shift_expression
+shift_expression REDUCE to relational_expression
+relational_expression REDUCE to equality_expression
+equality_expression REDUCE to and_expression
+and_expression REDUCE to exclusive_or_expression
+exclusive_or_expression REDUCE to inclusive_or_expression
+inclusive_or_expression REDUCE to logical_and_expression
+inclusive_and_expression REDUCE to logical_or_expression
+logical_or_expression REDUCE to conditional_expression
+conditional_expression REDUCE to assignment_expression
+asignment_expression REDUCE to expression
+RETURN expression SEMICOLON REDUCE to jump_statement
+jump_statement REDUCE to statement
+statement REDUCE to statement_list
+increaseLocation(): 1, total = 249
+increaseLocation(): 1, total = 250
+Scanner: token [}]
+OCURLY declaration_list statement_list CCURLY REDUCE to compound_statement
+declaration_specifiers declarator compound_statement REDUCE to function_definition
+function_definition REDUCE to external_declaration
+translation_unit external_declaration REDUCE to translation_unit
+
+Parse complete. Result = 0

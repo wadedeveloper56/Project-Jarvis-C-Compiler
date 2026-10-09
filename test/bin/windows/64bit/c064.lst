@@ -1,4 +1,4 @@
-JWasm v2.12pre, Oct  6 2026
+JWasm v2.12pre, Oct  9 2026
 c064.asm
                             *   .model FLAT
 00000000                    *   _TEXT segment PARA FLAT PUBLIC 'CODE'
@@ -100,13 +100,13 @@ Symbols:
 @Cpu . . . . . . . . . . . . . .        Number           D5Fh 
 @CurSeg  . . . . . . . . . . . .        Text   
 @DataSize  . . . . . . . . . . .        Number             0h 
-@Date  . . . . . . . . . . . . .        Text   10/08/26
+@Date  . . . . . . . . . . . . .        Text   10/09/26
 @FileCur . . . . . . . . . . . .        Text   c064.asm
 @FileName  . . . . . . . . . . .        Text   C064
 @Interface . . . . . . . . . . .        Number             7h 
 @Model . . . . . . . . . . . . .        Number             7h 
 @ReservedStack . . . . . . . . .        Number             0h 
-@Time  . . . . . . . . . . . . .        Text   16:48:41
+@Time  . . . . . . . . . . . . .        Text   07:32:18
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT
