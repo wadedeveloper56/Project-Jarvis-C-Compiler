@@ -1,4 +1,4 @@
-%skeleton "lalr1.cc" /* -*- C++ -*- */
+﻿%skeleton "lalr1.cc" /* -*- C++ -*- */
 %require "3.0"
 %defines
 %define  api.parser.class { Parser }
@@ -255,7 +255,7 @@
 %%
 
 primary_expression
-    : IDENTIFIER                { $1->setLocation(@1.begin.line, @1.begin.column); $$ = createPrimaryExpression($1,NULL);      cout << "IDENTIFIER REDUCE to primary_expression" << endl; }
+    : IDENTIFIER                { $$ = createPrimaryExpression($1,NULL);      cout << "IDENTIFIER REDUCE to primary_expression" << endl; }
     | constant                  { $$ = createPrimaryExpression(nullptr,$1);   cout << "constant REDUCE to primary_expression" << endl; }
     | OPAREN expression CPAREN  { $$ = $2;                                    cout << "OPAREN expression CPAREN REDUCE to primary_expression" << endl; }
     ;
@@ -270,8 +270,8 @@ postfix_expression
     | postfix_expression OBRACE expression CBRACE                  { $$ = createExpression(NT_ARRAY,$2,$4,$3,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,  $1,nullptr,nullptr); cout << "postfix_expression OBRACE expression CBRACE REDUCE to postfix_expression" << endl; }
     | postfix_expression OPAREN CPAREN                             { $$ = createExpression(NT_FUNCTION_CALL,$2,$3,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,nullptr,nullptr); cout << "postfix_expression OPAREN CPAREN REDUCE to postfix_expression" << endl; }
     | postfix_expression OPAREN argument_expression_list CPAREN    { $$ = createExpression(NT_FUNCTION_CALL,$2,$4,nullptr,nullptr,nullptr,$3,nullptr,nullptr,nullptr,nullptr,nullptr, $1,nullptr,nullptr); cout << "postfix_expression OPAREN argument_expression_list CPAREN REDUCE to postfix_expression" << endl; }
-    | postfix_expression PERIOD IDENTIFIER                         { $3->setLocation(@3.begin.line, @3.begin.column); $$ = createExpression(NT_VAR_ACCESS,$2,nullptr,nullptr,nullptr,nullptr,nullptr,$3,nullptr,nullptr,nullptr,nullptr, $1,nullptr,nullptr); cout << "postfix_expression PERIOD_OP IDENTIFIER REDUCE to postfix_expression" << endl; }
-    | postfix_expression PTR_OP IDENTIFIER                         { $3->setLocation(@3.begin.line, @3.begin.column); $$ = createExpression(NT_VAR_ACCESS,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,$3,nullptr,nullptr,$2,nullptr, $1,nullptr,nullptr); cout << "postfix_expression PTR_OP IDENTIFIER REDUCE to postfix_expression" << endl; }
+    | postfix_expression PERIOD IDENTIFIER                         { $$ = createExpression(NT_VAR_ACCESS,$2,nullptr,nullptr,nullptr,nullptr,nullptr,$3,nullptr,nullptr,nullptr,nullptr, $1,nullptr,nullptr); cout << "postfix_expression PERIOD_OP IDENTIFIER REDUCE to postfix_expression" << endl; }
+    | postfix_expression PTR_OP IDENTIFIER                         { $$ = createExpression(NT_VAR_ACCESS,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,$3,nullptr,nullptr,$2,nullptr, $1,nullptr,nullptr); cout << "postfix_expression PTR_OP IDENTIFIER REDUCE to postfix_expression" << endl; }
     | postfix_expression INC_OP                                    { $$ = createExpression(NT_INC,nullptr,nullptr,nullptr,$1,nullptr,nullptr,nullptr,nullptr,nullptr,$2,nullptr, nullptr,nullptr,nullptr); cout << "postfix_expression INC_OP REDUCE to postfix_expression" << endl; }
     | postfix_expression DEC_OP                                    { $$ = createExpression(NT_DEC,nullptr,nullptr,nullptr,$1,nullptr,nullptr,nullptr,nullptr,nullptr,$2,nullptr, nullptr,nullptr,nullptr); cout << "postfix_expression DEC_OP REDUCE to postfix_expression" << endl; }
     | OPAREN type_name CPAREN OCURLY initializer_list CCURLY       { $$ = createExpression(NT_TYPECAST,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,$5,$2,nullptr,nullptr, nullptr,nullptr,nullptr); cout << "OPAREN type_name CPAREN_OP OCURLY_OP initializer_list CCURLY REDUCE to postfix_expression" << endl; }
@@ -512,13 +512,13 @@ declarator
     ;
 
 direct_declarator
-    : IDENTIFIER                                            { $1->setLocation(@1.begin.line, @1.begin.column); $$ = createDirectDeclarator($1,nullptr,nullptr,NULL,NULL,NULL,NULL,NULL); cout << "IDENTIFIER REDUCE to direct_declarator" << endl;}
-    | OPAREN declarator CPAREN                              { $1->setLocation(@1.begin.line, @1.begin.column); $3->setLocation(@3.begin.line, @3.begin.column); $$ = createDirectDeclarator(nullptr,$1,$3,$2,NULL,NULL,NULL,NULL); cout << "OPAREN declarator CPAREN REDUCE to direct_declarator" << endl;}
-    | direct_declarator OBRACE constant_expression CBRACE   { $2->setLocation(@2.begin.line, @2.begin.column); $4->setLocation(@4.begin.line, @4.begin.column); $$ = createDirectDeclarator(nullptr,$2,$4,NULL,$1,$3,NULL,NULL); cout << "direct_declarator OBRACE constant_expression CBRACE REDUCE to direct_declarator" << endl;}
-    | direct_declarator OBRACE CBRACE                       { $2->setLocation(@2.begin.line, @2.begin.column); $3->setLocation(@3.begin.line, @3.begin.column); $$ = createDirectDeclarator(nullptr,$2,$3,NULL,$1,NULL,NULL,NULL); cout << "direct_declarator OBRACE CBRACE REDUCE to direct_declarator" << endl;}
-    | direct_declarator OPAREN parameter_type_list CPAREN   { $2->setLocation(@2.begin.line, @2.begin.column); $4->setLocation(@4.begin.line, @4.begin.column); $$ = createDirectDeclarator(nullptr,$2,$4,NULL,$1,NULL,$3,NULL); cout << "direct_declarator OPAREN parameter_type_list CPAREN to direct_declarator" << endl;}
-    | direct_declarator OPAREN identifier_list CPAREN       { $2->setLocation(@2.begin.line, @2.begin.column); $4->setLocation(@4.begin.line, @4.begin.column); $$ = createDirectDeclarator(nullptr,$2,$4,NULL,$1,NULL,NULL,$3); cout << "direct_declarator OPAREN identifier_list CPAREN REDUCE to direct_declarator" << endl;}
-    | direct_declarator OPAREN CPAREN                       { $2->setLocation(@2.begin.line, @2.begin.column); $3->setLocation(@3.begin.line, @3.begin.column); $$ = createDirectDeclarator(nullptr,$2,$3,NULL,$1,NULL,NULL,NULL); cout << "direct_declarator OPAREN CPAREN REDUCE to direct_declarator" << endl;}
+    : IDENTIFIER                                            { $$ = createDirectDeclarator($1,nullptr,nullptr,NULL,NULL,NULL,NULL,NULL); cout << "IDENTIFIER REDUCE to direct_declarator" << endl;}
+    | OPAREN declarator CPAREN                              { $$ = createDirectDeclarator(nullptr,$1,$3,$2,NULL,NULL,NULL,NULL); cout << "OPAREN declarator CPAREN REDUCE to direct_declarator" << endl;}
+    | direct_declarator OBRACE constant_expression CBRACE   { $$ = createDirectDeclarator(nullptr,$2,$4,NULL,$1,$3,NULL,NULL); cout << "direct_declarator OBRACE constant_expression CBRACE REDUCE to direct_declarator" << endl;}
+    | direct_declarator OBRACE CBRACE                       { $$ = createDirectDeclarator(nullptr,$2,$3,NULL,$1,NULL,NULL,NULL); cout << "direct_declarator OBRACE CBRACE REDUCE to direct_declarator" << endl;}
+    | direct_declarator OPAREN parameter_type_list CPAREN   { $$ = createDirectDeclarator(nullptr,$2,$4,NULL,$1,NULL,$3,NULL); cout << "direct_declarator OPAREN parameter_type_list CPAREN to direct_declarator" << endl;}
+    | direct_declarator OPAREN identifier_list CPAREN       { $$ = createDirectDeclarator(nullptr,$2,$4,NULL,$1,NULL,NULL,$3); cout << "direct_declarator OPAREN identifier_list CPAREN REDUCE to direct_declarator" << endl;}
+    | direct_declarator OPAREN CPAREN                       { $$ = createDirectDeclarator(nullptr,$2,$3,NULL,$1,NULL,NULL,NULL); cout << "direct_declarator OPAREN CPAREN REDUCE to direct_declarator" << endl;}
     ;
 
 pointer

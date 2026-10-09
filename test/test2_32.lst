@@ -101,7 +101,7 @@ Symbols:
 @FileName  . . . . . . . . . . .        Text   TEST2_32
 @Interface . . . . . . . . . . .        Number             1h 
 @Model . . . . . . . . . . . . .        Number             7h 
-@Time  . . . . . . . . . . . . .        Text   07:32:21
+@Time  . . . . . . . . . . . . .        Text   07:52:41
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT
@@ -111,4 +111,4 @@ _m . . . . . . . . . . . . . . .        DWord              4h _BSS C
 _u . . . . . . . . . . . . . . .        DWord              0h _BSS C
 _x . . . . . . . . . . . . . . .        DWord              0h _DATA C
 
-test2_32.asm: 29 lines, 2 passes, 0 ms, 0 warnings, 0 errors
+test2_32.asm: 29 lines, 2 passes, 1 ms, 0 warnings, 0 errors

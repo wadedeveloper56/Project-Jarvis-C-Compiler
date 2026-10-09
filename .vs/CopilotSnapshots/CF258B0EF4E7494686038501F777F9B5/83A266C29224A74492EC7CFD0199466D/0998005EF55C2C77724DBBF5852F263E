@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "SemanticAnalyzer.h"
 #include "ProgramData.h"
 #include "ExternalDeclaration.h"
@@ -7,9 +7,6 @@
 #include "Diagnostic.h"
 #include "SymbolTable.h"
 #include <unordered_set>
-#include <unordered_map>
-#include <set>
-#include <functional>
 
 using namespace WadeSpace;
 using namespace std;

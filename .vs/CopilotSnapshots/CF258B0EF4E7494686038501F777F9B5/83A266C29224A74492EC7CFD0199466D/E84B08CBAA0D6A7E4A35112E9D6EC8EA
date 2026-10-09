@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 using namespace std;
 
@@ -89,10 +89,6 @@ class CToken
 {
 public:
 	shared_ptr<CTokData> data;
-	// location info (may be 0 if unknown)
-	std::string file;
-	int line = 0;
-	int column = 0;
 	CToken() = default;
 	~CToken()= default;
 	CToken(const CToken& other)= default;
@@ -103,10 +99,6 @@ public:
 	string getKeywordName() const;
 	unsigned long long getIntegerConst() const;
 	long double getDoubleConst() const;
-	void setLocation(int line_, int column_, const std::string& file_ = "") { line = line_; column = column_; file = file_; }
-	int getLine() const { return line; }
-	int getColumn() const { return column; }
-	std::string getFileName() const { return file; }
 };
 
 shared_ptr<CToken> createToken(shared_ptr<CTokData> data);

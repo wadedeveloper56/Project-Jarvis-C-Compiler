@@ -1888,7 +1888,7 @@ namespace  WadeSpace  {
             {
   case 2: // primary_expression: "identifier"
 #line 258 "ansic.y"
-                                { yylhs.value.as < shared_ptr<ExpressionTree> > () = createPrimaryExpression(yystack_[0].value.as < shared_ptr<CToken> > (),NULL);      cout << "IDENTIFIER REDUCE to primary_expression" << endl; }
+                                { yystack_[0].value.as < shared_ptr<CToken> > ()->setLocation(yystack_[0].location.begin.line, yystack_[0].location.begin.column); yylhs.value.as < shared_ptr<ExpressionTree> > () = createPrimaryExpression(yystack_[0].value.as < shared_ptr<CToken> > (),NULL);      cout << "IDENTIFIER REDUCE to primary_expression" << endl; }
 #line 1893 "parser.cpp"
     break;
 
@@ -1948,13 +1948,13 @@ namespace  WadeSpace  {
 
   case 12: // postfix_expression: postfix_expression "." "identifier"
 #line 273 "ansic.y"
-                                                                   { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_VAR_ACCESS,yystack_[1].value.as < shared_ptr<CToken> > (),nullptr,nullptr,nullptr,nullptr,nullptr,yystack_[0].value.as < shared_ptr<CToken> > (),nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),nullptr,nullptr); cout << "postfix_expression PERIOD_OP IDENTIFIER REDUCE to postfix_expression" << endl; }
+                                                                   { yystack_[0].value.as < shared_ptr<CToken> > ()->setLocation(yystack_[0].location.begin.line, yystack_[0].location.begin.column); yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_VAR_ACCESS,yystack_[1].value.as < shared_ptr<CToken> > (),nullptr,nullptr,nullptr,nullptr,nullptr,yystack_[0].value.as < shared_ptr<CToken> > (),nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),nullptr,nullptr); cout << "postfix_expression PERIOD_OP IDENTIFIER REDUCE to postfix_expression" << endl; }
 #line 1953 "parser.cpp"
     break;
 
   case 13: // postfix_expression: postfix_expression "->" "identifier"
 #line 274 "ansic.y"
-                                                                   { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_VAR_ACCESS,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,yystack_[0].value.as < shared_ptr<CToken> > (),nullptr,nullptr,yystack_[1].value.as < shared_ptr<CToken> > (),nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),nullptr,nullptr); cout << "postfix_expression PTR_OP IDENTIFIER REDUCE to postfix_expression" << endl; }
+                                                                   { yystack_[0].value.as < shared_ptr<CToken> > ()->setLocation(yystack_[0].location.begin.line, yystack_[0].location.begin.column); yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_VAR_ACCESS,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,yystack_[0].value.as < shared_ptr<CToken> > (),nullptr,nullptr,yystack_[1].value.as < shared_ptr<CToken> > (),nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),nullptr,nullptr); cout << "postfix_expression PTR_OP IDENTIFIER REDUCE to postfix_expression" << endl; }
 #line 1959 "parser.cpp"
     break;
 
@@ -2716,43 +2716,43 @@ namespace  WadeSpace  {
 
   case 140: // direct_declarator: "identifier"
 #line 515 "ansic.y"
-                                                            { yylhs.value.as < shared_ptr<DirectDeclarator> > () = createDirectDeclarator(yystack_[0].value.as < shared_ptr<CToken> > (),nullptr,nullptr,NULL,NULL,NULL,NULL,NULL); cout << "IDENTIFIER REDUCE to direct_declarator" << endl;}
+                                                            { yystack_[0].value.as < shared_ptr<CToken> > ()->setLocation(yystack_[0].location.begin.line, yystack_[0].location.begin.column); yylhs.value.as < shared_ptr<DirectDeclarator> > () = createDirectDeclarator(yystack_[0].value.as < shared_ptr<CToken> > (),nullptr,nullptr,NULL,NULL,NULL,NULL,NULL); cout << "IDENTIFIER REDUCE to direct_declarator" << endl;}
 #line 2721 "parser.cpp"
     break;
 
   case 141: // direct_declarator: "(" declarator ")"
 #line 516 "ansic.y"
-                                                            { yylhs.value.as < shared_ptr<DirectDeclarator> > () = createDirectDeclarator(nullptr,yystack_[2].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<CToken> > (),yystack_[1].value.as < shared_ptr<Declarator> > (),NULL,NULL,NULL,NULL); cout << "OPAREN declarator CPAREN REDUCE to direct_declarator" << endl;}
+                                                            { yystack_[2].value.as < shared_ptr<CToken> > ()->setLocation(yystack_[2].location.begin.line, yystack_[2].location.begin.column); yystack_[0].value.as < shared_ptr<CToken> > ()->setLocation(yystack_[0].location.begin.line, yystack_[0].location.begin.column); yylhs.value.as < shared_ptr<DirectDeclarator> > () = createDirectDeclarator(nullptr,yystack_[2].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<CToken> > (),yystack_[1].value.as < shared_ptr<Declarator> > (),NULL,NULL,NULL,NULL); cout << "OPAREN declarator CPAREN REDUCE to direct_declarator" << endl;}
 #line 2727 "parser.cpp"
     break;
 
   case 142: // direct_declarator: direct_declarator "[" constant_expression "]"
 #line 517 "ansic.y"
-                                                            { yylhs.value.as < shared_ptr<DirectDeclarator> > () = createDirectDeclarator(nullptr,yystack_[2].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<CToken> > (),NULL,yystack_[3].value.as < shared_ptr<DirectDeclarator> > (),yystack_[1].value.as < shared_ptr<ExpressionTree> > (),NULL,NULL); cout << "direct_declarator OBRACE constant_expression CBRACE REDUCE to direct_declarator" << endl;}
+                                                            { yystack_[2].value.as < shared_ptr<CToken> > ()->setLocation(yystack_[2].location.begin.line, yystack_[2].location.begin.column); yystack_[0].value.as < shared_ptr<CToken> > ()->setLocation(yystack_[0].location.begin.line, yystack_[0].location.begin.column); yylhs.value.as < shared_ptr<DirectDeclarator> > () = createDirectDeclarator(nullptr,yystack_[2].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<CToken> > (),NULL,yystack_[3].value.as < shared_ptr<DirectDeclarator> > (),yystack_[1].value.as < shared_ptr<ExpressionTree> > (),NULL,NULL); cout << "direct_declarator OBRACE constant_expression CBRACE REDUCE to direct_declarator" << endl;}
 #line 2733 "parser.cpp"
     break;
 
   case 143: // direct_declarator: direct_declarator "[" "]"
 #line 518 "ansic.y"
-                                                            { yylhs.value.as < shared_ptr<DirectDeclarator> > () = createDirectDeclarator(nullptr,yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<CToken> > (),NULL,yystack_[2].value.as < shared_ptr<DirectDeclarator> > (),NULL,NULL,NULL); cout << "direct_declarator OBRACE CBRACE REDUCE to direct_declarator" << endl;}
+                                                            { yystack_[1].value.as < shared_ptr<CToken> > ()->setLocation(yystack_[1].location.begin.line, yystack_[1].location.begin.column); yystack_[0].value.as < shared_ptr<CToken> > ()->setLocation(yystack_[0].location.begin.line, yystack_[0].location.begin.column); yylhs.value.as < shared_ptr<DirectDeclarator> > () = createDirectDeclarator(nullptr,yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<CToken> > (),NULL,yystack_[2].value.as < shared_ptr<DirectDeclarator> > (),NULL,NULL,NULL); cout << "direct_declarator OBRACE CBRACE REDUCE to direct_declarator" << endl;}
 #line 2739 "parser.cpp"
     break;
 
   case 144: // direct_declarator: direct_declarator "(" parameter_type_list ")"
 #line 519 "ansic.y"
-                                                            { yylhs.value.as < shared_ptr<DirectDeclarator> > () = createDirectDeclarator(nullptr,yystack_[2].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<CToken> > (),NULL,yystack_[3].value.as < shared_ptr<DirectDeclarator> > (),NULL,yystack_[1].value.as < shared_ptr<ParameterTypeList> > (),NULL); cout << "direct_declarator OPAREN parameter_type_list CPAREN to direct_declarator" << endl;}
+                                                            { yystack_[2].value.as < shared_ptr<CToken> > ()->setLocation(yystack_[2].location.begin.line, yystack_[2].location.begin.column); yystack_[0].value.as < shared_ptr<CToken> > ()->setLocation(yystack_[0].location.begin.line, yystack_[0].location.begin.column); yylhs.value.as < shared_ptr<DirectDeclarator> > () = createDirectDeclarator(nullptr,yystack_[2].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<CToken> > (),NULL,yystack_[3].value.as < shared_ptr<DirectDeclarator> > (),NULL,yystack_[1].value.as < shared_ptr<ParameterTypeList> > (),NULL); cout << "direct_declarator OPAREN parameter_type_list CPAREN to direct_declarator" << endl;}
 #line 2745 "parser.cpp"
     break;
 
   case 145: // direct_declarator: direct_declarator "(" identifier_list ")"
 #line 520 "ansic.y"
-                                                            { yylhs.value.as < shared_ptr<DirectDeclarator> > () = createDirectDeclarator(nullptr,yystack_[2].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<CToken> > (),NULL,yystack_[3].value.as < shared_ptr<DirectDeclarator> > (),NULL,NULL,yystack_[1].value.as < shared_ptr<vector<shared_ptr<CToken>>> > ()); cout << "direct_declarator OPAREN identifier_list CPAREN REDUCE to direct_declarator" << endl;}
+                                                            { yystack_[2].value.as < shared_ptr<CToken> > ()->setLocation(yystack_[2].location.begin.line, yystack_[2].location.begin.column); yystack_[0].value.as < shared_ptr<CToken> > ()->setLocation(yystack_[0].location.begin.line, yystack_[0].location.begin.column); yylhs.value.as < shared_ptr<DirectDeclarator> > () = createDirectDeclarator(nullptr,yystack_[2].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<CToken> > (),NULL,yystack_[3].value.as < shared_ptr<DirectDeclarator> > (),NULL,NULL,yystack_[1].value.as < shared_ptr<vector<shared_ptr<CToken>>> > ()); cout << "direct_declarator OPAREN identifier_list CPAREN REDUCE to direct_declarator" << endl;}
 #line 2751 "parser.cpp"
     break;
 
   case 146: // direct_declarator: direct_declarator "(" ")"
 #line 521 "ansic.y"
-                                                            { yylhs.value.as < shared_ptr<DirectDeclarator> > () = createDirectDeclarator(nullptr,yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<CToken> > (),NULL,yystack_[2].value.as < shared_ptr<DirectDeclarator> > (),NULL,NULL,NULL); cout << "direct_declarator OPAREN CPAREN REDUCE to direct_declarator" << endl;}
+                                                            { yystack_[1].value.as < shared_ptr<CToken> > ()->setLocation(yystack_[1].location.begin.line, yystack_[1].location.begin.column); yystack_[0].value.as < shared_ptr<CToken> > ()->setLocation(yystack_[0].location.begin.line, yystack_[0].location.begin.column); yylhs.value.as < shared_ptr<DirectDeclarator> > () = createDirectDeclarator(nullptr,yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<CToken> > (),NULL,yystack_[2].value.as < shared_ptr<DirectDeclarator> > (),NULL,NULL,NULL); cout << "direct_declarator OPAREN CPAREN REDUCE to direct_declarator" << endl;}
 #line 2757 "parser.cpp"
     break;
 
