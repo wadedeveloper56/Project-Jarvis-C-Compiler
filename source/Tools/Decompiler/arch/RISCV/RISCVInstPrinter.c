@@ -24,6 +24,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "pch.h"
 #include <capstone/capstone.h>
 #include <capstone/platform.h>
 #include "../../MathExtras.h"

@@ -1,6 +1,7 @@
 /* Capstone Disassembly Engine */
 /* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2015 */
 
+#include "pch.h"
 #ifdef CAPSTONE_HAS_SYSTEMZ
 
 #include "../../utils.h"

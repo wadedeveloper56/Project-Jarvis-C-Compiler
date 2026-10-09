@@ -15,6 +15,7 @@
 
 /* Capstone Disassembly Engine */
 /* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2019 */
+#include "pch.h"
 
 #ifdef CAPSTONE_HAS_X86
 

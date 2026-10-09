@@ -23,6 +23,7 @@
 // This class prints an ARC MCInst to a .s file.
 //
 //===----------------------------------------------------------------------===//
+#include "pch.h"
 
 #ifdef CAPSTONE_HAS_ARC
 

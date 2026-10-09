@@ -1,6 +1,7 @@
 /* Capstone Disassembly Engine */
 /* M68K Backend by Daniel Collin <daniel@collin.com> 2015-2016 */
 
+#include "pch.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

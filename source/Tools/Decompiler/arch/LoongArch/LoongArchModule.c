@@ -1,6 +1,7 @@
 /* Capstone Disassembly Engine */
 /* By Jiajie Chen <c@jia.je> 2024 */
 /*    Yanglin Xun <1109673069@qq.com>, 2024 */
+#include "pch.h"
 
 #ifdef CAPSTONE_HAS_LOONGARCH
 

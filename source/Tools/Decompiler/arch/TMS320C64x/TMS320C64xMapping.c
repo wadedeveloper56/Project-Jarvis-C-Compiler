@@ -1,6 +1,7 @@
 /* Capstone Disassembly Engine */
 /* TMS320C64x Backend by Fotis Loukos <me@fotisl.com> 2016 */
 
+#include "pch.h"
 #ifdef CAPSTONE_HAS_TMS320C64X
 
 #include <stdio.h> // debug

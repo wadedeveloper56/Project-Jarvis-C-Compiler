@@ -20,6 +20,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "pch.h"
 #include <capstone/platform.h>
 #include <stdio.h>
 #include <stdlib.h>

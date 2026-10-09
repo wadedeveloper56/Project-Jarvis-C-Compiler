@@ -1,6 +1,7 @@
 /* Capstone Disassembly Engine */
 /* M680X Backend by Wolfgang Schwotzer <wolfgang.schwotzer@gmx.net> 2017 */
 
+#include "pch.h"
 #ifdef CAPSTONE_HAS_M680X
 #include <stdio.h>
 #include <stdlib.h>

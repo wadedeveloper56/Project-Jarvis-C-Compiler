@@ -1,6 +1,7 @@
 /* Capstone Disassembly Engine */
 /* By Spike, xwings  2019 */
 
+#include "pch.h"
 #include "WASMInstPrinter.h"
 #include "WASMMapping.h"
 

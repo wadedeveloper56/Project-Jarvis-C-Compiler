@@ -2,6 +2,7 @@
 /* BPF Backend by david942j <david942j@gmail.com>, 2019 */
 /* SPDX-FileCopyrightText: 2024 Roee Toledano <roeetoledano10@gmail.com> */
 /* SPDX-License-Identifier: BSD-3 */
+#include "pch.h"
 
 #ifdef CAPSTONE_HAS_BPF
 

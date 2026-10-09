@@ -1,6 +1,7 @@
 /* Capstone Disassembly Engine */
 /* By Giovanni Dante Grazioli, deroad <wargio@libero.it>, 2024 */
 
+#include "pch.h"
 #ifdef CAPSTONE_HAS_MIPS
 
 #include <capstone/capstone.h>

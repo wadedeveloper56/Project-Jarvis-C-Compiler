@@ -4,6 +4,7 @@
 /*    Jiajie Chen <c@jia.je>, 2024 */
 /*    Yanglin Xun <1109673069@qq.com>, 2024 */
 
+#include "pch.h"
 #include <capstone/loongarch.h>
 
 #include "LoongArchDisassemblerExtension.h"

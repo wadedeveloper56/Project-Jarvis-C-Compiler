@@ -23,6 +23,7 @@
 // This file provides basic encoding and assembly information for AArch64.
 //
 //===----------------------------------------------------------------------===//
+#include "pch.h"
 #include <capstone/platform.h>
 #include <stdio.h>
 #include <stdlib.h>

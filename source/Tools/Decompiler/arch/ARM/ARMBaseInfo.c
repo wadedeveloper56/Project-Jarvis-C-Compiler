@@ -23,6 +23,7 @@
 // This file provides basic encoding and assembly information for ARM.
 //
 //===----------------------------------------------------------------------===//
+#include "pch.h"
 
 #include <capstone/platform.h>
 

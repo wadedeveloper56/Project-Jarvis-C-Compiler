@@ -1,5 +1,6 @@
 /* Capstone Disassembly Engine */
 /* By Dmitry Sibirtsev <sibirtsevdl@gmail.com>, 2024 */
+#include "pch.h"
 
 #ifdef CAPSTONE_HAS_ARC
 

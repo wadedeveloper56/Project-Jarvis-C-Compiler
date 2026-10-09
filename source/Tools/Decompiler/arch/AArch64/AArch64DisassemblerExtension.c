@@ -2,6 +2,7 @@
 /* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2019 */
 /*    Rot127 <unisono@quyllur.org>, 2022-2023 */
 
+#include "pch.h"
 #include "AArch64DisassemblerExtension.h"
 #include "AArch64BaseInfo.h"
 

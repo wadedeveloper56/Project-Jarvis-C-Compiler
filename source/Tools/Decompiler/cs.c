@@ -1,6 +1,7 @@
 /* Capstone Disassembly Engine */
 /* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2019 */
 
+#include "pch.h"
 #include "SStream.h"
 #if defined(CAPSTONE_HAS_OSXKERNEL)
 #include <Availability.h>

@@ -14,6 +14,7 @@
 /* Capstone Disassembly Engine */
 /* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2019 */
 
+#include "pch.h"
 #include "MCRegisterInfo.h"
 
 /// DiffListIterator - Base iterator class that can traverse the
