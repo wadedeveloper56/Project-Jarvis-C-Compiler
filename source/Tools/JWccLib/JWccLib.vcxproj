@@ -217,6 +217,7 @@
     <ClInclude Include="ProgramData.h" />
     <ClInclude Include="scanner.h" />
     <ClInclude Include="SelectionStatement.h" />
+    <ClInclude Include="SemanticAnalyzer.h" />
     <ClInclude Include="SpecifierQualifierList.h" />
     <ClInclude Include="stack.hh" />
     <ClInclude Include="Statement.h" />
@@ -280,6 +281,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="SelectionStatement.cpp" />
+    <ClCompile Include="SemanticAnalyzer.cpp" />
     <ClCompile Include="SpecifierQualifierList.cpp" />
     <ClCompile Include="Statement.cpp" />
     <ClCompile Include="StorageClassSpecifier.cpp" />

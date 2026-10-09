@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "Compiler.h"
 #include "scanner.h"
 #include "parser.hpp"
@@ -10,7 +10,6 @@
 #include "BaseCodeGenerator.h"
 #include "MasmCodeGenerator.h"
 #include "output.h"
-#include "SemanticAnalyzer.h"
 
 using namespace WadeSpace;
 using namespace std;
@@ -31,13 +30,6 @@ void Compiler::compileFile(istringstream& inStr, ostream& out, int& exitcode)
 	Interpreter i;
 	i.setStreams(&inStr, &out);
 	exitcode = i.parse();
-	// Run semantic analysis on the parsed program
-	SemanticAnalyzer analyzer;
-	auto diagnostics = analyzer.analyze(programData);
-	for (const auto& d : diagnostics)
-	{
-		out << "semantic: " << d << endl;
-	}
 	shared_ptr<BaseCodeGenerator> generator = programData->processGlobalVariables();
 	generator->generateCode(out);
 }
