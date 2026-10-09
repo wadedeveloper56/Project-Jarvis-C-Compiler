@@ -187,6 +187,7 @@
     <ClInclude Include="Declaration.h" />
     <ClInclude Include="DeclarationSpecifiers.h" />
     <ClInclude Include="Declarator.h" />
+    <ClInclude Include="Diagnostic.h" />
     <ClInclude Include="DirectAbstractDeclarator.h" />
     <ClInclude Include="DirectDeclarator.h" />
     <ClInclude Include="Enumerator.h" />
@@ -226,6 +227,7 @@
     <ClInclude Include="StructDeclarator.h" />
     <ClInclude Include="StructOrUnion.h" />
     <ClInclude Include="StructOrUnionSpecifier.h" />
+    <ClInclude Include="SymbolTable.h" />
     <ClInclude Include="Token.h" />
     <ClInclude Include="TokenType.h" />
     <ClInclude Include="TypeName.h" />
@@ -243,6 +245,7 @@
     <ClCompile Include="Declaration.cpp" />
     <ClCompile Include="DeclarationSpecifiers.cpp" />
     <ClCompile Include="Declarator.cpp" />
+    <ClCompile Include="Diagnostic.cpp" />
     <ClCompile Include="DirectAbstractDeclarator.cpp" />
     <ClCompile Include="DirectDeclarator.cpp" />
     <ClCompile Include="Enumerator.cpp" />
@@ -290,6 +293,7 @@
     <ClCompile Include="StructOrUnion.cpp" />
     <ClCompile Include="StructOrUnionSpecifier.cpp" />
     <ClCompile Include="structures.cpp" />
+    <ClCompile Include="SymbolTable.cpp" />
     <ClCompile Include="Token.cpp" />
     <ClCompile Include="TypeName.cpp" />
     <ClCompile Include="TypeQualifier.cpp" />

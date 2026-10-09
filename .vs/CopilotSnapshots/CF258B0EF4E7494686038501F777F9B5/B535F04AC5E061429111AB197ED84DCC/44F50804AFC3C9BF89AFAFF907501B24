@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "Compiler.h"
 #include "scanner.h"
 #include "parser.hpp"
@@ -11,7 +11,6 @@
 #include "MasmCodeGenerator.h"
 #include "output.h"
 #include "SemanticAnalyzer.h"
-#include "Diagnostic.h"
 
 using namespace WadeSpace;
 using namespace std;

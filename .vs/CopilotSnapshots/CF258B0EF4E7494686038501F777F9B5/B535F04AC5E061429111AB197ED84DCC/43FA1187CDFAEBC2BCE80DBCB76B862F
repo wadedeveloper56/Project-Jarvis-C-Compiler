@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <string>
 #include <vector>
@@ -7,7 +7,6 @@
 namespace WadeSpace
 {
 	class ProgramData;
-	struct Diagnostic;
 
 	class SemanticAnalyzer
 	{
@@ -15,7 +14,7 @@ namespace WadeSpace
 		SemanticAnalyzer() = default;
 		virtual ~SemanticAnalyzer() = default;
 
-		// Analyze the program data and return a list of diagnostics.
-		std::vector<Diagnostic> analyze(std::shared_ptr<ProgramData> programData);
+		// Analyze the program data and return a list of diagnostics (strings).
+		std::vector<std::string> analyze(std::shared_ptr<ProgramData> programData);
 	};
 }
