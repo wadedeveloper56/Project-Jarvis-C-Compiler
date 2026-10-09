@@ -7,10 +7,7 @@
 #include "Diagnostic.h"
 #include "SymbolTable.h"
 #include "TypeInfo.h"
-#include <unordered_set>
-#include <unordered_map>
-#include <set>
-#include <functional>
+
 
 using namespace WadeSpace;
 using namespace std;
