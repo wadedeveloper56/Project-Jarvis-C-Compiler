@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <string>
 #include <vector>
@@ -9,7 +9,6 @@
 namespace WadeSpace
 {
 	class TypeSpecifier;
-	struct TypeInfo;
 
 	struct SymbolInfo
 	{

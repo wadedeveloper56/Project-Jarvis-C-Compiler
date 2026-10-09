@@ -1,4 +1,4 @@
-%skeleton "lalr1.cc" /* -*- C++ -*- */
+﻿%skeleton "lalr1.cc" /* -*- C++ -*- */
 %require "3.0"
 %defines
 %define  api.parser.class { Parser }
@@ -81,8 +81,6 @@
     // #define yylex(x, y) scanner.get_next_token()
     
     using namespace WadeSpace;
-    // helper macro to set token location from Bison location @n
-    #define SETLOC(tok, pos) do { if ((tok) != nullptr) (tok)->setLocation((pos).begin.line, (pos).begin.column); } while(0)
 }
 
 %lex-param { WadeSpace::Scanner &scanner }

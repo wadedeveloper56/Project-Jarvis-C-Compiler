@@ -1,4 +1,4 @@
-%skeleton "lalr1.cc" /* -*- C++ -*- */
+﻿%skeleton "lalr1.cc" /* -*- C++ -*- */
 %require "3.0"
 %defines
 %define  api.parser.class { Parser }
@@ -81,8 +81,6 @@
     // #define yylex(x, y) scanner.get_next_token()
     
     using namespace WadeSpace;
-    // helper macro to set token location from Bison location @n
-    #define SETLOC(tok, pos) do { if ((tok) != nullptr) (tok)->setLocation((pos).begin.line, (pos).begin.column); } while(0)
 }
 
 %lex-param { WadeSpace::Scanner &scanner }
@@ -518,9 +516,9 @@ direct_declarator
     | OPAREN declarator CPAREN                              { $1->setLocation(@1.begin.line, @1.begin.column); $3->setLocation(@3.begin.line, @3.begin.column); $$ = createDirectDeclarator(nullptr,$1,$3,$2,NULL,NULL,NULL,NULL); cout << "OPAREN declarator CPAREN REDUCE to direct_declarator" << endl;}
     | direct_declarator OBRACE constant_expression CBRACE   { $2->setLocation(@2.begin.line, @2.begin.column); $4->setLocation(@4.begin.line, @4.begin.column); $$ = createDirectDeclarator(nullptr,$2,$4,NULL,$1,$3,NULL,NULL); cout << "direct_declarator OBRACE constant_expression CBRACE REDUCE to direct_declarator" << endl;}
     | direct_declarator OBRACE CBRACE                       { $2->setLocation(@2.begin.line, @2.begin.column); $3->setLocation(@3.begin.line, @3.begin.column); $$ = createDirectDeclarator(nullptr,$2,$3,NULL,$1,NULL,NULL,NULL); cout << "direct_declarator OBRACE CBRACE REDUCE to direct_declarator" << endl;}
-    | direct_declarator OPAREN parameter_type_list CPAREN   { SETLOC($2,@2); SETLOC($4,@4); $$ = createDirectDeclarator(nullptr,$2,$4,NULL,$1,NULL,$3,NULL); cout << "direct_declarator OPAREN parameter_type_list CPAREN to direct_declarator" << endl;}
-    | direct_declarator OPAREN identifier_list CPAREN       { SETLOC($2,@2); SETLOC($4,@4); $$ = createDirectDeclarator(nullptr,$2,$4,NULL,$1,NULL,NULL,$3); cout << "direct_declarator OPAREN identifier_list CPAREN REDUCE to direct_declarator" << endl;}
-    | direct_declarator OPAREN CPAREN                       { SETLOC($2,@2); SETLOC($3,@3); $$ = createDirectDeclarator(nullptr,$2,$3,NULL,$1,NULL,NULL,NULL); cout << "direct_declarator OPAREN CPAREN REDUCE to direct_declarator" << endl;}
+    | direct_declarator OPAREN parameter_type_list CPAREN   { $2->setLocation(@2.begin.line, @2.begin.column); $4->setLocation(@4.begin.line, @4.begin.column); $$ = createDirectDeclarator(nullptr,$2,$4,NULL,$1,NULL,$3,NULL); cout << "direct_declarator OPAREN parameter_type_list CPAREN to direct_declarator" << endl;}
+    | direct_declarator OPAREN identifier_list CPAREN       { $2->setLocation(@2.begin.line, @2.begin.column); $4->setLocation(@4.begin.line, @4.begin.column); $$ = createDirectDeclarator(nullptr,$2,$4,NULL,$1,NULL,NULL,$3); cout << "direct_declarator OPAREN identifier_list CPAREN REDUCE to direct_declarator" << endl;}
+    | direct_declarator OPAREN CPAREN                       { $2->setLocation(@2.begin.line, @2.begin.column); $3->setLocation(@3.begin.line, @3.begin.column); $$ = createDirectDeclarator(nullptr,$2,$3,NULL,$1,NULL,NULL,NULL); cout << "direct_declarator OPAREN CPAREN REDUCE to direct_declarator" << endl;}
     ;
 
 pointer

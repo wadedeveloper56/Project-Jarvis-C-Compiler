@@ -1,0 +1,230 @@
+﻿#include "pch.h"
+#include "SemanticAnalyzer.h"
+#include "ProgramData.h"
+#include "ExternalDeclaration.h"
+#include "InitDeclarator.h"
+#include "FunctionDefinition.h"
+#include "Diagnostic.h"
+#include "SymbolTable.h"
+#include "TypeInfo.h"
+#include <unordered_set>
+#include <unordered_map>
+#include <set>
+#include <functional>
+
+using namespace WadeSpace;
+using namespace std;
+
+vector<Diagnostic> SemanticAnalyzer::analyze(shared_ptr<ProgramData> programData)
+{
+	vector<Diagnostic> diagnostics;
+	if (!programData || !programData->hasProgram()) return diagnostics;
+
+	auto program = programData->getProgram();
+	SymbolTable symbols;
+
+	auto buildTypeInfo = [&](shared_ptr<DeclarationSpecifiers> declSpecs, shared_ptr<Declarator> declarator) -> TypeInfo::TypeInfoPtr {
+		TypeInfo::TypeInfoPtr base = nullptr;
+		if (declSpecs && declSpecs->hasDeclarationSpecifiersNodeList()) {
+			auto list = declSpecs->getDeclarationSpecifiersNodeList();
+			for (auto& node : *list) {
+				if (node->hasTypeSpecifier()) {
+					auto ts = node->getTypeSpecifier();
+					if (ts->hasType()) {
+						base = TypeInfo::makePrimitive(ts->getType().value());
+					}
+					else if (ts->hasStructOrUnionSpecifier() && ts->getStructOrUnionSpecifier()->hasName()) {
+						base = TypeInfo::makeStruct(ts->getStructOrUnionSpecifier()->getName()->getSymbolName());
+					}
+					break;
+				}
+			}
+		}
+		// handle declarator pointer -> pointer types
+		if (declarator && declarator->hasPointer()) {
+			base = TypeInfo::makePointer(base);
+		}
+		// handle function declarator (parameter list)
+		if (declarator && declarator->hasDirectDeclarator()) {
+			auto dd = declarator->getDirectDeclarator();
+			if (dd->hasParameterTypeList()) {
+				// build parameter types as primitives when possible
+				vector<TypeInfo::TypeInfoPtr> params;
+				auto plist = dd->getParameterTypeList();
+				if (plist && plist->hasVectorParameterDeclaration()) {
+					for (auto& p : *plist->getVectorParameterDeclaration()) {
+						TypeInfo::TypeInfoPtr pt = nullptr;
+						if (p->hasDeclarationSpecifiers() && p->getDeclarationSpecifiers()->hasDeclarationSpecifiersNodeList()) {
+							auto nlist = p->getDeclarationSpecifiers()->getDeclarationSpecifiersNodeList();
+							if (!nlist->empty() && (*nlist)[0]->hasTypeSpecifier()) {
+								auto ts = (*nlist)[0]->getTypeSpecifier();
+								if (ts->hasType()) pt = TypeInfo::makePrimitive(ts->getType().value());
+								else if (ts->hasStructOrUnionSpecifier() && ts->getStructOrUnionSpecifier()->hasName()) pt = TypeInfo::makeStruct(ts->getStructOrUnionSpecifier()->getName()->getSymbolName());
+							}
+						}
+						params.push_back(pt);
+					}
+				}
+				base = TypeInfo::makeFunction(base, params);
+			}
+		}
+		return base;
+	};
+
+	// First pass: declare typedefs and function signatures in global scope
+	for (auto& ext : *program)
+	{
+		if (ext->hasFunction())
+		{
+			auto fn = ext->getFunctionDefinition();
+			if (fn && fn->hasDeclarator() && fn->getDeclarator()->hasDirectDeclarator())
+			{
+				auto dd = fn->getDeclarator()->getDirectDeclarator();
+				if (dd->hasIdentifier())
+				{
+					string name = dd->getIdentifier()->getSymbolName();
+					SymbolInfo info;
+					info.kind = SymbolInfo::Kind::Function;
+					info.name = name;
+					// attach type info
+					info.type = buildTypeInfo(fn->getDeclarationSpecifiers(), fn->getDeclarator());
+					if (!symbols.declare(info))
+					{
+						int line = 0; string file = ""; int col = 0;
+						if (dd->hasIdentifier() && dd->getIdentifier()) { line = dd->getIdentifier()->getLine(); col = dd->getIdentifier()->getColumn(); file = dd->getIdentifier()->getFileName(); }
+						diagnostics.emplace_back(Diagnostic::Severity::Error, "Duplicate function definition: " + name, "E001", file, line, col);
+					}
+				}
+			}
+		}
+		else if (ext->hasDeclaration())
+		{
+			if (ext->isTypedef())
+			{
+				auto decl = ext->getDeclaration();
+				if (decl->hasVectorInitDeclarator())
+				{
+					for (auto& init : *decl->getVectorInitDeclarator())
+					{
+						string varName = init->getVariableName();
+						if (!varName.empty())
+						{
+							SymbolInfo info;
+							info.kind = SymbolInfo::Kind::Typedef;
+							info.name = varName;
+							// try attach type for typedef from declaration specifiers
+							if (decl->hasDeclarationSpecifiers() && decl->getDeclarationSpecifiers()->hasDeclarationSpecifiersNodeList())
+							{
+								auto list = decl->getDeclarationSpecifiers()->getDeclarationSpecifiersNodeList();
+								if (!list->empty() && (*list)[0]->hasTypeSpecifier()) info.type = (*list)[0]->getTypeSpecifier();
+							}
+							if (!symbols.declare(info))
+							{
+								int line = 0; string file = ""; int col = 0;
+								if (init->hasDeclarator() && init->getDeclarator()->hasDirectDeclarator()) {
+									auto idd = init->getDeclarator()->getDirectDeclarator();
+									if (idd->hasIdentifier() && idd->getIdentifier()) { line = idd->getIdentifier()->getLine(); col = idd->getIdentifier()->getColumn(); file = idd->getIdentifier()->getFileName(); }
+								}
+								diagnostics.emplace_back(Diagnostic::Severity::Error, "Duplicate typedef name: " + varName, "E002", file, line, col);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Second pass: deeper per-function checks and block-level declarations
+	for (auto& ext : *program)
+	{
+		if (ext->hasFunction())
+		{
+			auto fn = ext->getFunctionDefinition();
+			if (!fn) continue;
+
+			// enter function scope
+			symbols.pushScope();
+
+			// add parameters
+			if (fn->hasDeclarator() && fn->getDeclarator()->hasDirectDeclarator())
+			{
+				auto dd = fn->getDeclarator()->getDirectDeclarator();
+				if (dd->hasParameterTypeList())
+				{
+					auto params = dd->getParameterTypeList();
+					if (params->hasVectorParameterDeclaration())
+					{
+						for (auto& param : *params->getVectorParameterDeclaration())
+						{
+							if (param->hasDeclarator() && param->getDeclarator()->hasDirectDeclarator())
+							{
+								auto pdd = param->getDeclarator()->getDirectDeclarator();
+								if (pdd->hasIdentifier())
+								{
+									string pname = pdd->getIdentifier()->getSymbolName();
+									SymbolInfo sinfo;
+									sinfo.kind = SymbolInfo::Kind::Parameter;
+									sinfo.name = pname;
+									// attach parameter type if available
+									if (param->hasDeclarationSpecifiers() && param->getDeclarationSpecifiers()->hasDeclarationSpecifiersNodeList()) {
+										auto list = param->getDeclarationSpecifiers()->getDeclarationSpecifiersNodeList();
+										if (!list->empty() && (*list)[0]->hasTypeSpecifier()) sinfo.type = (*list)[0]->getTypeSpecifier();
+									}
+									if (!symbols.declare(sinfo))
+									{
+										int line = 0; string file = ""; int col = 0;
+										if (pdd->hasIdentifier() && pdd->getIdentifier()) { line = pdd->getIdentifier()->getLine(); col = pdd->getIdentifier()->getColumn(); file = pdd->getIdentifier()->getFileName(); }
+										diagnostics.emplace_back(Diagnostic::Severity::Error, "Duplicate parameter name: " + pname, "E003", file, line, col);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+
+			// process local declarations in function (very basic: find declarations attached to function)
+			if (fn->hasVectorDeclaration())
+			{
+				for (auto& decl : *fn->getVectorDeclaration())
+				{
+					if (decl->hasVectorInitDeclarator())
+					{
+						for (auto& init : *decl->getVectorInitDeclarator())
+						{
+							string varName = init->getVariableName();
+							if (!varName.empty())
+							{
+								SymbolInfo info;
+								info.kind = SymbolInfo::Kind::Variable;
+								info.name = varName;
+								// attach variable type from declaration specifiers if present
+								if (decl->hasDeclarationSpecifiers() && decl->getDeclarationSpecifiers()->hasDeclarationSpecifiersNodeList()) {
+									auto list = decl->getDeclarationSpecifiers()->getDeclarationSpecifiersNodeList();
+									if (!list->empty() && (*list)[0]->hasTypeSpecifier()) info.type = (*list)[0]->getTypeSpecifier();
+								}
+								if (!symbols.declare(info))
+								{
+									int line = 0; string file = ""; int col = 0;
+									// try to get identifier location from init
+									if (init->hasDeclarator() && init->getDeclarator()->hasDirectDeclarator()) {
+										auto idd = init->getDeclarator()->getDirectDeclarator();
+										if (idd->hasIdentifier() && idd->getIdentifier()) { line = idd->getIdentifier()->getLine(); col = idd->getIdentifier()->getColumn(); file = idd->getIdentifier()->getFileName(); }
+									}
+									diagnostics.emplace_back(Diagnostic::Severity::Error, "Duplicate local declaration: " + varName, "E004", file, line, col);
+								}
+							}
+						}
+					}
+				}
+			}
+
+			// TODO: walk function body AST for identifier uses and more checks
+
+			// exit function scope
+			symbols.popScope();
+		}
+	}
+
+	return diagnostics;
+}

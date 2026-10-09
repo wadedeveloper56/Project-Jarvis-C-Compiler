@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "SemanticAnalyzer.h"
 #include "ProgramData.h"
 #include "ExternalDeclaration.h"
@@ -356,107 +356,6 @@ vector<Diagnostic> SemanticAnalyzer::analyze(shared_ptr<ProgramData> programData
 			}
 
 			// TODO: walk function body AST for identifier uses and more checks
-
-			// helper: check type compatibility with some relaxed rules (pointers/arrays)
-			auto typesCompatible = [&](TypeInfoPtr a, TypeInfoPtr b)->bool {
-				if (!a || !b) return false;
-				if (a->equals(*b)) return true;
-				if (a->kind == TypeInfo::Kind::Pointer && b->kind == TypeInfo::Kind::Pointer)
-				{
-					if (a->element && b->element) return a->element->equals(*b->element);
-					return false;
-				}
-				if (a->kind == TypeInfo::Kind::Array && b->kind == TypeInfo::Kind::Array)
-				{
-					if (a->element && b->element) return a->element->equals(*b->element);
-					return false;
-				}
-				// allow array -> pointer to element
-				if (a->kind == TypeInfo::Kind::Array && b->kind == TypeInfo::Kind::Pointer)
-				{
-					if (a->element && b->element) return a->element->equals(*b->element);
-					return false;
-				}
-				if (a->kind == TypeInfo::Kind::Pointer && b->kind == TypeInfo::Kind::Array)
-				{
-					if (a->element && b->element) return a->element->equals(*b->element);
-					return false;
-				}
-				return false;
-			};
-
-			// analyze statements recursively to find returns and expression uses
-			function<void(shared_ptr<BaseStatement>)> analyzeStatement = [&](shared_ptr<BaseStatement> stmt)
-			{
-				if (!stmt) return;
-				// return/jump statements
-				if (stmt->getOp().has_value() && stmt->getOp().value() == TokenType::RETURN)
-				{
-					// return may carry an expression
-					if (stmt->hasExp() && stmt->getExp())
-					{
-						auto rettype = analyzeExpression(stmt->getExp());
-						if (functionType && functionType->returnType && rettype)
-						{
-							if (!typesCompatible(functionType->returnType, rettype))
-							{
-								int line = 0; string file = ""; int col = 0;
-								if (stmt->hasExp() && stmt->getExp()) {
-									// try to get token from expression root
-									auto rt = stmt->getExp()->postOrderTraversal(cout, stmt->getExp()->evaluate(cout, sem_process_adapter), sem_process_adapter);
-								}
-								// fallback to statement op token
-								if (stmt->getIdentifier()) { file = stmt->getIdentifier()->getFileName(); line = stmt->getIdentifier()->getLine(); col = stmt->getIdentifier()->getColumn(); }
-								diagnostics.emplace_back(Diagnostic::Severity::Error, "Return type mismatch", "E201", file, line, col);
-							}
-						}
-					}
-				}
-				// declarations inside statement
-				if (stmt->hasDeclarationList() && stmt->getDeclarationList())
-				{
-					for (auto& d : *stmt->getDeclarationList())
-					{
-						if (d->hasVectorInitDeclarator())
-						{
-							for (auto& init : *d->getVectorInitDeclarator())
-							{
-								string vname = init->getVariableName();
-								if (!vname.empty())
-								{
-									// check initializer
-									if (init->hasInitializer() && init->getInitializer() && init->getInitializer()->hasAssignmentExpression())
-									{
-										auto itype = analyzeExpression(init->getInitializer()->getAssignmentExpression());
-										auto vtype = buildTypeInfo(d->getDeclarationSpecifiers(), init->getDeclarator());
-										if (vtype && itype && !typesCompatible(vtype, itype))
-										{
-											int line = 0; string file = ""; int col = 0;
-											if (init->hasDeclarator() && init->getDeclarator()->hasDirectDeclarator()) {
-												auto idd = init->getDeclarator()->getDirectDeclarator();
-												if (idd->hasIdentifier() && idd->getIdentifier()) { line = idd->getIdentifier()->getLine(); col = idd->getIdentifier()->getColumn(); file = idd->getIdentifier()->getFileName(); }
-											}
-											diagnostics.emplace_back(Diagnostic::Severity::Error, "Initializer type mismatch for '" + vname + "'", "E202", file, line, col);
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-
-				// traverse nested statements
-				if (stmt->hasStatement() && stmt->getStatement()) analyzeStatement(stmt->getStatement());
-				if (stmt->hasStatement2() && stmt->getStatement2()) analyzeStatement(stmt->getStatement2());
-				if (stmt->hasEs1() && stmt->getEs1()) analyzeStatement(stmt->getEs1());
-				if (stmt->hasEs2() && stmt->getEs2()) analyzeStatement(stmt->getEs2());
-				if (stmt->hasStatementList() && stmt->getStatementList()) {
-					for (auto& s : *stmt->getStatementList()) analyzeStatement(s);
-				}
-			};
-
-			// run analysis over function body
-			if (fn->hasBaseStatement() && fn->getBaseStatement()) analyzeStatement(fn->getBaseStatement());
 
 			// exit function scope
 			symbols.popScope();

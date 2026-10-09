@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <string>
 #include <vector>
@@ -9,14 +9,12 @@
 namespace WadeSpace
 {
 	class TypeSpecifier;
-	struct TypeInfo;
 
 	struct SymbolInfo
 	{
 		enum class Kind { Variable, Function, Typedef, Parameter } kind;
 		std::string name;
-		// type info for semantic analyzer
-		std::shared_ptr<TypeInfo> type;
+		std::shared_ptr<TypeSpecifier> type;
 		int line = 0;
 	};
 

@@ -1,7 +1,5 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "SymbolTable.h"
-
-#include "TypeInfo.h"
 
 using namespace WadeSpace;
 

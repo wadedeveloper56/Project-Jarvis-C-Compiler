@@ -230,6 +230,7 @@
     <ClInclude Include="SymbolTable.h" />
     <ClInclude Include="Token.h" />
     <ClInclude Include="TokenType.h" />
+    <ClInclude Include="TypeInfo.h" />
     <ClInclude Include="TypeName.h" />
     <ClInclude Include="TypeQualifier.h" />
     <ClInclude Include="TypeSpecifier.h" />
@@ -295,6 +296,7 @@
     <ClCompile Include="structures.cpp" />
     <ClCompile Include="SymbolTable.cpp" />
     <ClCompile Include="Token.cpp" />
+    <ClCompile Include="TypeInfo.cpp" />
     <ClCompile Include="TypeName.cpp" />
     <ClCompile Include="TypeQualifier.cpp" />
     <ClCompile Include="TypeSpecifier.cpp" />
