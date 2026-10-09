@@ -19,7 +19,7 @@ test2_64.asm
 00000004                    *   _DATA ends
 00000000                    *   _BSS segment PARA FLAT PUBLIC 'BSS'
                             *   assume cs:ERROR
-00000000  00000000              _u DWORD  ?
+00000000  00000000              _u SDWORD  ?
 00000004  00000000              _m SDWORD  ?
 
 00000000                        .code
@@ -102,7 +102,7 @@ Symbols:
 @Interface . . . . . . . . . . .        Number             7h 
 @Model . . . . . . . . . . . . .        Number             7h 
 @ReservedStack . . . . . . . . .        Number             0h 
-@Time  . . . . . . . . . . . . .        Text   07:52:41
+@Time  . . . . . . . . . . . . .        Text   10:02:21
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT

@@ -6,38 +6,9 @@ C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\64bit\test1.asm
 00000000                    *   _DATA segment PARA FLAT PUBLIC 'DATA'
                             *   _DATA ends
                             *   assume cs:flat,ds:flat,ss:flat,es:flat,fs:ERROR,gs:NOTHING
-                                .x64p
-                                option casemap : none
-
-
-
-                                .data
-00000000                    *   _DATA segment
-                            *   assume cs:ERROR
-00000000                        .data?
-                            *   _DATA ends
-00000000                    *   _BSS segment PARA FLAT PUBLIC 'BSS'
-                            *   assume cs:ERROR
-00000000  00                    _var1 SBYTE  ?
-00000001  0000                  _var2 SWORD  ?
-00000003  00000000              _var3 SDWORD  ?
-
-00000000                        .code
-00000007                    *   _BSS ends
-00000000                    *   _TEXT segment
-                            *   assume cs:FLAT
-                                _main PROTO C _argc:SDWORD , _argv:QWORD ;
-
-00000000                        _main PROC C, _argc:SDWORD , _argv:QWORD 
-00000000  55                *   push rbp
-00000001  488BEC            *   mov rbp, rsp
-00000004  48C7C005000000        	mov rax,5
-0000000B                        	ret
-0000000B  C9                *   leave
-0000000C  C3                *   retn 
-0000000D                        _main endp
-                                end
-0000000D                    *   _TEXT ends
+                                error: Return type mismatch
+                           Error A2082: Must be in segment block
+                           Error A2099: END directive required at end of file
 
 
 Macros:
@@ -56,18 +27,8 @@ Segments and Groups:
                 N a m e                 Size     Length   Align   Combine Class
 
 FLAT . . . . . . . . . . . . . .        GROUP
-_BSS . . . . . . . . . . . . . .        64 Bit   00000007 Para    Public  'BSS'
 _DATA  . . . . . . . . . . . . .        64 Bit   00000000 Para    Public  'DATA'
-_TEXT  . . . . . . . . . . . . .        64 Bit   0000000D Para    Public  'CODE'
-
-
-Procedures, parameters and locals:
-
-                N a m e                 Type     Value    Segment  Length
-
-_main  . . . . . . . . . . . . .        P Near   00000000 _TEXT    0000000D Public   C
-  _argc  . . . . . . . . . . . .        DWord             rbp + 0010
-  _argv  . . . . . . . . . . . .        QWord             rbp + 0018
+_TEXT  . . . . . . . . . . . . .        64 Bit   00000000 Para    Public  'CODE'
 
 
 Symbols:
@@ -75,7 +36,7 @@ Symbols:
                 N a m e                 Type       Value     Attr
 
 @CodeSize  . . . . . . . . . . .        Number             0h 
-@Cpu . . . . . . . . . . . . . .        Number           DDFh 
+@Cpu . . . . . . . . . . . . . .        Number           D5Fh 
 @CurSeg  . . . . . . . . . . . .        Text   
 @DataSize  . . . . . . . . . . .        Number             0h 
 @Date  . . . . . . . . . . . . .        Text   10/09/26
@@ -84,14 +45,11 @@ Symbols:
 @Interface . . . . . . . . . . .        Number             7h 
 @Model . . . . . . . . . . . . .        Number             7h 
 @ReservedStack . . . . . . . . .        Number             0h 
-@Time  . . . . . . . . . . . . .        Text   07:52:38
+@Time  . . . . . . . . . . . . .        Text   10:02:16
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT
 @stack . . . . . . . . . . . . .        Text   FLAT
 __JWASM__  . . . . . . . . . . .        Number            D4h 
-_var1  . . . . . . . . . . . . .        Byte               0h _BSS FASTCALL
-_var2  . . . . . . . . . . . . .        Word               1h _BSS FASTCALL
-_var3  . . . . . . . . . . . . .        DWord              3h _BSS FASTCALL
 
-C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\64bit\test1.asm: 19 lines, 2 passes, 0 ms, 0 warnings, 0 errors
+C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\64bit\test1.asm: 1 lines, 1 passes, 1 ms, 0 warnings, 2 errors

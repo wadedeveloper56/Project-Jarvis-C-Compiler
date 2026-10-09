@@ -21,7 +21,7 @@ test2_16.asm
 00000000                    *   _BSS segment WORD  PUBLIC 'BSS'
                             *   assume cs:ERROR
                             *   DGROUP group _BSS
-00000000  00000000              _u DWORD  ?
+00000000  00000000              _u SDWORD  ?
 00000004  00000000              _m SDWORD  ?
 
 00000000                        .code
@@ -103,7 +103,7 @@ Symbols:
 @FileName  . . . . . . . . . . .        Text   TEST2_16
 @Interface . . . . . . . . . . .        Number             0h 
 @Model . . . . . . . . . . . . .        Number             2h 
-@Time  . . . . . . . . . . . . .        Text   07:52:41
+@Time  . . . . . . . . . . . . .        Text   10:02:21
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   DGROUP

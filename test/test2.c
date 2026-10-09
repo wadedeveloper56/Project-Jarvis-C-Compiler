@@ -1,14 +1,16 @@
-unsigned int u;
+int u;
 int x = 3;
 int m;
 
 int func1(int a, int b) {
-	int c = a + b * 5;
+	int c;  
+	c=a + b * 5;
 	return c;
 }
 
 int func2(int a, int b) {
-	int c = a + b / 3;
+	int c;
+	c = a + b / 3;
 	return c;
 }
 

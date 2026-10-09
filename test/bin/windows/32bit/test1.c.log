@@ -163,4 +163,4 @@ declaration_specifiers declarator compound_statement REDUCE to function_definiti
 function_definition REDUCE to external_declaration
 translation_unit external_declaration REDUCE to translation_unit
 
-Parse complete. Result = 0
+Parse complete. Result = 1
