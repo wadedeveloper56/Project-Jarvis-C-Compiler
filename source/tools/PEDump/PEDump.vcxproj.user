@@ -3,12 +3,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LocalDebuggerCommandArguments> -a C:\projects\OSDev\Project-Jarvis-C-Compiler\test\test2_16.obj</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArgumentsHistory>-A C:\projects\OSDev\ProjectJarvis\bin\tools\intermediate\Arguments\Release\Win32\ArgDate.obj| -a C:\projects\OSDev\ProjectJarvis\test\bin\windows\x64\test1.exe|</LocalDebuggerCommandArgumentsHistory>
+    <LocalDebuggerCommandArgumentsHistory>-A C:\projects\OSDev\ProjectJarvis\bin\tools\intermediate\Arguments\Release\Win32\ArgDate.obj| -a C:\projects\OSDev\ProjectJarvis\test\bin\windows\x64\test1.exe| -a C:\projects\OSDev\Project-Jarvis-C-Compiler\test\test2_16.obj|</LocalDebuggerCommandArgumentsHistory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LocalDebuggerCommandArguments> -a C:\projects\OSDev\Project-Jarvis-C-Compiler\test\test2_16.obj</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArgumentsHistory>-A C:\projects\OSDev\ProjectJarvis\bin\tools\intermediate\Arguments\Release\Win32\ArgDate.obj|</LocalDebuggerCommandArgumentsHistory>
+    <LocalDebuggerCommandArgumentsHistory>-A C:\projects\OSDev\ProjectJarvis\bin\tools\intermediate\Arguments\Release\Win32\ArgDate.obj| -a C:\projects\OSDev\Project-Jarvis-C-Compiler\test\test2_16.obj|</LocalDebuggerCommandArgumentsHistory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LocalDebuggerCommandArguments> -a C:\projects\OSDev\Project-Jarvis-C-Compiler\test\test2_16.obj</LocalDebuggerCommandArguments>
@@ -18,6 +18,6 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerCommandArguments> -a C:\projects\OSDev\Project-Jarvis-C-Compiler\test\test2_16.obj</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArgumentsHistory>-A C:\projects\OSDev\ProjectJarvis\bin\tools\intermediate\Arguments\Release\Win32\ArgDate.obj|</LocalDebuggerCommandArgumentsHistory>
+    <LocalDebuggerCommandArgumentsHistory>-A C:\projects\OSDev\ProjectJarvis\bin\tools\intermediate\Arguments\Release\Win32\ArgDate.obj| -a C:\projects\OSDev\Project-Jarvis-C-Compiler\test\test2_16.obj|</LocalDebuggerCommandArgumentsHistory>
   </PropertyGroup>
 </Project>

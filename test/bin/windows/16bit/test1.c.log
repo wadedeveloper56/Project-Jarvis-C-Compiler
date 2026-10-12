@@ -4,7 +4,7 @@ char var1 ;
 short var2 ;
 int var3 ;
 
-int main ( int argc , char * argv [ ] )
+int main ( )
 {
 return 5 ;
 }
@@ -79,63 +79,24 @@ increaseLocation(): 1, total = 46
 increaseLocation(): 1, total = 47
 Scanner: token [(]
 increaseLocation(): 1, total = 48
-increaseLocation(): 3, total = 51
-Scanner: token [int]
-INT REDUCE to type_specifier
-increaseLocation(): 1, total = 52
-increaseLocation(): 4, total = 56
-Scanner: identifier [argc]
-type_specifier REDUCE to declaration_specifiers
-IDENTIFIER REDUCE to direct_declarator
-increaseLocation(): 1, total = 57
-increaseLocation(): 1, total = 58
-Scanner: token [,]
-direct_declarator REDUCE to declarator
-declaration_specifiers declarator REDUCE to parameter_declaration
-parameter_declaration REDUCE to parameter_list
-increaseLocation(): 1, total = 59
-increaseLocation(): 4, total = 63
-Scanner: token [char]
-CHAR REDUCE to type_specifier
-increaseLocation(): 1, total = 64
-increaseLocation(): 1, total = 65
-Scanner: token [*]
-type_specifier REDUCE to declaration_specifiers
-increaseLocation(): 1, total = 66
-increaseLocation(): 4, total = 70
-Scanner: identifier [argv]
-TIMES_OP REDUCE to POINTER
-IDENTIFIER REDUCE to direct_declarator
-increaseLocation(): 1, total = 71
-increaseLocation(): 1, total = 72
-Scanner: token [[]
-increaseLocation(): 1, total = 73
-increaseLocation(): 1, total = 74
-Scanner: token []]
-direct_declarator OBRACE CBRACE REDUCE to direct_declarator
-increaseLocation(): 1, total = 75
-increaseLocation(): 1, total = 76
+increaseLocation(): 1, total = 49
 Scanner: token [)]
-pointer direct_declarator REDUCE to declarator
-declaration_specifiers declarator REDUCE to parameter_declaration
-parameter_list COMMA parameter_declaration REDUCE to parameter_list
-parameter_list REDUCE to parameter_type_list
-direct_declarator OPAREN parameter_type_list CPAREN to direct_declarator
-increaseLocation(): 1, total = 77
-increaseLocation(): 1, total = 78
+direct_declarator OPAREN CPAREN REDUCE to direct_declarator
+increaseLocation(): 1, total = 50
+increaseLocation(): 1, total = 51
 Scanner: token [{]
 direct_declarator REDUCE to declarator
-increaseLocation(): 1, total = 79
-increaseLocation(): 6, total = 85
+increaseLocation(): 1, total = 52
+increaseLocation(): 6, total = 58
 Scanner: token [return]
-increaseLocation(): 1, total = 86
-increaseLocation(): 1, total = 87
+increaseLocation(): 1, total = 59
+increaseLocation(): 1, total = 60
 Scanner: decimal number: 5
 I_CONST REDUCE to constant 
 constant REDUCE to primary_expression
 primary_expression REDUCE to postfix_expression
-increaseLocation(): 1, total = 88
-increaseLocation(): 1, total = 89
+increaseLocation(): 1, total = 61
+increaseLocation(): 1, total = 62
 Scanner: token [;]
 postfix_expression REDUCE unary_expression
 unary_expression REDUCE to cast_expression
@@ -155,12 +116,12 @@ asignment_expression REDUCE to expression
 RETURN expression SEMICOLON REDUCE to jump_statement
 jump_statement REDUCE to statement
 statement REDUCE to statement_list
-increaseLocation(): 1, total = 90
-increaseLocation(): 1, total = 91
+increaseLocation(): 1, total = 63
+increaseLocation(): 1, total = 64
 Scanner: token [}]
 OCURLY statement_list CCURLY REDUCE to compound_statement
 declaration_specifiers declarator compound_statement REDUCE to function_definition
 function_definition REDUCE to external_declaration
 translation_unit external_declaration REDUCE to translation_unit
 
-Parse complete. Result = 1
+Parse complete. Result = 0
