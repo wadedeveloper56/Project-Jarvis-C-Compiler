@@ -10,6 +10,8 @@
 #include "BaseCodeGenerator.h"
 #include "MasmCodeGenerator.h"
 #include "output.h"
+#include "SemanticAnalyzer.h"
+#include "Diagnostic.h"
 
 using namespace WadeSpace;
 using namespace std;
@@ -30,6 +32,23 @@ void Compiler::compileFile(istringstream& inStr, ostream& out, int& exitcode)
 	Interpreter i;
 	i.setStreams(&inStr, &out);
 	exitcode = i.parse();
+	// Run semantic analysis on the parsed program
+	SemanticAnalyzer analyzer;
+	auto diagnostics = analyzer.analyze(programData);
+	bool hasError = false;
+	for (const auto& d : diagnostics)
+	{
+		out << d.toIDEString() << endl;
+		if (d.severity == Diagnostic::Severity::Error) hasError = true;
+	}
+
+	if (hasError)
+	{
+		// Prevent code generation on semantic errors
+		exitcode = 1;
+		return;
+	}
+
 	shared_ptr<BaseCodeGenerator> generator = programData->processGlobalVariables();
 	generator->generateCode(out);
 }

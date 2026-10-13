@@ -114,7 +114,7 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		cerr << "Error opening file " << infiles->filename[0] << endl;
+		std::cerr << "Failed to open input '" << infiles->filename[0] << "': " << strerror(errno) << std::endl;
 		exitcode = -1;
 	}
 

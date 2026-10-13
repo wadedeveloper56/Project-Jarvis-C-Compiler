@@ -43,6 +43,8 @@ namespace WadeSpace
 		optional<TokenType> type;
 		shared_ptr<vector<shared_ptr<VariableData>>> parameters;
 		shared_ptr<BaseStatement> statements;
+		// local variables declared inside the function body
+		shared_ptr<vector<shared_ptr<VariableData>>> localVariables;
 
 		FunctionData() = default;
 		virtual ~FunctionData() = default;

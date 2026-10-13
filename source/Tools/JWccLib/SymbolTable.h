@@ -1,0 +1,34 @@
+#pragma once
+
+#include <string>
+#include <vector>
+#include <map>
+#include <memory>
+#include <optional>
+
+namespace WadeSpace
+{
+	class TypeSpecifier;
+	struct TypeInfo;
+
+	struct SymbolInfo
+	{
+		enum class Kind { Variable, Function, Typedef, Parameter } kind;
+		std::string name;
+		// type info for semantic analyzer
+		std::shared_ptr<TypeInfo> type;
+		int line = 0;
+	};
+
+	class SymbolTable
+	{
+		std::vector<std::map<std::string, SymbolInfo>> scopes;
+	public:
+		SymbolTable();
+		void pushScope();
+		void popScope();
+		bool declare(const SymbolInfo& info); // false if already declared in current scope
+		std::optional<SymbolInfo> lookup(const std::string& name) const; // searches outward
+		bool isDeclaredInCurrentScope(const std::string& name) const;
+	};
+}

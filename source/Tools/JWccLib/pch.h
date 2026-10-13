@@ -28,6 +28,8 @@
 #include <unordered_map>
 #include <stack>
 #include <sstream>
+#include <unordered_set>
+#include <functional>
 
 #pragma warning(disable:4267)
 #pragma warning(disable:4244)

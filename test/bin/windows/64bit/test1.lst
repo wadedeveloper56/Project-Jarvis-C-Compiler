@@ -1,4 +1,4 @@
-JWasm v2.12pre, Oct  6 2026
+JWasm v2.12pre, Oct  9 2026
 C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\64bit\test1.asm
                             *   .model FLAT
 00000000                    *   _TEXT segment PARA FLAT PUBLIC 'CODE'
@@ -26,18 +26,15 @@ C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\64bit\test1.asm
 00000007                    *   _BSS ends
 00000000                    *   _TEXT segment
                             *   assume cs:FLAT
-                                _main PROTO C _argc:SDWORD , _argv:QWORD ;
+                                _main PROTO C;
 
-00000000                        _main PROC C, _argc:SDWORD , _argv:QWORD 
-00000000  55                *   push rbp
-00000001  488BEC            *   mov rbp, rsp
-00000004  48C7C005000000        	mov rax,5
-0000000B                        	ret
-0000000B  C9                *   leave
-0000000C  C3                *   retn 
-0000000D                        _main endp
+00000000                        _main PROC C
+00000000  48C7C005000000        	mov rax,5
+00000007                        	ret
+00000007  C3                *   retn
+00000008                        _main endp
                                 end
-0000000D                    *   _TEXT ends
+00000008                    *   _TEXT ends
 
 
 Macros:
@@ -58,16 +55,14 @@ Segments and Groups:
 FLAT . . . . . . . . . . . . . .        GROUP
 _BSS . . . . . . . . . . . . . .        64 Bit   00000007 Para    Public  'BSS'
 _DATA  . . . . . . . . . . . . .        64 Bit   00000000 Para    Public  'DATA'
-_TEXT  . . . . . . . . . . . . .        64 Bit   0000000D Para    Public  'CODE'
+_TEXT  . . . . . . . . . . . . .        64 Bit   00000008 Para    Public  'CODE'
 
 
 Procedures, parameters and locals:
 
                 N a m e                 Type     Value    Segment  Length
 
-_main  . . . . . . . . . . . . .        P Near   00000000 _TEXT    0000000D Public   C
-  _argc  . . . . . . . . . . . .        DWord             rbp + 0010
-  _argv  . . . . . . . . . . . .        QWord             rbp + 0018
+_main  . . . . . . . . . . . . .        P Near   00000000 _TEXT    00000008 Public   C
 
 
 Symbols:
@@ -78,13 +73,13 @@ Symbols:
 @Cpu . . . . . . . . . . . . . .        Number           DDFh 
 @CurSeg  . . . . . . . . . . . .        Text   
 @DataSize  . . . . . . . . . . .        Number             0h 
-@Date  . . . . . . . . . . . . .        Text   10/08/26
+@Date  . . . . . . . . . . . . .        Text   10/09/26
 @FileCur . . . . . . . . . . . .        Text   C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\64bit\test1.asm
 @FileName  . . . . . . . . . . .        Text   TEST1
 @Interface . . . . . . . . . . .        Number             7h 
 @Model . . . . . . . . . . . . .        Number             7h 
 @ReservedStack . . . . . . . . .        Number             0h 
-@Time  . . . . . . . . . . . . .        Text   16:48:41
+@Time  . . . . . . . . . . . . .        Text   17:46:07
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT

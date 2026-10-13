@@ -1,4 +1,4 @@
-JWasm v2.12pre, Oct  6 2026
+JWasm v2.12pre, Oct  9 2026
 C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\16bit\test1.asm
                                 .286
                                 .model small;
@@ -28,18 +28,15 @@ C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\16bit\test1.asm
 00000007                    *   _BSS ends
 00000000                    *   _TEXT segment
                             *   assume cs:_TEXT
-                                _main PROTO C _argc:SDWORD , _argv:WORD ;
+                                _main PROTO C;
 
-00000000                        _main PROC C, _argc:SDWORD , _argv:WORD 
-00000000  55                *   push bp
-00000001  8BEC              *   mov bp, sp
-00000003  B80500                	mov ax,5
-00000006                        	ret
-00000006  C9                *   leave
-00000007  C3                *   retn 
-00000008                        _main endp
+00000000                        _main PROC C
+00000000  B80500                	mov ax,5
+00000003                        	ret
+00000003  C3                *   retn
+00000004                        _main endp
                                 end
-00000008                    *   _TEXT ends
+00000004                    *   _TEXT ends
 
 
 Macros:
@@ -57,7 +54,7 @@ Segments and Groups:
 
                 N a m e                 Size     Length   Align   Combine Class
 
-_TEXT  . . . . . . . . . . . . .        16 Bit   0008     Word    Public  'CODE'
+_TEXT  . . . . . . . . . . . . .        16 Bit   0004     Word    Public  'CODE'
 DGROUP . . . . . . . . . . . . .        GROUP
 _DATA  . . . . . . . . . . . . .        16 Bit   0000     Word    Public  'DATA'
 _BSS . . . . . . . . . . . . . .        16 Bit   0007     Word    Public  'BSS'
@@ -67,9 +64,7 @@ Procedures, parameters and locals:
 
                 N a m e                 Type     Value    Segment  Length
 
-_main  . . . . . . . . . . . . .        P Near   0000     _TEXT    0008 Public   C
-  _argc  . . . . . . . . . . . .        DWord             bp + 0004
-  _argv  . . . . . . . . . . . .        Word              bp + 0008
+_main  . . . . . . . . . . . . .        P Near   0000     _TEXT    0004 Public   C
 
 
 Symbols:
@@ -80,12 +75,12 @@ Symbols:
 @Cpu . . . . . . . . . . . . . .        Number           507h 
 @CurSeg  . . . . . . . . . . . .        Text   
 @DataSize  . . . . . . . . . . .        Number             0h 
-@Date  . . . . . . . . . . . . .        Text   10/08/26
+@Date  . . . . . . . . . . . . .        Text   10/09/26
 @FileCur . . . . . . . . . . . .        Text   C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\16bit\test1.asm
 @FileName  . . . . . . . . . . .        Text   TEST1
 @Interface . . . . . . . . . . .        Number             0h 
 @Model . . . . . . . . . . . . .        Number             2h 
-@Time  . . . . . . . . . . . . .        Text   16:48:44
+@Time  . . . . . . . . . . . . .        Text   17:46:11
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   DGROUP

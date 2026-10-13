@@ -187,6 +187,7 @@
     <ClInclude Include="Declaration.h" />
     <ClInclude Include="DeclarationSpecifiers.h" />
     <ClInclude Include="Declarator.h" />
+    <ClInclude Include="Diagnostic.h" />
     <ClInclude Include="DirectAbstractDeclarator.h" />
     <ClInclude Include="DirectDeclarator.h" />
     <ClInclude Include="Enumerator.h" />
@@ -217,6 +218,7 @@
     <ClInclude Include="ProgramData.h" />
     <ClInclude Include="scanner.h" />
     <ClInclude Include="SelectionStatement.h" />
+    <ClInclude Include="SemanticAnalyzer.h" />
     <ClInclude Include="SpecifierQualifierList.h" />
     <ClInclude Include="stack.hh" />
     <ClInclude Include="Statement.h" />
@@ -225,8 +227,10 @@
     <ClInclude Include="StructDeclarator.h" />
     <ClInclude Include="StructOrUnion.h" />
     <ClInclude Include="StructOrUnionSpecifier.h" />
+    <ClInclude Include="SymbolTable.h" />
     <ClInclude Include="Token.h" />
     <ClInclude Include="TokenType.h" />
+    <ClInclude Include="TypeInfo.h" />
     <ClInclude Include="TypeName.h" />
     <ClInclude Include="TypeQualifier.h" />
     <ClInclude Include="TypeSpecifier.h" />
@@ -242,6 +246,7 @@
     <ClCompile Include="Declaration.cpp" />
     <ClCompile Include="DeclarationSpecifiers.cpp" />
     <ClCompile Include="Declarator.cpp" />
+    <ClCompile Include="Diagnostic.cpp" />
     <ClCompile Include="DirectAbstractDeclarator.cpp" />
     <ClCompile Include="DirectDeclarator.cpp" />
     <ClCompile Include="Enumerator.cpp" />
@@ -280,6 +285,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="SelectionStatement.cpp" />
+    <ClCompile Include="SemanticAnalyzer.cpp" />
     <ClCompile Include="SpecifierQualifierList.cpp" />
     <ClCompile Include="Statement.cpp" />
     <ClCompile Include="StorageClassSpecifier.cpp" />
@@ -288,7 +294,9 @@
     <ClCompile Include="StructOrUnion.cpp" />
     <ClCompile Include="StructOrUnionSpecifier.cpp" />
     <ClCompile Include="structures.cpp" />
+    <ClCompile Include="SymbolTable.cpp" />
     <ClCompile Include="Token.cpp" />
+    <ClCompile Include="TypeInfo.cpp" />
     <ClCompile Include="TypeName.cpp" />
     <ClCompile Include="TypeQualifier.cpp" />
     <ClCompile Include="TypeSpecifier.cpp" />

@@ -1,0 +1,26 @@
+#include "pch.h"
+#include "Diagnostic.h"
+
+using namespace WadeSpace;
+using namespace std;
+
+string Diagnostic::toString() const
+{
+	string sev = (severity == Severity::Error) ? "error" : (severity == Severity::Warning ? "warning" : "info");
+	if (file.empty())
+	{
+		if (!code.empty()) return sev + " " + code + ": " + message;
+		return sev + ": " + message;
+	}
+	if (!code.empty()) return file + "(" + to_string(line) + "): " + sev + " " + code + ": " + message;
+	return file + "(" + to_string(line) + "): " + sev + ": " + message;
+}
+
+string Diagnostic::toIDEString() const
+{
+	// Visual Studio style: file(line): severity: message
+	string sev = (severity == Severity::Error) ? "error" : (severity == Severity::Warning ? "warning" : "info");
+	if (file.empty()) return sev + ": " + message;
+	if (!code.empty()) return file + "(" + to_string(line) + "): " + sev + " " + code + ": " + message;
+	return file + "(" + to_string(line) + "): " + sev + ": " + message;
+}

@@ -1,14 +1,14 @@
 PEDUMP - 16/32/64 bit  OMF/COFF EXE/OBJ/LIB file dumper v1.0 (C) Copyright 2025-2026 Christopher D. Wade.
 All Rights Reserved
 Dump of file C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\32bit\test1.obj
-File Size 388 bytes
+File Size 384 bytes
 File Type: 32-bit COFF OBJECT
 
 FILE HEADER VALUES
                14C Machine (Intel 386 or later processors and compatible processors)
                  3 (3) Number of Sections
-          6AC80FBB TimeDateStamp ->  n/a
-                96 PointerToSymbolTable
+          6AC96EB1 TimeDateStamp ->  n/a
+                92 PointerToSymbolTable
                  D (13) NumberOfSymbols
                  0 (0) SizeOfOptionalHeader
                  0 Flags
@@ -18,8 +18,8 @@ SECTION HEADER #0 (0)
    .text name
        0 physical address
        0 virtual address
-       A (10) size of raw data
-      8C file pointer to raw data (0000008C to 00000095)
+       6 (6) size of raw data
+      8C file pointer to raw data (0000008C to 00000091)
        0 file pointer to relocation table
        0 file pointer to line numbers
        0 number of relocations
@@ -32,11 +32,8 @@ SECTION HEADER #0 (0)
          Readable
 
 RAW DATA #0 (0)
-RAW DATA #0 (0) - 10 bytes
-0x0:	push	ebp
-0x1:	mov	ebp, esp
-0x3:	mov	eax, 5
-0x8:	leave	
+RAW DATA #0 (0) - 6 bytes
+0x0:	mov	eax, 5
 
 
 SECTION HEADER #1 (1)
@@ -83,7 +80,7 @@ Indx Sectn   Value   Type  Storage Name
 0000 DEBUG 00000000  0000 FILE     .file
      * C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\32bit\test1.asm
 0006     1 00000000  0000 STATIC   .text
-     * Section: 0000  Len: 0000A  Relocs: 0000  LineNums: 0000 checksum:00000000
+     * Section: 0000  Len: 00006  Relocs: 0000  LineNums: 0000 checksum:00000000
 0008     2 00000000  0000 STATIC   .data
      * Section: 0000  Len: 00000  Relocs: 0000  LineNums: 0000 checksum:00000000
 000A     3 00000000  0000 STATIC   .bss

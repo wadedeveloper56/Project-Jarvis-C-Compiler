@@ -71,3 +71,5 @@ long double CToken::getDoubleConst() const
 	}
 	return 0.0;
 }
+
+// Note: location getters/setters are simple members in CToken (defined in header)

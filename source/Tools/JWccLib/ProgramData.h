@@ -33,6 +33,7 @@ namespace WadeSpace
 	private:
 		void handleDeclaration(shared_ptr<Declaration> declaration, shared_ptr<vector<shared_ptr<VariableData>>> variableTable);
 		void handleFunction(shared_ptr<FunctionDefinition> declaration, shared_ptr < vector < shared_ptr<FunctionData>>> functionTable);
+		void collectLocalDeclarations(shared_ptr<BaseStatement> stmt, shared_ptr<vector<shared_ptr<VariableData>>> locals);
 		shared_ptr<ParameterTypeList> getDeclarationParameterList(shared_ptr<vector<shared_ptr<InitDeclarator>>> initDeclaratorsList);
 		TokenType getFunctionParameterType(shared_ptr<ParameterDeclaration> parameterDeclaration);
 		string getParameterDeclarationName(shared_ptr<ParameterDeclaration> parameterDeclaration);

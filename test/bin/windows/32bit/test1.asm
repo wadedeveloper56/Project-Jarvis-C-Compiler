@@ -11,9 +11,9 @@ _var2 SWORD  ?
 _var3 SDWORD  ?
 
 .code
-_main PROTO C _argc:SDWORD , _argv:DWORD ;
+_main PROTO C;
 
-_main PROC C, _argc:SDWORD , _argv:DWORD 
+_main PROC C
 	mov eax,5
 	ret
 _main endp

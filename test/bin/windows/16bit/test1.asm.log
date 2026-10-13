@@ -1,7 +1,7 @@
 PEDUMP - 16/32/64 bit  OMF/COFF EXE/OBJ/LIB file dumper v1.0 (C) Copyright 2025-2026 Christopher D. Wade.
 All Rights Reserved
 Dump of file C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\16bit\test1.obj
-File Size 214 bytes
+File Size 210 bytes
 File Type: 16-bit DOS\Windows OBJECT
 
 Type 0x80 (THEADR) : length 0x004E (78)
@@ -17,7 +17,7 @@ Type 0x96 (LNAMES) : length 0x0028 (40)
 00000074  53 53 04 5f 42 53 53 d1                           SS._BSS.
 
 Type 0x98 (SEGDEF) : length 0x0007 (7)
-0000007f  48 08 00 03 02 01 0b                              H......
+0000007f  48 04 00 03 02 01 0f                              H......
 
 Type 0x88 (COMENT) : length 0x0005 (5)
 00000089  80 fe 4f 01 a5                                    ..O..
@@ -37,9 +37,9 @@ Type 0x90 : length 0x000D (13)
 Type 0x88 (COMENT) : length 0x0004 (4)
 000000be  00 a2 01 d1                                       ....
 
-Type 0xA0 (LEDATA) : length 0x000C (12)
-000000c5  01 00 00 55 8b ec b8 05  00 c9 c3 3e              ...U.......>
+Type 0xA0 (LEDATA) : length 0x0008 (8)
+000000c5  01 00 00 b8 05 00 c3 d7                           ........
 
 Type 0x8A : length 0x0002 (2)
-000000d4  00 74                                             .t
+000000d0  00 74                                             .t
 
