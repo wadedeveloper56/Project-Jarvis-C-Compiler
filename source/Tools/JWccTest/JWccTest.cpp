@@ -23,6 +23,29 @@ namespace JWccTest
 	TEST_CLASS(JWccTest)
 	{
 	public:
+
+		// helper: create a Declaration for 'int x;' style
+		shared_ptr<WadeSpace::Declaration> createSimpleDeclaration(const std::string& name, WadeSpace::TokenType type = WadeSpace::INT)
+		{
+			auto declSpec = make_shared<WadeSpace::DeclarationSpecifiers>();
+			// build a TypeSpecifier and put it in DeclarationSpecifiersNode
+			auto ts = make_shared<WadeSpace::TypeSpecifier>();
+			ts->setType(type);
+			auto node = make_shared<WadeSpace::DeclarationSpecifiersNode>(nullptr, ts, nullptr);
+			declSpec->setDeclarationSpecifiersNodeList(make_shared<vector<shared_ptr<WadeSpace::DeclarationSpecifiersNode>>>());
+			declSpec->getDeclarationSpecifiersNodeList()->push_back(node);
+
+			auto decl = make_shared<WadeSpace::Declaration>(declSpec);
+			// create DirectDeclarator with identifier token
+			auto idtok = createStringIDToken(const_cast<char*>(name.c_str()));
+			auto dd = make_shared<WadeSpace::DirectDeclarator>(idtok, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
+			auto declarator = make_shared<WadeSpace::Declarator>(nullptr, dd);
+			auto init = make_shared<WadeSpace::InitDeclarator>();
+			init->setDeclarator(declarator);
+			// add to declaration
+			decl->addInitDeclarator(init);
+			return decl;
+		}
 		
 		TEST_METHOD(CollectLocalDeclarations)
 		{
@@ -43,7 +66,7 @@ namespace JWccTest
 			auto gen = pd.processGlobalVariables();
 			Assert::IsTrue(pd.hasGenerator());
 			auto ft = gen->getFunctionTable();
-			//Assert::IsTrue(ft != nullptr && !ft->empty());
+			Assert::IsTrue(ft != nullptr && ft->size() > 0);
 			//auto f = ft->at(0);
 			//Assert::IsTrue(f->localVariables != nullptr && !f->localVariables->empty());
 			//Assert::AreEqual(std::string("k"), f->localVariables->at(0)->name);
@@ -96,29 +119,6 @@ namespace JWccTest
 			//std::string s = out.str();
 			//Assert::IsTrue(s.find("_testfn PROC") != std::string::npos);
 			//Assert::IsTrue(s.find("LOCAL l1") != std::string::npos || s.find("LOCAL l1:") != std::string::npos || s.find("l1") != std::string::npos);
-		}
-
-		// helper: create a Declaration for 'int x;' style
-		shared_ptr<WadeSpace::Declaration> createSimpleDeclaration(const std::string& name, WadeSpace::TokenType type = WadeSpace::INT)
-		{
-			auto declSpec = make_shared<WadeSpace::DeclarationSpecifiers>();
-			// build a TypeSpecifier and put it in DeclarationSpecifiersNode
-			auto ts = make_shared<WadeSpace::TypeSpecifier>();
-			ts->setType(type);
-			auto node = make_shared<WadeSpace::DeclarationSpecifiersNode>(nullptr, ts, nullptr);
-			declSpec->setDeclarationSpecifiersNodeList(make_shared<vector<shared_ptr<WadeSpace::DeclarationSpecifiersNode>>>());
-			declSpec->getDeclarationSpecifiersNodeList()->push_back(node);
-
-			auto decl = make_shared<WadeSpace::Declaration>(declSpec);
-			// create DirectDeclarator with identifier token
-			auto idtok = createStringIDToken(const_cast<char*>(name.c_str()));
-			auto dd = make_shared<WadeSpace::DirectDeclarator>(idtok, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
-			auto declarator = make_shared<WadeSpace::Declarator>(nullptr, dd);
-			auto init = make_shared<WadeSpace::InitDeclarator>();
-			init->setDeclarator(declarator);
-			// add to declaration
-			decl->addInitDeclarator(init);
-			return decl;
 		}
 
 
