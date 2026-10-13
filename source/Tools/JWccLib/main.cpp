@@ -1,4 +1,3 @@
-#define _CRTDBG_MAP_ALLOC
 #include "pch.h"
 #include <fstream>
 #include <sstream>
@@ -21,7 +20,6 @@ using namespace WadeSpace::PreProcessor;
 
 int main(int argc, char* argv[])
 {
-	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 	ifstream in;
 	ofstream out;
 	ArgIntPtr bitsize = argInt0("bB", "bitsize", NULL, "define bit size to be 16, 32 or 64 bits (default is 32)");
@@ -105,17 +103,45 @@ int main(int argc, char* argv[])
 	in.open(infiles->filename[0], ifstream::in);
 	out.open(outfile->filename[0], ofstream::out);
 
-	if (in.is_open() && out.is_open())
+	if (!in.is_open())
 	{
-		debug_printf("Parse starting");
-		compiler = make_shared<WadeSpace::Compiler>();
-		compiler->compile(in, infiles, out, exitcode);
-		cout << "Parse complete. Result = " << exitcode << endl;
+		cerr << "Failed to open input '" << infiles->filename[0] << "' ";
+		int errNum = errno;
+		char errMsg[256];
+
+		// Use MSVC-preferred strerror_s instead of strerror
+		if (strerror_s(errMsg, sizeof(errMsg), errNum) == 0)
+		{
+			cerr << "Error Code (" << errNum << "): '" << errMsg << "'" << endl;
+		}
+		else
+		{
+			cerr << "Error Code: " << errNum << " (Unknown error description)" << endl;
+		}
+		exitcode = -1;
+	}
+	else if (!out.is_open())
+	{
+		cerr << "Failed to open output '" << outfile->filename[0] << "' ";
+		int errNum = errno;
+		char errMsg[256];
+
+		if (strerror_s(errMsg, sizeof(errMsg), errNum) == 0)
+		{
+			cerr << "Error Code (" << errNum << "): '" << errMsg << "'" << endl;
+		}
+		else
+		{
+			cerr << "Error Code: " << errNum << " (Unknown error description)" << endl;
+		}
+		exitcode = -1;
 	}
 	else
 	{
-		std::cerr << "Failed to open input '" << infiles->filename[0] << "': " << strerror(errno) << std::endl;
-		exitcode = -1;
+		debug_printf("Parse starting");
+		compiler = make_shared<Compiler>();
+		compiler->compile(in, infiles, out, exitcode);
+		cout << "Parse complete. Result = " << exitcode << endl;
 	}
 
 exit:

@@ -1,23 +1,23 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LocalDebuggerCommandArguments> -b 64 -o C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\x64\test2.asm C:\projects\OSDev\Project-Jarvis-C-Compiler\test\test2.c</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments> -b 64 -o C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\test\\bin\\windows\\64bit\\test2.asm C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\test\\test2.c</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerCommandArgumentsHistory>-b 32 -o  C:\projects\ProjectJarvis\test\test1.asm  C:\projects\OSDev\ProjectJarvis\test\test1.c| -b 64 -o bin\windows\x64\test1.asm C:\projects\OSDev\ProjectJarvis\test\test1.c| -b 64 -o C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\x64\test2.asm C:\projects\OSDev\Project-Jarvis-C-Compiler\test\test2.c|</LocalDebuggerCommandArgumentsHistory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LocalDebuggerCommandArguments> -b 64 -o C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\x64\test2.asm C:\projects\OSDev\Project-Jarvis-C-Compiler\test\test2.c</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments> -b 64 -o C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\test\\bin\\windows\\64bit\\test2.asm C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\test\\test2.c</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerCommandArgumentsHistory>-b 32 -o  C:\projects\ProjectJarvis\test\test1.asm  C:\projects\OSDev\ProjectJarvis\test\test1.c| -b 64 -o C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\x64\test2.asm C:\projects\OSDev\Project-Jarvis-C-Compiler\test\test2.c|</LocalDebuggerCommandArgumentsHistory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments> -b 64 -o C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\x64\test2.asm C:\projects\OSDev\Project-Jarvis-C-Compiler\test\test2.c</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments> -b 64 -o C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\test\\bin\\windows\\64bit\\test2.asm C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\test\\test2.c</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArgumentsHistory>-b 32 -o  C:\projects\ProjectJarvis\test\test1.asm  C:\projects\OSDev\ProjectJarvis\test\test1.c| -b 64 -o bin\windows\x64\test1.asm test1.c| -b 64 -o bin\windows\x64\test1.asm C:\projects\OSDev\ProjectJarvis\test\test1.c| -b 64 -o C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\x64\test1.asm C:\projects\OSDev\Project-Jarvis-C-Compiler\test\test1.c| -b 64 -o C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\x64\test2.asm C:\projects\OSDev\Project-Jarvis-C-Compiler\test\test2.c|</LocalDebuggerCommandArgumentsHistory>
+    <LocalDebuggerCommandArgumentsHistory> -b 64 -o C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\x64\test1.asm C:\projects\OSDev\Project-Jarvis-C-Compiler\test\test1.c| -b 64 -o C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\x64\test2.asm C:\projects\OSDev\Project-Jarvis-C-Compiler\test\test2.c| -b 64 -o C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\test\\bin\\windows\\x64\\test2.asm C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\test\\test2.c| -b 64 -o C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\test\\bin\\windows\\64biit\\test2.asm C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\test\\test2.c| -b 64 -o C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\test\\bin\\windows\\64bit\\test2.asm C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\test\\test2.c|</LocalDebuggerCommandArgumentsHistory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments> -b 64 -o C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\x64\test2.asm C:\projects\OSDev\Project-Jarvis-C-Compiler\test\test2.c</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments> -b 64 -o C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\test\\bin\\windows\\64bit\\test2.asm C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\test\\test2.c</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArgumentsHistory>C:\projects\OSDev\ProjectJarvis\test\test1.c|-b 32 -o  C:\projects\ProjectJarvis\test\test1.asm  C:\projects\OSDev\ProjectJarvis\test\test1.c| -b 64 -o C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\x64\test2.asm C:\projects\OSDev\Project-Jarvis-C-Compiler\test\test2.c|</LocalDebuggerCommandArgumentsHistory>
+    <LocalDebuggerCommandArgumentsHistory>C:\projects\OSDev\ProjectJarvis\test\test1.c|-b 32 -o  C:\projects\ProjectJarvis\test\test1.asm  C:\projects\OSDev\ProjectJarvis\test\test1.c| -b 64 -o C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\x64\test2.asm C:\projects\OSDev\Project-Jarvis-C-Compiler\test\test2.c| -b 64 -o C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\test\\bin\\windows\\64bit\\test2.asm C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\test\\test2.c|</LocalDebuggerCommandArgumentsHistory>
   </PropertyGroup>
 </Project>
