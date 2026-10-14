@@ -100,7 +100,7 @@ Dependency generation:
     "Time: " __TIME__ "  Date: " __DATE__;
 const char* ppMain::usageText = "[options] files";
 
-int start(int argc, char* argv[]) MAINTRY
+int main(int argc, char* argv[]) MAINTRY
 {
     ppMain preproc;
     try
@@ -371,7 +371,7 @@ int ppMain::Run(int argc, char* argv[])
             }
             if (!MakeStubs.GetValue() && !MakeStubsUser.GetValue() || (errorMax.GetExists() && errorMax.GetValue().empty()))
             {
-                (*outstream) << "#line " << pp.GetErrLineNo() << " \"" << pp.GetErrFile() << "\"" << std::endl;
+                //(*outstream) << "#line " << pp.GetErrLineNo() << " \"" << pp.GetErrFile() << "\"" << std::endl;
                 (*outstream) << working << std::endl;
             }
         }

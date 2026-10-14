@@ -136,7 +136,7 @@ int main(int argc, char* argv[])
 	{
 		debug_printf("Parse starting");
 		compiler = make_shared<Compiler>();
-		compiler->compile(in, out, exitcode);
+		compiler->compile(in, out, exitcode, infiles->filename[0]);
 		if (exitcode == 0)
 		{
 			cout << "Parse successful" << endl;

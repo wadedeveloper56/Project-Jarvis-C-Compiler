@@ -54,3 +54,4 @@ C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWcc -b 16 -o 
 C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWasm -omf -Fl=test2_16.lst -Sa -Fotest2_16.obj test2_16.asm
 C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\pedump -a test2_16.obj > test2_16.asm.log
 
+C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWcpp -otest2.i test2.c

@@ -1,5 +1,6 @@
+#define NUMBER 5
 int u;
-int x = 3;
+int x = NUMBER;
 int m;
 
 int func1(int a, int b) {

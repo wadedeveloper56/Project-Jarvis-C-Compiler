@@ -1,3 +1,5 @@
 Compiler (x86/x64) v1.0 (C) Copyright 2025-2026 Christopher D. Wade.
 All Rights Reserved
-Parse successful
+Scanner: unknown character [#]
+Error at line 1, column 1: syntax error, unexpected identifier
+Parse failed. Result = 1

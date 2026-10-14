@@ -1,7 +1,7 @@
 PEDUMP - 16/32/64 bit  OMF/COFF EXE/OBJ/LIB file dumper v1.0 (C) Copyright 2025-2026 Christopher D. Wade.
 All Rights Reserved
 Dump of file test2_16.obj
-File Size 200 bytes
+File Size 119 bytes
 File Type: 16-bit DOS\Windows OBJECT
 
 Type 0x80 (THEADR) : length 0x000E (14)
@@ -13,35 +13,23 @@ Type 0x96 (LNAMES) : length 0x0028 (40)
 00000034  53 53 04 5f 42 53 53 d1                           SS._BSS.
 
 Type 0x98 (SEGDEF) : length 0x0007 (7)
-0000003f  48 18 00 03 02 01 fb                              H......
+0000003f  48 00 00 03 02 01 13                              H......
 
 Type 0x88 (COMENT) : length 0x0005 (5)
 00000049  80 fe 4f 01 a5                                    ..O..
 
 Type 0x98 (SEGDEF) : length 0x0007 (7)
-00000051  48 04 00 05 04 01 0b                              H......
+00000051  48 00 00 05 04 01 0f                              H......
 
 Type 0x98 (SEGDEF) : length 0x0007 (7)
-0000005b  48 08 00 08 07 01 01                              H......
+0000005b  48 00 00 08 07 01 09                              H......
 
 Type 0x9A : length 0x0006 (6)
 00000065  06 ff 02 ff 03 57                                 .....W
 
-Type 0x90 : length 0x0024 (36)
-0000006e  00 01 07 5f 5f 66 75 6e  63 31 00 00 00 07 5f 5f  ...__func1....__
-0000007e  66 75 6e 63 32 08 00 00  07 5f 5f 66 75 6e 63 33  func2....__func3
-0000008e  10 00 00 4a                                       ...J
-
 Type 0x88 (COMENT) : length 0x0004 (4)
-00000095  00 a2 01 d1                                       ....
-
-Type 0xA0 (LEDATA) : length 0x0008 (8)
-0000009c  02 00 00 03 00 00 00 53                           .......S
-
-Type 0xA0 (LEDATA) : length 0x001C (28)
-000000a7  01 00 00 55 8b ec 83 ec  02 c9 c3 55 8b ec 83 ec  ...U.......U....
-000000b7  02 c9 c3 55 8b ec 83 ec  04 c9 c3 e6              ...U........
+0000006e  00 a2 01 d1                                       ....
 
 Type 0x8A : length 0x0002 (2)
-000000c6  00 74                                             .t
+00000075  00 74                                             .t
 

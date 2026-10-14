@@ -10,7 +10,6 @@
 #include "output.h"
 #include "SemanticAnalyzer.h"
 #include "Diagnostic.h"
-#include "ppMain.h"
 
 using namespace WadeSpace;
 using namespace std;
@@ -49,7 +48,7 @@ void Compiler::compileFile(istream& inStr, ostream& out, int& exitcode)
 	generator->generateCode(out);
 }
 
-void Compiler::compile(istream& in, ostream& out, int& exitcode)
+void Compiler::compile(istream& in, ostream& out, int& exitcode, const string& filename)
 {
 	compileFile(in, out, exitcode);
 }
