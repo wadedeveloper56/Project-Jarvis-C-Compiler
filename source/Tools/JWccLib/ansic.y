@@ -257,412 +257,412 @@
 %%
 
 primary_expression
-    : IDENTIFIER                { SETLOC($1,@1); $$ = createPrimaryExpression($1,NULL);      cout << "IDENTIFIER REDUCE to primary_expression" << endl; }
-    | constant                  { $$ = createPrimaryExpression(nullptr,$1);   cout << "constant REDUCE to primary_expression" << endl; }
-    | OPAREN expression CPAREN  { $$ = $2;                                    cout << "OPAREN expression CPAREN REDUCE to primary_expression" << endl; }
+    : IDENTIFIER                { SETLOC($1,@1); $$ = createPrimaryExpression($1,NULL);      /*cout << "IDENTIFIER REDUCE to primary_expression" << endl;*/ }
+    | constant                  { $$ = createPrimaryExpression(nullptr,$1);   /*cout << "constant REDUCE to primary_expression" << endl;*/ }
+    | OPAREN expression CPAREN  { $$ = $2;                                    /*cout << "OPAREN expression CPAREN REDUCE to primary_expression" << endl;*/ }
     ;
 
 constant
-    : F_CONST         { $$ = createConstant(nullptr,$1,nullptr,FLOAT_CONSTANT);   cout << "F_CONST REDUCE to constant " << endl; }
-    | I_CONST         { $$ = createConstant($1,nullptr,nullptr,INTEGER_CONSTANT); cout << "I_CONST REDUCE to constant " << endl; }
-    | STRING_LITERAL  { $$ = createConstant(nullptr,nullptr,$1,STRING_CONSTANT);  cout << "STRING_LITERAL REDUCE to constant  " << endl; }
+    : F_CONST         { $$ = createConstant(nullptr,$1,nullptr,FLOAT_CONSTANT);   /*cout << "F_CONST REDUCE to constant " << endl;*/ }
+    | I_CONST         { $$ = createConstant($1,nullptr,nullptr,INTEGER_CONSTANT); /*cout << "I_CONST REDUCE to constant " << endl;*/ }
+    | STRING_LITERAL  { $$ = createConstant(nullptr,nullptr,$1,STRING_CONSTANT);  /*cout << "STRING_LITERAL REDUCE to constant  " << endl;*/ }
 
 postfix_expression
-    : primary_expression                                           { $$ = $1;  cout << "primary_expression REDUCE to postfix_expression" << endl; }
-    | postfix_expression OBRACE expression CBRACE                  { $$ = createExpression(NT_ARRAY,$2,$4,$3,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,  $1,nullptr,nullptr); cout << "postfix_expression OBRACE expression CBRACE REDUCE to postfix_expression" << endl; }
-    | postfix_expression OPAREN CPAREN                             { $$ = createExpression(NT_FUNCTION_CALL,$2,$3,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,nullptr,nullptr); cout << "postfix_expression OPAREN CPAREN REDUCE to postfix_expression" << endl; }
-    | postfix_expression OPAREN argument_expression_list CPAREN    { SETLOC($2,@2); SETLOC($4,@4); $$ = createExpression(NT_FUNCTION_CALL,$2,$4,nullptr,nullptr,nullptr,$3,nullptr,nullptr,nullptr,nullptr,nullptr, $1,nullptr,nullptr); cout << "postfix_expression OPAREN argument_expression_list CPAREN REDUCE to postfix_expression" << endl; }
-    | postfix_expression PERIOD IDENTIFIER                         { SETLOC($3,@3); $$ = createExpression(NT_VAR_ACCESS,$2,nullptr,nullptr,nullptr,nullptr,nullptr,$3,nullptr,nullptr,nullptr,nullptr, $1,nullptr,nullptr); cout << "postfix_expression PERIOD_OP IDENTIFIER REDUCE to postfix_expression" << endl; }
-    | postfix_expression PTR_OP IDENTIFIER                         { SETLOC($3,@3); $$ = createExpression(NT_VAR_ACCESS,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,$3,nullptr,nullptr,$2,nullptr, $1,nullptr,nullptr); cout << "postfix_expression PTR_OP IDENTIFIER REDUCE to postfix_expression" << endl; }
-    | postfix_expression INC_OP                                    { $$ = createExpression(NT_INC,nullptr,nullptr,nullptr,$1,nullptr,nullptr,nullptr,nullptr,nullptr,$2,nullptr, nullptr,nullptr,nullptr); cout << "postfix_expression INC_OP REDUCE to postfix_expression" << endl; }
-    | postfix_expression DEC_OP                                    { $$ = createExpression(NT_DEC,nullptr,nullptr,nullptr,$1,nullptr,nullptr,nullptr,nullptr,nullptr,$2,nullptr, nullptr,nullptr,nullptr); cout << "postfix_expression DEC_OP REDUCE to postfix_expression" << endl; }
-    | OPAREN type_name CPAREN OCURLY initializer_list CCURLY       { $$ = createExpression(NT_TYPECAST,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,$5,$2,nullptr,nullptr, nullptr,nullptr,nullptr); cout << "OPAREN type_name CPAREN_OP OCURLY_OP initializer_list CCURLY REDUCE to postfix_expression" << endl; }
-    | OPAREN type_name CPAREN OCURLY initializer_list COMMA CCURLY { $$ = createExpression(NT_TYPECAST,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,$5,$2,nullptr,nullptr, nullptr,nullptr,nullptr); cout << "OPAREN type_name CPAREN_OP OCURLY_OP initializer_list COMMA CCURLY REDUCE to postfix_expression" << endl; }
+    : primary_expression                                           { $$ = $1;  /*cout << "primary_expression REDUCE to postfix_expression" << endl;*/ }
+    | postfix_expression OBRACE expression CBRACE                  { $$ = createExpression(NT_ARRAY,$2,$4,$3,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,  $1,nullptr,nullptr); /*cout << "postfix_expression OBRACE expression CBRACE REDUCE to postfix_expression" << endl;*/ }
+    | postfix_expression OPAREN CPAREN                             { $$ = createExpression(NT_FUNCTION_CALL,$2,$3,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,nullptr,nullptr); /*cout << "postfix_expression OPAREN CPAREN REDUCE to postfix_expression" << endl;*/ }
+    | postfix_expression OPAREN argument_expression_list CPAREN    { SETLOC($2,@2); SETLOC($4,@4); $$ = createExpression(NT_FUNCTION_CALL,$2,$4,nullptr,nullptr,nullptr,$3,nullptr,nullptr,nullptr,nullptr,nullptr, $1,nullptr,nullptr); /*cout << "postfix_expression OPAREN argument_expression_list CPAREN REDUCE to postfix_expression" << endl;*/ }
+    | postfix_expression PERIOD IDENTIFIER                         { SETLOC($3,@3); $$ = createExpression(NT_VAR_ACCESS,$2,nullptr,nullptr,nullptr,nullptr,nullptr,$3,nullptr,nullptr,nullptr,nullptr, $1,nullptr,nullptr); /*cout << "postfix_expression PERIOD_OP IDENTIFIER REDUCE to postfix_expression" << endl;*/ }
+    | postfix_expression PTR_OP IDENTIFIER                         { SETLOC($3,@3); $$ = createExpression(NT_VAR_ACCESS,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,$3,nullptr,nullptr,$2,nullptr, $1,nullptr,nullptr); /*cout << "postfix_expression PTR_OP IDENTIFIER REDUCE to postfix_expression" << endl;*/ }
+    | postfix_expression INC_OP                                    { $$ = createExpression(NT_INC,nullptr,nullptr,nullptr,$1,nullptr,nullptr,nullptr,nullptr,nullptr,$2,nullptr, nullptr,nullptr,nullptr); /*cout << "postfix_expression INC_OP REDUCE to postfix_expression" << endl;*/ }
+    | postfix_expression DEC_OP                                    { $$ = createExpression(NT_DEC,nullptr,nullptr,nullptr,$1,nullptr,nullptr,nullptr,nullptr,nullptr,$2,nullptr, nullptr,nullptr,nullptr); /*cout << "postfix_expression DEC_OP REDUCE to postfix_expression" << endl;*/ }
+    | OPAREN type_name CPAREN OCURLY initializer_list CCURLY       { $$ = createExpression(NT_TYPECAST,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,$5,$2,nullptr,nullptr, nullptr,nullptr,nullptr); /*cout << "OPAREN type_name CPAREN_OP OCURLY_OP initializer_list CCURLY REDUCE to postfix_expression" << endl;*/ }
+    | OPAREN type_name CPAREN OCURLY initializer_list COMMA CCURLY { $$ = createExpression(NT_TYPECAST,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,$5,$2,nullptr,nullptr, nullptr,nullptr,nullptr); /*cout << "OPAREN type_name CPAREN_OP OCURLY_OP initializer_list COMMA CCURLY REDUCE to postfix_expression" << endl;*/ }
 
 
 argument_expression_list
-    : assignment_expression                                { $$ = createArgumentExpressionList($1,nullptr); cout << "assignment_expression REDUCE argument_expression_list" << endl; }
-    | argument_expression_list COMMA assignment_expression { $$ = createArgumentExpressionList($3,$1); cout << "argument_expression_list COMMA assignment_expression REDUCE argument_expression_list" << endl; }
+    : assignment_expression                                { $$ = createArgumentExpressionList($1,nullptr); /*cout << "assignment_expression REDUCE argument_expression_list" << endl;*/ }
+    | argument_expression_list COMMA assignment_expression { $$ = createArgumentExpressionList($3,$1); /*cout << "argument_expression_list COMMA assignment_expression REDUCE argument_expression_list" << endl;*/ }
     ;
 
 unary_expression
-    : postfix_expression             { $$ = $1; cout << "postfix_expression REDUCE unary_expression" << endl;}
-    | INC_OP unary_expression        { $$ = createExpression(NT_INC,nullptr,nullptr,nullptr,$2,nullptr,nullptr,nullptr,nullptr,nullptr,$1,nullptr, nullptr,nullptr,nullptr); cout << "INC_OP unary_expression REDUCE unary_expression" << endl;}
-    | DEC_OP unary_expression        { $$ = createExpression(NT_DEC,nullptr,nullptr,nullptr,$2,nullptr,nullptr,nullptr,nullptr,nullptr,$1,nullptr, nullptr,nullptr,nullptr); cout << "DEC_OP unary_expression REDUCE unary_expression" << endl;}
-    | unary_operator cast_expression { $$ = createExpression(NT_UNARY,nullptr,nullptr,nullptr,$2,nullptr,nullptr,nullptr,nullptr,nullptr,$1,nullptr, nullptr,nullptr,nullptr); cout << "unary_operator cast_expression REDUCE unary_expression" << endl;}
-    | SIZEOF unary_expression        { $$ = createExpression(NT_SIZEOF,$1,nullptr,nullptr,$2,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, nullptr,nullptr,nullptr); cout << "SIZEOF unary_expression REDUCE unary_expression" << endl;}
-    | SIZEOF OPAREN type_name CPAREN { $$ = createExpression(NT_SIZEOF,$1,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,$3,nullptr,nullptr, nullptr,nullptr,nullptr); cout << "SIZEOF OPAREN type_name CPAREN REDUCE unary_expression" << endl;}
+    : postfix_expression             { $$ = $1; /*cout << "postfix_expression REDUCE unary_expression" << endl;*/}
+    | INC_OP unary_expression        { $$ = createExpression(NT_INC,nullptr,nullptr,nullptr,$2,nullptr,nullptr,nullptr,nullptr,nullptr,$1,nullptr, nullptr,nullptr,nullptr); /*cout << "INC_OP unary_expression REDUCE unary_expression" << endl;*/}
+    | DEC_OP unary_expression        { $$ = createExpression(NT_DEC,nullptr,nullptr,nullptr,$2,nullptr,nullptr,nullptr,nullptr,nullptr,$1,nullptr, nullptr,nullptr,nullptr); /*cout << "DEC_OP unary_expression REDUCE unary_expression" << endl;*/}
+    | unary_operator cast_expression { $$ = createExpression(NT_UNARY,nullptr,nullptr,nullptr,$2,nullptr,nullptr,nullptr,nullptr,nullptr,$1,nullptr, nullptr,nullptr,nullptr); /*cout << "unary_operator cast_expression REDUCE unary_expression" << endl;*/}
+    | SIZEOF unary_expression        { $$ = createExpression(NT_SIZEOF,$1,nullptr,nullptr,$2,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, nullptr,nullptr,nullptr); /*cout << "SIZEOF unary_expression REDUCE unary_expression" << endl;*/}
+    | SIZEOF OPAREN type_name CPAREN { $$ = createExpression(NT_SIZEOF,$1,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,$3,nullptr,nullptr, nullptr,nullptr,nullptr); /*cout << "SIZEOF OPAREN type_name CPAREN REDUCE unary_expression" << endl;*/}
     ;
 
 unary_operator
-    : BIT_AND   { $$ = $1; cout << "BIT_AND REDUCE to unary_operator" << endl;}
-    | TIMES_OP  { $$ = $1; cout << "TIMES_OP REDUCE to unary_operator" << endl;}
-    | PLUS_OP   { $$ = $1; cout << "PLUS_OP REDUCE to unary_operator" << endl;}
-    | MINUS_OP  { $$ = $1; cout << "MINUS_OP REDUCE to unary_operator" << endl;}
-    | TILDE     { $$ = $1; cout << "TILDE REDUCE to unary_operator" << endl;}
-    | NOT_OP    { $$ = $1; cout << "NOT_OP REDUCE to unary_operator" << endl;}
+    : BIT_AND   { $$ = $1; /*cout << "BIT_AND REDUCE to unary_operator" << endl;*/}
+    | TIMES_OP  { $$ = $1; /*cout << "TIMES_OP REDUCE to unary_operator" << endl;*/}
+    | PLUS_OP   { $$ = $1; /*cout << "PLUS_OP REDUCE to unary_operator" << endl;*/}
+    | MINUS_OP  { $$ = $1; /*cout << "MINUS_OP REDUCE to unary_operator" << endl;*/}
+    | TILDE     { $$ = $1; /*cout << "TILDE REDUCE to unary_operator" << endl;*/}
+    | NOT_OP    { $$ = $1; /*cout << "NOT_OP REDUCE to unary_operator" << endl;*/}
     ;
 
 cast_expression
-    : unary_expression                         { $$ = $1;  cout << "unary_expression REDUCE to cast_expression" << endl;}
-    | OPAREN type_name CPAREN cast_expression  { $$ = createExpression(NT_TYPECAST,nullptr,nullptr,nullptr,$4,nullptr,nullptr,nullptr,nullptr,$2,nullptr,nullptr, nullptr,nullptr,nullptr);  cout << "unary_expression REDUCE to cast_expression" << endl;}
+    : unary_expression                         { $$ = $1;  /*cout << "unary_expression REDUCE to cast_expression" << endl;*/}
+    | OPAREN type_name CPAREN cast_expression  { $$ = createExpression(NT_TYPECAST,nullptr,nullptr,nullptr,$4,nullptr,nullptr,nullptr,nullptr,$2,nullptr,nullptr, nullptr,nullptr,nullptr);  /*cout << "unary_expression REDUCE to cast_expression" << endl;*/}
     ;
 
 multiplicative_expression
-    : cast_expression                                    { $$ = $1;  cout << "cast_expression REDUCE to multiplicative_expression" << endl;}
-    | multiplicative_expression TIMES_OP cast_expression { SETLOC($2, @2); $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); cout << "multiplicative_expression TIMES_OP cast_expression REDUCE to multiplicative_expression" << endl;}
-    | multiplicative_expression DIV_OP cast_expression   { $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); cout << "multiplicative_expression DIV_OP cast_expression REDUCE to multiplicative_expression" << endl;}
-    | multiplicative_expression MOD_OP cast_expression   { $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); cout << "multiplicative_expression MOD_OP cast_expression REDUCE to multiplicative_expression" << endl;}
+    : cast_expression                                    { $$ = $1;  /*cout << "cast_expression REDUCE to multiplicative_expression" << endl;*/}
+    | multiplicative_expression TIMES_OP cast_expression { SETLOC($2, @2); $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); /*cout << "multiplicative_expression TIMES_OP cast_expression REDUCE to multiplicative_expression" << endl;*/}
+    | multiplicative_expression DIV_OP cast_expression   { $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); /*cout << "multiplicative_expression DIV_OP cast_expression REDUCE to multiplicative_expression" << endl;*/}
+    | multiplicative_expression MOD_OP cast_expression   { $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); /*cout << "multiplicative_expression MOD_OP cast_expression REDUCE to multiplicative_expression" << endl;*/}
     ;
 
 additive_expression
-    : multiplicative_expression                               { $$ = $1;  cout << "multiplicative_expression REDUCE to additive_expression" << endl;}
-    | additive_expression PLUS_OP multiplicative_expression   { SETLOC($2, @2); $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); cout << "additive_expression REDUCE to multiplicative_expression" << endl;}
-    | additive_expression MINUS_OP multiplicative_expression  { SETLOC($2, @2); $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); cout << "additive_expression REDUCE to multiplicative_expression" << endl;}
+    : multiplicative_expression                               { $$ = $1;  /*cout << "multiplicative_expression REDUCE to additive_expression" << endl;*/}
+    | additive_expression PLUS_OP multiplicative_expression   { SETLOC($2, @2); $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); /*cout << "additive_expression REDUCE to multiplicative_expression" << endl;*/}
+    | additive_expression MINUS_OP multiplicative_expression  { SETLOC($2, @2); $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); /*cout << "additive_expression REDUCE to multiplicative_expression" << endl;*/}
     ;
 
 shift_expression
-    : additive_expression                           { $$ = $1;  cout << "additive_expression REDUCE to shift_expression" << endl;}
-    | shift_expression LEFT_OP additive_expression  { $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3);; cout << "shift_expression LEFT_OP additive_expression REDUCE to shift_expression" << endl;}
-    | shift_expression RIGHT_OP additive_expression { $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3);; cout << "shift_expression RIGHT_OP additive_expression REDUCE to shift_expression" << endl;}
+    : additive_expression                           { $$ = $1;  /*cout << "additive_expression REDUCE to shift_expression" << endl;*/}
+    | shift_expression LEFT_OP additive_expression  { $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3);; /*cout << "shift_expression LEFT_OP additive_expression REDUCE to shift_expression" << endl;*/}
+    | shift_expression RIGHT_OP additive_expression { $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3);; /*cout << "shift_expression RIGHT_OP additive_expression REDUCE to shift_expression" << endl;*/}
     ;
 
 relational_expression
-    : shift_expression                                       { $$ = $1;  cout << "shift_expression REDUCE to relational_expression" << endl;}
-    | relational_expression LESS shift_expression            { $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); cout << "relational_expression LESS shift_expression REDUCE to shift_expression" << endl;}
-    | relational_expression GREATER shift_expression         { $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); cout << "relational_expression GREATER shift_expression REDUCE to shift_expression" << endl;}
-    | relational_expression LESS_EQUAL shift_expression      { SETLOC($2, @2); $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); cout << "relational_expression LESS_EQUAL shift_expression REDUCE to shift_expression" << endl;}
-    | relational_expression GREATER_EQUAL shift_expression   { SETLOC($2, @2); $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); cout << "relational_expression GREATER_EQUAL shift_expression REDUCE to shift_expression" << endl;}
+    : shift_expression                                       { $$ = $1;  /*cout << "shift_expression REDUCE to relational_expression" << endl;*/}
+    | relational_expression LESS shift_expression            { $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); /*cout << "relational_expression LESS shift_expression REDUCE to shift_expression" << endl;*/}
+    | relational_expression GREATER shift_expression         { $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); /*cout << "relational_expression GREATER shift_expression REDUCE to shift_expression" << endl;*/}
+    | relational_expression LESS_EQUAL shift_expression      { SETLOC($2, @2); $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); /*cout << "relational_expression LESS_EQUAL shift_expression REDUCE to shift_expression" << endl;*/}
+    | relational_expression GREATER_EQUAL shift_expression   { SETLOC($2, @2); $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); /*cout << "relational_expression GREATER_EQUAL shift_expression REDUCE to shift_expression" << endl;*/}
     ;
 
 equality_expression
-    : relational_expression                                  { $$ = $1;  cout << "relational_expression REDUCE to equality_expression" << endl;}
-    | equality_expression EQUAL_EQUAL relational_expression  { SETLOC($2, @2); $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); cout << "equality_expression EQUAL_EQUAL relational_expression REDUCE to equality_expression" << endl;}
-    | equality_expression NOT_EQUAL relational_expression    { SETLOC($2, @2); $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); cout << "equality_expression NOT_EQUAL relational_expression REDUCE to equality_expression" << endl;}
+    : relational_expression                                  { $$ = $1;  /*cout << "relational_expression REDUCE to equality_expression" << endl;*/}
+    | equality_expression EQUAL_EQUAL relational_expression  { SETLOC($2, @2); $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); /*cout << "equality_expression EQUAL_EQUAL relational_expression REDUCE to equality_expression" << endl;*/}
+    | equality_expression NOT_EQUAL relational_expression    { SETLOC($2, @2); $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); /*cout << "equality_expression NOT_EQUAL relational_expression REDUCE to equality_expression" << endl;*/}
     ;
 
 and_expression     
-    : equality_expression                         { $$ = $1;  cout << "equality_expression REDUCE to and_expression" << endl;}
-    | and_expression BIT_AND equality_expression  { $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); cout << "and_expression BIT_AND equality_expression REDUCE to and_expression" << endl;}
+    : equality_expression                         { $$ = $1;  /*cout << "equality_expression REDUCE to and_expression" << endl;*/}
+    | and_expression BIT_AND equality_expression  { $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); /*cout << "and_expression BIT_AND equality_expression REDUCE to and_expression" << endl;*/}
     ;
 
 exclusive_or_expression
-    : and_expression                                 { $$ = $1;  cout << "and_expression REDUCE to exclusive_or_expression" << endl;}
-    | exclusive_or_expression XOR_OP and_expression  { $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); cout << "exclusive_or_expression XOR_OP and_expression REDUCE to exclusive_or_expression" << endl;}
+    : and_expression                                 { $$ = $1;  /*cout << "and_expression REDUCE to exclusive_or_expression" << endl;*/}
+    | exclusive_or_expression XOR_OP and_expression  { $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); /*cout << "exclusive_or_expression XOR_OP and_expression REDUCE to exclusive_or_expression" << endl;*/}
     ;
 
 inclusive_or_expression
-    : exclusive_or_expression                                { $$ = $1;  cout << "exclusive_or_expression REDUCE to inclusive_or_expression" << endl;}
-    | inclusive_or_expression BIT_OR exclusive_or_expression { $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); cout << "inclusive_or_expression BIT_OR exclusive_or_expression REDUCE to inclusive_or_expression" << endl;}
+    : exclusive_or_expression                                { $$ = $1;  /*cout << "exclusive_or_expression REDUCE to inclusive_or_expression" << endl;*/}
+    | inclusive_or_expression BIT_OR exclusive_or_expression { $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); /*cout << "inclusive_or_expression BIT_OR exclusive_or_expression REDUCE to inclusive_or_expression" << endl;*/}
     ;
 
 logical_and_expression
-    : inclusive_or_expression                                { $$ = $1;  cout << "inclusive_or_expression REDUCE to logical_and_expression" << endl;}
-    | logical_and_expression AND_OP inclusive_or_expression  { $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); cout << "inclusive_or_expression REDUCE to logical_and_expression" << endl;}
+    : inclusive_or_expression                                { $$ = $1;  /*cout << "inclusive_or_expression REDUCE to logical_and_expression" << endl;*/}
+    | logical_and_expression AND_OP inclusive_or_expression  { $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); /*cout << "inclusive_or_expression REDUCE to logical_and_expression" << endl;*/}
     ;
 
 logical_or_expression
-    : logical_and_expression                              { $$ = $1;  cout << "inclusive_and_expression REDUCE to logical_or_expression" << endl;}
-    | logical_or_expression OR_OP logical_and_expression  { $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); cout << "logical_or_expression OR_OP logical_and_expression REDUCE to logical_or_expression" << endl;}
+    : logical_and_expression                              { $$ = $1;  /*cout << "inclusive_and_expression REDUCE to logical_or_expression" << endl;*/}
+    | logical_or_expression OR_OP logical_and_expression  { $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); /*cout << "logical_or_expression OR_OP logical_and_expression REDUCE to logical_or_expression" << endl;*/}
     ;
 
 conditional_expression
-    : logical_or_expression                                                   { $$ = $1;  cout << "logical_or_expression REDUCE to conditional_expression" << endl;}
-    | logical_or_expression QUESTION expression COLON conditional_expression  { $$ = createExpression(NT_QUESTION,nullptr,nullptr,$1,$3,$5,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,  nullptr,nullptr,nullptr); cout << "logical_or_expression QUESTION expression COLON conditional_expression REDUCE to conditional_expression" << endl;}
+    : logical_or_expression                                                   { $$ = $1;  /*cout << "logical_or_expression REDUCE to conditional_expression" << endl;*/}
+    | logical_or_expression QUESTION expression COLON conditional_expression  { $$ = createExpression(NT_QUESTION,nullptr,nullptr,$1,$3,$5,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,  nullptr,nullptr,nullptr); /*cout << "logical_or_expression QUESTION expression COLON conditional_expression REDUCE to conditional_expression" << endl;*/}
     ;
 
 assignment_expression
-    : conditional_expression                                      { $$ = $1;  cout << "conditional_expression REDUCE to assignment_expression" << endl;}
-    | unary_expression assignment_operator assignment_expression  { $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); cout << "unary_expression assignment_operator assignment_expression REDUCE to assignment_expression" << endl;}
+    : conditional_expression                                      { $$ = $1;  /*cout << "conditional_expression REDUCE to assignment_expression" << endl;*/}
+    | unary_expression assignment_operator assignment_expression  { $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); /*cout << "unary_expression assignment_operator assignment_expression REDUCE to assignment_expression" << endl;*/}
     ;
 
 assignment_operator
-    : EQUAL          { $$ = $1;  cout << "EQUAL_OP REDUCE to assignment_operator" << endl;}
-    | MUL_ASSIGN     { $$ = $1;  cout << "MUL_ASSIGN REDUCE to assignment_operator" << endl;}
-    | DIV_ASSIGN     { $$ = $1;  cout << "DIV_ASSIGN REDUCE to assignment_operator" << endl;}
-    | MOD_ASSIGN     { $$ = $1;  cout << "MOG_ASSIGN REDUCE to assignment_operator" << endl;}
-    | ADD_ASSIGN     { $$ = $1;  cout << "ADD_ASSIGN REDUCE to assignment_operator" << endl;}
-    | SUB_ASSIGN     { $$ = $1;  cout << "SUB_ASSIGN REDUCE to assignment_operator" << endl;}
-    | LEFT_ASSIGN    { $$ = $1;  cout << "LEFT_ASSIGN REDUCE to assignment_operator" << endl;}
-    | RIGHT_ASSIGN   { $$ = $1;  cout << "RIGHT_ASSIGN REDUCE to assignment_operator" << endl;}
-    | AND_ASSIGN     { $$ = $1;  cout << "AND_ASSIGN REDUCE to assignment_operator" << endl;}
-    | XOR_ASSIGN     { $$ = $1;  cout << "XOR_ASSIGN REDUCE to assignment_operator" << endl;}
-    | OR_ASSIGN      { $$ = $1;  cout << "OR_ASSIGN REDUCE to assignment_operator" << endl;}
+    : EQUAL          { $$ = $1;  /*cout << "EQUAL_OP REDUCE to assignment_operator" << endl;*/}
+    | MUL_ASSIGN     { $$ = $1;  /*cout << "MUL_ASSIGN REDUCE to assignment_operator" << endl;*/}
+    | DIV_ASSIGN     { $$ = $1;  /*cout << "DIV_ASSIGN REDUCE to assignment_operator" << endl;*/}
+    | MOD_ASSIGN     { $$ = $1;  /*cout << "MOG_ASSIGN REDUCE to assignment_operator" << endl;*/}
+    | ADD_ASSIGN     { $$ = $1;  /*cout << "ADD_ASSIGN REDUCE to assignment_operator" << endl;*/}
+    | SUB_ASSIGN     { $$ = $1;  /*cout << "SUB_ASSIGN REDUCE to assignment_operator" << endl;*/}
+    | LEFT_ASSIGN    { $$ = $1;  /*cout << "LEFT_ASSIGN REDUCE to assignment_operator" << endl;*/}
+    | RIGHT_ASSIGN   { $$ = $1;  /*cout << "RIGHT_ASSIGN REDUCE to assignment_operator" << endl;*/}
+    | AND_ASSIGN     { $$ = $1;  /*cout << "AND_ASSIGN REDUCE to assignment_operator" << endl;*/}
+    | XOR_ASSIGN     { $$ = $1;  /*cout << "XOR_ASSIGN REDUCE to assignment_operator" << endl;*/}
+    | OR_ASSIGN      { $$ = $1;  /*cout << "OR_ASSIGN REDUCE to assignment_operator" << endl;*/}
     ;
 
 expression
-    : assignment_expression                   { $$ = $1;  cout << "asignment_expression REDUCE to expression" << endl;}
-    | expression COMMA assignment_expression  { $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); cout << "expression COMMA assignment_expression COMMA  REDUCE to expression" << endl;}
+    : assignment_expression                   { $$ = $1;  /*cout << "asignment_expression REDUCE to expression" << endl;*/}
+    | expression COMMA assignment_expression  { $$ = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, $1,$2,$3); /*cout << "expression COMMA assignment_expression COMMA  REDUCE to expression" << endl;*/}
     ;
 
 constant_expression
-    : conditional_expression  { $$ = $1;  cout << "conditional_expression REDUCE to constant_expression" << endl;}
+    : conditional_expression  { $$ = $1;  /*cout << "conditional_expression REDUCE to constant_expression" << endl;*/}
     ;
 
 declaration
-    : declaration_specifiers SEMICOLON                       { $$ = createDeclaration($1,nullptr); cout << "declaration_specifiers SEMICOLON REDUCE to declaration" << endl;}
-    | declaration_specifiers init_declarator_list SEMICOLON  { $$ = createDeclaration($1,$2); cout << "declaration_specifiers init_declarator_list SEMICOLON REDUCE to declaration" << endl;}
+    : declaration_specifiers SEMICOLON                       { $$ = createDeclaration($1,nullptr); /*cout << "declaration_specifiers SEMICOLON REDUCE to declaration" << endl;*/}
+    | declaration_specifiers init_declarator_list SEMICOLON  { $$ = createDeclaration($1,$2); /*cout << "declaration_specifiers init_declarator_list SEMICOLON REDUCE to declaration" << endl;*/}
     ;
 
 declaration_specifiers
-    : storage_class_specifier                         { $$ = createDeclarationSpecifiers(nullptr,nullptr,$1,nullptr,nullptr,nullptr); cout << "storage_class_specifier REDUCE to declaration_specifiers" << endl;}
-    | storage_class_specifier declaration_specifiers  { $$ = createDeclarationSpecifiers(nullptr,$2,$1,nullptr,nullptr,nullptr);      cout << "storage_class_specifier declaration_specifiers REDUCE to declaration_specifiers" << endl;}
-    | type_specifier                                  { $$ = createDeclarationSpecifiers(nullptr,nullptr,nullptr,$1,nullptr,nullptr); cout << "type_specifier REDUCE to declaration_specifiers" << endl;}
-    | type_specifier declaration_specifiers           { $$ = createDeclarationSpecifiers(nullptr,$2,nullptr,$1,nullptr,nullptr);      cout << "type_specifier declaration_specifiers REDUCE to declaration_specifiers" << endl;}
-    | type_qualifier                                  { $$ = createDeclarationSpecifiers(nullptr,nullptr,nullptr,nullptr,$1,nullptr); cout << "type_qualifier REDUCE to declaration_specifiers" << endl;}
-    | type_qualifier declaration_specifiers           { $$ = createDeclarationSpecifiers(nullptr,$2,nullptr,nullptr,$1,nullptr);      cout << "type_qualifier declaration_specifiers REDUCE to declaration_specifiers" << endl;}
+    : storage_class_specifier                         { $$ = createDeclarationSpecifiers(nullptr,nullptr,$1,nullptr,nullptr,nullptr); /*cout << "storage_class_specifier REDUCE to declaration_specifiers" << endl;*/}
+    | storage_class_specifier declaration_specifiers  { $$ = createDeclarationSpecifiers(nullptr,$2,$1,nullptr,nullptr,nullptr);      /*cout << "storage_class_specifier declaration_specifiers REDUCE to declaration_specifiers" << endl;*/}
+    | type_specifier                                  { $$ = createDeclarationSpecifiers(nullptr,nullptr,nullptr,$1,nullptr,nullptr); /*cout << "type_specifier REDUCE to declaration_specifiers" << endl;*/}
+    | type_specifier declaration_specifiers           { $$ = createDeclarationSpecifiers(nullptr,$2,nullptr,$1,nullptr,nullptr);      /*cout << "type_specifier declaration_specifiers REDUCE to declaration_specifiers" << endl;*/}
+    | type_qualifier                                  { $$ = createDeclarationSpecifiers(nullptr,nullptr,nullptr,nullptr,$1,nullptr); /*cout << "type_qualifier REDUCE to declaration_specifiers" << endl;*/}
+    | type_qualifier declaration_specifiers           { $$ = createDeclarationSpecifiers(nullptr,$2,nullptr,nullptr,$1,nullptr);      /*cout << "type_qualifier declaration_specifiers REDUCE to declaration_specifiers" << endl;*/}
     ;
 
 init_declarator_list
-    : init_declarator                            { $$ = createInitDeclaratorList($1,nullptr); cout << "init_declarator REDUCE to init_declarator_list" << endl;}
-    | init_declarator_list COMMA init_declarator { $$ = createInitDeclaratorList($3,$1); cout << "init_declarator_list COMMA init_declarator REDUCE to init_declarator_list" << endl;}
+    : init_declarator                            { $$ = createInitDeclaratorList($1,nullptr); /*cout << "init_declarator REDUCE to init_declarator_list" << endl;*/}
+    | init_declarator_list COMMA init_declarator { $$ = createInitDeclaratorList($3,$1); /*cout << "init_declarator_list COMMA init_declarator REDUCE to init_declarator_list" << endl;*/}
     ;
 
 init_declarator
-    : declarator                    { $$ = createInitDeclarator($1,nullptr); cout << "declarator REDUCE to init_declarator" << endl;}
-    | declarator EQUAL initializer  { $$ = createInitDeclarator($1,$3); cout << "declarator EQUAL initializer REDUCE to init_declarator" << endl;}
+    : declarator                    { $$ = createInitDeclarator($1,nullptr); /*cout << "declarator REDUCE to init_declarator" << endl;*/}
+    | declarator EQUAL initializer  { $$ = createInitDeclarator($1,$3); /*cout << "declarator EQUAL initializer REDUCE to init_declarator" << endl;*/}
     ;
 
 storage_class_specifier
-    : TYPEDEF   { $$ = createStorageClassSpecifier($1); cout << "TYPEDEF REDUCE to storage_class_specifier" << endl;}
-    | EXTERN    { $$ = createStorageClassSpecifier($1); cout << "EXTERN REDUCE to storage_class_specifier" << endl;}
-    | STATIC    { $$ = createStorageClassSpecifier($1); cout << "STATIC REDUCE to storage_class_specifier" << endl;}
-    | AUTO      { $$ = createStorageClassSpecifier($1); cout << "AUTO REDUCE to storage_class_specifier" << endl;}
-    | REGISTER  { $$ = createStorageClassSpecifier($1); cout << "REGISTER REDUCE to storage_class_specifier" << endl;}
+    : TYPEDEF   { $$ = createStorageClassSpecifier($1); /*cout << "TYPEDEF REDUCE to storage_class_specifier" << endl;*/}
+    | EXTERN    { $$ = createStorageClassSpecifier($1); /*cout << "EXTERN REDUCE to storage_class_specifier" << endl;*/}
+    | STATIC    { $$ = createStorageClassSpecifier($1); /*cout << "STATIC REDUCE to storage_class_specifier" << endl;*/}
+    | AUTO      { $$ = createStorageClassSpecifier($1); /*cout << "AUTO REDUCE to storage_class_specifier" << endl;*/}
+    | REGISTER  { $$ = createStorageClassSpecifier($1); /*cout << "REGISTER REDUCE to storage_class_specifier" << endl;*/}
     ;
 
 type_specifier
-    : VOIDT                     { $$ = make_shared<TypeSpecifier>(VOIDT, $1, nullptr, nullptr, nullptr); cout << "VOIDT REDUCE to type_specifier" << endl;}
-    | CHAR                      { $$ = make_shared<TypeSpecifier>(CHAR, $1, nullptr, nullptr, nullptr); cout << "CHAR REDUCE to type_specifier" << endl;}
-    | SHORTT                    { $$ = make_shared<TypeSpecifier>(SHORTT, $1, nullptr, nullptr, nullptr); cout << "SHORT REDUCE to type_specifier" << endl;}
-    | INT                       { $$ = make_shared<TypeSpecifier>(INT, $1, nullptr, nullptr, nullptr); cout << "INT REDUCE to type_specifier" << endl;}
-    | LONG                      { $$ = make_shared<TypeSpecifier>(LONG, $1, nullptr, nullptr, nullptr); cout << "LONG REDUCE to type_specifier" << endl;}
-    | LONG_LONG                 { $$ = make_shared<TypeSpecifier>(LONG_LONG, $1, nullptr, nullptr, nullptr); cout << "LONG_LONG REDUCE to type_specifier" << endl;}
-    | FLOAT                     { $$ = make_shared<TypeSpecifier>(FLOAT, $1, nullptr, nullptr, nullptr); cout << "FLOAT REDUCE to type_specifier" << endl;}
-    | DOUBLE                    { $$ = make_shared<TypeSpecifier>(DOUBLE, $1, nullptr, nullptr, nullptr); cout << "DOUBLE REDUCE to type_specifier" << endl;}
-    | LONG_DOUBLE               { $$ = make_shared<TypeSpecifier>(LONG_DOUBLE, $1, nullptr, nullptr, nullptr); cout << "LONG_DOUBLE REDUCE to type_specifier" << endl;}
-    | BOOLT                     { $$ = make_shared<TypeSpecifier>(BOOLT, $1, nullptr, nullptr, nullptr); cout << "BOOL REDUCE to type_specifier" << endl;}
-    | SIGNED                    { $$ = make_shared<TypeSpecifier>(SIGNED, $1, nullptr, nullptr, nullptr); cout << "SIGNED REDUCE to type_specifier" << endl;}
-    | UNSIGNED                  { $$ = make_shared<TypeSpecifier>(UNSIGNED, $1, nullptr, nullptr, nullptr); cout << "UNIGNED REDUCE to type_specifier" << endl;}
-    | struct_or_union_specifier { $$ = make_shared<TypeSpecifier>(UNKNOWN, nullptr, $1, nullptr, nullptr); cout << "struct_or_union_specifier REDUCE to type_specifier" << endl;}
-    | enum_specifier            { $$ = make_shared<TypeSpecifier>(ENUM, nullptr, nullptr, $1, nullptr); cout << "enum_specifier REDUCE to type_specifier" << endl;}
-    | TYPE_NAME                 { $$ = make_shared<TypeSpecifier>(TYPE_NAME, $1, nullptr, nullptr, nullptr); cout << "TYPE_NAME REDUCE to type_specifier" << endl;}
+    : VOIDT                     { $$ = make_shared<TypeSpecifier>(VOIDT, $1, nullptr, nullptr, nullptr); /*cout << "VOIDT REDUCE to type_specifier" << endl;*/}
+    | CHAR                      { $$ = make_shared<TypeSpecifier>(CHAR, $1, nullptr, nullptr, nullptr); /*cout << "CHAR REDUCE to type_specifier" << endl;*/}
+    | SHORTT                    { $$ = make_shared<TypeSpecifier>(SHORTT, $1, nullptr, nullptr, nullptr); /*cout << "SHORT REDUCE to type_specifier" << endl;*/}
+    | INT                       { $$ = make_shared<TypeSpecifier>(INT, $1, nullptr, nullptr, nullptr); /*cout << "INT REDUCE to type_specifier" << endl;*/}
+    | LONG                      { $$ = make_shared<TypeSpecifier>(LONG, $1, nullptr, nullptr, nullptr); /*cout << "LONG REDUCE to type_specifier" << endl;*/}
+    | LONG_LONG                 { $$ = make_shared<TypeSpecifier>(LONG_LONG, $1, nullptr, nullptr, nullptr); /*cout << "LONG_LONG REDUCE to type_specifier" << endl;*/}
+    | FLOAT                     { $$ = make_shared<TypeSpecifier>(FLOAT, $1, nullptr, nullptr, nullptr); /*cout << "FLOAT REDUCE to type_specifier" << endl;*/}
+    | DOUBLE                    { $$ = make_shared<TypeSpecifier>(DOUBLE, $1, nullptr, nullptr, nullptr); /*cout << "DOUBLE REDUCE to type_specifier" << endl;*/}
+    | LONG_DOUBLE               { $$ = make_shared<TypeSpecifier>(LONG_DOUBLE, $1, nullptr, nullptr, nullptr); /*cout << "LONG_DOUBLE REDUCE to type_specifier" << endl;*/}
+    | BOOLT                     { $$ = make_shared<TypeSpecifier>(BOOLT, $1, nullptr, nullptr, nullptr); /*cout << "BOOL REDUCE to type_specifier" << endl;*/}
+    | SIGNED                    { $$ = make_shared<TypeSpecifier>(SIGNED, $1, nullptr, nullptr, nullptr); /*cout << "SIGNED REDUCE to type_specifier" << endl;*/}
+    | UNSIGNED                  { $$ = make_shared<TypeSpecifier>(UNSIGNED, $1, nullptr, nullptr, nullptr); /*cout << "UNIGNED REDUCE to type_specifier" << endl;*/}
+    | struct_or_union_specifier { $$ = make_shared<TypeSpecifier>(UNKNOWN, nullptr, $1, nullptr, nullptr); /*cout << "struct_or_union_specifier REDUCE to type_specifier" << endl;*/}
+    | enum_specifier            { $$ = make_shared<TypeSpecifier>(ENUM, nullptr, nullptr, $1, nullptr); /*cout << "enum_specifier REDUCE to type_specifier" << endl;*/}
+    | TYPE_NAME                 { $$ = make_shared<TypeSpecifier>(TYPE_NAME, $1, nullptr, nullptr, nullptr); /*cout << "TYPE_NAME REDUCE to type_specifier" << endl;*/}
     ;
 
 struct_or_union_specifier
-    : struct_or_union IDENTIFIER OCURLY struct_declaration_list CCURLY   { $$ = make_shared<StructOrUnionSpecifier>($1,$2,$4); cout << "struct_or_union IDENTIFIER OCURLY struct_declaration_list CCURLY REDUCE to struct_or_union_specifier" << endl;}
-    | struct_or_union OCURLY struct_declaration_list CCURLY              { $$ = make_shared<StructOrUnionSpecifier>($1,nullptr,$3);  cout << "struct_or_union OCURLY struct_declaration_list CCURLY REDUCE to struct_or_union_specifier" << endl;}
-    | struct_or_union IDENTIFIER                                         { $$ = make_shared<StructOrUnionSpecifier>($1,$2,nullptr); cout << "struct_or_union IDENTIFIER REDUCE to struct_or_union_specifier" << endl;}
+    : struct_or_union IDENTIFIER OCURLY struct_declaration_list CCURLY   { $$ = make_shared<StructOrUnionSpecifier>($1,$2,$4); /*cout << "struct_or_union IDENTIFIER OCURLY struct_declaration_list CCURLY REDUCE to struct_or_union_specifier" << endl;*/}
+    | struct_or_union OCURLY struct_declaration_list CCURLY              { $$ = make_shared<StructOrUnionSpecifier>($1,nullptr,$3);  /*cout << "struct_or_union OCURLY struct_declaration_list CCURLY REDUCE to struct_or_union_specifier" << endl;*/}
+    | struct_or_union IDENTIFIER                                         { $$ = make_shared<StructOrUnionSpecifier>($1,$2,nullptr); /*cout << "struct_or_union IDENTIFIER REDUCE to struct_or_union_specifier" << endl;*/}
     ;
 
 struct_or_union
-    : STRUCT   { $$ = $1; cout << "STRUCT REDUCE to struct_or_union" << endl;}
-    | UNION    { $$ = $1; cout << "UNION REDUCE to struct_or_union" << endl;}
+    : STRUCT   { $$ = $1; /*cout << "STRUCT REDUCE to struct_or_union" << endl;*/}
+    | UNION    { $$ = $1; /*cout << "UNION REDUCE to struct_or_union" << endl;*/}
     ;
 
 struct_declaration_list
-    : struct_declaration                          { $$ = createStructDeclarationList($1,nullptr); cout << "struct_declaration REDUCE to struct_declaration_list" << endl;}                          
-    | struct_declaration_list struct_declaration  { $$ = createStructDeclarationList($2,$1); cout << "struct_declaration_list struct_declaration REDUCE to struct_declaration_list" << endl;}
+    : struct_declaration                          { $$ = createStructDeclarationList($1,nullptr); /*cout << "struct_declaration REDUCE to struct_declaration_list" << endl;*/}                          
+    | struct_declaration_list struct_declaration  { $$ = createStructDeclarationList($2,$1); /*cout << "struct_declaration_list struct_declaration REDUCE to struct_declaration_list" << endl;*/}
     ;
 
 struct_declaration
-    : specifier_qualifier_list struct_declarator_list SEMICOLON { $$ = make_shared<StructDeclaration>($1,$2); cout << "specifier_qualifier_list struct_declarator_list SEMICOLON REDUCE to struct_declaration" << endl;}
+    : specifier_qualifier_list struct_declarator_list SEMICOLON { $$ = make_shared<StructDeclaration>($1,$2); /*cout << "specifier_qualifier_list struct_declarator_list SEMICOLON REDUCE to struct_declaration" << endl;*/}
     ;
 
 specifier_qualifier_list
-    : type_specifier specifier_qualifier_list { $$ = make_shared<SpecifierQualifierList>($2,$1); cout << "type_specifier specifier_qualifier_list REDUCE to specifier_qualifier_list" << endl;}
-    | type_specifier                          { $$ = make_shared<SpecifierQualifierList>($1); cout << "type_specifier REDUCE to specifier_qualifier_list" << endl;}
-    | type_qualifier specifier_qualifier_list { $$ = make_shared<SpecifierQualifierList>($2,$1); cout << "type_qualifier specifier_qualifier_list REDUCE to specifier_qualifier_list" << endl;}
-    | type_qualifier                          { $$ = make_shared<SpecifierQualifierList>($1); cout << "type_qualifier REDUCE to specifier_qualifier_list" << endl;}
+    : type_specifier specifier_qualifier_list { $$ = make_shared<SpecifierQualifierList>($2,$1); /*cout << "type_specifier specifier_qualifier_list REDUCE to specifier_qualifier_list" << endl;*/}
+    | type_specifier                          { $$ = make_shared<SpecifierQualifierList>($1); /*cout << "type_specifier REDUCE to specifier_qualifier_list" << endl;*/}
+    | type_qualifier specifier_qualifier_list { $$ = make_shared<SpecifierQualifierList>($2,$1); /*cout << "type_qualifier specifier_qualifier_list REDUCE to specifier_qualifier_list" << endl;*/}
+    | type_qualifier                          { $$ = make_shared<SpecifierQualifierList>($1); /*cout << "type_qualifier REDUCE to specifier_qualifier_list" << endl;*/}
     ;
 
 struct_declarator_list
-    : struct_declarator                              { $$ = createStructDeclaratorList($1,nullptr); cout << "struct_declarator REDUCE to struct_declarator_list" << endl; }
-    | struct_declarator_list COMMA struct_declarator { $$ = createStructDeclaratorList($3,$1); cout << "struct_declarator_list COMMA struct_declarator REDUCE to struct_declarator_list" << endl; }
+    : struct_declarator                              { $$ = createStructDeclaratorList($1,nullptr); /*cout << "struct_declarator REDUCE to struct_declarator_list" << endl;*/ }
+    | struct_declarator_list COMMA struct_declarator { $$ = createStructDeclaratorList($3,$1); /*cout << "struct_declarator_list COMMA struct_declarator REDUCE to struct_declarator_list" << endl;*/ }
     ;
 
 struct_declarator
-    : declarator                           { $$ = make_shared<StructDeclarator>($1); cout << "declarator REDUCE to struct_declarator" << endl;}
-    | COLON constant_expression            { $$ = make_shared<StructDeclarator>($2); cout << "COLON constant_expression REDUCE to struct_declarator" << endl;}
-    | declarator COLON constant_expression { $$ = make_shared<StructDeclarator>($1,$3); cout << "declarator COLON constant_expression REDUCE to struct_declarator" << endl;}
+    : declarator                           { $$ = make_shared<StructDeclarator>($1); /*cout << "declarator REDUCE to struct_declarator" << endl;*/}
+    | COLON constant_expression            { $$ = make_shared<StructDeclarator>($2); /*cout << "COLON constant_expression REDUCE to struct_declarator" << endl;*/}
+    | declarator COLON constant_expression { $$ = make_shared<StructDeclarator>($1,$3); /*cout << "declarator COLON constant_expression REDUCE to struct_declarator" << endl;*/}
     ;
 
 enum_specifier
-    : ENUM OCURLY enumerator_list CCURLY             { $$ = make_shared<EnumSpecifier>(nullptr,$3); cout << "ENUM OCURLY enumerator_list CCURLY REDUCE to enum_specifier" << endl;}
-    | ENUM IDENTIFIER OCURLY enumerator_list CCURLY  { $$ = make_shared<EnumSpecifier>($2,$4); cout << "ENUM IDENTIFIER OCURLY enumerator_list CCURLY REDUCE to enum_specifier" << endl;}
-    | ENUM IDENTIFIER                                { $$ = make_shared<EnumSpecifier>($2,nullptr); cout << "ENUM IDENTIFIER REDUCE to enum_specifier" << endl;}
+    : ENUM OCURLY enumerator_list CCURLY             { $$ = make_shared<EnumSpecifier>(nullptr,$3); /*cout << "ENUM OCURLY enumerator_list CCURLY REDUCE to enum_specifier" << endl;*/}
+    | ENUM IDENTIFIER OCURLY enumerator_list CCURLY  { $$ = make_shared<EnumSpecifier>($2,$4); /*cout << "ENUM IDENTIFIER OCURLY enumerator_list CCURLY REDUCE to enum_specifier" << endl;*/}
+    | ENUM IDENTIFIER                                { $$ = make_shared<EnumSpecifier>($2,nullptr); /*cout << "ENUM IDENTIFIER REDUCE to enum_specifier" << endl;*/}
     ;
 
 enumerator_list
-    : enumerator                        { $$ = createEnumeratorList($1,nullptr); cout << "enumerator REDUCE enumerator_list" << endl;}
-    | enumerator_list COMMA enumerator  { $$ = createEnumeratorList($3,$1); cout << "enumerator_list COMMA enumerator REDUCE enumerator_list" << endl; }
+    : enumerator                        { $$ = createEnumeratorList($1,nullptr); /*cout << "enumerator REDUCE enumerator_list" << endl;*/}
+    | enumerator_list COMMA enumerator  { $$ = createEnumeratorList($3,$1); /*cout << "enumerator_list COMMA enumerator REDUCE enumerator_list" << endl;*/ }
     ;
 
 enumerator
-    : IDENTIFIER                           { $$ = make_shared<Enumerator>($1,nullptr); cout << "IDENTIFIER REDUCE to ENUMERATOR" << endl;}
-    | IDENTIFIER EQUAL constant_expression { $$ = make_shared<Enumerator>($1,$3); cout << "IDENTIFIER EQUAL constant_expression REDUCE to ENUMERATOR" << endl;}
+    : IDENTIFIER                           { $$ = make_shared<Enumerator>($1,nullptr); /*cout << "IDENTIFIER REDUCE to ENUMERATOR" << endl;*/}
+    | IDENTIFIER EQUAL constant_expression { $$ = make_shared<Enumerator>($1,$3); /*cout << "IDENTIFIER EQUAL constant_expression REDUCE to ENUMERATOR" << endl;*/}
     ;
 
 type_qualifier
-    : CONSTT    { $$ = make_shared<TypeQualifier>($1); cout << "CONSTT REDUCE to type_qualifier" << endl;}
-    | VOLATILE { $$ = make_shared<TypeQualifier>($1); cout << "VOLATILE REDUCE to type_qualifier" << endl;}
+    : CONSTT    { $$ = make_shared<TypeQualifier>($1); /*cout << "CONSTT REDUCE to type_qualifier" << endl;*/}
+    | VOLATILE { $$ = make_shared<TypeQualifier>($1); /*cout << "VOLATILE REDUCE to type_qualifier" << endl;*/}
     ;
 
 declarator
-    : pointer direct_declarator { $$ = createDeclarator($1,$2); cout << "pointer direct_declarator REDUCE to declarator" << endl;}
-    | direct_declarator         { $$ = createDeclarator(nullptr,$1); cout << "direct_declarator REDUCE to declarator" << endl;}
+    : pointer direct_declarator { $$ = createDeclarator($1,$2); /*cout << "pointer direct_declarator REDUCE to declarator" << endl;*/}
+    | direct_declarator         { $$ = createDeclarator(nullptr,$1); /*cout << "direct_declarator REDUCE to declarator" << endl;*/}
     ;
 
 direct_declarator
-    : IDENTIFIER                                            { SETLOC($1,@1); $$ = createDirectDeclarator($1,nullptr,nullptr,NULL,NULL,NULL,NULL,NULL); cout << "IDENTIFIER REDUCE to direct_declarator" << endl;}
-    | OPAREN declarator CPAREN                              { $1->setLocation(@1.begin.line, @1.begin.column); $3->setLocation(@3.begin.line, @3.begin.column); $$ = createDirectDeclarator(nullptr,$1,$3,$2,NULL,NULL,NULL,NULL); cout << "OPAREN declarator CPAREN REDUCE to direct_declarator" << endl;}
-    | direct_declarator OBRACE constant_expression CBRACE   { $2->setLocation(@2.begin.line, @2.begin.column); $4->setLocation(@4.begin.line, @4.begin.column); $$ = createDirectDeclarator(nullptr,$2,$4,NULL,$1,$3,NULL,NULL); cout << "direct_declarator OBRACE constant_expression CBRACE REDUCE to direct_declarator" << endl;}
-    | direct_declarator OBRACE CBRACE                       { $2->setLocation(@2.begin.line, @2.begin.column); $3->setLocation(@3.begin.line, @3.begin.column); $$ = createDirectDeclarator(nullptr,$2,$3,NULL,$1,NULL,NULL,NULL); cout << "direct_declarator OBRACE CBRACE REDUCE to direct_declarator" << endl;}
-    | direct_declarator OPAREN parameter_type_list CPAREN   { SETLOC($2,@2); SETLOC($4,@4); $$ = createDirectDeclarator(nullptr,$2,$4,NULL,$1,NULL,$3,NULL); cout << "direct_declarator OPAREN parameter_type_list CPAREN to direct_declarator" << endl;}
-    | direct_declarator OPAREN identifier_list CPAREN       { SETLOC($2,@2); SETLOC($4,@4); $$ = createDirectDeclarator(nullptr,$2,$4,NULL,$1,NULL,NULL,$3); cout << "direct_declarator OPAREN identifier_list CPAREN REDUCE to direct_declarator" << endl;}
-    | direct_declarator OPAREN CPAREN                       { SETLOC($2,@2); SETLOC($3,@3); $$ = createDirectDeclarator(nullptr,$2,$3,NULL,$1,NULL,NULL,NULL); cout << "direct_declarator OPAREN CPAREN REDUCE to direct_declarator" << endl;}
+    : IDENTIFIER                                            { SETLOC($1,@1); $$ = createDirectDeclarator($1,nullptr,nullptr,NULL,NULL,NULL,NULL,NULL); /*cout << "IDENTIFIER REDUCE to direct_declarator" << endl;*/}
+    | OPAREN declarator CPAREN                              { $1->setLocation(@1.begin.line, @1.begin.column); $3->setLocation(@3.begin.line, @3.begin.column); $$ = createDirectDeclarator(nullptr,$1,$3,$2,NULL,NULL,NULL,NULL); /*cout << "OPAREN declarator CPAREN REDUCE to direct_declarator" << endl;*/}
+    | direct_declarator OBRACE constant_expression CBRACE   { $2->setLocation(@2.begin.line, @2.begin.column); $4->setLocation(@4.begin.line, @4.begin.column); $$ = createDirectDeclarator(nullptr,$2,$4,NULL,$1,$3,NULL,NULL); /*cout << "direct_declarator OBRACE constant_expression CBRACE REDUCE to direct_declarator" << endl;*/}
+    | direct_declarator OBRACE CBRACE                       { $2->setLocation(@2.begin.line, @2.begin.column); $3->setLocation(@3.begin.line, @3.begin.column); $$ = createDirectDeclarator(nullptr,$2,$3,NULL,$1,NULL,NULL,NULL); /*cout << "direct_declarator OBRACE CBRACE REDUCE to direct_declarator" << endl;*/}
+    | direct_declarator OPAREN parameter_type_list CPAREN   { SETLOC($2,@2); SETLOC($4,@4); $$ = createDirectDeclarator(nullptr,$2,$4,NULL,$1,NULL,$3,NULL); /*cout << "direct_declarator OPAREN parameter_type_list CPAREN to direct_declarator" << endl;*/}
+    | direct_declarator OPAREN identifier_list CPAREN       { SETLOC($2,@2); SETLOC($4,@4); $$ = createDirectDeclarator(nullptr,$2,$4,NULL,$1,NULL,NULL,$3); /*cout << "direct_declarator OPAREN identifier_list CPAREN REDUCE to direct_declarator" << endl;*/}
+    | direct_declarator OPAREN CPAREN                       { SETLOC($2,@2); SETLOC($3,@3); $$ = createDirectDeclarator(nullptr,$2,$3,NULL,$1,NULL,NULL,NULL); /*cout << "direct_declarator OPAREN CPAREN REDUCE to direct_declarator" << endl;*/}
     ;
 
 pointer
-    : TIMES_OP                              {$$ = make_shared<Pointer>($1); cout << "TIMES_OP REDUCE to POINTER" << endl;}
-    | TIMES_OP type_qualifier_list          {$$ = make_shared<Pointer>($1,$2); cout << "TIMES_OP type_qualifier_list REDUCE to POINTER" << endl;}
-    | TIMES_OP pointer                      {$$ = make_shared<Pointer>($1,$2); $$->inc(); cout << "TIMES_OP pointer REDUCE to POINTER" << endl;}
-    | TIMES_OP type_qualifier_list pointer  {$$ = make_shared<Pointer>($1,$2,$3); $$->inc(); cout << "TIMES_OP type_qualifier_list pointer REDUCE to POINTER" << endl;}
+    : TIMES_OP                              {$$ = make_shared<Pointer>($1); /*cout << "TIMES_OP REDUCE to POINTER" << endl;*/}
+    | TIMES_OP type_qualifier_list          {$$ = make_shared<Pointer>($1,$2); /*cout << "TIMES_OP type_qualifier_list REDUCE to POINTER" << endl;*/}
+    | TIMES_OP pointer                      {$$ = make_shared<Pointer>($1,$2); $$->inc(); /*cout << "TIMES_OP pointer REDUCE to POINTER" << endl;*/}
+    | TIMES_OP type_qualifier_list pointer  {$$ = make_shared<Pointer>($1,$2,$3); $$->inc(); /*cout << "TIMES_OP type_qualifier_list pointer REDUCE to POINTER" << endl;*/}
     ;
 
 type_qualifier_list
-    : type_qualifier                     { $$ = createTypeQualifierList($1,nullptr);cout << "type_qualifier REDUCE type_qualifier_list" << endl; }
-    | type_qualifier_list type_qualifier { $$ = createTypeQualifierList($2,$1); cout << "type_qualifier_list type_qualifier REDUCE type_qualifier_list" << endl; }
+    : type_qualifier                     { $$ = createTypeQualifierList($1,nullptr);/*cout << "type_qualifier REDUCE type_qualifier_list" << endl;*/ }
+    | type_qualifier_list type_qualifier { $$ = createTypeQualifierList($2,$1); /*cout << "type_qualifier_list type_qualifier REDUCE type_qualifier_list" << endl;*/ }
     ;
 
 parameter_type_list
-    : parameter_list                  { $$ = make_shared<ParameterTypeList>($1,false); cout << "parameter_list REDUCE to parameter_type_list" << endl; }
-    | parameter_list COMMA ELLIPSIS   { $$ = make_shared<ParameterTypeList>($1,true); cout << "parameter_list COMMA ELLIPSIS REDUCE to parameter_type_list" << endl; }
+    : parameter_list                  { $$ = make_shared<ParameterTypeList>($1,false); /*cout << "parameter_list REDUCE to parameter_type_list" << endl;*/ }
+    | parameter_list COMMA ELLIPSIS   { $$ = make_shared<ParameterTypeList>($1,true); /*cout << "parameter_list COMMA ELLIPSIS REDUCE to parameter_type_list" << endl;*/ }
     ;
 
 parameter_list
-    : parameter_declaration                       { $$ = createParameterList($1,nullptr); cout << "parameter_declaration REDUCE to parameter_list" << endl; }
-    | parameter_list COMMA parameter_declaration  { $$ = createParameterList($3,$1); cout << "parameter_list COMMA parameter_declaration REDUCE to parameter_list" << endl; }
+    : parameter_declaration                       { $$ = createParameterList($1,nullptr); /*cout << "parameter_declaration REDUCE to parameter_list" << endl;*/ }
+    | parameter_list COMMA parameter_declaration  { $$ = createParameterList($3,$1); /*cout << "parameter_list COMMA parameter_declaration REDUCE to parameter_list" << endl;*/ }
     ;
 
 parameter_declaration
-    : declaration_specifiers declarator           { $$ = make_shared<ParameterDeclaration>($1,$2); cout << "declaration_specifiers declarator REDUCE to parameter_declaration" << endl; }
-    | declaration_specifiers abstract_declarator  { $$ = make_shared<ParameterDeclaration>($1,$2); cout << "declaration_specifiers abstract_declarator REDUCE to parameter_declaration" << endl; }
-    | declaration_specifiers                      { $$ = make_shared<ParameterDeclaration>($1); cout << "declaration_specifiers REDUCE to parameter_declaration" << endl; }
+    : declaration_specifiers declarator           { $$ = make_shared<ParameterDeclaration>($1,$2); /*cout << "declaration_specifiers declarator REDUCE to parameter_declaration" << endl;*/ }
+    | declaration_specifiers abstract_declarator  { $$ = make_shared<ParameterDeclaration>($1,$2); /*cout << "declaration_specifiers abstract_declarator REDUCE to parameter_declaration" << endl;*/ }
+    | declaration_specifiers                      { $$ = make_shared<ParameterDeclaration>($1); /*cout << "declaration_specifiers REDUCE to parameter_declaration" << endl;*/ }
     ;
 
 identifier_list
-    : IDENTIFIER                       { $$ = createIdentifierList($1,nullptr); cout << "IDENTIFIER REDUCE to identifier_list" << endl; }
-    | identifier_list COMMA IDENTIFIER { $$ = createIdentifierList($3,$1); cout << "identifier_list COMMA IDENTIFIER REDUCE to identifier_list" << endl; }
+    : IDENTIFIER                       { $$ = createIdentifierList($1,nullptr); /*cout << "IDENTIFIER REDUCE to identifier_list" << endl;*/ }
+    | identifier_list COMMA IDENTIFIER { $$ = createIdentifierList($3,$1); /*cout << "identifier_list COMMA IDENTIFIER REDUCE to identifier_list" << endl;*/ }
     ;
 
 type_name
-    : specifier_qualifier_list                     { $$ = make_shared<TypeName>($1); cout << "specifier_qualifier_list REDUCE to type_name" << endl; }
-    | specifier_qualifier_list abstract_declarator { $$ = make_shared<TypeName>($1,$2); cout << "specifier_qualifier_list abstract_declarator REDUCE to type_name" << endl; }
+    : specifier_qualifier_list                     { $$ = make_shared<TypeName>($1); /*cout << "specifier_qualifier_list REDUCE to type_name" << endl;*/ }
+    | specifier_qualifier_list abstract_declarator { $$ = make_shared<TypeName>($1,$2); /*cout << "specifier_qualifier_list abstract_declarator REDUCE to type_name" << endl;*/ }
     ;
 
 abstract_declarator
-    : pointer                             { $$ = make_shared<AbstractDeclarator>($1,nullptr); cout << "pointer REDUCE to abstract_declarator" << endl; }
-    | direct_abstract_declarator          { $$ = make_shared<AbstractDeclarator>(nullptr,$1); cout << "direct_abstract_declarator REDUCE to abstract_declarator" << endl; }
-    | pointer direct_abstract_declarator  { $$ = make_shared<AbstractDeclarator>($1,$2);      cout << "pointer direct_abstract_declarator REDUCE to abstract_declarator" << endl; }
+    : pointer                             { $$ = make_shared<AbstractDeclarator>($1,nullptr); /*cout << "pointer REDUCE to abstract_declarator" << endl;*/ }
+    | direct_abstract_declarator          { $$ = make_shared<AbstractDeclarator>(nullptr,$1); /*cout << "direct_abstract_declarator REDUCE to abstract_declarator" << endl;*/ }
+    | pointer direct_abstract_declarator  { $$ = make_shared<AbstractDeclarator>($1,$2);      /*cout << "pointer direct_abstract_declarator REDUCE to abstract_declarator" << endl;*/ }
     ;
 
 direct_abstract_declarator
-    : OPAREN abstract_declarator CPAREN                            { $$ = createDirectAbstractDeclarator($2, nullptr); cout << "OPAREN abstract_declarator CPAREN REDUCE to direct_abstract_declarator" << endl; }
-    | OBRACE CBRACE                                                { $$ = createDirectAbstractDeclarator(nullptr, nullptr, nullptr, nullptr, ARRAY); cout << "OBRACE CBRACE REDUCE to direct_abstract_declarator" << endl; }
-    | OPAREN CPAREN                                                { $$ = createDirectAbstractDeclarator(nullptr, nullptr, nullptr, nullptr, FUNCTION); cout << "OPAREN CPAREN REDUCE to direct_abstract_declarator" << endl; }
-    | OBRACE constant_expression CBRACE                            { $$ = createDirectAbstractDeclarator(nullptr, nullptr, nullptr, $2, NONE); cout << "OBRACE constant_expression CBRACE REDUCE to direct_abstract_declarator" << endl; }
-    | OPAREN parameter_type_list CPAREN                            { $$ = createDirectAbstractDeclarator(nullptr, nullptr, $2, nullptr, FUNCTION); cout << "OPAREN parameter_type_list CPAREN REDUCE to direct_abstract_declarator" << endl; }
-    | direct_abstract_declarator OBRACE CBRACE                     { $$ = createDirectAbstractDeclarator($1, nullptr, nullptr, nullptr, ARRAY); cout << "direct_abstract_declarator OBRACE CBRACE REDUCE to direct_abstract_declarator" << endl; }
-    | direct_abstract_declarator OPAREN CPAREN                     { $$ = createDirectAbstractDeclarator($1, nullptr, nullptr, nullptr, FUNCTION); cout << "direct_abstract_declarator OPAREN CPAREN REDUCE to direct_abstract_declarator" << endl; }
-    | direct_abstract_declarator OBRACE constant_expression CBRACE { $$ = createDirectAbstractDeclarator($1, nullptr, nullptr, $3, ARRAY); cout << "direct_abstract_declarator OBRACE constant_expression CBRACE REDUCE to direct_abstract_declarator" << endl; }
-    | direct_abstract_declarator OPAREN parameter_type_list CPAREN { $$ = createDirectAbstractDeclarator($1, nullptr, $3, nullptr, FUNCTION); cout << "direct_abstract_declarator OPAREN parameter_type_list CPAREN REDUCE to direct_abstract_declarator" << endl; }
+    : OPAREN abstract_declarator CPAREN                            { $$ = createDirectAbstractDeclarator($2, nullptr); /*cout << "OPAREN abstract_declarator CPAREN REDUCE to direct_abstract_declarator" << endl;*/ }
+    | OBRACE CBRACE                                                { $$ = createDirectAbstractDeclarator(nullptr, nullptr, nullptr, nullptr, ARRAY); /*cout << "OBRACE CBRACE REDUCE to direct_abstract_declarator" << endl;*/ }
+    | OPAREN CPAREN                                                { $$ = createDirectAbstractDeclarator(nullptr, nullptr, nullptr, nullptr, FUNCTION); /*cout << "OPAREN CPAREN REDUCE to direct_abstract_declarator" << endl;*/ }
+    | OBRACE constant_expression CBRACE                            { $$ = createDirectAbstractDeclarator(nullptr, nullptr, nullptr, $2, NONE); /*cout << "OBRACE constant_expression CBRACE REDUCE to direct_abstract_declarator" << endl;*/ }
+    | OPAREN parameter_type_list CPAREN                            { $$ = createDirectAbstractDeclarator(nullptr, nullptr, $2, nullptr, FUNCTION); /*cout << "OPAREN parameter_type_list CPAREN REDUCE to direct_abstract_declarator" << endl;*/ }
+    | direct_abstract_declarator OBRACE CBRACE                     { $$ = createDirectAbstractDeclarator($1, nullptr, nullptr, nullptr, ARRAY); /*cout << "direct_abstract_declarator OBRACE CBRACE REDUCE to direct_abstract_declarator" << endl;*/ }
+    | direct_abstract_declarator OPAREN CPAREN                     { $$ = createDirectAbstractDeclarator($1, nullptr, nullptr, nullptr, FUNCTION); /*cout << "direct_abstract_declarator OPAREN CPAREN REDUCE to direct_abstract_declarator" << endl;*/ }
+    | direct_abstract_declarator OBRACE constant_expression CBRACE { $$ = createDirectAbstractDeclarator($1, nullptr, nullptr, $3, ARRAY); /*cout << "direct_abstract_declarator OBRACE constant_expression CBRACE REDUCE to direct_abstract_declarator" << endl;*/ }
+    | direct_abstract_declarator OPAREN parameter_type_list CPAREN { $$ = createDirectAbstractDeclarator($1, nullptr, $3, nullptr, FUNCTION); /*cout << "direct_abstract_declarator OPAREN parameter_type_list CPAREN REDUCE to direct_abstract_declarator" << endl;*/ }
     ;
 
 initializer
-    : assignment_expression                { $$ = make_shared<Initializer>($1); cout << "assignment_expression REDUCE to initializer" << endl; }
-    | OCURLY initializer_list CCURLY       { $$ = make_shared<Initializer>($2); cout << "OCURLY initializer_list CCURLY REDUCE to initializer" << endl; }
-    | OCURLY initializer_list COMMA CCURLY { $$ = make_shared<Initializer>($2); cout << "OCURLY initializer_list COMMA CCURLY REDUCE to initializer" << endl; }
+    : assignment_expression                { $$ = make_shared<Initializer>($1); /*cout << "assignment_expression REDUCE to initializer" << endl;*/ }
+    | OCURLY initializer_list CCURLY       { $$ = make_shared<Initializer>($2); /*cout << "OCURLY initializer_list CCURLY REDUCE to initializer" << endl;*/ }
+    | OCURLY initializer_list COMMA CCURLY { $$ = make_shared<Initializer>($2); /*cout << "OCURLY initializer_list COMMA CCURLY REDUCE to initializer" << endl;*/ }
     ;
 
 initializer_list
-    : initializer                         { $$ = createInitializerList($1,nullptr); cout << "initializer REDUCE to initializer_list" << endl; }
-    | initializer_list COMMA initializer  { $$ = createInitializerList($3,$1); cout << "initializer_list COMMA initializer REDUCE to initializer_list" << endl; }   
+    : initializer                         { $$ = createInitializerList($1,nullptr); /*cout << "initializer REDUCE to initializer_list" << endl;*/ }
+    | initializer_list COMMA initializer  { $$ = createInitializerList($3,$1); /*cout << "initializer_list COMMA initializer REDUCE to initializer_list" << endl;*/ }   
     ;
 
 statement
-    : labeled_statement    { $$ = make_shared<Statement>(labeled_statement,$1); cout << "labeled_statement REDUCE to statement" << endl; }
-    | compound_statement   { $$ = make_shared<Statement>(compound_statement,$1); cout << "compound_statement REDUCE to statement" << endl; }
-    | expression_statement { $$ = make_shared<Statement>(expression_statement,$1); cout << "expression_statement REDUCE to statement" << endl; }
-    | selection_statement  { $$ = make_shared<Statement>(selection_statement,$1); cout << "selection_statement REDUCE to statement" << endl; }
-    | iteration_statement  { $$ = make_shared<Statement>(iteration_statement,$1); cout << "iteration_statement REDUCE to statement" << endl; }
-    | jump_statement       { $$ = make_shared<Statement>(jump_statement,$1); cout << "jump_statement REDUCE to statement" << endl; }
+    : labeled_statement    { $$ = make_shared<Statement>(labeled_statement,$1); /*cout << "labeled_statement REDUCE to statement" << endl;*/ }
+    | compound_statement   { $$ = make_shared<Statement>(compound_statement,$1); /*cout << "compound_statement REDUCE to statement" << endl;*/ }
+    | expression_statement { $$ = make_shared<Statement>(expression_statement,$1); /*cout << "expression_statement REDUCE to statement" << endl;*/ }
+    | selection_statement  { $$ = make_shared<Statement>(selection_statement,$1); /*cout << "selection_statement REDUCE to statement" << endl;*/ }
+    | iteration_statement  { $$ = make_shared<Statement>(iteration_statement,$1); /*cout << "iteration_statement REDUCE to statement" << endl;*/ }
+    | jump_statement       { $$ = make_shared<Statement>(jump_statement,$1); /*cout << "jump_statement REDUCE to statement" << endl;*/ }
     ;
 
 labeled_statement
-    : IDENTIFIER COLON statement               { $$ = make_shared<LabeledStatement>($1,$3); cout << "IDENTIFIER COLON statement REDUCE to label_statement" << endl; }
-    | CASE constant_expression COLON statement { $$ = make_shared<LabeledStatement>(CASE,$2,$4); cout << "CASE constant_expression COLON statement REDUCE to label_statement" << endl; }
-    | DEFAULT COLON statement                  { $$ = make_shared<LabeledStatement>(DEFAULT,$3); cout << "DEFAULT COLON statement REDUCE to label_statement" << endl; }
+    : IDENTIFIER COLON statement               { $$ = make_shared<LabeledStatement>($1,$3); /*cout << "IDENTIFIER COLON statement REDUCE to label_statement" << endl;*/ }
+    | CASE constant_expression COLON statement { $$ = make_shared<LabeledStatement>(CASE,$2,$4); /*cout << "CASE constant_expression COLON statement REDUCE to label_statement" << endl;*/ }
+    | DEFAULT COLON statement                  { $$ = make_shared<LabeledStatement>(DEFAULT,$3); /*cout << "DEFAULT COLON statement REDUCE to label_statement" << endl;*/ }
     ;
 
 compound_statement
-    : OCURLY CCURLY                                 { $$ = make_shared<CompoundStatement>(); cout << "OCURLY CCURLY REDUCE to compound_statement" << endl; }
-    | OCURLY statement_list CCURLY                  { $$ = make_shared<CompoundStatement>($2); cout << "OCURLY statement_list CCURLY REDUCE to compound_statement" << endl; }
-    | OCURLY declaration_list CCURLY                { $$ = make_shared<CompoundStatement>($2); cout << "OCURLY declaration_list CCURLY REDUCE to compound_statement" << endl; }
-    | OCURLY declaration_list statement_list CCURLY { $$ = make_shared<CompoundStatement>($3,$2); cout << "OCURLY declaration_list statement_list CCURLY REDUCE to compound_statement" << endl; }
+    : OCURLY CCURLY                                 { $$ = make_shared<CompoundStatement>(); /*cout << "OCURLY CCURLY REDUCE to compound_statement" << endl;*/ }
+    | OCURLY statement_list CCURLY                  { $$ = make_shared<CompoundStatement>($2); /*cout << "OCURLY statement_list CCURLY REDUCE to compound_statement" << endl;*/ }
+    | OCURLY declaration_list CCURLY                { $$ = make_shared<CompoundStatement>($2); /*cout << "OCURLY declaration_list CCURLY REDUCE to compound_statement" << endl;*/ }
+    | OCURLY declaration_list statement_list CCURLY { $$ = make_shared<CompoundStatement>($3,$2); /*cout << "OCURLY declaration_list statement_list CCURLY REDUCE to compound_statement" << endl;*/ }
     ;
 
 declaration_list
-    : declaration                   { $$ = createDeclarationList($1,nullptr); cout << "declaration REDUCE to declaration_list" << endl; }
-    | declaration_list declaration  { $$ = createDeclarationList($2,$1); cout << "declaration_list declaration REDUCE to declaration_list" << endl; }
+    : declaration                   { $$ = createDeclarationList($1,nullptr); /*cout << "declaration REDUCE to declaration_list" << endl;*/ }
+    | declaration_list declaration  { $$ = createDeclarationList($2,$1); /*cout << "declaration_list declaration REDUCE to declaration_list" << endl;*/ }
     ;
 
 statement_list
-    : statement                   { $$ = createStatementList($1,nullptr); cout << "statement REDUCE to statement_list" << endl; }
-    | statement_list statement    { $$ = createStatementList($2,$1); cout << "statement_list statement REDUCE to statement_list" << endl; }
+    : statement                   { $$ = createStatementList($1,nullptr); /*cout << "statement REDUCE to statement_list" << endl;*/ }
+    | statement_list statement    { $$ = createStatementList($2,$1); /*cout << "statement_list statement REDUCE to statement_list" << endl;*/ }
     ;
 
 expression_statement
-    : SEMICOLON             { $$ = make_shared<ExpressionStatement>(); cout << "SEMICOLON REDUCE to expression_statement" << endl; }
-    | expression SEMICOLON  { $$ = make_shared<ExpressionStatement>($1); cout << "expression SEMICOLON REDUCE to expression_statement" << endl; }
+    : SEMICOLON             { $$ = make_shared<ExpressionStatement>(); /*cout << "SEMICOLON REDUCE to expression_statement" << endl;*/ }
+    | expression SEMICOLON  { $$ = make_shared<ExpressionStatement>($1); /*cout << "expression SEMICOLON REDUCE to expression_statement" << endl;*/ }
     ;
 
 selection_statement
-    : IF OPAREN expression CPAREN statement  %prec "then"  { $$ = make_shared<SelectionStatement>(IF,$3,$5); cout << "IF OPAREN expression CPAREN statement REDUCE to selection_statement" << endl; }
-    | IF OPAREN expression CPAREN statement ELSE statement { $$ = make_shared<SelectionStatement>(IF,$3,$5,$7); cout << "IF OPAREN expression CPAREN statement ELSE statement REDUCE to selection_statement" << endl; }
-    | SWITCH OPAREN expression CPAREN statement            { $$ = make_shared<SelectionStatement>(SWITCH,$3,$5); cout << "SWITCH OPAREN expression CPAREN statement REDUCE to selection_statement" << endl; }
+    : IF OPAREN expression CPAREN statement  %prec "then"  { $$ = make_shared<SelectionStatement>(IF,$3,$5); /*cout << "IF OPAREN expression CPAREN statement REDUCE to selection_statement" << endl;*/ }
+    | IF OPAREN expression CPAREN statement ELSE statement { $$ = make_shared<SelectionStatement>(IF,$3,$5,$7); /*cout << "IF OPAREN expression CPAREN statement ELSE statement REDUCE to selection_statement" << endl;*/ }
+    | SWITCH OPAREN expression CPAREN statement            { $$ = make_shared<SelectionStatement>(SWITCH,$3,$5); /*cout << "SWITCH OPAREN expression CPAREN statement REDUCE to selection_statement" << endl;*/ }
     ;
 
 iteration_statement
-    : WHILE OPAREN expression CPAREN statement                                         { $$ = make_shared<IterationStatement>(WHILE,$3,$5); cout << "WHILE OPAREN expression CPAREN statement REDUCE to iteration_statement" << endl; }
-    | DO statement WHILE OPAREN expression CPAREN SEMICOLON                            { $$ = make_shared<IterationStatement>(DO,$5,$2); cout << "DO statement WHILE OPAREN expression CPAREN SEMICOLON REDUCE to iteration_statement" << endl; }
-    | FOR OPAREN expression_statement expression_statement CPAREN statement            { $$ = make_shared<IterationStatement>(FOR,$3,$4,$6); cout << "FOR OPAREN expression_statement expression_statement CPAREN statement REDUCE to iteration_statement" << endl; }
-    | FOR OPAREN expression_statement expression_statement expression CPAREN statement { $$ = make_shared<IterationStatement>(FOR,$3,$4,$5,$7); cout << "FOR OPAREN expression_statement expression_statement expression CPAREN statement REDUCE to iteration_statement" << endl; }
+    : WHILE OPAREN expression CPAREN statement                                         { $$ = make_shared<IterationStatement>(WHILE,$3,$5); /*cout << "WHILE OPAREN expression CPAREN statement REDUCE to iteration_statement" << endl;*/ }
+    | DO statement WHILE OPAREN expression CPAREN SEMICOLON                            { $$ = make_shared<IterationStatement>(DO,$5,$2); /*cout << "DO statement WHILE OPAREN expression CPAREN SEMICOLON REDUCE to iteration_statement" << endl;*/ }
+    | FOR OPAREN expression_statement expression_statement CPAREN statement            { $$ = make_shared<IterationStatement>(FOR,$3,$4,$6); /*cout << "FOR OPAREN expression_statement expression_statement CPAREN statement REDUCE to iteration_statement" << endl;*/ }
+    | FOR OPAREN expression_statement expression_statement expression CPAREN statement { $$ = make_shared<IterationStatement>(FOR,$3,$4,$5,$7); /*cout << "FOR OPAREN expression_statement expression_statement expression CPAREN statement REDUCE to iteration_statement" << endl;*/ }
     ;
 
 jump_statement
-    : GOTO IDENTIFIER SEMICOLON   { $$ = make_shared<JumpStatement>(GOTO,$2); cout << "GOTO IDENTIFIER SEMICOLON REDUCE to jump_statement" << endl; }
-    | CONTINUE SEMICOLON          { $$ = make_shared<JumpStatement>(CONTINUE); cout << "CONTINUE SEMICOLON REDUCE to jump_statement" << endl; }
-    | BREAK SEMICOLON             { $$ = make_shared<JumpStatement>(BREAK); cout << "BREAK SEMICOLON REDUCE to jump_statement" << endl; }
-    | RETURN SEMICOLON            { $$ = make_shared<JumpStatement>(RETURN); cout << "RETURN SEMICOLON REDUCE to jump_statement" << endl; }
-    | RETURN expression SEMICOLON { $$ = make_shared<JumpStatement>(RETURN,$2); cout << "RETURN expression SEMICOLON REDUCE to jump_statement" << endl; }
+    : GOTO IDENTIFIER SEMICOLON   { $$ = make_shared<JumpStatement>(GOTO,$2); /*cout << "GOTO IDENTIFIER SEMICOLON REDUCE to jump_statement" << endl;*/ }
+    | CONTINUE SEMICOLON          { $$ = make_shared<JumpStatement>(CONTINUE); /*cout << "CONTINUE SEMICOLON REDUCE to jump_statement" << endl;*/ }
+    | BREAK SEMICOLON             { $$ = make_shared<JumpStatement>(BREAK); /*cout << "BREAK SEMICOLON REDUCE to jump_statement" << endl;*/ }
+    | RETURN SEMICOLON            { $$ = make_shared<JumpStatement>(RETURN); /*cout << "RETURN SEMICOLON REDUCE to jump_statement" << endl;*/ }
+    | RETURN expression SEMICOLON { $$ = make_shared<JumpStatement>(RETURN,$2); /*cout << "RETURN expression SEMICOLON REDUCE to jump_statement" << endl;*/ }
     ;
 
 translation_unit 
-    : external_declaration                  { createTranslationUnit($1); cout << "external_declaration REDUCE to translation_unit" << endl << endl; }
-    | translation_unit external_declaration { createTranslationUnit($2); cout << "translation_unit external_declaration REDUCE to translation_unit" << endl << endl; }
+    : external_declaration                  { createTranslationUnit($1); /*cout << "external_declaration REDUCE to translation_unit" << endl << endl; */ }
+    | translation_unit external_declaration { createTranslationUnit($2); /*cout << "translation_unit external_declaration REDUCE to translation_unit" << endl << endl; */ }
     ;
 
 external_declaration
-    : function_definition  { $$ = make_shared<ExternalDeclaration>($1); cout << "function_definition REDUCE to external_declaration" << endl; }
-    | declaration          { $$ = make_shared<ExternalDeclaration>($1); cout << "declaration REDUCE to external_declaration" << endl; }
+    : function_definition  { $$ = make_shared<ExternalDeclaration>($1); /*cout << "function_definition REDUCE to external_declaration" << endl;*/ }
+    | declaration          { $$ = make_shared<ExternalDeclaration>($1); /*cout << "declaration REDUCE to external_declaration" << endl;*/ }
     ;
 
 function_definition
-    : declaration_specifiers declarator declaration_list compound_statement { $$ = make_shared<FunctionDefinition>($1,$2,$3,$4); cout << "declaration_specifiers declarator declaration_list compound_statement REDUCE to function_definition" << endl; }
-    | declaration_specifiers declarator compound_statement                  { $$ = make_shared<FunctionDefinition>($1,$2,$3); cout << "declaration_specifiers declarator compound_statement REDUCE to function_definition" << endl; }
-    | declarator declaration_list compound_statement                        { $$ = make_shared<FunctionDefinition>($1,$2,$3); cout << "declarator declaration_list compound_statement REDUCE to function_definition" << endl; }
-    | declarator compound_statement                                         { $$ = make_shared<FunctionDefinition>($1,$2); cout << "declarator compound_statement REDUCE to function_definition" << endl; }
+    : declaration_specifiers declarator declaration_list compound_statement { $$ = make_shared<FunctionDefinition>($1,$2,$3,$4); /*cout << "declaration_specifiers declarator declaration_list compound_statement REDUCE to function_definition" << endl;*/ }
+    | declaration_specifiers declarator compound_statement                  { $$ = make_shared<FunctionDefinition>($1,$2,$3); /*cout << "declaration_specifiers declarator compound_statement REDUCE to function_definition" << endl;*/ }
+    | declarator declaration_list compound_statement                        { $$ = make_shared<FunctionDefinition>($1,$2,$3); /*cout << "declarator declaration_list compound_statement REDUCE to function_definition" << endl;*/ }
+    | declarator compound_statement                                         { $$ = make_shared<FunctionDefinition>($1,$2); /*cout << "declarator compound_statement REDUCE to function_definition" << endl;*/ }
     ;
     
 %%
