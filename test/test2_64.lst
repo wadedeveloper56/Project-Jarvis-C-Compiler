@@ -1,4 +1,4 @@
-JWasm v2.12pre, Oct  9 2026
+JWasm v2.12pre, Oct 14 2026
 test2_64.asm
                             *   .model FLAT
 00000000                    *   _TEXT segment PARA FLAT PUBLIC 'CODE'
@@ -109,13 +109,13 @@ Symbols:
 @Cpu . . . . . . . . . . . . . .        Number           DDFh 
 @CurSeg  . . . . . . . . . . . .        Text   
 @DataSize  . . . . . . . . . . .        Number             0h 
-@Date  . . . . . . . . . . . . .        Text   10/09/26
+@Date  . . . . . . . . . . . . .        Text   10/14/26
 @FileCur . . . . . . . . . . . .        Text   test2_64.asm
 @FileName  . . . . . . . . . . .        Text   TEST2_64
 @Interface . . . . . . . . . . .        Number             7h 
 @Model . . . . . . . . . . . . .        Number             7h 
 @ReservedStack . . . . . . . . .        Number             0h 
-@Time  . . . . . . . . . . . . .        Text   17:46:11
+@Time  . . . . . . . . . . . . .        Text   12:18:05
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT
@@ -125,4 +125,4 @@ _m . . . . . . . . . . . . . . .        DWord              4h _BSS FASTCALL
 _u . . . . . . . . . . . . . . .        DWord              0h _BSS FASTCALL
 _x . . . . . . . . . . . . . . .        DWord              0h _DATA FASTCALL
 
-test2_64.asm: 31 lines, 2 passes, 1 ms, 0 warnings, 0 errors
+test2_64.asm: 31 lines, 2 passes, 0 ms, 0 warnings, 0 errors
