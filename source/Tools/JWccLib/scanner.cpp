@@ -189,27 +189,8 @@ extern int yyleng;
 #define EOB_ACT_END_OF_FILE 1
 #define EOB_ACT_LAST_MATCH 2
     
-    /* Note: We specifically omit the test for yy_rule_can_match_eol because it requires
-     *       access to the local variable yy_act. Since yyless() is a macro, it would break
-     *       existing scanners that call yyless() from OUTSIDE yylex.
-     *       One obvious solution it to make yy_act a global. I tried that, and saw
-     *       a 5% performance hit in a non-yylineno scanner, because yy_act is
-     *       normally declared as a register variable-- so it is not worth it.
-     */
-    #define  YY_LESS_LINENO(n) \
-            do { \
-                int yyl;\
-                for ( yyl = n; yyl < yyleng; ++yyl )\
-                    if ( yytext[yyl] == '\n' )\
-                        --yylineno;\
-            }while(0)
-    #define YY_LINENO_REWIND_TO(dst) \
-            do {\
-                const char *p;\
-                for ( p = yy_cp-1; p >= (dst); --p)\
-                    if ( *p == '\n' )\
-                        --yylineno;\
-            }while(0)
+    #define YY_LESS_LINENO(n)
+    #define YY_LINENO_REWIND_TO(ptr)
     
 /* Return all but the first "n" matched characters back to the input stream. */
 #define yyless(n) \
@@ -358,8 +339,8 @@ int yyFlexLexer::yylex()
 	(yy_hold_char) = *yy_cp; \
 	*yy_cp = '\0'; \
 	(yy_c_buf_p) = yy_cp;
-#define YY_NUM_RULES 100
-#define YY_END_OF_BUFFER 101
+#define YY_NUM_RULES 101
+#define YY_END_OF_BUFFER 102
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -369,8 +350,8 @@ struct yy_trans_info
 	};
 static const flex_int16_t yy_accept[323] =
     {   0,
-        0,    0,  101,   99,   98,   98,   87,   99,   95,   89,
-       99,   57,   58,   93,   92,   55,   91,   61,   94,   41,
+        0,    0,  102,  100,   99,   98,   87,  100,   95,   89,
+      100,   57,   58,   93,   92,   55,   91,   61,   94,   41,
        40,   56,   52,   81,   63,   82,   51,   38,   38,   59,
        60,   88,   38,   38,   38,   38,   38,   38,   38,   38,
        38,   38,   38,   38,   38,   38,   38,   53,   90,   54,
@@ -704,16 +685,6 @@ static const flex_int16_t yy_chk[746] =
       322,  322,  322,  322,  322
     } ;
 
-/* Table of booleans, true if rule could match eol. */
-static const flex_int32_t yy_rule_can_match_eol[101] =
-    {   0,
-0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 
-    0,     };
-
 /* The intent behind this definition is that it'll catch
  * any uses of REJECT which flex missed.
  */
@@ -755,8 +726,8 @@ static const flex_int32_t yy_rule_can_match_eol[101] =
     //
     // Location class can be found in location.hh and posistion.hh files. It's just a bit too much
     // boilerplate for this small example. Bummer.
-#line 758 "scanner.cpp"
-#line 759 "scanner.cpp"
+#line 729 "scanner.cpp"
+#line 730 "scanner.cpp"
 
 #define INITIAL 0
 
@@ -891,7 +862,7 @@ YY_DECL
 #line 65 "ansic.l"
 
 
-#line 894 "scanner.cpp"
+#line 865 "scanner.cpp"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -936,16 +907,6 @@ yy_find_action:
 			}
 
 		YY_DO_BEFORE_ACTION;
-
-		if ( yy_act != YY_END_OF_BUFFER && yy_rule_can_match_eol[yy_act] )
-			{
-			int yyl;
-			for ( yyl = 0; yyl < yyleng; ++yyl )
-				if ( yytext[yyl] == '\n' )
-					
-    yylineno++;
-;
-			}
 
 do_action:	/* This label is used only to access EOF actions. */
 
@@ -1754,24 +1715,28 @@ case 98:
 /* rule 98 can match eol */
 YY_RULE_SETUP
 #line 471 "ansic.l"
-{ }
+{ m_driver.clear(); }
 	YY_BREAK
 case 99:
 YY_RULE_SETUP
 #line 472 "ansic.l"
-{ cout << "Scanner: unknown character [" << yytext << "]" << endl; 
-               }
+{ }
+	YY_BREAK
+case 100:
+YY_RULE_SETUP
+#line 473 "ansic.l"
+{ cout << "Scanner: unknown character [" << yytext << "]" << endl; }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
 #line 474 "ansic.l"
 { return yyterminate(); }
 	YY_BREAK
-case 100:
+case 101:
 YY_RULE_SETUP
 #line 476 "ansic.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 1774 "scanner.cpp"
+#line 1739 "scanner.cpp"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2256,10 +2221,6 @@ int yyFlexLexer::yy_get_next_buffer()
 
 	*--yy_cp = (char) c;
 
-    if ( c == '\n' ){
-        --yylineno;
-    }
-
 	(yytext_ptr) = yy_bp;
 	(yy_hold_char) = *yy_cp;
 	(yy_c_buf_p) = yy_cp;
@@ -2329,11 +2290,6 @@ int yyFlexLexer::yy_get_next_buffer()
 	c = *(unsigned char *) (yy_c_buf_p);	/* cast for 8-bit char's */
 	*(yy_c_buf_p) = '\0';	/* preserve yytext */
 	(yy_hold_char) = *++(yy_c_buf_p);
-
-	if ( c == '\n' )
-		
-    yylineno++;
-;
 
 	return c;
 }
