@@ -10,7 +10,7 @@
 #include "output.h"
 #include "SemanticAnalyzer.h"
 #include "Diagnostic.h"
-//#include "ppMain.h"
+#include "ppMain.h"
 
 using namespace WadeSpace;
 using namespace std;
