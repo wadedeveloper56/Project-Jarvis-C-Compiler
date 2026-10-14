@@ -100,7 +100,7 @@ Dependency generation:
     "Time: " __TIME__ "  Date: " __DATE__;
 const char* ppMain::usageText = "[options] files";
 
-int main(int argc, char* argv[]) MAINTRY
+int start(int argc, char* argv[]) MAINTRY
 {
     ppMain preproc;
     try

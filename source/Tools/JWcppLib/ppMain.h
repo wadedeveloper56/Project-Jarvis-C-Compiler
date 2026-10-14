@@ -67,5 +67,5 @@ class ppMain
     static const char* usageText;
     static const char* helpText;
 };
-
+int start(int argc, char* argv[]);
 #endif

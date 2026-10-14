@@ -89,7 +89,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Decompiler", "Decompiler\De
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JWccTest", "JWccTest\JWccTest.vcxproj", "{92A96E9D-C7C5-BEC2-328A-DAB32834F7AD}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JWcppLib", "JWcpp\JWcpp.vcxproj", "{3AD9B4FA-2EB4-4DB7-ADED-08DBF8CA9D71}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JWcppLib", "JWcppLib\JWcpp.vcxproj", "{3AD9B4FA-2EB4-4DB7-ADED-08DBF8CA9D71}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

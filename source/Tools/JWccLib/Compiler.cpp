@@ -5,18 +5,15 @@
 #include "interpreter.h"
 #include "ArgumentTable.h"
 #include "GlobalVars.h"
-//#include "simplecpp.h"
-//#include "preprocessor.h"
 #include "BaseCodeGenerator.h"
 #include "MasmCodeGenerator.h"
 #include "output.h"
 #include "SemanticAnalyzer.h"
 #include "Diagnostic.h"
+//#include "ppMain.h"
 
 using namespace WadeSpace;
 using namespace std;
-//using namespace simplecpp;
-//using namespace WadeSpace::PreProcessor;
 
 Compiler::Compiler()
 {
@@ -44,7 +41,6 @@ void Compiler::compileFile(istream& inStr, ostream& out, int& exitcode)
 
 	if (hasError)
 	{
-		// Prevent code generation on semantic errors
 		exitcode = 1;
 		return;
 	}
@@ -53,23 +49,7 @@ void Compiler::compileFile(istream& inStr, ostream& out, int& exitcode)
 	generator->generateCode(out);
 }
 
-void Compiler::compile(istream& in, ArgFilePtr infiles, ostream& out, int& exitcode)
+void Compiler::compile(istream& in, ostream& out, int& exitcode)
 {
-	//DUI dui;
-	//OutputList outputList;
-	vector<string> files;
-	//TokenList* rawtokens;
-	//FileDataCache filedata;
-
-	//rawtokens = new TokenList(in, files, infiles->filename[0], &outputList);
-	//rawtokens->removeComments();
-	//TokenList outputTokens(files);
-	//preprocess(outputTokens, *rawtokens, files, filedata, dui, &outputList);
-	//cleanup(filedata);
-	//delete rawtokens;
-	//rawtokens = nullptr;
-	//cout << outputTokens.stringify() << endl << endl;;
-	//istringstream inStr(outputTokens.stringify());
-
 	compileFile(in, out, exitcode);
 }
