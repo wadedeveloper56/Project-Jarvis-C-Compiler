@@ -7,7 +7,7 @@
 #include "ArgumentTable.h"
 #include "GlobalVars.h"
 //#include "simplecpp.h"
-#include "preprocessor.h"
+//#include "preprocessor.h"
 #include "BaseCodeGenerator.h"
 #include "MasmCodeGenerator.h"
 #include "output.h"
@@ -16,7 +16,7 @@
 using namespace WadeSpace;
 using namespace std;
 //using namespace simplecpp;
-using namespace WadeSpace::PreProcessor;
+//using namespace WadeSpace::PreProcessor;
 
 int main(int argc, char* argv[])
 {

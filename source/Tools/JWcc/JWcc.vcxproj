@@ -25,9 +25,6 @@
     <ProjectReference Include="..\JWccLib\JWccLib.vcxproj">
       <Project>{55e11707-51c1-4126-9ce7-1d3ef7e9d7f0}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\PreProcessor2\PreProcessor2.vcxproj">
-      <Project>{ec832e55-a126-40da-b115-fc2973ae0f73}</Project>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\JWccLib\main.cpp" />

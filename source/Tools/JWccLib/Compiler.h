@@ -20,7 +20,7 @@ namespace WadeSpace
 	public:
 		Compiler();
 		virtual ~Compiler() = default;
-		void compileFile(istringstream& inStr, ostream& out, int& exitcode);
+		void compileFile(istream& inStr, ostream& out, int& exitcode);
 		void compile(istream& in, ArgFilePtr infiles, ostream& out, int& exitcode);
 		[[nodiscard]] shared_ptr<ProgramData> getProgramData() const { return programData; }
 		[[nodiscard]] shared_ptr<map<string, shared_ptr<DeclarationSpecifiersNode>>> getTypedefList() const { return typedefList; }

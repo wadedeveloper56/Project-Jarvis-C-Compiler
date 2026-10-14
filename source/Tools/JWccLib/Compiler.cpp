@@ -6,7 +6,7 @@
 #include "ArgumentTable.h"
 #include "GlobalVars.h"
 //#include "simplecpp.h"
-#include "preprocessor.h"
+//#include "preprocessor.h"
 #include "BaseCodeGenerator.h"
 #include "MasmCodeGenerator.h"
 #include "output.h"
@@ -16,7 +16,7 @@
 using namespace WadeSpace;
 using namespace std;
 //using namespace simplecpp;
-using namespace WadeSpace::PreProcessor;
+//using namespace WadeSpace::PreProcessor;
 
 Compiler::Compiler()
 {
@@ -27,7 +27,7 @@ Compiler::Compiler()
 	enumList = make_shared<map<string, shared_ptr<EnumSpecifier>>>();
 }
 
-void Compiler::compileFile(istringstream& inStr, ostream& out, int& exitcode)
+void Compiler::compileFile(istream& inStr, ostream& out, int& exitcode)
 {
 	Interpreter i;
 	i.setStreams(&inStr, &out);
@@ -55,21 +55,21 @@ void Compiler::compileFile(istringstream& inStr, ostream& out, int& exitcode)
 
 void Compiler::compile(istream& in, ArgFilePtr infiles, ostream& out, int& exitcode)
 {
-	DUI dui;
-	OutputList outputList;
+	//DUI dui;
+	//OutputList outputList;
 	vector<string> files;
-	TokenList* rawtokens;
-	FileDataCache filedata;
+	//TokenList* rawtokens;
+	//FileDataCache filedata;
 
-	rawtokens = new TokenList(in, files, infiles->filename[0], &outputList);
-	rawtokens->removeComments();
-	TokenList outputTokens(files);
-	preprocess(outputTokens, *rawtokens, files, filedata, dui, &outputList);
-	cleanup(filedata);
-	delete rawtokens;
-	rawtokens = nullptr;
+	//rawtokens = new TokenList(in, files, infiles->filename[0], &outputList);
+	//rawtokens->removeComments();
+	//TokenList outputTokens(files);
+	//preprocess(outputTokens, *rawtokens, files, filedata, dui, &outputList);
+	//cleanup(filedata);
+	//delete rawtokens;
+	//rawtokens = nullptr;
 	//cout << outputTokens.stringify() << endl << endl;;
-	istringstream inStr(outputTokens.stringify());
+	//istringstream inStr(outputTokens.stringify());
 
-	compileFile(inStr, out, exitcode);
+	compileFile(in, out, exitcode);
 }
