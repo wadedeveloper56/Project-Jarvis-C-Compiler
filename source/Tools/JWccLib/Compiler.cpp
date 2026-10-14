@@ -68,7 +68,7 @@ void Compiler::compile(istream& in, ArgFilePtr infiles, ostream& out, int& exitc
 	cleanup(filedata);
 	delete rawtokens;
 	rawtokens = nullptr;
-	cout << outputTokens.stringify() << endl << endl;;
+	//cout << outputTokens.stringify() << endl << endl;;
 	istringstream inStr(outputTokens.stringify());
 
 	compileFile(inStr, out, exitcode);

@@ -141,7 +141,14 @@ int main(int argc, char* argv[])
 		debug_printf("Parse starting");
 		compiler = make_shared<Compiler>();
 		compiler->compile(in, infiles, out, exitcode);
-		cout << "Parse complete. Result = " << exitcode << endl;
+		if (exitcode == 0)
+		{
+			cout << "Parse successful" << endl;
+		}
+		else
+		{
+			cout << "Parse failed. Result = " << exitcode << endl;
+		}
 	}
 
 exit:

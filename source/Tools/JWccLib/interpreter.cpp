@@ -31,7 +31,7 @@ void Interpreter::setStreams(std::istream* is, std::ostream* os)
 void Interpreter::increaseLocation(unsigned int loc)
 {
 	m_location += loc;
-	cout << "increaseLocation(): " << loc << ", total = " << m_location << endl;
+	//cout << "increaseLocation(): " << loc << ", total = " << m_location << endl;
 }
 
 unsigned int Interpreter::location() const

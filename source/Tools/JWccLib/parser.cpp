@@ -1890,1309 +1890,1309 @@ namespace  WadeSpace  {
             {
   case 2: // primary_expression: "identifier"
 #line 260 "ansic.y"
-                                { SETLOC(yystack_[0].value.as < shared_ptr<CToken> > (),yystack_[0].location); yylhs.value.as < shared_ptr<ExpressionTree> > () = createPrimaryExpression(yystack_[0].value.as < shared_ptr<CToken> > (),NULL);      cout << "IDENTIFIER REDUCE to primary_expression" << endl; }
+                                { SETLOC(yystack_[0].value.as < shared_ptr<CToken> > (),yystack_[0].location); yylhs.value.as < shared_ptr<ExpressionTree> > () = createPrimaryExpression(yystack_[0].value.as < shared_ptr<CToken> > (),NULL);      /*cout << "IDENTIFIER REDUCE to primary_expression" << endl;*/ }
 #line 1895 "parser.cpp"
     break;
 
   case 3: // primary_expression: constant
 #line 261 "ansic.y"
-                                { yylhs.value.as < shared_ptr<ExpressionTree> > () = createPrimaryExpression(nullptr,yystack_[0].value.as < shared_ptr<Constant> > ());   cout << "constant REDUCE to primary_expression" << endl; }
+                                { yylhs.value.as < shared_ptr<ExpressionTree> > () = createPrimaryExpression(nullptr,yystack_[0].value.as < shared_ptr<Constant> > ());   /*cout << "constant REDUCE to primary_expression" << endl;*/ }
 #line 1901 "parser.cpp"
     break;
 
   case 4: // primary_expression: "(" expression ")"
 #line 262 "ansic.y"
-                                { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[1].value.as < shared_ptr<ExpressionTree> > ();                                    cout << "OPAREN expression CPAREN REDUCE to primary_expression" << endl; }
+                                { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[1].value.as < shared_ptr<ExpressionTree> > ();                                    /*cout << "OPAREN expression CPAREN REDUCE to primary_expression" << endl;*/ }
 #line 1907 "parser.cpp"
     break;
 
   case 5: // constant: "f_const"
 #line 266 "ansic.y"
-                      { yylhs.value.as < shared_ptr<Constant> > () = createConstant(nullptr,yystack_[0].value.as < shared_ptr<CToken> > (),nullptr,FLOAT_CONSTANT);   cout << "F_CONST REDUCE to constant " << endl; }
+                      { yylhs.value.as < shared_ptr<Constant> > () = createConstant(nullptr,yystack_[0].value.as < shared_ptr<CToken> > (),nullptr,FLOAT_CONSTANT);   /*cout << "F_CONST REDUCE to constant " << endl;*/ }
 #line 1913 "parser.cpp"
     break;
 
   case 6: // constant: "i_const"
 #line 267 "ansic.y"
-                      { yylhs.value.as < shared_ptr<Constant> > () = createConstant(yystack_[0].value.as < shared_ptr<CToken> > (),nullptr,nullptr,INTEGER_CONSTANT); cout << "I_CONST REDUCE to constant " << endl; }
+                      { yylhs.value.as < shared_ptr<Constant> > () = createConstant(yystack_[0].value.as < shared_ptr<CToken> > (),nullptr,nullptr,INTEGER_CONSTANT); /*cout << "I_CONST REDUCE to constant " << endl;*/ }
 #line 1919 "parser.cpp"
     break;
 
   case 7: // constant: "sting_literal"
 #line 268 "ansic.y"
-                      { yylhs.value.as < shared_ptr<Constant> > () = createConstant(nullptr,nullptr,yystack_[0].value.as < shared_ptr<CToken> > (),STRING_CONSTANT);  cout << "STRING_LITERAL REDUCE to constant  " << endl; }
+                      { yylhs.value.as < shared_ptr<Constant> > () = createConstant(nullptr,nullptr,yystack_[0].value.as < shared_ptr<CToken> > (),STRING_CONSTANT);  /*cout << "STRING_LITERAL REDUCE to constant  " << endl;*/ }
 #line 1925 "parser.cpp"
     break;
 
   case 8: // postfix_expression: primary_expression
 #line 271 "ansic.y"
-                                                                   { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > ();  cout << "primary_expression REDUCE to postfix_expression" << endl; }
+                                                                   { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > ();  /*cout << "primary_expression REDUCE to postfix_expression" << endl;*/ }
 #line 1931 "parser.cpp"
     break;
 
   case 9: // postfix_expression: postfix_expression "[" expression "]"
 #line 272 "ansic.y"
-                                                                   { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_ARRAY,yystack_[2].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<CToken> > (),yystack_[1].value.as < shared_ptr<ExpressionTree> > (),nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,  yystack_[3].value.as < shared_ptr<ExpressionTree> > (),nullptr,nullptr); cout << "postfix_expression OBRACE expression CBRACE REDUCE to postfix_expression" << endl; }
+                                                                   { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_ARRAY,yystack_[2].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<CToken> > (),yystack_[1].value.as < shared_ptr<ExpressionTree> > (),nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,  yystack_[3].value.as < shared_ptr<ExpressionTree> > (),nullptr,nullptr); /*cout << "postfix_expression OBRACE expression CBRACE REDUCE to postfix_expression" << endl;*/ }
 #line 1937 "parser.cpp"
     break;
 
   case 10: // postfix_expression: postfix_expression "(" ")"
 #line 273 "ansic.y"
-                                                                   { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_FUNCTION_CALL,yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<CToken> > (),nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),nullptr,nullptr); cout << "postfix_expression OPAREN CPAREN REDUCE to postfix_expression" << endl; }
+                                                                   { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_FUNCTION_CALL,yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<CToken> > (),nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),nullptr,nullptr); /*cout << "postfix_expression OPAREN CPAREN REDUCE to postfix_expression" << endl;*/ }
 #line 1943 "parser.cpp"
     break;
 
   case 11: // postfix_expression: postfix_expression "(" argument_expression_list ")"
 #line 274 "ansic.y"
-                                                                   { SETLOC(yystack_[2].value.as < shared_ptr<CToken> > (),yystack_[2].location); SETLOC(yystack_[0].value.as < shared_ptr<CToken> > (),yystack_[0].location); yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_FUNCTION_CALL,yystack_[2].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<CToken> > (),nullptr,nullptr,nullptr,yystack_[1].value.as < shared_ptr<vector<shared_ptr<ExpressionTree>>> > (),nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[3].value.as < shared_ptr<ExpressionTree> > (),nullptr,nullptr); cout << "postfix_expression OPAREN argument_expression_list CPAREN REDUCE to postfix_expression" << endl; }
+                                                                   { SETLOC(yystack_[2].value.as < shared_ptr<CToken> > (),yystack_[2].location); SETLOC(yystack_[0].value.as < shared_ptr<CToken> > (),yystack_[0].location); yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_FUNCTION_CALL,yystack_[2].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<CToken> > (),nullptr,nullptr,nullptr,yystack_[1].value.as < shared_ptr<vector<shared_ptr<ExpressionTree>>> > (),nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[3].value.as < shared_ptr<ExpressionTree> > (),nullptr,nullptr); /*cout << "postfix_expression OPAREN argument_expression_list CPAREN REDUCE to postfix_expression" << endl;*/ }
 #line 1949 "parser.cpp"
     break;
 
   case 12: // postfix_expression: postfix_expression "." "identifier"
 #line 275 "ansic.y"
-                                                                   { SETLOC(yystack_[0].value.as < shared_ptr<CToken> > (),yystack_[0].location); yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_VAR_ACCESS,yystack_[1].value.as < shared_ptr<CToken> > (),nullptr,nullptr,nullptr,nullptr,nullptr,yystack_[0].value.as < shared_ptr<CToken> > (),nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),nullptr,nullptr); cout << "postfix_expression PERIOD_OP IDENTIFIER REDUCE to postfix_expression" << endl; }
+                                                                   { SETLOC(yystack_[0].value.as < shared_ptr<CToken> > (),yystack_[0].location); yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_VAR_ACCESS,yystack_[1].value.as < shared_ptr<CToken> > (),nullptr,nullptr,nullptr,nullptr,nullptr,yystack_[0].value.as < shared_ptr<CToken> > (),nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),nullptr,nullptr); /*cout << "postfix_expression PERIOD_OP IDENTIFIER REDUCE to postfix_expression" << endl;*/ }
 #line 1955 "parser.cpp"
     break;
 
   case 13: // postfix_expression: postfix_expression "->" "identifier"
 #line 276 "ansic.y"
-                                                                   { SETLOC(yystack_[0].value.as < shared_ptr<CToken> > (),yystack_[0].location); yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_VAR_ACCESS,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,yystack_[0].value.as < shared_ptr<CToken> > (),nullptr,nullptr,yystack_[1].value.as < shared_ptr<CToken> > (),nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),nullptr,nullptr); cout << "postfix_expression PTR_OP IDENTIFIER REDUCE to postfix_expression" << endl; }
+                                                                   { SETLOC(yystack_[0].value.as < shared_ptr<CToken> > (),yystack_[0].location); yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_VAR_ACCESS,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,yystack_[0].value.as < shared_ptr<CToken> > (),nullptr,nullptr,yystack_[1].value.as < shared_ptr<CToken> > (),nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),nullptr,nullptr); /*cout << "postfix_expression PTR_OP IDENTIFIER REDUCE to postfix_expression" << endl;*/ }
 #line 1961 "parser.cpp"
     break;
 
   case 14: // postfix_expression: postfix_expression "++"
 #line 277 "ansic.y"
-                                                                   { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_INC,nullptr,nullptr,nullptr,yystack_[1].value.as < shared_ptr<ExpressionTree> > (),nullptr,nullptr,nullptr,nullptr,nullptr,yystack_[0].value.as < shared_ptr<CToken> > (),nullptr, nullptr,nullptr,nullptr); cout << "postfix_expression INC_OP REDUCE to postfix_expression" << endl; }
+                                                                   { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_INC,nullptr,nullptr,nullptr,yystack_[1].value.as < shared_ptr<ExpressionTree> > (),nullptr,nullptr,nullptr,nullptr,nullptr,yystack_[0].value.as < shared_ptr<CToken> > (),nullptr, nullptr,nullptr,nullptr); /*cout << "postfix_expression INC_OP REDUCE to postfix_expression" << endl;*/ }
 #line 1967 "parser.cpp"
     break;
 
   case 15: // postfix_expression: postfix_expression "--"
 #line 278 "ansic.y"
-                                                                   { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_DEC,nullptr,nullptr,nullptr,yystack_[1].value.as < shared_ptr<ExpressionTree> > (),nullptr,nullptr,nullptr,nullptr,nullptr,yystack_[0].value.as < shared_ptr<CToken> > (),nullptr, nullptr,nullptr,nullptr); cout << "postfix_expression DEC_OP REDUCE to postfix_expression" << endl; }
+                                                                   { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_DEC,nullptr,nullptr,nullptr,yystack_[1].value.as < shared_ptr<ExpressionTree> > (),nullptr,nullptr,nullptr,nullptr,nullptr,yystack_[0].value.as < shared_ptr<CToken> > (),nullptr, nullptr,nullptr,nullptr); /*cout << "postfix_expression DEC_OP REDUCE to postfix_expression" << endl;*/ }
 #line 1973 "parser.cpp"
     break;
 
   case 16: // postfix_expression: "(" type_name ")" "{" initializer_list "}"
 #line 279 "ansic.y"
-                                                                   { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_TYPECAST,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,yystack_[1].value.as < shared_ptr<vector<shared_ptr<Initializer>>> > (),yystack_[4].value.as < shared_ptr<TypeName> > (),nullptr,nullptr, nullptr,nullptr,nullptr); cout << "OPAREN type_name CPAREN_OP OCURLY_OP initializer_list CCURLY REDUCE to postfix_expression" << endl; }
+                                                                   { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_TYPECAST,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,yystack_[1].value.as < shared_ptr<vector<shared_ptr<Initializer>>> > (),yystack_[4].value.as < shared_ptr<TypeName> > (),nullptr,nullptr, nullptr,nullptr,nullptr); /*cout << "OPAREN type_name CPAREN_OP OCURLY_OP initializer_list CCURLY REDUCE to postfix_expression" << endl;*/ }
 #line 1979 "parser.cpp"
     break;
 
   case 17: // postfix_expression: "(" type_name ")" "{" initializer_list "," "}"
 #line 280 "ansic.y"
-                                                                   { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_TYPECAST,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,yystack_[2].value.as < shared_ptr<vector<shared_ptr<Initializer>>> > (),yystack_[5].value.as < shared_ptr<TypeName> > (),nullptr,nullptr, nullptr,nullptr,nullptr); cout << "OPAREN type_name CPAREN_OP OCURLY_OP initializer_list COMMA CCURLY REDUCE to postfix_expression" << endl; }
+                                                                   { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_TYPECAST,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,yystack_[2].value.as < shared_ptr<vector<shared_ptr<Initializer>>> > (),yystack_[5].value.as < shared_ptr<TypeName> > (),nullptr,nullptr, nullptr,nullptr,nullptr); /*cout << "OPAREN type_name CPAREN_OP OCURLY_OP initializer_list COMMA CCURLY REDUCE to postfix_expression" << endl;*/ }
 #line 1985 "parser.cpp"
     break;
 
   case 18: // argument_expression_list: assignment_expression
 #line 284 "ansic.y"
-                                                           { yylhs.value.as < shared_ptr<vector<shared_ptr<ExpressionTree>>> > () = createArgumentExpressionList(yystack_[0].value.as < shared_ptr<ExpressionTree> > (),nullptr); cout << "assignment_expression REDUCE argument_expression_list" << endl; }
+                                                           { yylhs.value.as < shared_ptr<vector<shared_ptr<ExpressionTree>>> > () = createArgumentExpressionList(yystack_[0].value.as < shared_ptr<ExpressionTree> > (),nullptr); /*cout << "assignment_expression REDUCE argument_expression_list" << endl;*/ }
 #line 1991 "parser.cpp"
     break;
 
   case 19: // argument_expression_list: argument_expression_list "," assignment_expression
 #line 285 "ansic.y"
-                                                           { yylhs.value.as < shared_ptr<vector<shared_ptr<ExpressionTree>>> > () = createArgumentExpressionList(yystack_[0].value.as < shared_ptr<ExpressionTree> > (),yystack_[2].value.as < shared_ptr<vector<shared_ptr<ExpressionTree>>> > ()); cout << "argument_expression_list COMMA assignment_expression REDUCE argument_expression_list" << endl; }
+                                                           { yylhs.value.as < shared_ptr<vector<shared_ptr<ExpressionTree>>> > () = createArgumentExpressionList(yystack_[0].value.as < shared_ptr<ExpressionTree> > (),yystack_[2].value.as < shared_ptr<vector<shared_ptr<ExpressionTree>>> > ()); /*cout << "argument_expression_list COMMA assignment_expression REDUCE argument_expression_list" << endl;*/ }
 #line 1997 "parser.cpp"
     break;
 
   case 20: // unary_expression: postfix_expression
 #line 289 "ansic.y"
-                                     { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > (); cout << "postfix_expression REDUCE unary_expression" << endl;}
+                                     { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > (); /*cout << "postfix_expression REDUCE unary_expression" << endl;*/}
 #line 2003 "parser.cpp"
     break;
 
   case 21: // unary_expression: "++" unary_expression
 #line 290 "ansic.y"
-                                     { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_INC,nullptr,nullptr,nullptr,yystack_[0].value.as < shared_ptr<ExpressionTree> > (),nullptr,nullptr,nullptr,nullptr,nullptr,yystack_[1].value.as < shared_ptr<CToken> > (),nullptr, nullptr,nullptr,nullptr); cout << "INC_OP unary_expression REDUCE unary_expression" << endl;}
+                                     { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_INC,nullptr,nullptr,nullptr,yystack_[0].value.as < shared_ptr<ExpressionTree> > (),nullptr,nullptr,nullptr,nullptr,nullptr,yystack_[1].value.as < shared_ptr<CToken> > (),nullptr, nullptr,nullptr,nullptr); /*cout << "INC_OP unary_expression REDUCE unary_expression" << endl;*/}
 #line 2009 "parser.cpp"
     break;
 
   case 22: // unary_expression: "--" unary_expression
 #line 291 "ansic.y"
-                                     { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_DEC,nullptr,nullptr,nullptr,yystack_[0].value.as < shared_ptr<ExpressionTree> > (),nullptr,nullptr,nullptr,nullptr,nullptr,yystack_[1].value.as < shared_ptr<CToken> > (),nullptr, nullptr,nullptr,nullptr); cout << "DEC_OP unary_expression REDUCE unary_expression" << endl;}
+                                     { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_DEC,nullptr,nullptr,nullptr,yystack_[0].value.as < shared_ptr<ExpressionTree> > (),nullptr,nullptr,nullptr,nullptr,nullptr,yystack_[1].value.as < shared_ptr<CToken> > (),nullptr, nullptr,nullptr,nullptr); /*cout << "DEC_OP unary_expression REDUCE unary_expression" << endl;*/}
 #line 2015 "parser.cpp"
     break;
 
   case 23: // unary_expression: unary_operator cast_expression
 #line 292 "ansic.y"
-                                     { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_UNARY,nullptr,nullptr,nullptr,yystack_[0].value.as < shared_ptr<ExpressionTree> > (),nullptr,nullptr,nullptr,nullptr,nullptr,yystack_[1].value.as < shared_ptr<CToken> > (),nullptr, nullptr,nullptr,nullptr); cout << "unary_operator cast_expression REDUCE unary_expression" << endl;}
+                                     { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_UNARY,nullptr,nullptr,nullptr,yystack_[0].value.as < shared_ptr<ExpressionTree> > (),nullptr,nullptr,nullptr,nullptr,nullptr,yystack_[1].value.as < shared_ptr<CToken> > (),nullptr, nullptr,nullptr,nullptr); /*cout << "unary_operator cast_expression REDUCE unary_expression" << endl;*/}
 #line 2021 "parser.cpp"
     break;
 
   case 24: // unary_expression: "sizeof" unary_expression
 #line 293 "ansic.y"
-                                     { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_SIZEOF,yystack_[1].value.as < shared_ptr<CToken> > (),nullptr,nullptr,yystack_[0].value.as < shared_ptr<ExpressionTree> > (),nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, nullptr,nullptr,nullptr); cout << "SIZEOF unary_expression REDUCE unary_expression" << endl;}
+                                     { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_SIZEOF,yystack_[1].value.as < shared_ptr<CToken> > (),nullptr,nullptr,yystack_[0].value.as < shared_ptr<ExpressionTree> > (),nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, nullptr,nullptr,nullptr); /*cout << "SIZEOF unary_expression REDUCE unary_expression" << endl;*/}
 #line 2027 "parser.cpp"
     break;
 
   case 25: // unary_expression: "sizeof" "(" type_name ")"
 #line 294 "ansic.y"
-                                     { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_SIZEOF,yystack_[3].value.as < shared_ptr<CToken> > (),nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,yystack_[1].value.as < shared_ptr<TypeName> > (),nullptr,nullptr, nullptr,nullptr,nullptr); cout << "SIZEOF OPAREN type_name CPAREN REDUCE unary_expression" << endl;}
+                                     { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_SIZEOF,yystack_[3].value.as < shared_ptr<CToken> > (),nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,yystack_[1].value.as < shared_ptr<TypeName> > (),nullptr,nullptr, nullptr,nullptr,nullptr); /*cout << "SIZEOF OPAREN type_name CPAREN REDUCE unary_expression" << endl;*/}
 #line 2033 "parser.cpp"
     break;
 
   case 26: // unary_operator: "&"
 #line 298 "ansic.y"
-                { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > (); cout << "BIT_AND REDUCE to unary_operator" << endl;}
+                { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > (); /*cout << "BIT_AND REDUCE to unary_operator" << endl;*/}
 #line 2039 "parser.cpp"
     break;
 
   case 27: // unary_operator: "*"
 #line 299 "ansic.y"
-                { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > (); cout << "TIMES_OP REDUCE to unary_operator" << endl;}
+                { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > (); /*cout << "TIMES_OP REDUCE to unary_operator" << endl;*/}
 #line 2045 "parser.cpp"
     break;
 
   case 28: // unary_operator: "+"
 #line 300 "ansic.y"
-                { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > (); cout << "PLUS_OP REDUCE to unary_operator" << endl;}
+                { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > (); /*cout << "PLUS_OP REDUCE to unary_operator" << endl;*/}
 #line 2051 "parser.cpp"
     break;
 
   case 29: // unary_operator: "-"
 #line 301 "ansic.y"
-                { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > (); cout << "MINUS_OP REDUCE to unary_operator" << endl;}
+                { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > (); /*cout << "MINUS_OP REDUCE to unary_operator" << endl;*/}
 #line 2057 "parser.cpp"
     break;
 
   case 30: // unary_operator: "~"
 #line 302 "ansic.y"
-                { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > (); cout << "TILDE REDUCE to unary_operator" << endl;}
+                { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > (); /*cout << "TILDE REDUCE to unary_operator" << endl;*/}
 #line 2063 "parser.cpp"
     break;
 
   case 31: // unary_operator: "!"
 #line 303 "ansic.y"
-                { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > (); cout << "NOT_OP REDUCE to unary_operator" << endl;}
+                { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > (); /*cout << "NOT_OP REDUCE to unary_operator" << endl;*/}
 #line 2069 "parser.cpp"
     break;
 
   case 32: // cast_expression: unary_expression
 #line 307 "ansic.y"
-                                               { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > ();  cout << "unary_expression REDUCE to cast_expression" << endl;}
+                                               { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > ();  /*cout << "unary_expression REDUCE to cast_expression" << endl;*/}
 #line 2075 "parser.cpp"
     break;
 
   case 33: // cast_expression: "(" type_name ")" cast_expression
 #line 308 "ansic.y"
-                                               { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_TYPECAST,nullptr,nullptr,nullptr,yystack_[0].value.as < shared_ptr<ExpressionTree> > (),nullptr,nullptr,nullptr,nullptr,yystack_[2].value.as < shared_ptr<TypeName> > (),nullptr,nullptr, nullptr,nullptr,nullptr);  cout << "unary_expression REDUCE to cast_expression" << endl;}
+                                               { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_TYPECAST,nullptr,nullptr,nullptr,yystack_[0].value.as < shared_ptr<ExpressionTree> > (),nullptr,nullptr,nullptr,nullptr,yystack_[2].value.as < shared_ptr<TypeName> > (),nullptr,nullptr, nullptr,nullptr,nullptr);  /*cout << "unary_expression REDUCE to cast_expression" << endl;*/}
 #line 2081 "parser.cpp"
     break;
 
   case 34: // multiplicative_expression: cast_expression
 #line 312 "ansic.y"
-                                                         { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > ();  cout << "cast_expression REDUCE to multiplicative_expression" << endl;}
+                                                         { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > ();  /*cout << "cast_expression REDUCE to multiplicative_expression" << endl;*/}
 #line 2087 "parser.cpp"
     break;
 
   case 35: // multiplicative_expression: multiplicative_expression "*" cast_expression
 #line 313 "ansic.y"
-                                                         { SETLOC(yystack_[1].value.as < shared_ptr<CToken> > (), yystack_[1].location); yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); cout << "multiplicative_expression TIMES_OP cast_expression REDUCE to multiplicative_expression" << endl;}
+                                                         { SETLOC(yystack_[1].value.as < shared_ptr<CToken> > (), yystack_[1].location); yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); /*cout << "multiplicative_expression TIMES_OP cast_expression REDUCE to multiplicative_expression" << endl;*/}
 #line 2093 "parser.cpp"
     break;
 
   case 36: // multiplicative_expression: multiplicative_expression "/" cast_expression
 #line 314 "ansic.y"
-                                                         { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); cout << "multiplicative_expression DIV_OP cast_expression REDUCE to multiplicative_expression" << endl;}
+                                                         { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); /*cout << "multiplicative_expression DIV_OP cast_expression REDUCE to multiplicative_expression" << endl;*/}
 #line 2099 "parser.cpp"
     break;
 
   case 37: // multiplicative_expression: multiplicative_expression "%" cast_expression
 #line 315 "ansic.y"
-                                                         { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); cout << "multiplicative_expression MOD_OP cast_expression REDUCE to multiplicative_expression" << endl;}
+                                                         { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); /*cout << "multiplicative_expression MOD_OP cast_expression REDUCE to multiplicative_expression" << endl;*/}
 #line 2105 "parser.cpp"
     break;
 
   case 38: // additive_expression: multiplicative_expression
 #line 319 "ansic.y"
-                                                              { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > ();  cout << "multiplicative_expression REDUCE to additive_expression" << endl;}
+                                                              { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > ();  /*cout << "multiplicative_expression REDUCE to additive_expression" << endl;*/}
 #line 2111 "parser.cpp"
     break;
 
   case 39: // additive_expression: additive_expression "+" multiplicative_expression
 #line 320 "ansic.y"
-                                                              { SETLOC(yystack_[1].value.as < shared_ptr<CToken> > (), yystack_[1].location); yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); cout << "additive_expression REDUCE to multiplicative_expression" << endl;}
+                                                              { SETLOC(yystack_[1].value.as < shared_ptr<CToken> > (), yystack_[1].location); yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); /*cout << "additive_expression REDUCE to multiplicative_expression" << endl;*/}
 #line 2117 "parser.cpp"
     break;
 
   case 40: // additive_expression: additive_expression "-" multiplicative_expression
 #line 321 "ansic.y"
-                                                              { SETLOC(yystack_[1].value.as < shared_ptr<CToken> > (), yystack_[1].location); yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); cout << "additive_expression REDUCE to multiplicative_expression" << endl;}
+                                                              { SETLOC(yystack_[1].value.as < shared_ptr<CToken> > (), yystack_[1].location); yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); /*cout << "additive_expression REDUCE to multiplicative_expression" << endl;*/}
 #line 2123 "parser.cpp"
     break;
 
   case 41: // shift_expression: additive_expression
 #line 325 "ansic.y"
-                                                    { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > ();  cout << "additive_expression REDUCE to shift_expression" << endl;}
+                                                    { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > ();  /*cout << "additive_expression REDUCE to shift_expression" << endl;*/}
 #line 2129 "parser.cpp"
     break;
 
   case 42: // shift_expression: shift_expression "<<" additive_expression
 #line 326 "ansic.y"
-                                                    { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ());; cout << "shift_expression LEFT_OP additive_expression REDUCE to shift_expression" << endl;}
+                                                    { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ());; /*cout << "shift_expression LEFT_OP additive_expression REDUCE to shift_expression" << endl;*/}
 #line 2135 "parser.cpp"
     break;
 
   case 43: // shift_expression: shift_expression ">>" additive_expression
 #line 327 "ansic.y"
-                                                    { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ());; cout << "shift_expression RIGHT_OP additive_expression REDUCE to shift_expression" << endl;}
+                                                    { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ());; /*cout << "shift_expression RIGHT_OP additive_expression REDUCE to shift_expression" << endl;*/}
 #line 2141 "parser.cpp"
     break;
 
   case 44: // relational_expression: shift_expression
 #line 331 "ansic.y"
-                                                             { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > ();  cout << "shift_expression REDUCE to relational_expression" << endl;}
+                                                             { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > ();  /*cout << "shift_expression REDUCE to relational_expression" << endl;*/}
 #line 2147 "parser.cpp"
     break;
 
   case 45: // relational_expression: relational_expression "<" shift_expression
 #line 332 "ansic.y"
-                                                             { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); cout << "relational_expression LESS shift_expression REDUCE to shift_expression" << endl;}
+                                                             { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); /*cout << "relational_expression LESS shift_expression REDUCE to shift_expression" << endl;*/}
 #line 2153 "parser.cpp"
     break;
 
   case 46: // relational_expression: relational_expression ">" shift_expression
 #line 333 "ansic.y"
-                                                             { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); cout << "relational_expression GREATER shift_expression REDUCE to shift_expression" << endl;}
+                                                             { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); /*cout << "relational_expression GREATER shift_expression REDUCE to shift_expression" << endl;*/}
 #line 2159 "parser.cpp"
     break;
 
   case 47: // relational_expression: relational_expression "<=" shift_expression
 #line 334 "ansic.y"
-                                                             { SETLOC(yystack_[1].value.as < shared_ptr<CToken> > (), yystack_[1].location); yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); cout << "relational_expression LESS_EQUAL shift_expression REDUCE to shift_expression" << endl;}
+                                                             { SETLOC(yystack_[1].value.as < shared_ptr<CToken> > (), yystack_[1].location); yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); /*cout << "relational_expression LESS_EQUAL shift_expression REDUCE to shift_expression" << endl;*/}
 #line 2165 "parser.cpp"
     break;
 
   case 48: // relational_expression: relational_expression ">=" shift_expression
 #line 335 "ansic.y"
-                                                             { SETLOC(yystack_[1].value.as < shared_ptr<CToken> > (), yystack_[1].location); yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); cout << "relational_expression GREATER_EQUAL shift_expression REDUCE to shift_expression" << endl;}
+                                                             { SETLOC(yystack_[1].value.as < shared_ptr<CToken> > (), yystack_[1].location); yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); /*cout << "relational_expression GREATER_EQUAL shift_expression REDUCE to shift_expression" << endl;*/}
 #line 2171 "parser.cpp"
     break;
 
   case 49: // equality_expression: relational_expression
 #line 339 "ansic.y"
-                                                             { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > ();  cout << "relational_expression REDUCE to equality_expression" << endl;}
+                                                             { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > ();  /*cout << "relational_expression REDUCE to equality_expression" << endl;*/}
 #line 2177 "parser.cpp"
     break;
 
   case 50: // equality_expression: equality_expression "==" relational_expression
 #line 340 "ansic.y"
-                                                             { SETLOC(yystack_[1].value.as < shared_ptr<CToken> > (), yystack_[1].location); yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); cout << "equality_expression EQUAL_EQUAL relational_expression REDUCE to equality_expression" << endl;}
+                                                             { SETLOC(yystack_[1].value.as < shared_ptr<CToken> > (), yystack_[1].location); yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); /*cout << "equality_expression EQUAL_EQUAL relational_expression REDUCE to equality_expression" << endl;*/}
 #line 2183 "parser.cpp"
     break;
 
   case 51: // equality_expression: equality_expression "!=" relational_expression
 #line 341 "ansic.y"
-                                                             { SETLOC(yystack_[1].value.as < shared_ptr<CToken> > (), yystack_[1].location); yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); cout << "equality_expression NOT_EQUAL relational_expression REDUCE to equality_expression" << endl;}
+                                                             { SETLOC(yystack_[1].value.as < shared_ptr<CToken> > (), yystack_[1].location); yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); /*cout << "equality_expression NOT_EQUAL relational_expression REDUCE to equality_expression" << endl;*/}
 #line 2189 "parser.cpp"
     break;
 
   case 52: // and_expression: equality_expression
 #line 345 "ansic.y"
-                                                  { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > ();  cout << "equality_expression REDUCE to and_expression" << endl;}
+                                                  { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > ();  /*cout << "equality_expression REDUCE to and_expression" << endl;*/}
 #line 2195 "parser.cpp"
     break;
 
   case 53: // and_expression: and_expression "&" equality_expression
 #line 346 "ansic.y"
-                                                  { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); cout << "and_expression BIT_AND equality_expression REDUCE to and_expression" << endl;}
+                                                  { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); /*cout << "and_expression BIT_AND equality_expression REDUCE to and_expression" << endl;*/}
 #line 2201 "parser.cpp"
     break;
 
   case 54: // exclusive_or_expression: and_expression
 #line 350 "ansic.y"
-                                                     { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > ();  cout << "and_expression REDUCE to exclusive_or_expression" << endl;}
+                                                     { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > ();  /*cout << "and_expression REDUCE to exclusive_or_expression" << endl;*/}
 #line 2207 "parser.cpp"
     break;
 
   case 55: // exclusive_or_expression: exclusive_or_expression "^" and_expression
 #line 351 "ansic.y"
-                                                     { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); cout << "exclusive_or_expression XOR_OP and_expression REDUCE to exclusive_or_expression" << endl;}
+                                                     { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); /*cout << "exclusive_or_expression XOR_OP and_expression REDUCE to exclusive_or_expression" << endl;*/}
 #line 2213 "parser.cpp"
     break;
 
   case 56: // inclusive_or_expression: exclusive_or_expression
 #line 355 "ansic.y"
-                                                             { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > ();  cout << "exclusive_or_expression REDUCE to inclusive_or_expression" << endl;}
+                                                             { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > ();  /*cout << "exclusive_or_expression REDUCE to inclusive_or_expression" << endl;*/}
 #line 2219 "parser.cpp"
     break;
 
   case 57: // inclusive_or_expression: inclusive_or_expression "|" exclusive_or_expression
 #line 356 "ansic.y"
-                                                             { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); cout << "inclusive_or_expression BIT_OR exclusive_or_expression REDUCE to inclusive_or_expression" << endl;}
+                                                             { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); /*cout << "inclusive_or_expression BIT_OR exclusive_or_expression REDUCE to inclusive_or_expression" << endl;*/}
 #line 2225 "parser.cpp"
     break;
 
   case 58: // logical_and_expression: inclusive_or_expression
 #line 360 "ansic.y"
-                                                             { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > ();  cout << "inclusive_or_expression REDUCE to logical_and_expression" << endl;}
+                                                             { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > ();  /*cout << "inclusive_or_expression REDUCE to logical_and_expression" << endl;*/}
 #line 2231 "parser.cpp"
     break;
 
   case 59: // logical_and_expression: logical_and_expression "&&" inclusive_or_expression
 #line 361 "ansic.y"
-                                                             { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); cout << "inclusive_or_expression REDUCE to logical_and_expression" << endl;}
+                                                             { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); /*cout << "inclusive_or_expression REDUCE to logical_and_expression" << endl;*/}
 #line 2237 "parser.cpp"
     break;
 
   case 60: // logical_or_expression: logical_and_expression
 #line 365 "ansic.y"
-                                                          { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > ();  cout << "inclusive_and_expression REDUCE to logical_or_expression" << endl;}
+                                                          { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > ();  /*cout << "inclusive_and_expression REDUCE to logical_or_expression" << endl;*/}
 #line 2243 "parser.cpp"
     break;
 
   case 61: // logical_or_expression: logical_or_expression "||" logical_and_expression
 #line 366 "ansic.y"
-                                                          { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); cout << "logical_or_expression OR_OP logical_and_expression REDUCE to logical_or_expression" << endl;}
+                                                          { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); /*cout << "logical_or_expression OR_OP logical_and_expression REDUCE to logical_or_expression" << endl;*/}
 #line 2249 "parser.cpp"
     break;
 
   case 62: // conditional_expression: logical_or_expression
 #line 370 "ansic.y"
-                                                                              { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > ();  cout << "logical_or_expression REDUCE to conditional_expression" << endl;}
+                                                                              { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > ();  /*cout << "logical_or_expression REDUCE to conditional_expression" << endl;*/}
 #line 2255 "parser.cpp"
     break;
 
   case 63: // conditional_expression: logical_or_expression "question" expression ":" conditional_expression
 #line 371 "ansic.y"
-                                                                              { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_QUESTION,nullptr,nullptr,yystack_[4].value.as < shared_ptr<ExpressionTree> > (),yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > (),nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,  nullptr,nullptr,nullptr); cout << "logical_or_expression QUESTION expression COLON conditional_expression REDUCE to conditional_expression" << endl;}
+                                                                              { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_QUESTION,nullptr,nullptr,yystack_[4].value.as < shared_ptr<ExpressionTree> > (),yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > (),nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,  nullptr,nullptr,nullptr); /*cout << "logical_or_expression QUESTION expression COLON conditional_expression REDUCE to conditional_expression" << endl;*/}
 #line 2261 "parser.cpp"
     break;
 
   case 64: // assignment_expression: conditional_expression
 #line 375 "ansic.y"
-                                                                  { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > ();  cout << "conditional_expression REDUCE to assignment_expression" << endl;}
+                                                                  { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > ();  /*cout << "conditional_expression REDUCE to assignment_expression" << endl;*/}
 #line 2267 "parser.cpp"
     break;
 
   case 65: // assignment_expression: unary_expression assignment_operator assignment_expression
 #line 376 "ansic.y"
-                                                                  { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); cout << "unary_expression assignment_operator assignment_expression REDUCE to assignment_expression" << endl;}
+                                                                  { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); /*cout << "unary_expression assignment_operator assignment_expression REDUCE to assignment_expression" << endl;*/}
 #line 2273 "parser.cpp"
     break;
 
   case 66: // assignment_operator: "="
 #line 380 "ansic.y"
-                     { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > ();  cout << "EQUAL_OP REDUCE to assignment_operator" << endl;}
+                     { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > ();  /*cout << "EQUAL_OP REDUCE to assignment_operator" << endl;*/}
 #line 2279 "parser.cpp"
     break;
 
   case 67: // assignment_operator: "*="
 #line 381 "ansic.y"
-                     { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > ();  cout << "MUL_ASSIGN REDUCE to assignment_operator" << endl;}
+                     { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > ();  /*cout << "MUL_ASSIGN REDUCE to assignment_operator" << endl;*/}
 #line 2285 "parser.cpp"
     break;
 
   case 68: // assignment_operator: "/="
 #line 382 "ansic.y"
-                     { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > ();  cout << "DIV_ASSIGN REDUCE to assignment_operator" << endl;}
+                     { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > ();  /*cout << "DIV_ASSIGN REDUCE to assignment_operator" << endl;*/}
 #line 2291 "parser.cpp"
     break;
 
   case 69: // assignment_operator: "%="
 #line 383 "ansic.y"
-                     { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > ();  cout << "MOG_ASSIGN REDUCE to assignment_operator" << endl;}
+                     { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > ();  /*cout << "MOG_ASSIGN REDUCE to assignment_operator" << endl;*/}
 #line 2297 "parser.cpp"
     break;
 
   case 70: // assignment_operator: "+="
 #line 384 "ansic.y"
-                     { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > ();  cout << "ADD_ASSIGN REDUCE to assignment_operator" << endl;}
+                     { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > ();  /*cout << "ADD_ASSIGN REDUCE to assignment_operator" << endl;*/}
 #line 2303 "parser.cpp"
     break;
 
   case 71: // assignment_operator: "-="
 #line 385 "ansic.y"
-                     { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > ();  cout << "SUB_ASSIGN REDUCE to assignment_operator" << endl;}
+                     { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > ();  /*cout << "SUB_ASSIGN REDUCE to assignment_operator" << endl;*/}
 #line 2309 "parser.cpp"
     break;
 
   case 72: // assignment_operator: "<<="
 #line 386 "ansic.y"
-                     { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > ();  cout << "LEFT_ASSIGN REDUCE to assignment_operator" << endl;}
+                     { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > ();  /*cout << "LEFT_ASSIGN REDUCE to assignment_operator" << endl;*/}
 #line 2315 "parser.cpp"
     break;
 
   case 73: // assignment_operator: ">>="
 #line 387 "ansic.y"
-                     { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > ();  cout << "RIGHT_ASSIGN REDUCE to assignment_operator" << endl;}
+                     { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > ();  /*cout << "RIGHT_ASSIGN REDUCE to assignment_operator" << endl;*/}
 #line 2321 "parser.cpp"
     break;
 
   case 74: // assignment_operator: "&="
 #line 388 "ansic.y"
-                     { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > ();  cout << "AND_ASSIGN REDUCE to assignment_operator" << endl;}
+                     { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > ();  /*cout << "AND_ASSIGN REDUCE to assignment_operator" << endl;*/}
 #line 2327 "parser.cpp"
     break;
 
   case 75: // assignment_operator: "^="
 #line 389 "ansic.y"
-                     { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > ();  cout << "XOR_ASSIGN REDUCE to assignment_operator" << endl;}
+                     { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > ();  /*cout << "XOR_ASSIGN REDUCE to assignment_operator" << endl;*/}
 #line 2333 "parser.cpp"
     break;
 
   case 76: // assignment_operator: "|="
 #line 390 "ansic.y"
-                     { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > ();  cout << "OR_ASSIGN REDUCE to assignment_operator" << endl;}
+                     { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > ();  /*cout << "OR_ASSIGN REDUCE to assignment_operator" << endl;*/}
 #line 2339 "parser.cpp"
     break;
 
   case 77: // expression: assignment_expression
 #line 394 "ansic.y"
-                                              { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > ();  cout << "asignment_expression REDUCE to expression" << endl;}
+                                              { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > ();  /*cout << "asignment_expression REDUCE to expression" << endl;*/}
 #line 2345 "parser.cpp"
     break;
 
   case 78: // expression: expression "," assignment_expression
 #line 395 "ansic.y"
-                                              { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); cout << "expression COMMA assignment_expression COMMA  REDUCE to expression" << endl;}
+                                              { yylhs.value.as < shared_ptr<ExpressionTree> > () = createExpression(NT_OP,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr, yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); /*cout << "expression COMMA assignment_expression COMMA  REDUCE to expression" << endl;*/}
 #line 2351 "parser.cpp"
     break;
 
   case 79: // constant_expression: conditional_expression
 #line 399 "ansic.y"
-                              { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > ();  cout << "conditional_expression REDUCE to constant_expression" << endl;}
+                              { yylhs.value.as < shared_ptr<ExpressionTree> > () = yystack_[0].value.as < shared_ptr<ExpressionTree> > ();  /*cout << "conditional_expression REDUCE to constant_expression" << endl;*/}
 #line 2357 "parser.cpp"
     break;
 
   case 80: // declaration: declaration_specifiers ";"
 #line 403 "ansic.y"
-                                                             { yylhs.value.as < shared_ptr<Declaration> > () = createDeclaration(yystack_[1].value.as < shared_ptr<DeclarationSpecifiers> > (),nullptr); cout << "declaration_specifiers SEMICOLON REDUCE to declaration" << endl;}
+                                                             { yylhs.value.as < shared_ptr<Declaration> > () = createDeclaration(yystack_[1].value.as < shared_ptr<DeclarationSpecifiers> > (),nullptr); /*cout << "declaration_specifiers SEMICOLON REDUCE to declaration" << endl;*/}
 #line 2363 "parser.cpp"
     break;
 
   case 81: // declaration: declaration_specifiers init_declarator_list ";"
 #line 404 "ansic.y"
-                                                             { yylhs.value.as < shared_ptr<Declaration> > () = createDeclaration(yystack_[2].value.as < shared_ptr<DeclarationSpecifiers> > (),yystack_[1].value.as < shared_ptr<vector<shared_ptr<InitDeclarator>>> > ()); cout << "declaration_specifiers init_declarator_list SEMICOLON REDUCE to declaration" << endl;}
+                                                             { yylhs.value.as < shared_ptr<Declaration> > () = createDeclaration(yystack_[2].value.as < shared_ptr<DeclarationSpecifiers> > (),yystack_[1].value.as < shared_ptr<vector<shared_ptr<InitDeclarator>>> > ()); /*cout << "declaration_specifiers init_declarator_list SEMICOLON REDUCE to declaration" << endl;*/}
 #line 2369 "parser.cpp"
     break;
 
   case 82: // declaration_specifiers: storage_class_specifier
 #line 408 "ansic.y"
-                                                      { yylhs.value.as < shared_ptr<DeclarationSpecifiers> > () = createDeclarationSpecifiers(nullptr,nullptr,yystack_[0].value.as < shared_ptr<StorageClassSpecifier> > (),nullptr,nullptr,nullptr); cout << "storage_class_specifier REDUCE to declaration_specifiers" << endl;}
+                                                      { yylhs.value.as < shared_ptr<DeclarationSpecifiers> > () = createDeclarationSpecifiers(nullptr,nullptr,yystack_[0].value.as < shared_ptr<StorageClassSpecifier> > (),nullptr,nullptr,nullptr); /*cout << "storage_class_specifier REDUCE to declaration_specifiers" << endl;*/}
 #line 2375 "parser.cpp"
     break;
 
   case 83: // declaration_specifiers: storage_class_specifier declaration_specifiers
 #line 409 "ansic.y"
-                                                      { yylhs.value.as < shared_ptr<DeclarationSpecifiers> > () = createDeclarationSpecifiers(nullptr,yystack_[0].value.as < shared_ptr<DeclarationSpecifiers> > (),yystack_[1].value.as < shared_ptr<StorageClassSpecifier> > (),nullptr,nullptr,nullptr);      cout << "storage_class_specifier declaration_specifiers REDUCE to declaration_specifiers" << endl;}
+                                                      { yylhs.value.as < shared_ptr<DeclarationSpecifiers> > () = createDeclarationSpecifiers(nullptr,yystack_[0].value.as < shared_ptr<DeclarationSpecifiers> > (),yystack_[1].value.as < shared_ptr<StorageClassSpecifier> > (),nullptr,nullptr,nullptr);      /*cout << "storage_class_specifier declaration_specifiers REDUCE to declaration_specifiers" << endl;*/}
 #line 2381 "parser.cpp"
     break;
 
   case 84: // declaration_specifiers: type_specifier
 #line 410 "ansic.y"
-                                                      { yylhs.value.as < shared_ptr<DeclarationSpecifiers> > () = createDeclarationSpecifiers(nullptr,nullptr,nullptr,yystack_[0].value.as < shared_ptr<TypeSpecifier> > (),nullptr,nullptr); cout << "type_specifier REDUCE to declaration_specifiers" << endl;}
+                                                      { yylhs.value.as < shared_ptr<DeclarationSpecifiers> > () = createDeclarationSpecifiers(nullptr,nullptr,nullptr,yystack_[0].value.as < shared_ptr<TypeSpecifier> > (),nullptr,nullptr); /*cout << "type_specifier REDUCE to declaration_specifiers" << endl;*/}
 #line 2387 "parser.cpp"
     break;
 
   case 85: // declaration_specifiers: type_specifier declaration_specifiers
 #line 411 "ansic.y"
-                                                      { yylhs.value.as < shared_ptr<DeclarationSpecifiers> > () = createDeclarationSpecifiers(nullptr,yystack_[0].value.as < shared_ptr<DeclarationSpecifiers> > (),nullptr,yystack_[1].value.as < shared_ptr<TypeSpecifier> > (),nullptr,nullptr);      cout << "type_specifier declaration_specifiers REDUCE to declaration_specifiers" << endl;}
+                                                      { yylhs.value.as < shared_ptr<DeclarationSpecifiers> > () = createDeclarationSpecifiers(nullptr,yystack_[0].value.as < shared_ptr<DeclarationSpecifiers> > (),nullptr,yystack_[1].value.as < shared_ptr<TypeSpecifier> > (),nullptr,nullptr);      /*cout << "type_specifier declaration_specifiers REDUCE to declaration_specifiers" << endl;*/}
 #line 2393 "parser.cpp"
     break;
 
   case 86: // declaration_specifiers: type_qualifier
 #line 412 "ansic.y"
-                                                      { yylhs.value.as < shared_ptr<DeclarationSpecifiers> > () = createDeclarationSpecifiers(nullptr,nullptr,nullptr,nullptr,yystack_[0].value.as < shared_ptr<TypeQualifier> > (),nullptr); cout << "type_qualifier REDUCE to declaration_specifiers" << endl;}
+                                                      { yylhs.value.as < shared_ptr<DeclarationSpecifiers> > () = createDeclarationSpecifiers(nullptr,nullptr,nullptr,nullptr,yystack_[0].value.as < shared_ptr<TypeQualifier> > (),nullptr); /*cout << "type_qualifier REDUCE to declaration_specifiers" << endl;*/}
 #line 2399 "parser.cpp"
     break;
 
   case 87: // declaration_specifiers: type_qualifier declaration_specifiers
 #line 413 "ansic.y"
-                                                      { yylhs.value.as < shared_ptr<DeclarationSpecifiers> > () = createDeclarationSpecifiers(nullptr,yystack_[0].value.as < shared_ptr<DeclarationSpecifiers> > (),nullptr,nullptr,yystack_[1].value.as < shared_ptr<TypeQualifier> > (),nullptr);      cout << "type_qualifier declaration_specifiers REDUCE to declaration_specifiers" << endl;}
+                                                      { yylhs.value.as < shared_ptr<DeclarationSpecifiers> > () = createDeclarationSpecifiers(nullptr,yystack_[0].value.as < shared_ptr<DeclarationSpecifiers> > (),nullptr,nullptr,yystack_[1].value.as < shared_ptr<TypeQualifier> > (),nullptr);      /*cout << "type_qualifier declaration_specifiers REDUCE to declaration_specifiers" << endl;*/}
 #line 2405 "parser.cpp"
     break;
 
   case 88: // init_declarator_list: init_declarator
 #line 417 "ansic.y"
-                                                 { yylhs.value.as < shared_ptr<vector<shared_ptr<InitDeclarator>>> > () = createInitDeclaratorList(yystack_[0].value.as < shared_ptr<InitDeclarator> > (),nullptr); cout << "init_declarator REDUCE to init_declarator_list" << endl;}
+                                                 { yylhs.value.as < shared_ptr<vector<shared_ptr<InitDeclarator>>> > () = createInitDeclaratorList(yystack_[0].value.as < shared_ptr<InitDeclarator> > (),nullptr); /*cout << "init_declarator REDUCE to init_declarator_list" << endl;*/}
 #line 2411 "parser.cpp"
     break;
 
   case 89: // init_declarator_list: init_declarator_list "," init_declarator
 #line 418 "ansic.y"
-                                                 { yylhs.value.as < shared_ptr<vector<shared_ptr<InitDeclarator>>> > () = createInitDeclaratorList(yystack_[0].value.as < shared_ptr<InitDeclarator> > (),yystack_[2].value.as < shared_ptr<vector<shared_ptr<InitDeclarator>>> > ()); cout << "init_declarator_list COMMA init_declarator REDUCE to init_declarator_list" << endl;}
+                                                 { yylhs.value.as < shared_ptr<vector<shared_ptr<InitDeclarator>>> > () = createInitDeclaratorList(yystack_[0].value.as < shared_ptr<InitDeclarator> > (),yystack_[2].value.as < shared_ptr<vector<shared_ptr<InitDeclarator>>> > ()); /*cout << "init_declarator_list COMMA init_declarator REDUCE to init_declarator_list" << endl;*/}
 #line 2417 "parser.cpp"
     break;
 
   case 90: // init_declarator: declarator
 #line 422 "ansic.y"
-                                    { yylhs.value.as < shared_ptr<InitDeclarator> > () = createInitDeclarator(yystack_[0].value.as < shared_ptr<Declarator> > (),nullptr); cout << "declarator REDUCE to init_declarator" << endl;}
+                                    { yylhs.value.as < shared_ptr<InitDeclarator> > () = createInitDeclarator(yystack_[0].value.as < shared_ptr<Declarator> > (),nullptr); /*cout << "declarator REDUCE to init_declarator" << endl;*/}
 #line 2423 "parser.cpp"
     break;
 
   case 91: // init_declarator: declarator "=" initializer
 #line 423 "ansic.y"
-                                    { yylhs.value.as < shared_ptr<InitDeclarator> > () = createInitDeclarator(yystack_[2].value.as < shared_ptr<Declarator> > (),yystack_[0].value.as < shared_ptr<Initializer> > ()); cout << "declarator EQUAL initializer REDUCE to init_declarator" << endl;}
+                                    { yylhs.value.as < shared_ptr<InitDeclarator> > () = createInitDeclarator(yystack_[2].value.as < shared_ptr<Declarator> > (),yystack_[0].value.as < shared_ptr<Initializer> > ()); /*cout << "declarator EQUAL initializer REDUCE to init_declarator" << endl;*/}
 #line 2429 "parser.cpp"
     break;
 
   case 92: // storage_class_specifier: "typedef"
 #line 427 "ansic.y"
-                { yylhs.value.as < shared_ptr<StorageClassSpecifier> > () = createStorageClassSpecifier(yystack_[0].value.as < shared_ptr<CToken> > ()); cout << "TYPEDEF REDUCE to storage_class_specifier" << endl;}
+                { yylhs.value.as < shared_ptr<StorageClassSpecifier> > () = createStorageClassSpecifier(yystack_[0].value.as < shared_ptr<CToken> > ()); /*cout << "TYPEDEF REDUCE to storage_class_specifier" << endl;*/}
 #line 2435 "parser.cpp"
     break;
 
   case 93: // storage_class_specifier: "extern"
 #line 428 "ansic.y"
-                { yylhs.value.as < shared_ptr<StorageClassSpecifier> > () = createStorageClassSpecifier(yystack_[0].value.as < shared_ptr<CToken> > ()); cout << "EXTERN REDUCE to storage_class_specifier" << endl;}
+                { yylhs.value.as < shared_ptr<StorageClassSpecifier> > () = createStorageClassSpecifier(yystack_[0].value.as < shared_ptr<CToken> > ()); /*cout << "EXTERN REDUCE to storage_class_specifier" << endl;*/}
 #line 2441 "parser.cpp"
     break;
 
   case 94: // storage_class_specifier: "static"
 #line 429 "ansic.y"
-                { yylhs.value.as < shared_ptr<StorageClassSpecifier> > () = createStorageClassSpecifier(yystack_[0].value.as < shared_ptr<CToken> > ()); cout << "STATIC REDUCE to storage_class_specifier" << endl;}
+                { yylhs.value.as < shared_ptr<StorageClassSpecifier> > () = createStorageClassSpecifier(yystack_[0].value.as < shared_ptr<CToken> > ()); /*cout << "STATIC REDUCE to storage_class_specifier" << endl;*/}
 #line 2447 "parser.cpp"
     break;
 
   case 95: // storage_class_specifier: "auto"
 #line 430 "ansic.y"
-                { yylhs.value.as < shared_ptr<StorageClassSpecifier> > () = createStorageClassSpecifier(yystack_[0].value.as < shared_ptr<CToken> > ()); cout << "AUTO REDUCE to storage_class_specifier" << endl;}
+                { yylhs.value.as < shared_ptr<StorageClassSpecifier> > () = createStorageClassSpecifier(yystack_[0].value.as < shared_ptr<CToken> > ()); /*cout << "AUTO REDUCE to storage_class_specifier" << endl;*/}
 #line 2453 "parser.cpp"
     break;
 
   case 96: // storage_class_specifier: "register"
 #line 431 "ansic.y"
-                { yylhs.value.as < shared_ptr<StorageClassSpecifier> > () = createStorageClassSpecifier(yystack_[0].value.as < shared_ptr<CToken> > ()); cout << "REGISTER REDUCE to storage_class_specifier" << endl;}
+                { yylhs.value.as < shared_ptr<StorageClassSpecifier> > () = createStorageClassSpecifier(yystack_[0].value.as < shared_ptr<CToken> > ()); /*cout << "REGISTER REDUCE to storage_class_specifier" << endl;*/}
 #line 2459 "parser.cpp"
     break;
 
   case 97: // type_specifier: "void"
 #line 435 "ansic.y"
-                                { yylhs.value.as < shared_ptr<TypeSpecifier> > () = make_shared<TypeSpecifier>(VOIDT, yystack_[0].value.as < shared_ptr<CToken> > (), nullptr, nullptr, nullptr); cout << "VOIDT REDUCE to type_specifier" << endl;}
+                                { yylhs.value.as < shared_ptr<TypeSpecifier> > () = make_shared<TypeSpecifier>(VOIDT, yystack_[0].value.as < shared_ptr<CToken> > (), nullptr, nullptr, nullptr); /*cout << "VOIDT REDUCE to type_specifier" << endl;*/}
 #line 2465 "parser.cpp"
     break;
 
   case 98: // type_specifier: "char"
 #line 436 "ansic.y"
-                                { yylhs.value.as < shared_ptr<TypeSpecifier> > () = make_shared<TypeSpecifier>(CHAR, yystack_[0].value.as < shared_ptr<CToken> > (), nullptr, nullptr, nullptr); cout << "CHAR REDUCE to type_specifier" << endl;}
+                                { yylhs.value.as < shared_ptr<TypeSpecifier> > () = make_shared<TypeSpecifier>(CHAR, yystack_[0].value.as < shared_ptr<CToken> > (), nullptr, nullptr, nullptr); /*cout << "CHAR REDUCE to type_specifier" << endl;*/}
 #line 2471 "parser.cpp"
     break;
 
   case 99: // type_specifier: "short"
 #line 437 "ansic.y"
-                                { yylhs.value.as < shared_ptr<TypeSpecifier> > () = make_shared<TypeSpecifier>(SHORTT, yystack_[0].value.as < shared_ptr<CToken> > (), nullptr, nullptr, nullptr); cout << "SHORT REDUCE to type_specifier" << endl;}
+                                { yylhs.value.as < shared_ptr<TypeSpecifier> > () = make_shared<TypeSpecifier>(SHORTT, yystack_[0].value.as < shared_ptr<CToken> > (), nullptr, nullptr, nullptr); /*cout << "SHORT REDUCE to type_specifier" << endl;*/}
 #line 2477 "parser.cpp"
     break;
 
   case 100: // type_specifier: INT
 #line 438 "ansic.y"
-                                { yylhs.value.as < shared_ptr<TypeSpecifier> > () = make_shared<TypeSpecifier>(INT, yystack_[0].value.as < shared_ptr<CToken> > (), nullptr, nullptr, nullptr); cout << "INT REDUCE to type_specifier" << endl;}
+                                { yylhs.value.as < shared_ptr<TypeSpecifier> > () = make_shared<TypeSpecifier>(INT, yystack_[0].value.as < shared_ptr<CToken> > (), nullptr, nullptr, nullptr); /*cout << "INT REDUCE to type_specifier" << endl;*/}
 #line 2483 "parser.cpp"
     break;
 
   case 101: // type_specifier: "long"
 #line 439 "ansic.y"
-                                { yylhs.value.as < shared_ptr<TypeSpecifier> > () = make_shared<TypeSpecifier>(LONG, yystack_[0].value.as < shared_ptr<CToken> > (), nullptr, nullptr, nullptr); cout << "LONG REDUCE to type_specifier" << endl;}
+                                { yylhs.value.as < shared_ptr<TypeSpecifier> > () = make_shared<TypeSpecifier>(LONG, yystack_[0].value.as < shared_ptr<CToken> > (), nullptr, nullptr, nullptr); /*cout << "LONG REDUCE to type_specifier" << endl;*/}
 #line 2489 "parser.cpp"
     break;
 
   case 102: // type_specifier: "long long"
 #line 440 "ansic.y"
-                                { yylhs.value.as < shared_ptr<TypeSpecifier> > () = make_shared<TypeSpecifier>(LONG_LONG, yystack_[0].value.as < shared_ptr<CToken> > (), nullptr, nullptr, nullptr); cout << "LONG_LONG REDUCE to type_specifier" << endl;}
+                                { yylhs.value.as < shared_ptr<TypeSpecifier> > () = make_shared<TypeSpecifier>(LONG_LONG, yystack_[0].value.as < shared_ptr<CToken> > (), nullptr, nullptr, nullptr); /*cout << "LONG_LONG REDUCE to type_specifier" << endl;*/}
 #line 2495 "parser.cpp"
     break;
 
   case 103: // type_specifier: "float"
 #line 441 "ansic.y"
-                                { yylhs.value.as < shared_ptr<TypeSpecifier> > () = make_shared<TypeSpecifier>(FLOAT, yystack_[0].value.as < shared_ptr<CToken> > (), nullptr, nullptr, nullptr); cout << "FLOAT REDUCE to type_specifier" << endl;}
+                                { yylhs.value.as < shared_ptr<TypeSpecifier> > () = make_shared<TypeSpecifier>(FLOAT, yystack_[0].value.as < shared_ptr<CToken> > (), nullptr, nullptr, nullptr); /*cout << "FLOAT REDUCE to type_specifier" << endl;*/}
 #line 2501 "parser.cpp"
     break;
 
   case 104: // type_specifier: "double"
 #line 442 "ansic.y"
-                                { yylhs.value.as < shared_ptr<TypeSpecifier> > () = make_shared<TypeSpecifier>(DOUBLE, yystack_[0].value.as < shared_ptr<CToken> > (), nullptr, nullptr, nullptr); cout << "DOUBLE REDUCE to type_specifier" << endl;}
+                                { yylhs.value.as < shared_ptr<TypeSpecifier> > () = make_shared<TypeSpecifier>(DOUBLE, yystack_[0].value.as < shared_ptr<CToken> > (), nullptr, nullptr, nullptr); /*cout << "DOUBLE REDUCE to type_specifier" << endl;*/}
 #line 2507 "parser.cpp"
     break;
 
   case 105: // type_specifier: "long double"
 #line 443 "ansic.y"
-                                { yylhs.value.as < shared_ptr<TypeSpecifier> > () = make_shared<TypeSpecifier>(LONG_DOUBLE, yystack_[0].value.as < shared_ptr<CToken> > (), nullptr, nullptr, nullptr); cout << "LONG_DOUBLE REDUCE to type_specifier" << endl;}
+                                { yylhs.value.as < shared_ptr<TypeSpecifier> > () = make_shared<TypeSpecifier>(LONG_DOUBLE, yystack_[0].value.as < shared_ptr<CToken> > (), nullptr, nullptr, nullptr); /*cout << "LONG_DOUBLE REDUCE to type_specifier" << endl;*/}
 #line 2513 "parser.cpp"
     break;
 
   case 106: // type_specifier: "bool"
 #line 444 "ansic.y"
-                                { yylhs.value.as < shared_ptr<TypeSpecifier> > () = make_shared<TypeSpecifier>(BOOLT, yystack_[0].value.as < shared_ptr<CToken> > (), nullptr, nullptr, nullptr); cout << "BOOL REDUCE to type_specifier" << endl;}
+                                { yylhs.value.as < shared_ptr<TypeSpecifier> > () = make_shared<TypeSpecifier>(BOOLT, yystack_[0].value.as < shared_ptr<CToken> > (), nullptr, nullptr, nullptr); /*cout << "BOOL REDUCE to type_specifier" << endl;*/}
 #line 2519 "parser.cpp"
     break;
 
   case 107: // type_specifier: "signed"
 #line 445 "ansic.y"
-                                { yylhs.value.as < shared_ptr<TypeSpecifier> > () = make_shared<TypeSpecifier>(SIGNED, yystack_[0].value.as < shared_ptr<CToken> > (), nullptr, nullptr, nullptr); cout << "SIGNED REDUCE to type_specifier" << endl;}
+                                { yylhs.value.as < shared_ptr<TypeSpecifier> > () = make_shared<TypeSpecifier>(SIGNED, yystack_[0].value.as < shared_ptr<CToken> > (), nullptr, nullptr, nullptr); /*cout << "SIGNED REDUCE to type_specifier" << endl;*/}
 #line 2525 "parser.cpp"
     break;
 
   case 108: // type_specifier: "unsigned"
 #line 446 "ansic.y"
-                                { yylhs.value.as < shared_ptr<TypeSpecifier> > () = make_shared<TypeSpecifier>(UNSIGNED, yystack_[0].value.as < shared_ptr<CToken> > (), nullptr, nullptr, nullptr); cout << "UNIGNED REDUCE to type_specifier" << endl;}
+                                { yylhs.value.as < shared_ptr<TypeSpecifier> > () = make_shared<TypeSpecifier>(UNSIGNED, yystack_[0].value.as < shared_ptr<CToken> > (), nullptr, nullptr, nullptr); /*cout << "UNIGNED REDUCE to type_specifier" << endl;*/}
 #line 2531 "parser.cpp"
     break;
 
   case 109: // type_specifier: struct_or_union_specifier
 #line 447 "ansic.y"
-                                { yylhs.value.as < shared_ptr<TypeSpecifier> > () = make_shared<TypeSpecifier>(UNKNOWN, nullptr, yystack_[0].value.as < shared_ptr<StructOrUnionSpecifier> > (), nullptr, nullptr); cout << "struct_or_union_specifier REDUCE to type_specifier" << endl;}
+                                { yylhs.value.as < shared_ptr<TypeSpecifier> > () = make_shared<TypeSpecifier>(UNKNOWN, nullptr, yystack_[0].value.as < shared_ptr<StructOrUnionSpecifier> > (), nullptr, nullptr); /*cout << "struct_or_union_specifier REDUCE to type_specifier" << endl;*/}
 #line 2537 "parser.cpp"
     break;
 
   case 110: // type_specifier: enum_specifier
 #line 448 "ansic.y"
-                                { yylhs.value.as < shared_ptr<TypeSpecifier> > () = make_shared<TypeSpecifier>(ENUM, nullptr, nullptr, yystack_[0].value.as < shared_ptr<EnumSpecifier> > (), nullptr); cout << "enum_specifier REDUCE to type_specifier" << endl;}
+                                { yylhs.value.as < shared_ptr<TypeSpecifier> > () = make_shared<TypeSpecifier>(ENUM, nullptr, nullptr, yystack_[0].value.as < shared_ptr<EnumSpecifier> > (), nullptr); /*cout << "enum_specifier REDUCE to type_specifier" << endl;*/}
 #line 2543 "parser.cpp"
     break;
 
   case 111: // type_specifier: "type name"
 #line 449 "ansic.y"
-                                { yylhs.value.as < shared_ptr<TypeSpecifier> > () = make_shared<TypeSpecifier>(TYPE_NAME, yystack_[0].value.as < shared_ptr<CToken> > (), nullptr, nullptr, nullptr); cout << "TYPE_NAME REDUCE to type_specifier" << endl;}
+                                { yylhs.value.as < shared_ptr<TypeSpecifier> > () = make_shared<TypeSpecifier>(TYPE_NAME, yystack_[0].value.as < shared_ptr<CToken> > (), nullptr, nullptr, nullptr); /*cout << "TYPE_NAME REDUCE to type_specifier" << endl;*/}
 #line 2549 "parser.cpp"
     break;
 
   case 112: // struct_or_union_specifier: struct_or_union "identifier" "{" struct_declaration_list "}"
 #line 453 "ansic.y"
-                                                                         { yylhs.value.as < shared_ptr<StructOrUnionSpecifier> > () = make_shared<StructOrUnionSpecifier>(yystack_[4].value.as < shared_ptr<CToken> > (),yystack_[3].value.as < shared_ptr<CToken> > (),yystack_[1].value.as < shared_ptr<vector<shared_ptr<StructDeclaration>>> > ()); cout << "struct_or_union IDENTIFIER OCURLY struct_declaration_list CCURLY REDUCE to struct_or_union_specifier" << endl;}
+                                                                         { yylhs.value.as < shared_ptr<StructOrUnionSpecifier> > () = make_shared<StructOrUnionSpecifier>(yystack_[4].value.as < shared_ptr<CToken> > (),yystack_[3].value.as < shared_ptr<CToken> > (),yystack_[1].value.as < shared_ptr<vector<shared_ptr<StructDeclaration>>> > ()); /*cout << "struct_or_union IDENTIFIER OCURLY struct_declaration_list CCURLY REDUCE to struct_or_union_specifier" << endl;*/}
 #line 2555 "parser.cpp"
     break;
 
   case 113: // struct_or_union_specifier: struct_or_union "{" struct_declaration_list "}"
 #line 454 "ansic.y"
-                                                                         { yylhs.value.as < shared_ptr<StructOrUnionSpecifier> > () = make_shared<StructOrUnionSpecifier>(yystack_[3].value.as < shared_ptr<CToken> > (),nullptr,yystack_[1].value.as < shared_ptr<vector<shared_ptr<StructDeclaration>>> > ());  cout << "struct_or_union OCURLY struct_declaration_list CCURLY REDUCE to struct_or_union_specifier" << endl;}
+                                                                         { yylhs.value.as < shared_ptr<StructOrUnionSpecifier> > () = make_shared<StructOrUnionSpecifier>(yystack_[3].value.as < shared_ptr<CToken> > (),nullptr,yystack_[1].value.as < shared_ptr<vector<shared_ptr<StructDeclaration>>> > ());  /*cout << "struct_or_union OCURLY struct_declaration_list CCURLY REDUCE to struct_or_union_specifier" << endl;*/}
 #line 2561 "parser.cpp"
     break;
 
   case 114: // struct_or_union_specifier: struct_or_union "identifier"
 #line 455 "ansic.y"
-                                                                         { yylhs.value.as < shared_ptr<StructOrUnionSpecifier> > () = make_shared<StructOrUnionSpecifier>(yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<CToken> > (),nullptr); cout << "struct_or_union IDENTIFIER REDUCE to struct_or_union_specifier" << endl;}
+                                                                         { yylhs.value.as < shared_ptr<StructOrUnionSpecifier> > () = make_shared<StructOrUnionSpecifier>(yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<CToken> > (),nullptr); /*cout << "struct_or_union IDENTIFIER REDUCE to struct_or_union_specifier" << endl;*/}
 #line 2567 "parser.cpp"
     break;
 
   case 115: // struct_or_union: "struct"
 #line 459 "ansic.y"
-               { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > (); cout << "STRUCT REDUCE to struct_or_union" << endl;}
+               { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > (); /*cout << "STRUCT REDUCE to struct_or_union" << endl;*/}
 #line 2573 "parser.cpp"
     break;
 
   case 116: // struct_or_union: "union"
 #line 460 "ansic.y"
-               { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > (); cout << "UNION REDUCE to struct_or_union" << endl;}
+               { yylhs.value.as < shared_ptr<CToken> > () = yystack_[0].value.as < shared_ptr<CToken> > (); /*cout << "UNION REDUCE to struct_or_union" << endl;*/}
 #line 2579 "parser.cpp"
     break;
 
   case 117: // struct_declaration_list: struct_declaration
 #line 464 "ansic.y"
-                                                  { yylhs.value.as < shared_ptr<vector<shared_ptr<StructDeclaration>>> > () = createStructDeclarationList(yystack_[0].value.as < shared_ptr<StructDeclaration> > (),nullptr); cout << "struct_declaration REDUCE to struct_declaration_list" << endl;}
+                                                  { yylhs.value.as < shared_ptr<vector<shared_ptr<StructDeclaration>>> > () = createStructDeclarationList(yystack_[0].value.as < shared_ptr<StructDeclaration> > (),nullptr); /*cout << "struct_declaration REDUCE to struct_declaration_list" << endl;*/}
 #line 2585 "parser.cpp"
     break;
 
   case 118: // struct_declaration_list: struct_declaration_list struct_declaration
 #line 465 "ansic.y"
-                                                  { yylhs.value.as < shared_ptr<vector<shared_ptr<StructDeclaration>>> > () = createStructDeclarationList(yystack_[0].value.as < shared_ptr<StructDeclaration> > (),yystack_[1].value.as < shared_ptr<vector<shared_ptr<StructDeclaration>>> > ()); cout << "struct_declaration_list struct_declaration REDUCE to struct_declaration_list" << endl;}
+                                                  { yylhs.value.as < shared_ptr<vector<shared_ptr<StructDeclaration>>> > () = createStructDeclarationList(yystack_[0].value.as < shared_ptr<StructDeclaration> > (),yystack_[1].value.as < shared_ptr<vector<shared_ptr<StructDeclaration>>> > ()); /*cout << "struct_declaration_list struct_declaration REDUCE to struct_declaration_list" << endl;*/}
 #line 2591 "parser.cpp"
     break;
 
   case 119: // struct_declaration: specifier_qualifier_list struct_declarator_list ";"
 #line 469 "ansic.y"
-                                                                { yylhs.value.as < shared_ptr<StructDeclaration> > () = make_shared<StructDeclaration>(yystack_[2].value.as < shared_ptr<SpecifierQualifierList> > (),yystack_[1].value.as < shared_ptr<vector<shared_ptr<StructDeclarator>>> > ()); cout << "specifier_qualifier_list struct_declarator_list SEMICOLON REDUCE to struct_declaration" << endl;}
+                                                                { yylhs.value.as < shared_ptr<StructDeclaration> > () = make_shared<StructDeclaration>(yystack_[2].value.as < shared_ptr<SpecifierQualifierList> > (),yystack_[1].value.as < shared_ptr<vector<shared_ptr<StructDeclarator>>> > ()); /*cout << "specifier_qualifier_list struct_declarator_list SEMICOLON REDUCE to struct_declaration" << endl;*/}
 #line 2597 "parser.cpp"
     break;
 
   case 120: // specifier_qualifier_list: type_specifier specifier_qualifier_list
 #line 473 "ansic.y"
-                                              { yylhs.value.as < shared_ptr<SpecifierQualifierList> > () = make_shared<SpecifierQualifierList>(yystack_[0].value.as < shared_ptr<SpecifierQualifierList> > (),yystack_[1].value.as < shared_ptr<TypeSpecifier> > ()); cout << "type_specifier specifier_qualifier_list REDUCE to specifier_qualifier_list" << endl;}
+                                              { yylhs.value.as < shared_ptr<SpecifierQualifierList> > () = make_shared<SpecifierQualifierList>(yystack_[0].value.as < shared_ptr<SpecifierQualifierList> > (),yystack_[1].value.as < shared_ptr<TypeSpecifier> > ()); /*cout << "type_specifier specifier_qualifier_list REDUCE to specifier_qualifier_list" << endl;*/}
 #line 2603 "parser.cpp"
     break;
 
   case 121: // specifier_qualifier_list: type_specifier
 #line 474 "ansic.y"
-                                              { yylhs.value.as < shared_ptr<SpecifierQualifierList> > () = make_shared<SpecifierQualifierList>(yystack_[0].value.as < shared_ptr<TypeSpecifier> > ()); cout << "type_specifier REDUCE to specifier_qualifier_list" << endl;}
+                                              { yylhs.value.as < shared_ptr<SpecifierQualifierList> > () = make_shared<SpecifierQualifierList>(yystack_[0].value.as < shared_ptr<TypeSpecifier> > ()); /*cout << "type_specifier REDUCE to specifier_qualifier_list" << endl;*/}
 #line 2609 "parser.cpp"
     break;
 
   case 122: // specifier_qualifier_list: type_qualifier specifier_qualifier_list
 #line 475 "ansic.y"
-                                              { yylhs.value.as < shared_ptr<SpecifierQualifierList> > () = make_shared<SpecifierQualifierList>(yystack_[0].value.as < shared_ptr<SpecifierQualifierList> > (),yystack_[1].value.as < shared_ptr<TypeQualifier> > ()); cout << "type_qualifier specifier_qualifier_list REDUCE to specifier_qualifier_list" << endl;}
+                                              { yylhs.value.as < shared_ptr<SpecifierQualifierList> > () = make_shared<SpecifierQualifierList>(yystack_[0].value.as < shared_ptr<SpecifierQualifierList> > (),yystack_[1].value.as < shared_ptr<TypeQualifier> > ()); /*cout << "type_qualifier specifier_qualifier_list REDUCE to specifier_qualifier_list" << endl;*/}
 #line 2615 "parser.cpp"
     break;
 
   case 123: // specifier_qualifier_list: type_qualifier
 #line 476 "ansic.y"
-                                              { yylhs.value.as < shared_ptr<SpecifierQualifierList> > () = make_shared<SpecifierQualifierList>(yystack_[0].value.as < shared_ptr<TypeQualifier> > ()); cout << "type_qualifier REDUCE to specifier_qualifier_list" << endl;}
+                                              { yylhs.value.as < shared_ptr<SpecifierQualifierList> > () = make_shared<SpecifierQualifierList>(yystack_[0].value.as < shared_ptr<TypeQualifier> > ()); /*cout << "type_qualifier REDUCE to specifier_qualifier_list" << endl;*/}
 #line 2621 "parser.cpp"
     break;
 
   case 124: // struct_declarator_list: struct_declarator
 #line 480 "ansic.y"
-                                                     { yylhs.value.as < shared_ptr<vector<shared_ptr<StructDeclarator>>> > () = createStructDeclaratorList(yystack_[0].value.as < shared_ptr<StructDeclarator> > (),nullptr); cout << "struct_declarator REDUCE to struct_declarator_list" << endl; }
+                                                     { yylhs.value.as < shared_ptr<vector<shared_ptr<StructDeclarator>>> > () = createStructDeclaratorList(yystack_[0].value.as < shared_ptr<StructDeclarator> > (),nullptr); /*cout << "struct_declarator REDUCE to struct_declarator_list" << endl;*/ }
 #line 2627 "parser.cpp"
     break;
 
   case 125: // struct_declarator_list: struct_declarator_list "," struct_declarator
 #line 481 "ansic.y"
-                                                     { yylhs.value.as < shared_ptr<vector<shared_ptr<StructDeclarator>>> > () = createStructDeclaratorList(yystack_[0].value.as < shared_ptr<StructDeclarator> > (),yystack_[2].value.as < shared_ptr<vector<shared_ptr<StructDeclarator>>> > ()); cout << "struct_declarator_list COMMA struct_declarator REDUCE to struct_declarator_list" << endl; }
+                                                     { yylhs.value.as < shared_ptr<vector<shared_ptr<StructDeclarator>>> > () = createStructDeclaratorList(yystack_[0].value.as < shared_ptr<StructDeclarator> > (),yystack_[2].value.as < shared_ptr<vector<shared_ptr<StructDeclarator>>> > ()); /*cout << "struct_declarator_list COMMA struct_declarator REDUCE to struct_declarator_list" << endl;*/ }
 #line 2633 "parser.cpp"
     break;
 
   case 126: // struct_declarator: declarator
 #line 485 "ansic.y"
-                                           { yylhs.value.as < shared_ptr<StructDeclarator> > () = make_shared<StructDeclarator>(yystack_[0].value.as < shared_ptr<Declarator> > ()); cout << "declarator REDUCE to struct_declarator" << endl;}
+                                           { yylhs.value.as < shared_ptr<StructDeclarator> > () = make_shared<StructDeclarator>(yystack_[0].value.as < shared_ptr<Declarator> > ()); /*cout << "declarator REDUCE to struct_declarator" << endl;*/}
 #line 2639 "parser.cpp"
     break;
 
   case 127: // struct_declarator: ":" constant_expression
 #line 486 "ansic.y"
-                                           { yylhs.value.as < shared_ptr<StructDeclarator> > () = make_shared<StructDeclarator>(yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); cout << "COLON constant_expression REDUCE to struct_declarator" << endl;}
+                                           { yylhs.value.as < shared_ptr<StructDeclarator> > () = make_shared<StructDeclarator>(yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); /*cout << "COLON constant_expression REDUCE to struct_declarator" << endl;*/}
 #line 2645 "parser.cpp"
     break;
 
   case 128: // struct_declarator: declarator ":" constant_expression
 #line 487 "ansic.y"
-                                           { yylhs.value.as < shared_ptr<StructDeclarator> > () = make_shared<StructDeclarator>(yystack_[2].value.as < shared_ptr<Declarator> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); cout << "declarator COLON constant_expression REDUCE to struct_declarator" << endl;}
+                                           { yylhs.value.as < shared_ptr<StructDeclarator> > () = make_shared<StructDeclarator>(yystack_[2].value.as < shared_ptr<Declarator> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); /*cout << "declarator COLON constant_expression REDUCE to struct_declarator" << endl;*/}
 #line 2651 "parser.cpp"
     break;
 
   case 129: // enum_specifier: "enum" "{" enumerator_list "}"
 #line 491 "ansic.y"
-                                                     { yylhs.value.as < shared_ptr<EnumSpecifier> > () = make_shared<EnumSpecifier>(nullptr,yystack_[1].value.as < shared_ptr<vector<shared_ptr<Enumerator>>> > ()); cout << "ENUM OCURLY enumerator_list CCURLY REDUCE to enum_specifier" << endl;}
+                                                     { yylhs.value.as < shared_ptr<EnumSpecifier> > () = make_shared<EnumSpecifier>(nullptr,yystack_[1].value.as < shared_ptr<vector<shared_ptr<Enumerator>>> > ()); /*cout << "ENUM OCURLY enumerator_list CCURLY REDUCE to enum_specifier" << endl;*/}
 #line 2657 "parser.cpp"
     break;
 
   case 130: // enum_specifier: "enum" "identifier" "{" enumerator_list "}"
 #line 492 "ansic.y"
-                                                     { yylhs.value.as < shared_ptr<EnumSpecifier> > () = make_shared<EnumSpecifier>(yystack_[3].value.as < shared_ptr<CToken> > (),yystack_[1].value.as < shared_ptr<vector<shared_ptr<Enumerator>>> > ()); cout << "ENUM IDENTIFIER OCURLY enumerator_list CCURLY REDUCE to enum_specifier" << endl;}
+                                                     { yylhs.value.as < shared_ptr<EnumSpecifier> > () = make_shared<EnumSpecifier>(yystack_[3].value.as < shared_ptr<CToken> > (),yystack_[1].value.as < shared_ptr<vector<shared_ptr<Enumerator>>> > ()); /*cout << "ENUM IDENTIFIER OCURLY enumerator_list CCURLY REDUCE to enum_specifier" << endl;*/}
 #line 2663 "parser.cpp"
     break;
 
   case 131: // enum_specifier: "enum" "identifier"
 #line 493 "ansic.y"
-                                                     { yylhs.value.as < shared_ptr<EnumSpecifier> > () = make_shared<EnumSpecifier>(yystack_[0].value.as < shared_ptr<CToken> > (),nullptr); cout << "ENUM IDENTIFIER REDUCE to enum_specifier" << endl;}
+                                                     { yylhs.value.as < shared_ptr<EnumSpecifier> > () = make_shared<EnumSpecifier>(yystack_[0].value.as < shared_ptr<CToken> > (),nullptr); /*cout << "ENUM IDENTIFIER REDUCE to enum_specifier" << endl;*/}
 #line 2669 "parser.cpp"
     break;
 
   case 132: // enumerator_list: enumerator
 #line 497 "ansic.y"
-                                        { yylhs.value.as < shared_ptr<vector<shared_ptr<Enumerator>>> > () = createEnumeratorList(yystack_[0].value.as < shared_ptr<Enumerator> > (),nullptr); cout << "enumerator REDUCE enumerator_list" << endl;}
+                                        { yylhs.value.as < shared_ptr<vector<shared_ptr<Enumerator>>> > () = createEnumeratorList(yystack_[0].value.as < shared_ptr<Enumerator> > (),nullptr); /*cout << "enumerator REDUCE enumerator_list" << endl;*/}
 #line 2675 "parser.cpp"
     break;
 
   case 133: // enumerator_list: enumerator_list "," enumerator
 #line 498 "ansic.y"
-                                        { yylhs.value.as < shared_ptr<vector<shared_ptr<Enumerator>>> > () = createEnumeratorList(yystack_[0].value.as < shared_ptr<Enumerator> > (),yystack_[2].value.as < shared_ptr<vector<shared_ptr<Enumerator>>> > ()); cout << "enumerator_list COMMA enumerator REDUCE enumerator_list" << endl; }
+                                        { yylhs.value.as < shared_ptr<vector<shared_ptr<Enumerator>>> > () = createEnumeratorList(yystack_[0].value.as < shared_ptr<Enumerator> > (),yystack_[2].value.as < shared_ptr<vector<shared_ptr<Enumerator>>> > ()); /*cout << "enumerator_list COMMA enumerator REDUCE enumerator_list" << endl;*/ }
 #line 2681 "parser.cpp"
     break;
 
   case 134: // enumerator: "identifier"
 #line 502 "ansic.y"
-                                           { yylhs.value.as < shared_ptr<Enumerator> > () = make_shared<Enumerator>(yystack_[0].value.as < shared_ptr<CToken> > (),nullptr); cout << "IDENTIFIER REDUCE to ENUMERATOR" << endl;}
+                                           { yylhs.value.as < shared_ptr<Enumerator> > () = make_shared<Enumerator>(yystack_[0].value.as < shared_ptr<CToken> > (),nullptr); /*cout << "IDENTIFIER REDUCE to ENUMERATOR" << endl;*/}
 #line 2687 "parser.cpp"
     break;
 
   case 135: // enumerator: "identifier" "=" constant_expression
 #line 503 "ansic.y"
-                                           { yylhs.value.as < shared_ptr<Enumerator> > () = make_shared<Enumerator>(yystack_[2].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); cout << "IDENTIFIER EQUAL constant_expression REDUCE to ENUMERATOR" << endl;}
+                                           { yylhs.value.as < shared_ptr<Enumerator> > () = make_shared<Enumerator>(yystack_[2].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); /*cout << "IDENTIFIER EQUAL constant_expression REDUCE to ENUMERATOR" << endl;*/}
 #line 2693 "parser.cpp"
     break;
 
   case 136: // type_qualifier: "const"
 #line 507 "ansic.y"
-                { yylhs.value.as < shared_ptr<TypeQualifier> > () = make_shared<TypeQualifier>(yystack_[0].value.as < shared_ptr<CToken> > ()); cout << "CONSTT REDUCE to type_qualifier" << endl;}
+                { yylhs.value.as < shared_ptr<TypeQualifier> > () = make_shared<TypeQualifier>(yystack_[0].value.as < shared_ptr<CToken> > ()); /*cout << "CONSTT REDUCE to type_qualifier" << endl;*/}
 #line 2699 "parser.cpp"
     break;
 
   case 137: // type_qualifier: "volatile"
 #line 508 "ansic.y"
-               { yylhs.value.as < shared_ptr<TypeQualifier> > () = make_shared<TypeQualifier>(yystack_[0].value.as < shared_ptr<CToken> > ()); cout << "VOLATILE REDUCE to type_qualifier" << endl;}
+               { yylhs.value.as < shared_ptr<TypeQualifier> > () = make_shared<TypeQualifier>(yystack_[0].value.as < shared_ptr<CToken> > ()); /*cout << "VOLATILE REDUCE to type_qualifier" << endl;*/}
 #line 2705 "parser.cpp"
     break;
 
   case 138: // declarator: pointer direct_declarator
 #line 512 "ansic.y"
-                                { yylhs.value.as < shared_ptr<Declarator> > () = createDeclarator(yystack_[1].value.as < shared_ptr<Pointer> > (),yystack_[0].value.as < shared_ptr<DirectDeclarator> > ()); cout << "pointer direct_declarator REDUCE to declarator" << endl;}
+                                { yylhs.value.as < shared_ptr<Declarator> > () = createDeclarator(yystack_[1].value.as < shared_ptr<Pointer> > (),yystack_[0].value.as < shared_ptr<DirectDeclarator> > ()); /*cout << "pointer direct_declarator REDUCE to declarator" << endl;*/}
 #line 2711 "parser.cpp"
     break;
 
   case 139: // declarator: direct_declarator
 #line 513 "ansic.y"
-                                { yylhs.value.as < shared_ptr<Declarator> > () = createDeclarator(nullptr,yystack_[0].value.as < shared_ptr<DirectDeclarator> > ()); cout << "direct_declarator REDUCE to declarator" << endl;}
+                                { yylhs.value.as < shared_ptr<Declarator> > () = createDeclarator(nullptr,yystack_[0].value.as < shared_ptr<DirectDeclarator> > ()); /*cout << "direct_declarator REDUCE to declarator" << endl;*/}
 #line 2717 "parser.cpp"
     break;
 
   case 140: // direct_declarator: "identifier"
 #line 517 "ansic.y"
-                                                            { SETLOC(yystack_[0].value.as < shared_ptr<CToken> > (),yystack_[0].location); yylhs.value.as < shared_ptr<DirectDeclarator> > () = createDirectDeclarator(yystack_[0].value.as < shared_ptr<CToken> > (),nullptr,nullptr,NULL,NULL,NULL,NULL,NULL); cout << "IDENTIFIER REDUCE to direct_declarator" << endl;}
+                                                            { SETLOC(yystack_[0].value.as < shared_ptr<CToken> > (),yystack_[0].location); yylhs.value.as < shared_ptr<DirectDeclarator> > () = createDirectDeclarator(yystack_[0].value.as < shared_ptr<CToken> > (),nullptr,nullptr,NULL,NULL,NULL,NULL,NULL); /*cout << "IDENTIFIER REDUCE to direct_declarator" << endl;*/}
 #line 2723 "parser.cpp"
     break;
 
   case 141: // direct_declarator: "(" declarator ")"
 #line 518 "ansic.y"
-                                                            { yystack_[2].value.as < shared_ptr<CToken> > ()->setLocation(yystack_[2].location.begin.line, yystack_[2].location.begin.column); yystack_[0].value.as < shared_ptr<CToken> > ()->setLocation(yystack_[0].location.begin.line, yystack_[0].location.begin.column); yylhs.value.as < shared_ptr<DirectDeclarator> > () = createDirectDeclarator(nullptr,yystack_[2].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<CToken> > (),yystack_[1].value.as < shared_ptr<Declarator> > (),NULL,NULL,NULL,NULL); cout << "OPAREN declarator CPAREN REDUCE to direct_declarator" << endl;}
+                                                            { yystack_[2].value.as < shared_ptr<CToken> > ()->setLocation(yystack_[2].location.begin.line, yystack_[2].location.begin.column); yystack_[0].value.as < shared_ptr<CToken> > ()->setLocation(yystack_[0].location.begin.line, yystack_[0].location.begin.column); yylhs.value.as < shared_ptr<DirectDeclarator> > () = createDirectDeclarator(nullptr,yystack_[2].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<CToken> > (),yystack_[1].value.as < shared_ptr<Declarator> > (),NULL,NULL,NULL,NULL); /*cout << "OPAREN declarator CPAREN REDUCE to direct_declarator" << endl;*/}
 #line 2729 "parser.cpp"
     break;
 
   case 142: // direct_declarator: direct_declarator "[" constant_expression "]"
 #line 519 "ansic.y"
-                                                            { yystack_[2].value.as < shared_ptr<CToken> > ()->setLocation(yystack_[2].location.begin.line, yystack_[2].location.begin.column); yystack_[0].value.as < shared_ptr<CToken> > ()->setLocation(yystack_[0].location.begin.line, yystack_[0].location.begin.column); yylhs.value.as < shared_ptr<DirectDeclarator> > () = createDirectDeclarator(nullptr,yystack_[2].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<CToken> > (),NULL,yystack_[3].value.as < shared_ptr<DirectDeclarator> > (),yystack_[1].value.as < shared_ptr<ExpressionTree> > (),NULL,NULL); cout << "direct_declarator OBRACE constant_expression CBRACE REDUCE to direct_declarator" << endl;}
+                                                            { yystack_[2].value.as < shared_ptr<CToken> > ()->setLocation(yystack_[2].location.begin.line, yystack_[2].location.begin.column); yystack_[0].value.as < shared_ptr<CToken> > ()->setLocation(yystack_[0].location.begin.line, yystack_[0].location.begin.column); yylhs.value.as < shared_ptr<DirectDeclarator> > () = createDirectDeclarator(nullptr,yystack_[2].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<CToken> > (),NULL,yystack_[3].value.as < shared_ptr<DirectDeclarator> > (),yystack_[1].value.as < shared_ptr<ExpressionTree> > (),NULL,NULL); /*cout << "direct_declarator OBRACE constant_expression CBRACE REDUCE to direct_declarator" << endl;*/}
 #line 2735 "parser.cpp"
     break;
 
   case 143: // direct_declarator: direct_declarator "[" "]"
 #line 520 "ansic.y"
-                                                            { yystack_[1].value.as < shared_ptr<CToken> > ()->setLocation(yystack_[1].location.begin.line, yystack_[1].location.begin.column); yystack_[0].value.as < shared_ptr<CToken> > ()->setLocation(yystack_[0].location.begin.line, yystack_[0].location.begin.column); yylhs.value.as < shared_ptr<DirectDeclarator> > () = createDirectDeclarator(nullptr,yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<CToken> > (),NULL,yystack_[2].value.as < shared_ptr<DirectDeclarator> > (),NULL,NULL,NULL); cout << "direct_declarator OBRACE CBRACE REDUCE to direct_declarator" << endl;}
+                                                            { yystack_[1].value.as < shared_ptr<CToken> > ()->setLocation(yystack_[1].location.begin.line, yystack_[1].location.begin.column); yystack_[0].value.as < shared_ptr<CToken> > ()->setLocation(yystack_[0].location.begin.line, yystack_[0].location.begin.column); yylhs.value.as < shared_ptr<DirectDeclarator> > () = createDirectDeclarator(nullptr,yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<CToken> > (),NULL,yystack_[2].value.as < shared_ptr<DirectDeclarator> > (),NULL,NULL,NULL); /*cout << "direct_declarator OBRACE CBRACE REDUCE to direct_declarator" << endl;*/}
 #line 2741 "parser.cpp"
     break;
 
   case 144: // direct_declarator: direct_declarator "(" parameter_type_list ")"
 #line 521 "ansic.y"
-                                                            { SETLOC(yystack_[2].value.as < shared_ptr<CToken> > (),yystack_[2].location); SETLOC(yystack_[0].value.as < shared_ptr<CToken> > (),yystack_[0].location); yylhs.value.as < shared_ptr<DirectDeclarator> > () = createDirectDeclarator(nullptr,yystack_[2].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<CToken> > (),NULL,yystack_[3].value.as < shared_ptr<DirectDeclarator> > (),NULL,yystack_[1].value.as < shared_ptr<ParameterTypeList> > (),NULL); cout << "direct_declarator OPAREN parameter_type_list CPAREN to direct_declarator" << endl;}
+                                                            { SETLOC(yystack_[2].value.as < shared_ptr<CToken> > (),yystack_[2].location); SETLOC(yystack_[0].value.as < shared_ptr<CToken> > (),yystack_[0].location); yylhs.value.as < shared_ptr<DirectDeclarator> > () = createDirectDeclarator(nullptr,yystack_[2].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<CToken> > (),NULL,yystack_[3].value.as < shared_ptr<DirectDeclarator> > (),NULL,yystack_[1].value.as < shared_ptr<ParameterTypeList> > (),NULL); /*cout << "direct_declarator OPAREN parameter_type_list CPAREN to direct_declarator" << endl;*/}
 #line 2747 "parser.cpp"
     break;
 
   case 145: // direct_declarator: direct_declarator "(" identifier_list ")"
 #line 522 "ansic.y"
-                                                            { SETLOC(yystack_[2].value.as < shared_ptr<CToken> > (),yystack_[2].location); SETLOC(yystack_[0].value.as < shared_ptr<CToken> > (),yystack_[0].location); yylhs.value.as < shared_ptr<DirectDeclarator> > () = createDirectDeclarator(nullptr,yystack_[2].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<CToken> > (),NULL,yystack_[3].value.as < shared_ptr<DirectDeclarator> > (),NULL,NULL,yystack_[1].value.as < shared_ptr<vector<shared_ptr<CToken>>> > ()); cout << "direct_declarator OPAREN identifier_list CPAREN REDUCE to direct_declarator" << endl;}
+                                                            { SETLOC(yystack_[2].value.as < shared_ptr<CToken> > (),yystack_[2].location); SETLOC(yystack_[0].value.as < shared_ptr<CToken> > (),yystack_[0].location); yylhs.value.as < shared_ptr<DirectDeclarator> > () = createDirectDeclarator(nullptr,yystack_[2].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<CToken> > (),NULL,yystack_[3].value.as < shared_ptr<DirectDeclarator> > (),NULL,NULL,yystack_[1].value.as < shared_ptr<vector<shared_ptr<CToken>>> > ()); /*cout << "direct_declarator OPAREN identifier_list CPAREN REDUCE to direct_declarator" << endl;*/}
 #line 2753 "parser.cpp"
     break;
 
   case 146: // direct_declarator: direct_declarator "(" ")"
 #line 523 "ansic.y"
-                                                            { SETLOC(yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[1].location); SETLOC(yystack_[0].value.as < shared_ptr<CToken> > (),yystack_[0].location); yylhs.value.as < shared_ptr<DirectDeclarator> > () = createDirectDeclarator(nullptr,yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<CToken> > (),NULL,yystack_[2].value.as < shared_ptr<DirectDeclarator> > (),NULL,NULL,NULL); cout << "direct_declarator OPAREN CPAREN REDUCE to direct_declarator" << endl;}
+                                                            { SETLOC(yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[1].location); SETLOC(yystack_[0].value.as < shared_ptr<CToken> > (),yystack_[0].location); yylhs.value.as < shared_ptr<DirectDeclarator> > () = createDirectDeclarator(nullptr,yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<CToken> > (),NULL,yystack_[2].value.as < shared_ptr<DirectDeclarator> > (),NULL,NULL,NULL); /*cout << "direct_declarator OPAREN CPAREN REDUCE to direct_declarator" << endl;*/}
 #line 2759 "parser.cpp"
     break;
 
   case 147: // pointer: "*"
 #line 527 "ansic.y"
-                                            {yylhs.value.as < shared_ptr<Pointer> > () = make_shared<Pointer>(yystack_[0].value.as < shared_ptr<CToken> > ()); cout << "TIMES_OP REDUCE to POINTER" << endl;}
+                                            {yylhs.value.as < shared_ptr<Pointer> > () = make_shared<Pointer>(yystack_[0].value.as < shared_ptr<CToken> > ()); /*cout << "TIMES_OP REDUCE to POINTER" << endl;*/}
 #line 2765 "parser.cpp"
     break;
 
   case 148: // pointer: "*" type_qualifier_list
 #line 528 "ansic.y"
-                                            {yylhs.value.as < shared_ptr<Pointer> > () = make_shared<Pointer>(yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<vector<shared_ptr<TypeQualifier>>> > ()); cout << "TIMES_OP type_qualifier_list REDUCE to POINTER" << endl;}
+                                            {yylhs.value.as < shared_ptr<Pointer> > () = make_shared<Pointer>(yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<vector<shared_ptr<TypeQualifier>>> > ()); /*cout << "TIMES_OP type_qualifier_list REDUCE to POINTER" << endl;*/}
 #line 2771 "parser.cpp"
     break;
 
   case 149: // pointer: "*" pointer
 #line 529 "ansic.y"
-                                            {yylhs.value.as < shared_ptr<Pointer> > () = make_shared<Pointer>(yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<Pointer> > ()); yylhs.value.as < shared_ptr<Pointer> > ()->inc(); cout << "TIMES_OP pointer REDUCE to POINTER" << endl;}
+                                            {yylhs.value.as < shared_ptr<Pointer> > () = make_shared<Pointer>(yystack_[1].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<Pointer> > ()); yylhs.value.as < shared_ptr<Pointer> > ()->inc(); /*cout << "TIMES_OP pointer REDUCE to POINTER" << endl;*/}
 #line 2777 "parser.cpp"
     break;
 
   case 150: // pointer: "*" type_qualifier_list pointer
 #line 530 "ansic.y"
-                                            {yylhs.value.as < shared_ptr<Pointer> > () = make_shared<Pointer>(yystack_[2].value.as < shared_ptr<CToken> > (),yystack_[1].value.as < shared_ptr<vector<shared_ptr<TypeQualifier>>> > (),yystack_[0].value.as < shared_ptr<Pointer> > ()); yylhs.value.as < shared_ptr<Pointer> > ()->inc(); cout << "TIMES_OP type_qualifier_list pointer REDUCE to POINTER" << endl;}
+                                            {yylhs.value.as < shared_ptr<Pointer> > () = make_shared<Pointer>(yystack_[2].value.as < shared_ptr<CToken> > (),yystack_[1].value.as < shared_ptr<vector<shared_ptr<TypeQualifier>>> > (),yystack_[0].value.as < shared_ptr<Pointer> > ()); yylhs.value.as < shared_ptr<Pointer> > ()->inc(); /*cout << "TIMES_OP type_qualifier_list pointer REDUCE to POINTER" << endl;*/}
 #line 2783 "parser.cpp"
     break;
 
   case 151: // type_qualifier_list: type_qualifier
 #line 534 "ansic.y"
-                                         { yylhs.value.as < shared_ptr<vector<shared_ptr<TypeQualifier>>> > () = createTypeQualifierList(yystack_[0].value.as < shared_ptr<TypeQualifier> > (),nullptr);cout << "type_qualifier REDUCE type_qualifier_list" << endl; }
+                                         { yylhs.value.as < shared_ptr<vector<shared_ptr<TypeQualifier>>> > () = createTypeQualifierList(yystack_[0].value.as < shared_ptr<TypeQualifier> > (),nullptr);/*cout << "type_qualifier REDUCE type_qualifier_list" << endl;*/ }
 #line 2789 "parser.cpp"
     break;
 
   case 152: // type_qualifier_list: type_qualifier_list type_qualifier
 #line 535 "ansic.y"
-                                         { yylhs.value.as < shared_ptr<vector<shared_ptr<TypeQualifier>>> > () = createTypeQualifierList(yystack_[0].value.as < shared_ptr<TypeQualifier> > (),yystack_[1].value.as < shared_ptr<vector<shared_ptr<TypeQualifier>>> > ()); cout << "type_qualifier_list type_qualifier REDUCE type_qualifier_list" << endl; }
+                                         { yylhs.value.as < shared_ptr<vector<shared_ptr<TypeQualifier>>> > () = createTypeQualifierList(yystack_[0].value.as < shared_ptr<TypeQualifier> > (),yystack_[1].value.as < shared_ptr<vector<shared_ptr<TypeQualifier>>> > ()); /*cout << "type_qualifier_list type_qualifier REDUCE type_qualifier_list" << endl;*/ }
 #line 2795 "parser.cpp"
     break;
 
   case 153: // parameter_type_list: parameter_list
 #line 539 "ansic.y"
-                                      { yylhs.value.as < shared_ptr<ParameterTypeList> > () = make_shared<ParameterTypeList>(yystack_[0].value.as < shared_ptr<vector<shared_ptr<ParameterDeclaration>>> > (),false); cout << "parameter_list REDUCE to parameter_type_list" << endl; }
+                                      { yylhs.value.as < shared_ptr<ParameterTypeList> > () = make_shared<ParameterTypeList>(yystack_[0].value.as < shared_ptr<vector<shared_ptr<ParameterDeclaration>>> > (),false); /*cout << "parameter_list REDUCE to parameter_type_list" << endl;*/ }
 #line 2801 "parser.cpp"
     break;
 
   case 154: // parameter_type_list: parameter_list "," "ellipsis"
 #line 540 "ansic.y"
-                                      { yylhs.value.as < shared_ptr<ParameterTypeList> > () = make_shared<ParameterTypeList>(yystack_[2].value.as < shared_ptr<vector<shared_ptr<ParameterDeclaration>>> > (),true); cout << "parameter_list COMMA ELLIPSIS REDUCE to parameter_type_list" << endl; }
+                                      { yylhs.value.as < shared_ptr<ParameterTypeList> > () = make_shared<ParameterTypeList>(yystack_[2].value.as < shared_ptr<vector<shared_ptr<ParameterDeclaration>>> > (),true); /*cout << "parameter_list COMMA ELLIPSIS REDUCE to parameter_type_list" << endl;*/ }
 #line 2807 "parser.cpp"
     break;
 
   case 155: // parameter_list: parameter_declaration
 #line 544 "ansic.y"
-                                                  { yylhs.value.as < shared_ptr<vector<shared_ptr<ParameterDeclaration>>> > () = createParameterList(yystack_[0].value.as < shared_ptr<ParameterDeclaration> > (),nullptr); cout << "parameter_declaration REDUCE to parameter_list" << endl; }
+                                                  { yylhs.value.as < shared_ptr<vector<shared_ptr<ParameterDeclaration>>> > () = createParameterList(yystack_[0].value.as < shared_ptr<ParameterDeclaration> > (),nullptr); /*cout << "parameter_declaration REDUCE to parameter_list" << endl;*/ }
 #line 2813 "parser.cpp"
     break;
 
   case 156: // parameter_list: parameter_list "," parameter_declaration
 #line 545 "ansic.y"
-                                                  { yylhs.value.as < shared_ptr<vector<shared_ptr<ParameterDeclaration>>> > () = createParameterList(yystack_[0].value.as < shared_ptr<ParameterDeclaration> > (),yystack_[2].value.as < shared_ptr<vector<shared_ptr<ParameterDeclaration>>> > ()); cout << "parameter_list COMMA parameter_declaration REDUCE to parameter_list" << endl; }
+                                                  { yylhs.value.as < shared_ptr<vector<shared_ptr<ParameterDeclaration>>> > () = createParameterList(yystack_[0].value.as < shared_ptr<ParameterDeclaration> > (),yystack_[2].value.as < shared_ptr<vector<shared_ptr<ParameterDeclaration>>> > ()); /*cout << "parameter_list COMMA parameter_declaration REDUCE to parameter_list" << endl;*/ }
 #line 2819 "parser.cpp"
     break;
 
   case 157: // parameter_declaration: declaration_specifiers declarator
 #line 549 "ansic.y"
-                                                  { yylhs.value.as < shared_ptr<ParameterDeclaration> > () = make_shared<ParameterDeclaration>(yystack_[1].value.as < shared_ptr<DeclarationSpecifiers> > (),yystack_[0].value.as < shared_ptr<Declarator> > ()); cout << "declaration_specifiers declarator REDUCE to parameter_declaration" << endl; }
+                                                  { yylhs.value.as < shared_ptr<ParameterDeclaration> > () = make_shared<ParameterDeclaration>(yystack_[1].value.as < shared_ptr<DeclarationSpecifiers> > (),yystack_[0].value.as < shared_ptr<Declarator> > ()); /*cout << "declaration_specifiers declarator REDUCE to parameter_declaration" << endl;*/ }
 #line 2825 "parser.cpp"
     break;
 
   case 158: // parameter_declaration: declaration_specifiers abstract_declarator
 #line 550 "ansic.y"
-                                                  { yylhs.value.as < shared_ptr<ParameterDeclaration> > () = make_shared<ParameterDeclaration>(yystack_[1].value.as < shared_ptr<DeclarationSpecifiers> > (),yystack_[0].value.as < shared_ptr<AbstractDeclarator> > ()); cout << "declaration_specifiers abstract_declarator REDUCE to parameter_declaration" << endl; }
+                                                  { yylhs.value.as < shared_ptr<ParameterDeclaration> > () = make_shared<ParameterDeclaration>(yystack_[1].value.as < shared_ptr<DeclarationSpecifiers> > (),yystack_[0].value.as < shared_ptr<AbstractDeclarator> > ()); /*cout << "declaration_specifiers abstract_declarator REDUCE to parameter_declaration" << endl;*/ }
 #line 2831 "parser.cpp"
     break;
 
   case 159: // parameter_declaration: declaration_specifiers
 #line 551 "ansic.y"
-                                                  { yylhs.value.as < shared_ptr<ParameterDeclaration> > () = make_shared<ParameterDeclaration>(yystack_[0].value.as < shared_ptr<DeclarationSpecifiers> > ()); cout << "declaration_specifiers REDUCE to parameter_declaration" << endl; }
+                                                  { yylhs.value.as < shared_ptr<ParameterDeclaration> > () = make_shared<ParameterDeclaration>(yystack_[0].value.as < shared_ptr<DeclarationSpecifiers> > ()); /*cout << "declaration_specifiers REDUCE to parameter_declaration" << endl;*/ }
 #line 2837 "parser.cpp"
     break;
 
   case 160: // identifier_list: "identifier"
 #line 555 "ansic.y"
-                                       { yylhs.value.as < shared_ptr<vector<shared_ptr<CToken>>> > () = createIdentifierList(yystack_[0].value.as < shared_ptr<CToken> > (),nullptr); cout << "IDENTIFIER REDUCE to identifier_list" << endl; }
+                                       { yylhs.value.as < shared_ptr<vector<shared_ptr<CToken>>> > () = createIdentifierList(yystack_[0].value.as < shared_ptr<CToken> > (),nullptr); /*cout << "IDENTIFIER REDUCE to identifier_list" << endl;*/ }
 #line 2843 "parser.cpp"
     break;
 
   case 161: // identifier_list: identifier_list "," "identifier"
 #line 556 "ansic.y"
-                                       { yylhs.value.as < shared_ptr<vector<shared_ptr<CToken>>> > () = createIdentifierList(yystack_[0].value.as < shared_ptr<CToken> > (),yystack_[2].value.as < shared_ptr<vector<shared_ptr<CToken>>> > ()); cout << "identifier_list COMMA IDENTIFIER REDUCE to identifier_list" << endl; }
+                                       { yylhs.value.as < shared_ptr<vector<shared_ptr<CToken>>> > () = createIdentifierList(yystack_[0].value.as < shared_ptr<CToken> > (),yystack_[2].value.as < shared_ptr<vector<shared_ptr<CToken>>> > ()); /*cout << "identifier_list COMMA IDENTIFIER REDUCE to identifier_list" << endl;*/ }
 #line 2849 "parser.cpp"
     break;
 
   case 162: // type_name: specifier_qualifier_list
 #line 560 "ansic.y"
-                                                   { yylhs.value.as < shared_ptr<TypeName> > () = make_shared<TypeName>(yystack_[0].value.as < shared_ptr<SpecifierQualifierList> > ()); cout << "specifier_qualifier_list REDUCE to type_name" << endl; }
+                                                   { yylhs.value.as < shared_ptr<TypeName> > () = make_shared<TypeName>(yystack_[0].value.as < shared_ptr<SpecifierQualifierList> > ()); /*cout << "specifier_qualifier_list REDUCE to type_name" << endl;*/ }
 #line 2855 "parser.cpp"
     break;
 
   case 163: // type_name: specifier_qualifier_list abstract_declarator
 #line 561 "ansic.y"
-                                                   { yylhs.value.as < shared_ptr<TypeName> > () = make_shared<TypeName>(yystack_[1].value.as < shared_ptr<SpecifierQualifierList> > (),yystack_[0].value.as < shared_ptr<AbstractDeclarator> > ()); cout << "specifier_qualifier_list abstract_declarator REDUCE to type_name" << endl; }
+                                                   { yylhs.value.as < shared_ptr<TypeName> > () = make_shared<TypeName>(yystack_[1].value.as < shared_ptr<SpecifierQualifierList> > (),yystack_[0].value.as < shared_ptr<AbstractDeclarator> > ()); /*cout << "specifier_qualifier_list abstract_declarator REDUCE to type_name" << endl;*/ }
 #line 2861 "parser.cpp"
     break;
 
   case 164: // abstract_declarator: pointer
 #line 565 "ansic.y"
-                                          { yylhs.value.as < shared_ptr<AbstractDeclarator> > () = make_shared<AbstractDeclarator>(yystack_[0].value.as < shared_ptr<Pointer> > (),nullptr); cout << "pointer REDUCE to abstract_declarator" << endl; }
+                                          { yylhs.value.as < shared_ptr<AbstractDeclarator> > () = make_shared<AbstractDeclarator>(yystack_[0].value.as < shared_ptr<Pointer> > (),nullptr); /*cout << "pointer REDUCE to abstract_declarator" << endl;*/ }
 #line 2867 "parser.cpp"
     break;
 
   case 165: // abstract_declarator: direct_abstract_declarator
 #line 566 "ansic.y"
-                                          { yylhs.value.as < shared_ptr<AbstractDeclarator> > () = make_shared<AbstractDeclarator>(nullptr,yystack_[0].value.as < shared_ptr<DirectAbstractDeclarator> > ()); cout << "direct_abstract_declarator REDUCE to abstract_declarator" << endl; }
+                                          { yylhs.value.as < shared_ptr<AbstractDeclarator> > () = make_shared<AbstractDeclarator>(nullptr,yystack_[0].value.as < shared_ptr<DirectAbstractDeclarator> > ()); /*cout << "direct_abstract_declarator REDUCE to abstract_declarator" << endl;*/ }
 #line 2873 "parser.cpp"
     break;
 
   case 166: // abstract_declarator: pointer direct_abstract_declarator
 #line 567 "ansic.y"
-                                          { yylhs.value.as < shared_ptr<AbstractDeclarator> > () = make_shared<AbstractDeclarator>(yystack_[1].value.as < shared_ptr<Pointer> > (),yystack_[0].value.as < shared_ptr<DirectAbstractDeclarator> > ());      cout << "pointer direct_abstract_declarator REDUCE to abstract_declarator" << endl; }
+                                          { yylhs.value.as < shared_ptr<AbstractDeclarator> > () = make_shared<AbstractDeclarator>(yystack_[1].value.as < shared_ptr<Pointer> > (),yystack_[0].value.as < shared_ptr<DirectAbstractDeclarator> > ());      /*cout << "pointer direct_abstract_declarator REDUCE to abstract_declarator" << endl;*/ }
 #line 2879 "parser.cpp"
     break;
 
   case 167: // direct_abstract_declarator: "(" abstract_declarator ")"
 #line 571 "ansic.y"
-                                                                   { yylhs.value.as < shared_ptr<DirectAbstractDeclarator> > () = createDirectAbstractDeclarator(yystack_[1].value.as < shared_ptr<AbstractDeclarator> > (), nullptr); cout << "OPAREN abstract_declarator CPAREN REDUCE to direct_abstract_declarator" << endl; }
+                                                                   { yylhs.value.as < shared_ptr<DirectAbstractDeclarator> > () = createDirectAbstractDeclarator(yystack_[1].value.as < shared_ptr<AbstractDeclarator> > (), nullptr); /*cout << "OPAREN abstract_declarator CPAREN REDUCE to direct_abstract_declarator" << endl;*/ }
 #line 2885 "parser.cpp"
     break;
 
   case 168: // direct_abstract_declarator: "[" "]"
 #line 572 "ansic.y"
-                                                                   { yylhs.value.as < shared_ptr<DirectAbstractDeclarator> > () = createDirectAbstractDeclarator(nullptr, nullptr, nullptr, nullptr, ARRAY); cout << "OBRACE CBRACE REDUCE to direct_abstract_declarator" << endl; }
+                                                                   { yylhs.value.as < shared_ptr<DirectAbstractDeclarator> > () = createDirectAbstractDeclarator(nullptr, nullptr, nullptr, nullptr, ARRAY); /*cout << "OBRACE CBRACE REDUCE to direct_abstract_declarator" << endl;*/ }
 #line 2891 "parser.cpp"
     break;
 
   case 169: // direct_abstract_declarator: "(" ")"
 #line 573 "ansic.y"
-                                                                   { yylhs.value.as < shared_ptr<DirectAbstractDeclarator> > () = createDirectAbstractDeclarator(nullptr, nullptr, nullptr, nullptr, FUNCTION); cout << "OPAREN CPAREN REDUCE to direct_abstract_declarator" << endl; }
+                                                                   { yylhs.value.as < shared_ptr<DirectAbstractDeclarator> > () = createDirectAbstractDeclarator(nullptr, nullptr, nullptr, nullptr, FUNCTION); /*cout << "OPAREN CPAREN REDUCE to direct_abstract_declarator" << endl;*/ }
 #line 2897 "parser.cpp"
     break;
 
   case 170: // direct_abstract_declarator: "[" constant_expression "]"
 #line 574 "ansic.y"
-                                                                   { yylhs.value.as < shared_ptr<DirectAbstractDeclarator> > () = createDirectAbstractDeclarator(nullptr, nullptr, nullptr, yystack_[1].value.as < shared_ptr<ExpressionTree> > (), NONE); cout << "OBRACE constant_expression CBRACE REDUCE to direct_abstract_declarator" << endl; }
+                                                                   { yylhs.value.as < shared_ptr<DirectAbstractDeclarator> > () = createDirectAbstractDeclarator(nullptr, nullptr, nullptr, yystack_[1].value.as < shared_ptr<ExpressionTree> > (), NONE); /*cout << "OBRACE constant_expression CBRACE REDUCE to direct_abstract_declarator" << endl;*/ }
 #line 2903 "parser.cpp"
     break;
 
   case 171: // direct_abstract_declarator: "(" parameter_type_list ")"
 #line 575 "ansic.y"
-                                                                   { yylhs.value.as < shared_ptr<DirectAbstractDeclarator> > () = createDirectAbstractDeclarator(nullptr, nullptr, yystack_[1].value.as < shared_ptr<ParameterTypeList> > (), nullptr, FUNCTION); cout << "OPAREN parameter_type_list CPAREN REDUCE to direct_abstract_declarator" << endl; }
+                                                                   { yylhs.value.as < shared_ptr<DirectAbstractDeclarator> > () = createDirectAbstractDeclarator(nullptr, nullptr, yystack_[1].value.as < shared_ptr<ParameterTypeList> > (), nullptr, FUNCTION); /*cout << "OPAREN parameter_type_list CPAREN REDUCE to direct_abstract_declarator" << endl;*/ }
 #line 2909 "parser.cpp"
     break;
 
   case 172: // direct_abstract_declarator: direct_abstract_declarator "[" "]"
 #line 576 "ansic.y"
-                                                                   { yylhs.value.as < shared_ptr<DirectAbstractDeclarator> > () = createDirectAbstractDeclarator(yystack_[2].value.as < shared_ptr<DirectAbstractDeclarator> > (), nullptr, nullptr, nullptr, ARRAY); cout << "direct_abstract_declarator OBRACE CBRACE REDUCE to direct_abstract_declarator" << endl; }
+                                                                   { yylhs.value.as < shared_ptr<DirectAbstractDeclarator> > () = createDirectAbstractDeclarator(yystack_[2].value.as < shared_ptr<DirectAbstractDeclarator> > (), nullptr, nullptr, nullptr, ARRAY); /*cout << "direct_abstract_declarator OBRACE CBRACE REDUCE to direct_abstract_declarator" << endl;*/ }
 #line 2915 "parser.cpp"
     break;
 
   case 173: // direct_abstract_declarator: direct_abstract_declarator "(" ")"
 #line 577 "ansic.y"
-                                                                   { yylhs.value.as < shared_ptr<DirectAbstractDeclarator> > () = createDirectAbstractDeclarator(yystack_[2].value.as < shared_ptr<DirectAbstractDeclarator> > (), nullptr, nullptr, nullptr, FUNCTION); cout << "direct_abstract_declarator OPAREN CPAREN REDUCE to direct_abstract_declarator" << endl; }
+                                                                   { yylhs.value.as < shared_ptr<DirectAbstractDeclarator> > () = createDirectAbstractDeclarator(yystack_[2].value.as < shared_ptr<DirectAbstractDeclarator> > (), nullptr, nullptr, nullptr, FUNCTION); /*cout << "direct_abstract_declarator OPAREN CPAREN REDUCE to direct_abstract_declarator" << endl;*/ }
 #line 2921 "parser.cpp"
     break;
 
   case 174: // direct_abstract_declarator: direct_abstract_declarator "[" constant_expression "]"
 #line 578 "ansic.y"
-                                                                   { yylhs.value.as < shared_ptr<DirectAbstractDeclarator> > () = createDirectAbstractDeclarator(yystack_[3].value.as < shared_ptr<DirectAbstractDeclarator> > (), nullptr, nullptr, yystack_[1].value.as < shared_ptr<ExpressionTree> > (), ARRAY); cout << "direct_abstract_declarator OBRACE constant_expression CBRACE REDUCE to direct_abstract_declarator" << endl; }
+                                                                   { yylhs.value.as < shared_ptr<DirectAbstractDeclarator> > () = createDirectAbstractDeclarator(yystack_[3].value.as < shared_ptr<DirectAbstractDeclarator> > (), nullptr, nullptr, yystack_[1].value.as < shared_ptr<ExpressionTree> > (), ARRAY); /*cout << "direct_abstract_declarator OBRACE constant_expression CBRACE REDUCE to direct_abstract_declarator" << endl;*/ }
 #line 2927 "parser.cpp"
     break;
 
   case 175: // direct_abstract_declarator: direct_abstract_declarator "(" parameter_type_list ")"
 #line 579 "ansic.y"
-                                                                   { yylhs.value.as < shared_ptr<DirectAbstractDeclarator> > () = createDirectAbstractDeclarator(yystack_[3].value.as < shared_ptr<DirectAbstractDeclarator> > (), nullptr, yystack_[1].value.as < shared_ptr<ParameterTypeList> > (), nullptr, FUNCTION); cout << "direct_abstract_declarator OPAREN parameter_type_list CPAREN REDUCE to direct_abstract_declarator" << endl; }
+                                                                   { yylhs.value.as < shared_ptr<DirectAbstractDeclarator> > () = createDirectAbstractDeclarator(yystack_[3].value.as < shared_ptr<DirectAbstractDeclarator> > (), nullptr, yystack_[1].value.as < shared_ptr<ParameterTypeList> > (), nullptr, FUNCTION); /*cout << "direct_abstract_declarator OPAREN parameter_type_list CPAREN REDUCE to direct_abstract_declarator" << endl;*/ }
 #line 2933 "parser.cpp"
     break;
 
   case 176: // initializer: assignment_expression
 #line 583 "ansic.y"
-                                           { yylhs.value.as < shared_ptr<Initializer> > () = make_shared<Initializer>(yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); cout << "assignment_expression REDUCE to initializer" << endl; }
+                                           { yylhs.value.as < shared_ptr<Initializer> > () = make_shared<Initializer>(yystack_[0].value.as < shared_ptr<ExpressionTree> > ()); /*cout << "assignment_expression REDUCE to initializer" << endl;*/ }
 #line 2939 "parser.cpp"
     break;
 
   case 177: // initializer: "{" initializer_list "}"
 #line 584 "ansic.y"
-                                           { yylhs.value.as < shared_ptr<Initializer> > () = make_shared<Initializer>(yystack_[1].value.as < shared_ptr<vector<shared_ptr<Initializer>>> > ()); cout << "OCURLY initializer_list CCURLY REDUCE to initializer" << endl; }
+                                           { yylhs.value.as < shared_ptr<Initializer> > () = make_shared<Initializer>(yystack_[1].value.as < shared_ptr<vector<shared_ptr<Initializer>>> > ()); /*cout << "OCURLY initializer_list CCURLY REDUCE to initializer" << endl;*/ }
 #line 2945 "parser.cpp"
     break;
 
   case 178: // initializer: "{" initializer_list "," "}"
 #line 585 "ansic.y"
-                                           { yylhs.value.as < shared_ptr<Initializer> > () = make_shared<Initializer>(yystack_[2].value.as < shared_ptr<vector<shared_ptr<Initializer>>> > ()); cout << "OCURLY initializer_list COMMA CCURLY REDUCE to initializer" << endl; }
+                                           { yylhs.value.as < shared_ptr<Initializer> > () = make_shared<Initializer>(yystack_[2].value.as < shared_ptr<vector<shared_ptr<Initializer>>> > ()); /*cout << "OCURLY initializer_list COMMA CCURLY REDUCE to initializer" << endl;*/ }
 #line 2951 "parser.cpp"
     break;
 
   case 179: // initializer_list: initializer
 #line 589 "ansic.y"
-                                          { yylhs.value.as < shared_ptr<vector<shared_ptr<Initializer>>> > () = createInitializerList(yystack_[0].value.as < shared_ptr<Initializer> > (),nullptr); cout << "initializer REDUCE to initializer_list" << endl; }
+                                          { yylhs.value.as < shared_ptr<vector<shared_ptr<Initializer>>> > () = createInitializerList(yystack_[0].value.as < shared_ptr<Initializer> > (),nullptr); /*cout << "initializer REDUCE to initializer_list" << endl;*/ }
 #line 2957 "parser.cpp"
     break;
 
   case 180: // initializer_list: initializer_list "," initializer
 #line 590 "ansic.y"
-                                          { yylhs.value.as < shared_ptr<vector<shared_ptr<Initializer>>> > () = createInitializerList(yystack_[0].value.as < shared_ptr<Initializer> > (),yystack_[2].value.as < shared_ptr<vector<shared_ptr<Initializer>>> > ()); cout << "initializer_list COMMA initializer REDUCE to initializer_list" << endl; }
+                                          { yylhs.value.as < shared_ptr<vector<shared_ptr<Initializer>>> > () = createInitializerList(yystack_[0].value.as < shared_ptr<Initializer> > (),yystack_[2].value.as < shared_ptr<vector<shared_ptr<Initializer>>> > ()); /*cout << "initializer_list COMMA initializer REDUCE to initializer_list" << endl;*/ }
 #line 2963 "parser.cpp"
     break;
 
   case 181: // statement: labeled_statement
 #line 594 "ansic.y"
-                           { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<Statement>(labeled_statement,yystack_[0].value.as < shared_ptr<LabeledStatement> > ()); cout << "labeled_statement REDUCE to statement" << endl; }
+                           { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<Statement>(labeled_statement,yystack_[0].value.as < shared_ptr<LabeledStatement> > ()); /*cout << "labeled_statement REDUCE to statement" << endl;*/ }
 #line 2969 "parser.cpp"
     break;
 
   case 182: // statement: compound_statement
 #line 595 "ansic.y"
-                           { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<Statement>(compound_statement,yystack_[0].value.as < shared_ptr<BaseStatement> > ()); cout << "compound_statement REDUCE to statement" << endl; }
+                           { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<Statement>(compound_statement,yystack_[0].value.as < shared_ptr<BaseStatement> > ()); /*cout << "compound_statement REDUCE to statement" << endl;*/ }
 #line 2975 "parser.cpp"
     break;
 
   case 183: // statement: expression_statement
 #line 596 "ansic.y"
-                           { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<Statement>(expression_statement,yystack_[0].value.as < shared_ptr<BaseStatement> > ()); cout << "expression_statement REDUCE to statement" << endl; }
+                           { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<Statement>(expression_statement,yystack_[0].value.as < shared_ptr<BaseStatement> > ()); /*cout << "expression_statement REDUCE to statement" << endl;*/ }
 #line 2981 "parser.cpp"
     break;
 
   case 184: // statement: selection_statement
 #line 597 "ansic.y"
-                           { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<Statement>(selection_statement,yystack_[0].value.as < shared_ptr<BaseStatement> > ()); cout << "selection_statement REDUCE to statement" << endl; }
+                           { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<Statement>(selection_statement,yystack_[0].value.as < shared_ptr<BaseStatement> > ()); /*cout << "selection_statement REDUCE to statement" << endl;*/ }
 #line 2987 "parser.cpp"
     break;
 
   case 185: // statement: iteration_statement
 #line 598 "ansic.y"
-                           { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<Statement>(iteration_statement,yystack_[0].value.as < shared_ptr<BaseStatement> > ()); cout << "iteration_statement REDUCE to statement" << endl; }
+                           { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<Statement>(iteration_statement,yystack_[0].value.as < shared_ptr<BaseStatement> > ()); /*cout << "iteration_statement REDUCE to statement" << endl;*/ }
 #line 2993 "parser.cpp"
     break;
 
   case 186: // statement: jump_statement
 #line 599 "ansic.y"
-                           { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<Statement>(jump_statement,yystack_[0].value.as < shared_ptr<BaseStatement> > ()); cout << "jump_statement REDUCE to statement" << endl; }
+                           { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<Statement>(jump_statement,yystack_[0].value.as < shared_ptr<BaseStatement> > ()); /*cout << "jump_statement REDUCE to statement" << endl;*/ }
 #line 2999 "parser.cpp"
     break;
 
   case 187: // labeled_statement: "identifier" ":" statement
 #line 603 "ansic.y"
-                                               { yylhs.value.as < shared_ptr<LabeledStatement> > () = make_shared<LabeledStatement>(yystack_[2].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<BaseStatement> > ()); cout << "IDENTIFIER COLON statement REDUCE to label_statement" << endl; }
+                                               { yylhs.value.as < shared_ptr<LabeledStatement> > () = make_shared<LabeledStatement>(yystack_[2].value.as < shared_ptr<CToken> > (),yystack_[0].value.as < shared_ptr<BaseStatement> > ()); /*cout << "IDENTIFIER COLON statement REDUCE to label_statement" << endl;*/ }
 #line 3005 "parser.cpp"
     break;
 
   case 188: // labeled_statement: "case" constant_expression ":" statement
 #line 604 "ansic.y"
-                                               { yylhs.value.as < shared_ptr<LabeledStatement> > () = make_shared<LabeledStatement>(CASE,yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[0].value.as < shared_ptr<BaseStatement> > ()); cout << "CASE constant_expression COLON statement REDUCE to label_statement" << endl; }
+                                               { yylhs.value.as < shared_ptr<LabeledStatement> > () = make_shared<LabeledStatement>(CASE,yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[0].value.as < shared_ptr<BaseStatement> > ()); /*cout << "CASE constant_expression COLON statement REDUCE to label_statement" << endl;*/ }
 #line 3011 "parser.cpp"
     break;
 
   case 189: // labeled_statement: "default" ":" statement
 #line 605 "ansic.y"
-                                               { yylhs.value.as < shared_ptr<LabeledStatement> > () = make_shared<LabeledStatement>(DEFAULT,yystack_[0].value.as < shared_ptr<BaseStatement> > ()); cout << "DEFAULT COLON statement REDUCE to label_statement" << endl; }
+                                               { yylhs.value.as < shared_ptr<LabeledStatement> > () = make_shared<LabeledStatement>(DEFAULT,yystack_[0].value.as < shared_ptr<BaseStatement> > ()); /*cout << "DEFAULT COLON statement REDUCE to label_statement" << endl;*/ }
 #line 3017 "parser.cpp"
     break;
 
   case 190: // compound_statement: "{" "}"
 #line 609 "ansic.y"
-                                                    { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<CompoundStatement>(); cout << "OCURLY CCURLY REDUCE to compound_statement" << endl; }
+                                                    { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<CompoundStatement>(); /*cout << "OCURLY CCURLY REDUCE to compound_statement" << endl;*/ }
 #line 3023 "parser.cpp"
     break;
 
   case 191: // compound_statement: "{" statement_list "}"
 #line 610 "ansic.y"
-                                                    { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<CompoundStatement>(yystack_[1].value.as < shared_ptr<vector<shared_ptr<BaseStatement>>> > ()); cout << "OCURLY statement_list CCURLY REDUCE to compound_statement" << endl; }
+                                                    { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<CompoundStatement>(yystack_[1].value.as < shared_ptr<vector<shared_ptr<BaseStatement>>> > ()); /*cout << "OCURLY statement_list CCURLY REDUCE to compound_statement" << endl;*/ }
 #line 3029 "parser.cpp"
     break;
 
   case 192: // compound_statement: "{" declaration_list "}"
 #line 611 "ansic.y"
-                                                    { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<CompoundStatement>(yystack_[1].value.as < shared_ptr<vector<shared_ptr<Declaration>>> > ()); cout << "OCURLY declaration_list CCURLY REDUCE to compound_statement" << endl; }
+                                                    { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<CompoundStatement>(yystack_[1].value.as < shared_ptr<vector<shared_ptr<Declaration>>> > ()); /*cout << "OCURLY declaration_list CCURLY REDUCE to compound_statement" << endl;*/ }
 #line 3035 "parser.cpp"
     break;
 
   case 193: // compound_statement: "{" declaration_list statement_list "}"
 #line 612 "ansic.y"
-                                                    { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<CompoundStatement>(yystack_[1].value.as < shared_ptr<vector<shared_ptr<BaseStatement>>> > (),yystack_[2].value.as < shared_ptr<vector<shared_ptr<Declaration>>> > ()); cout << "OCURLY declaration_list statement_list CCURLY REDUCE to compound_statement" << endl; }
+                                                    { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<CompoundStatement>(yystack_[1].value.as < shared_ptr<vector<shared_ptr<BaseStatement>>> > (),yystack_[2].value.as < shared_ptr<vector<shared_ptr<Declaration>>> > ()); /*cout << "OCURLY declaration_list statement_list CCURLY REDUCE to compound_statement" << endl;*/ }
 #line 3041 "parser.cpp"
     break;
 
   case 194: // declaration_list: declaration
 #line 616 "ansic.y"
-                                    { yylhs.value.as < shared_ptr<vector<shared_ptr<Declaration>>> > () = createDeclarationList(yystack_[0].value.as < shared_ptr<Declaration> > (),nullptr); cout << "declaration REDUCE to declaration_list" << endl; }
+                                    { yylhs.value.as < shared_ptr<vector<shared_ptr<Declaration>>> > () = createDeclarationList(yystack_[0].value.as < shared_ptr<Declaration> > (),nullptr); /*cout << "declaration REDUCE to declaration_list" << endl;*/ }
 #line 3047 "parser.cpp"
     break;
 
   case 195: // declaration_list: declaration_list declaration
 #line 617 "ansic.y"
-                                    { yylhs.value.as < shared_ptr<vector<shared_ptr<Declaration>>> > () = createDeclarationList(yystack_[0].value.as < shared_ptr<Declaration> > (),yystack_[1].value.as < shared_ptr<vector<shared_ptr<Declaration>>> > ()); cout << "declaration_list declaration REDUCE to declaration_list" << endl; }
+                                    { yylhs.value.as < shared_ptr<vector<shared_ptr<Declaration>>> > () = createDeclarationList(yystack_[0].value.as < shared_ptr<Declaration> > (),yystack_[1].value.as < shared_ptr<vector<shared_ptr<Declaration>>> > ()); /*cout << "declaration_list declaration REDUCE to declaration_list" << endl;*/ }
 #line 3053 "parser.cpp"
     break;
 
   case 196: // statement_list: statement
 #line 621 "ansic.y"
-                                  { yylhs.value.as < shared_ptr<vector<shared_ptr<BaseStatement>>> > () = createStatementList(yystack_[0].value.as < shared_ptr<BaseStatement> > (),nullptr); cout << "statement REDUCE to statement_list" << endl; }
+                                  { yylhs.value.as < shared_ptr<vector<shared_ptr<BaseStatement>>> > () = createStatementList(yystack_[0].value.as < shared_ptr<BaseStatement> > (),nullptr); /*cout << "statement REDUCE to statement_list" << endl;*/ }
 #line 3059 "parser.cpp"
     break;
 
   case 197: // statement_list: statement_list statement
 #line 622 "ansic.y"
-                                  { yylhs.value.as < shared_ptr<vector<shared_ptr<BaseStatement>>> > () = createStatementList(yystack_[0].value.as < shared_ptr<BaseStatement> > (),yystack_[1].value.as < shared_ptr<vector<shared_ptr<BaseStatement>>> > ()); cout << "statement_list statement REDUCE to statement_list" << endl; }
+                                  { yylhs.value.as < shared_ptr<vector<shared_ptr<BaseStatement>>> > () = createStatementList(yystack_[0].value.as < shared_ptr<BaseStatement> > (),yystack_[1].value.as < shared_ptr<vector<shared_ptr<BaseStatement>>> > ()); /*cout << "statement_list statement REDUCE to statement_list" << endl;*/ }
 #line 3065 "parser.cpp"
     break;
 
   case 198: // expression_statement: ";"
 #line 626 "ansic.y"
-                            { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<ExpressionStatement>(); cout << "SEMICOLON REDUCE to expression_statement" << endl; }
+                            { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<ExpressionStatement>(); /*cout << "SEMICOLON REDUCE to expression_statement" << endl;*/ }
 #line 3071 "parser.cpp"
     break;
 
   case 199: // expression_statement: expression ";"
 #line 627 "ansic.y"
-                            { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<ExpressionStatement>(yystack_[1].value.as < shared_ptr<ExpressionTree> > ()); cout << "expression SEMICOLON REDUCE to expression_statement" << endl; }
+                            { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<ExpressionStatement>(yystack_[1].value.as < shared_ptr<ExpressionTree> > ()); /*cout << "expression SEMICOLON REDUCE to expression_statement" << endl;*/ }
 #line 3077 "parser.cpp"
     break;
 
   case 200: // selection_statement: "if" "(" expression ")" statement
 #line 631 "ansic.y"
-                                                           { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<SelectionStatement>(IF,yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[0].value.as < shared_ptr<BaseStatement> > ()); cout << "IF OPAREN expression CPAREN statement REDUCE to selection_statement" << endl; }
+                                                           { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<SelectionStatement>(IF,yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[0].value.as < shared_ptr<BaseStatement> > ()); /*cout << "IF OPAREN expression CPAREN statement REDUCE to selection_statement" << endl;*/ }
 #line 3083 "parser.cpp"
     break;
 
   case 201: // selection_statement: "if" "(" expression ")" statement "else" statement
 #line 632 "ansic.y"
-                                                           { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<SelectionStatement>(IF,yystack_[4].value.as < shared_ptr<ExpressionTree> > (),yystack_[2].value.as < shared_ptr<BaseStatement> > (),yystack_[0].value.as < shared_ptr<BaseStatement> > ()); cout << "IF OPAREN expression CPAREN statement ELSE statement REDUCE to selection_statement" << endl; }
+                                                           { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<SelectionStatement>(IF,yystack_[4].value.as < shared_ptr<ExpressionTree> > (),yystack_[2].value.as < shared_ptr<BaseStatement> > (),yystack_[0].value.as < shared_ptr<BaseStatement> > ()); /*cout << "IF OPAREN expression CPAREN statement ELSE statement REDUCE to selection_statement" << endl;*/ }
 #line 3089 "parser.cpp"
     break;
 
   case 202: // selection_statement: "switch" "(" expression ")" statement
 #line 633 "ansic.y"
-                                                           { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<SelectionStatement>(SWITCH,yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[0].value.as < shared_ptr<BaseStatement> > ()); cout << "SWITCH OPAREN expression CPAREN statement REDUCE to selection_statement" << endl; }
+                                                           { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<SelectionStatement>(SWITCH,yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[0].value.as < shared_ptr<BaseStatement> > ()); /*cout << "SWITCH OPAREN expression CPAREN statement REDUCE to selection_statement" << endl;*/ }
 #line 3095 "parser.cpp"
     break;
 
   case 203: // iteration_statement: "while" "(" expression ")" statement
 #line 637 "ansic.y"
-                                                                                       { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<IterationStatement>(WHILE,yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[0].value.as < shared_ptr<BaseStatement> > ()); cout << "WHILE OPAREN expression CPAREN statement REDUCE to iteration_statement" << endl; }
+                                                                                       { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<IterationStatement>(WHILE,yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[0].value.as < shared_ptr<BaseStatement> > ()); /*cout << "WHILE OPAREN expression CPAREN statement REDUCE to iteration_statement" << endl;*/ }
 #line 3101 "parser.cpp"
     break;
 
   case 204: // iteration_statement: "do" statement "while" "(" expression ")" ";"
 #line 638 "ansic.y"
-                                                                                       { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<IterationStatement>(DO,yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[5].value.as < shared_ptr<BaseStatement> > ()); cout << "DO statement WHILE OPAREN expression CPAREN SEMICOLON REDUCE to iteration_statement" << endl; }
+                                                                                       { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<IterationStatement>(DO,yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[5].value.as < shared_ptr<BaseStatement> > ()); /*cout << "DO statement WHILE OPAREN expression CPAREN SEMICOLON REDUCE to iteration_statement" << endl;*/ }
 #line 3107 "parser.cpp"
     break;
 
   case 205: // iteration_statement: "for" "(" expression_statement expression_statement ")" statement
 #line 639 "ansic.y"
-                                                                                       { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<IterationStatement>(FOR,yystack_[3].value.as < shared_ptr<BaseStatement> > (),yystack_[2].value.as < shared_ptr<BaseStatement> > (),yystack_[0].value.as < shared_ptr<BaseStatement> > ()); cout << "FOR OPAREN expression_statement expression_statement CPAREN statement REDUCE to iteration_statement" << endl; }
+                                                                                       { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<IterationStatement>(FOR,yystack_[3].value.as < shared_ptr<BaseStatement> > (),yystack_[2].value.as < shared_ptr<BaseStatement> > (),yystack_[0].value.as < shared_ptr<BaseStatement> > ()); /*cout << "FOR OPAREN expression_statement expression_statement CPAREN statement REDUCE to iteration_statement" << endl;*/ }
 #line 3113 "parser.cpp"
     break;
 
   case 206: // iteration_statement: "for" "(" expression_statement expression_statement expression ")" statement
 #line 640 "ansic.y"
-                                                                                       { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<IterationStatement>(FOR,yystack_[4].value.as < shared_ptr<BaseStatement> > (),yystack_[3].value.as < shared_ptr<BaseStatement> > (),yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[0].value.as < shared_ptr<BaseStatement> > ()); cout << "FOR OPAREN expression_statement expression_statement expression CPAREN statement REDUCE to iteration_statement" << endl; }
+                                                                                       { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<IterationStatement>(FOR,yystack_[4].value.as < shared_ptr<BaseStatement> > (),yystack_[3].value.as < shared_ptr<BaseStatement> > (),yystack_[2].value.as < shared_ptr<ExpressionTree> > (),yystack_[0].value.as < shared_ptr<BaseStatement> > ()); /*cout << "FOR OPAREN expression_statement expression_statement expression CPAREN statement REDUCE to iteration_statement" << endl;*/ }
 #line 3119 "parser.cpp"
     break;
 
   case 207: // jump_statement: "goto" "identifier" ";"
 #line 644 "ansic.y"
-                                  { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<JumpStatement>(GOTO,yystack_[1].value.as < shared_ptr<CToken> > ()); cout << "GOTO IDENTIFIER SEMICOLON REDUCE to jump_statement" << endl; }
+                                  { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<JumpStatement>(GOTO,yystack_[1].value.as < shared_ptr<CToken> > ()); /*cout << "GOTO IDENTIFIER SEMICOLON REDUCE to jump_statement" << endl;*/ }
 #line 3125 "parser.cpp"
     break;
 
   case 208: // jump_statement: "continue" ";"
 #line 645 "ansic.y"
-                                  { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<JumpStatement>(CONTINUE); cout << "CONTINUE SEMICOLON REDUCE to jump_statement" << endl; }
+                                  { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<JumpStatement>(CONTINUE); /*cout << "CONTINUE SEMICOLON REDUCE to jump_statement" << endl;*/ }
 #line 3131 "parser.cpp"
     break;
 
   case 209: // jump_statement: "break" ";"
 #line 646 "ansic.y"
-                                  { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<JumpStatement>(BREAK); cout << "BREAK SEMICOLON REDUCE to jump_statement" << endl; }
+                                  { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<JumpStatement>(BREAK); /*cout << "BREAK SEMICOLON REDUCE to jump_statement" << endl;*/ }
 #line 3137 "parser.cpp"
     break;
 
   case 210: // jump_statement: "return" ";"
 #line 647 "ansic.y"
-                                  { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<JumpStatement>(RETURN); cout << "RETURN SEMICOLON REDUCE to jump_statement" << endl; }
+                                  { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<JumpStatement>(RETURN); /*cout << "RETURN SEMICOLON REDUCE to jump_statement" << endl;*/ }
 #line 3143 "parser.cpp"
     break;
 
   case 211: // jump_statement: "return" expression ";"
 #line 648 "ansic.y"
-                                  { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<JumpStatement>(RETURN,yystack_[1].value.as < shared_ptr<ExpressionTree> > ()); cout << "RETURN expression SEMICOLON REDUCE to jump_statement" << endl; }
+                                  { yylhs.value.as < shared_ptr<BaseStatement> > () = make_shared<JumpStatement>(RETURN,yystack_[1].value.as < shared_ptr<ExpressionTree> > ()); /*cout << "RETURN expression SEMICOLON REDUCE to jump_statement" << endl;*/ }
 #line 3149 "parser.cpp"
     break;
 
   case 212: // translation_unit: external_declaration
 #line 652 "ansic.y"
-                                            { createTranslationUnit(yystack_[0].value.as < shared_ptr<ExternalDeclaration> > ()); cout << "external_declaration REDUCE to translation_unit" << endl << endl; }
+                                            { createTranslationUnit(yystack_[0].value.as < shared_ptr<ExternalDeclaration> > ()); /*cout << "external_declaration REDUCE to translation_unit" << endl << endl; */ }
 #line 3155 "parser.cpp"
     break;
 
   case 213: // translation_unit: translation_unit external_declaration
 #line 653 "ansic.y"
-                                            { createTranslationUnit(yystack_[0].value.as < shared_ptr<ExternalDeclaration> > ()); cout << "translation_unit external_declaration REDUCE to translation_unit" << endl << endl; }
+                                            { createTranslationUnit(yystack_[0].value.as < shared_ptr<ExternalDeclaration> > ()); /*cout << "translation_unit external_declaration REDUCE to translation_unit" << endl << endl; */ }
 #line 3161 "parser.cpp"
     break;
 
   case 214: // external_declaration: function_definition
 #line 657 "ansic.y"
-                           { yylhs.value.as < shared_ptr<ExternalDeclaration> > () = make_shared<ExternalDeclaration>(yystack_[0].value.as < shared_ptr<FunctionDefinition> > ()); cout << "function_definition REDUCE to external_declaration" << endl; }
+                           { yylhs.value.as < shared_ptr<ExternalDeclaration> > () = make_shared<ExternalDeclaration>(yystack_[0].value.as < shared_ptr<FunctionDefinition> > ()); /*cout << "function_definition REDUCE to external_declaration" << endl;*/ }
 #line 3167 "parser.cpp"
     break;
 
   case 215: // external_declaration: declaration
 #line 658 "ansic.y"
-                           { yylhs.value.as < shared_ptr<ExternalDeclaration> > () = make_shared<ExternalDeclaration>(yystack_[0].value.as < shared_ptr<Declaration> > ()); cout << "declaration REDUCE to external_declaration" << endl; }
+                           { yylhs.value.as < shared_ptr<ExternalDeclaration> > () = make_shared<ExternalDeclaration>(yystack_[0].value.as < shared_ptr<Declaration> > ()); /*cout << "declaration REDUCE to external_declaration" << endl;*/ }
 #line 3173 "parser.cpp"
     break;
 
   case 216: // function_definition: declaration_specifiers declarator declaration_list compound_statement
 #line 662 "ansic.y"
-                                                                            { yylhs.value.as < shared_ptr<FunctionDefinition> > () = make_shared<FunctionDefinition>(yystack_[3].value.as < shared_ptr<DeclarationSpecifiers> > (),yystack_[2].value.as < shared_ptr<Declarator> > (),yystack_[1].value.as < shared_ptr<vector<shared_ptr<Declaration>>> > (),yystack_[0].value.as < shared_ptr<BaseStatement> > ()); cout << "declaration_specifiers declarator declaration_list compound_statement REDUCE to function_definition" << endl; }
+                                                                            { yylhs.value.as < shared_ptr<FunctionDefinition> > () = make_shared<FunctionDefinition>(yystack_[3].value.as < shared_ptr<DeclarationSpecifiers> > (),yystack_[2].value.as < shared_ptr<Declarator> > (),yystack_[1].value.as < shared_ptr<vector<shared_ptr<Declaration>>> > (),yystack_[0].value.as < shared_ptr<BaseStatement> > ()); /*cout << "declaration_specifiers declarator declaration_list compound_statement REDUCE to function_definition" << endl;*/ }
 #line 3179 "parser.cpp"
     break;
 
   case 217: // function_definition: declaration_specifiers declarator compound_statement
 #line 663 "ansic.y"
-                                                                            { yylhs.value.as < shared_ptr<FunctionDefinition> > () = make_shared<FunctionDefinition>(yystack_[2].value.as < shared_ptr<DeclarationSpecifiers> > (),yystack_[1].value.as < shared_ptr<Declarator> > (),yystack_[0].value.as < shared_ptr<BaseStatement> > ()); cout << "declaration_specifiers declarator compound_statement REDUCE to function_definition" << endl; }
+                                                                            { yylhs.value.as < shared_ptr<FunctionDefinition> > () = make_shared<FunctionDefinition>(yystack_[2].value.as < shared_ptr<DeclarationSpecifiers> > (),yystack_[1].value.as < shared_ptr<Declarator> > (),yystack_[0].value.as < shared_ptr<BaseStatement> > ()); /*cout << "declaration_specifiers declarator compound_statement REDUCE to function_definition" << endl;*/ }
 #line 3185 "parser.cpp"
     break;
 
   case 218: // function_definition: declarator declaration_list compound_statement
 #line 664 "ansic.y"
-                                                                            { yylhs.value.as < shared_ptr<FunctionDefinition> > () = make_shared<FunctionDefinition>(yystack_[2].value.as < shared_ptr<Declarator> > (),yystack_[1].value.as < shared_ptr<vector<shared_ptr<Declaration>>> > (),yystack_[0].value.as < shared_ptr<BaseStatement> > ()); cout << "declarator declaration_list compound_statement REDUCE to function_definition" << endl; }
+                                                                            { yylhs.value.as < shared_ptr<FunctionDefinition> > () = make_shared<FunctionDefinition>(yystack_[2].value.as < shared_ptr<Declarator> > (),yystack_[1].value.as < shared_ptr<vector<shared_ptr<Declaration>>> > (),yystack_[0].value.as < shared_ptr<BaseStatement> > ()); /*cout << "declarator declaration_list compound_statement REDUCE to function_definition" << endl;*/ }
 #line 3191 "parser.cpp"
     break;
 
   case 219: // function_definition: declarator compound_statement
 #line 665 "ansic.y"
-                                                                            { yylhs.value.as < shared_ptr<FunctionDefinition> > () = make_shared<FunctionDefinition>(yystack_[1].value.as < shared_ptr<Declarator> > (),yystack_[0].value.as < shared_ptr<BaseStatement> > ()); cout << "declarator compound_statement REDUCE to function_definition" << endl; }
+                                                                            { yylhs.value.as < shared_ptr<FunctionDefinition> > () = make_shared<FunctionDefinition>(yystack_[1].value.as < shared_ptr<Declarator> > (),yystack_[0].value.as < shared_ptr<BaseStatement> > ()); /*cout << "declarator compound_statement REDUCE to function_definition" << endl;*/ }
 #line 3197 "parser.cpp"
     break;
 
