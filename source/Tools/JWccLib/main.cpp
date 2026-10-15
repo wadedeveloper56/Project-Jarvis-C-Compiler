@@ -134,12 +134,12 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		debug_printf("Parse starting");
+		cout << "Compiling starting" << endl;
 		compiler = make_shared<Compiler>();
-		compiler->compile(in, out, exitcode, infiles->filename[0]);
-		if (exitcode == 0)
+		bool compileResult = compiler->compile(in, out, infiles->filename[0]);
+		if (!compileResult)
 		{
-			cout << "Parse successful" << endl;
+			cout << "Compilation successful" << endl;
 		}
 		else
 		{

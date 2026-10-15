@@ -20,8 +20,11 @@ namespace WadeSpace
 	public:
 		Compiler();
 		virtual ~Compiler() = default;
-		void compileFile(istream& inStr, ostream& out, int& exitcode);
-		void compile(istream& in, ostream& out, int& exitcode, const string& filename);
+		bool compileFile(istream& inStr, ostream& out);
+		bool StartChildProcessAndWait(char*  commandLine);
+		bool StartPreProcessor(char  *filename, const char* name);
+		bool compile(istream& in, ostream& out, const string& filename);
+
 		[[nodiscard]] shared_ptr<ProgramData> getProgramData() const { return programData; }
 		[[nodiscard]] shared_ptr<map<string, shared_ptr<DeclarationSpecifiersNode>>> getTypedefList() const { return typedefList; }
 		[[nodiscard]] shared_ptr<map<string, shared_ptr<StructOrUnionSpecifier>>> getStructList() const { return structList; }
