@@ -1,15 +1,15 @@
 PEDUMP - 16/32/64 bit  OMF/COFF EXE/OBJ/LIB file dumper v1.0 (C) Copyright 2025-2026 Christopher D. Wade.
 All Rights Reserved
 Dump of file test2_64.obj
-File Size 288 bytes
+File Size 376 bytes
 File Type: 64-bit COFF OBJECT
 
 FILE HEADER VALUES
               8664 Machine (x64)
                  3 (3) Number of Sections
-          6AD00DDD TimeDateStamp ->  n/a
-                8C PointerToSymbolTable
-                 8 (8) NumberOfSymbols
+          6AD0E939 TimeDateStamp ->  n/a
+                AE PointerToSymbolTable
+                 B (11) NumberOfSymbols
                  0 (0) SizeOfOptionalHeader
                  0 Flags
 
@@ -18,8 +18,8 @@ SECTION HEADER #0 (0)
    .text name
        0 physical address
        0 virtual address
-       0 (0) size of raw data
-       0 file pointer to raw data (00000000 to FFFFFFFF)
+      1E (30) size of raw data
+      8C file pointer to raw data (0000008C to 000000A9)
        0 file pointer to relocation table
        0 file pointer to line numbers
        0 number of relocations
@@ -31,14 +31,30 @@ SECTION HEADER #0 (0)
          Executable
          Readable
 
+RAW DATA #0 (0)
+RAW DATA #0 (0) - 30 bytes
+0x0:	push	rbp
+0x1:	mov	rbp, rsp
+0x4:	sub	rsp, 8
+0x8:	leave	
+0x9:	ret	
+0xa:	push	rbp
+0xb:	mov	rbp, rsp
+0xe:	sub	rsp, 8
+0x12:	leave	
+0x13:	ret	
+0x14:	push	rbp
+0x15:	mov	rbp, rsp
+0x18:	sub	rsp, 8
+0x1c:	leave	
 
 
 SECTION HEADER #1 (1)
    .data name
        0 physical address
        0 virtual address
-       0 (0) size of raw data
-       0 file pointer to raw data (00000000 to FFFFFFFF)
+       4 (4) size of raw data
+      AA file pointer to raw data (000000AA to 000000AD)
        0 file pointer to relocation table
        0 file pointer to line numbers
        0 number of relocations
@@ -50,14 +66,16 @@ C0500040 flags
          Readable
          Writeable
 
+RAW DATA #1 (1)
+00000000  05 00 00 00                                       ....
 
 
 SECTION HEADER #2 (2)
     .bss name
        0 physical address
        0 virtual address
-       0 (0) size of raw data
-       0 file pointer to raw data (00000000 to FFFFFFFF)
+       8 (8) size of raw data
+       0 file pointer to raw data (00000000 to 00000007)
        0 file pointer to relocation table
        0 file pointer to line numbers
        0 number of relocations
@@ -71,16 +89,19 @@ C0500080 flags
 
 
 
-Symbol Table - 8 entries  (* = auxillary symbol)
+Symbol Table - 11 entries  (* = auxillary symbol)
 Indx Sectn   Value   Type  Storage Name
 ---- ----- -------- ----- -------  --------
 0000 DEBUG 00000000  0000 FILE     .file
      * test2_64.asm
 0002     1 00000000  0000 STATIC   .text
-     * Section: 0000  Len: 00000  Relocs: 0000  LineNums: 0000 checksum:00000000
+     * Section: 0000  Len: 0001E  Relocs: 0000  LineNums: 0000 checksum:00000000
 0004     2 00000000  0000 STATIC   .data
-     * Section: 0000  Len: 00000  Relocs: 0000  LineNums: 0000 checksum:00000000
+     * Section: 0000  Len: 00004  Relocs: 0000  LineNums: 0000 checksum:00000000
 0006     3 00000000  0000 STATIC   .bss
-     * Section: 0000  Len: 00000  Relocs: 0000  LineNums: 0000 checksum:00000000
+     * Section: 0000  Len: 00008  Relocs: 0000  LineNums: 0000 checksum:00000000
+0008     1 00000000  0020 EXTERNAL __func1
+0009     1 0000000A  0020 EXTERNAL __func2
+000A     1 00000014  0020 EXTERNAL __func3
 
 String Table Size = 0x4 (4) bytes 0 entries

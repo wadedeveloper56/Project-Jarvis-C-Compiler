@@ -15,18 +15,54 @@ test2_16.asm
                                 .data
 00000000                    *   _DATA segment
                             *   assume cs:ERROR
+00000000  05000000              _x SDWORD 5
 00000000                        .data?
-                            *   _DATA ends
+00000004                    *   _DATA ends
 00000000                    *   _BSS segment WORD  PUBLIC 'BSS'
                             *   assume cs:ERROR
                             *   DGROUP group _BSS
+00000000  00000000              _u SDWORD  ?
+00000004  00000000              _m SDWORD  ?
 
 00000000                        .code
-                            *   _BSS ends
+00000008                    *   _BSS ends
 00000000                    *   _TEXT segment
                             *   assume cs:_TEXT
+                                _func1 PROTO C _a:SWORD , _b:SWORD ;
+                                _func2 PROTO C _a:SWORD , _b:SWORD ;
+                                _func3 PROTO C;
+
+00000000                        _func1 PROC C, _a:SWORD , _b:SWORD 
+                                	LOCAL _c:SWORD
+00000000  55                *   push bp
+00000001  8BEC              *   mov bp, sp
+00000003  83EC02            *   sub sp, 2
+00000006                        	ret
+00000006  C9                *   leave
+00000007  C3                *   retn 
+00000008                        _func1 endp
+
+00000008                        _func2 PROC C, _a:SWORD , _b:SWORD 
+                                	LOCAL _c:SWORD
+00000008  55                *   push bp
+00000009  8BEC              *   mov bp, sp
+0000000B  83EC02            *   sub sp, 2
+0000000E                        	ret
+0000000E  C9                *   leave
+0000000F  C3                *   retn 
+00000010                        _func2 endp
+
+00000010                        _func3 PROC C
+                                	LOCAL _a:SWORD, _b:SWORD
+00000010  55                *   push bp
+00000011  8BEC              *   mov bp, sp
+00000013  83EC04            *   sub sp, 4
+00000016                        	ret
+00000016  C9                *   leave
+00000017  C3                *   retn
+00000018                        _func3 endp
                                 end
-00000000                    *   _TEXT ends
+00000018                    *   _TEXT ends
 
 
 Macros:
@@ -44,10 +80,27 @@ Segments and Groups:
 
                 N a m e                 Size     Length   Align   Combine Class
 
-_TEXT  . . . . . . . . . . . . .        16 Bit   0000     Word    Public  'CODE'
+_TEXT  . . . . . . . . . . . . .        16 Bit   0018     Word    Public  'CODE'
 DGROUP . . . . . . . . . . . . .        GROUP
-_DATA  . . . . . . . . . . . . .        16 Bit   0000     Word    Public  'DATA'
-_BSS . . . . . . . . . . . . . .        16 Bit   0000     Word    Public  'BSS'
+_DATA  . . . . . . . . . . . . .        16 Bit   0004     Word    Public  'DATA'
+_BSS . . . . . . . . . . . . . .        16 Bit   0008     Word    Public  'BSS'
+
+
+Procedures, parameters and locals:
+
+                N a m e                 Type     Value    Segment  Length
+
+_func1 . . . . . . . . . . . . .        P Near   0000     _TEXT    0008 Public   C
+  _a . . . . . . . . . . . . . .        Word              bp + 0004
+  _b . . . . . . . . . . . . . .        Word              bp + 0006
+  _c . . . . . . . . . . . . . .        Word              bp - 0002
+_func2 . . . . . . . . . . . . .        P Near   0008     _TEXT    0008 Public   C
+  _a . . . . . . . . . . . . . .        Word              bp + 0004
+  _b . . . . . . . . . . . . . .        Word              bp + 0006
+  _c . . . . . . . . . . . . . .        Word              bp - 0002
+_func3 . . . . . . . . . . . . .        P Near   0010     _TEXT    0008 Public   C
+  _a . . . . . . . . . . . . . .        Word              bp - 0002
+  _b . . . . . . . . . . . . . .        Word              bp - 0004
 
 
 Symbols:
@@ -58,16 +111,19 @@ Symbols:
 @Cpu . . . . . . . . . . . . . .        Number           507h 
 @CurSeg  . . . . . . . . . . . .        Text   
 @DataSize  . . . . . . . . . . .        Number             0h 
-@Date  . . . . . . . . . . . . .        Text   10/14/26
+@Date  . . . . . . . . . . . . .        Text   10/15/26
 @FileCur . . . . . . . . . . . .        Text   test2_16.asm
 @FileName  . . . . . . . . . . .        Text   TEST2_16
 @Interface . . . . . . . . . . .        Number             0h 
 @Model . . . . . . . . . . . . .        Number             2h 
-@Time  . . . . . . . . . . . . .        Text   18:18:53
+@Time  . . . . . . . . . . . . .        Text   09:54:49
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   DGROUP
 @stack . . . . . . . . . . . . .        Text   DGROUP
 __JWASM__  . . . . . . . . . . .        Number            D4h 
+_m . . . . . . . . . . . . . . .        DWord              4h _BSS 
+_u . . . . . . . . . . . . . . .        DWord              0h _BSS 
+_x . . . . . . . . . . . . . . .        DWord              0h _DATA 
 
-test2_16.asm: 11 lines, 2 passes, 0 ms, 0 warnings, 0 errors
+test2_16.asm: 32 lines, 2 passes, 1 ms, 0 warnings, 0 errors
