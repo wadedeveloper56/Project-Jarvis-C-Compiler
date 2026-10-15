@@ -20,7 +20,7 @@ void createTranslationUnit(shared_ptr<ExternalDeclaration> externalDeclaration);
 shared_ptr<vector<shared_ptr<BaseStatement>>> createStatementList(shared_ptr<BaseStatement> statement, shared_ptr<vector<shared_ptr<BaseStatement>>> list);
 shared_ptr<vector<shared_ptr<Initializer>>> createInitializerList(shared_ptr<Initializer> initializer, shared_ptr<vector<shared_ptr<Initializer>>> list);
 shared_ptr<DirectAbstractDeclarator> createDirectAbstractDeclarator(shared_ptr<AbstractDeclarator> abstractDeclarator, shared_ptr<vector<shared_ptr<DirectAbstractDeclaratorNode>>> list);
-shared_ptr<DirectAbstractDeclarator> createDirectAbstractDeclarator(shared_ptr<DirectAbstractDeclarator> dad, shared_ptr<AbstractDeclarator> abstractDeclarator, shared_ptr<ParameterTypeList> parameterTypeList, shared_ptr<ExpressionTree> constantExpression, TokenType type);
+shared_ptr<DirectAbstractDeclarator> createDirectAbstractDeclarator(shared_ptr<DirectAbstractDeclarator> dad, shared_ptr<AbstractDeclarator> abstractDeclarator, shared_ptr<ParameterTypeList> parameterTypeList, shared_ptr<ExpressionTree> constantExpression, WadeSpace::TokenType type);
 shared_ptr<vector<shared_ptr<CToken>>> createIdentifierList(const shared_ptr<CToken> identifier, shared_ptr<vector<shared_ptr<CToken>>> list);
 shared_ptr<vector<shared_ptr<ParameterDeclaration>>> createParameterList(shared_ptr<ParameterDeclaration> value1, shared_ptr<vector<shared_ptr<ParameterDeclaration>>> list);
 shared_ptr<vector<shared_ptr<TypeQualifier>>> createTypeQualifierList(shared_ptr<TypeQualifier> value1, shared_ptr<vector<shared_ptr<TypeQualifier>>> list);
@@ -48,7 +48,7 @@ shared_ptr<ExpressionTree> createExpression(
 	shared_ptr<CToken> op,
 	shared_ptr<ExpressionTree> right
 );
-shared_ptr<Constant> createConstant(const shared_ptr<CToken> iConst, const shared_ptr<CToken> fConst, const shared_ptr<CToken> strConst, const optional<TokenType>& type);
+shared_ptr<Constant> createConstant(const shared_ptr<CToken> iConst, const shared_ptr<CToken> fConst, const shared_ptr<CToken> strConst, const std::optional<WadeSpace::TokenType>& type);
 shared_ptr<Declarator> createDeclarator(shared_ptr<Pointer> pointer, shared_ptr<DirectDeclarator> directDeclarator);
 shared_ptr<DirectDeclarator> createDirectDeclarator(shared_ptr<CToken> identifier, shared_ptr<CToken> token1, shared_ptr<CToken> token2,
 	shared_ptr<Declarator> declarator,

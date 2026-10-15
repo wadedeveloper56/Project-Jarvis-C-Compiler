@@ -30,10 +30,9 @@ namespace JWccTest
 		{
 			istringstream in("int add(int a, int b) { return a + b; }");
 			ostringstream out;
-			int exitcode = 0;
 			compiler = make_shared<Compiler>();
-			compiler->compileFile(in, out, exitcode);
-			Assert::AreEqual(0, exitcode);
+			bool exitcode = compiler->compileFile(in, out);
+			Assert::AreEqual(false, exitcode);
 			string s = out.str();
 			Assert::IsTrue(s.find("_add PROC") != string::npos || s.find("_add PROC C") != string::npos);
 		}
@@ -42,10 +41,9 @@ namespace JWccTest
 		{
 			istringstream in("int bad() { return 3.14; }");
 			ostringstream out;
-			int exitcode = 0;
 			compiler = make_shared<Compiler>();
-			compiler->compileFile(in, out, exitcode);
-			Assert::AreEqual(0, exitcode);
+			bool exitcode = compiler->compileFile(in, out);
+			Assert::AreEqual(false, exitcode);
 			string s = out.str();
 			//Assert::IsTrue(s.find("E") != string::npos || s.find("error") != string::npos);
 		}

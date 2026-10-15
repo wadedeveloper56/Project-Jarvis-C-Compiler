@@ -100,13 +100,13 @@ Symbols:
 @Cpu . . . . . . . . . . . . . .        Number           D5Fh 
 @CurSeg  . . . . . . . . . . . .        Text   
 @DataSize  . . . . . . . . . . .        Number             0h 
-@Date  . . . . . . . . . . . . .        Text   10/14/26
+@Date  . . . . . . . . . . . . .        Text   10/15/26
 @FileCur . . . . . . . . . . . .        Text   c064.asm
 @FileName  . . . . . . . . . . .        Text   C064
 @Interface . . . . . . . . . . .        Number             7h 
 @Model . . . . . . . . . . . . .        Number             7h 
 @ReservedStack . . . . . . . . .        Number             0h 
-@Time  . . . . . . . . . . . . .        Text   12:18:03
+@Time  . . . . . . . . . . . . .        Text   09:54:47
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT

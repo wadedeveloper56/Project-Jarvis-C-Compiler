@@ -5,7 +5,7 @@ option casemap : none
 
 
 .data
-_x SDWORD 3
+_x SDWORD 5
 .data?
 _u SDWORD  ?
 _m SDWORD  ?

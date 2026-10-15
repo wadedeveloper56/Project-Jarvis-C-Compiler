@@ -25,9 +25,6 @@
     <ProjectReference Include="..\JWccLib\JWccLib.vcxproj">
       <Project>{55e11707-51c1-4126-9ce7-1d3ef7e9d7f0}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\PreProcessor2\PreProcessor2.vcxproj">
-      <Project>{ec832e55-a126-40da-b115-fc2973ae0f73}</Project>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\JWccLib\main.cpp" />
@@ -96,25 +93,25 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>..\..\..\bin\tools\$(Configuration)\$(Platform)\</OutDir>
     <IntDir>..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
-    <IncludePath>..\Arguments;..\PreProcessor2;..\..\..\external\flex-bison;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\JWcppLib;..\Arguments;..\..\..\external\flex-bison;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>..\..\..\bin\tools\$(Configuration)\$(Platform)\</OutDir>
     <IntDir>..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
-    <IncludePath>..\Arguments;..\PreProcessor2;..\..\..\external\flex-bison;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\JWcppLib;..\Arguments;..\..\..\external\flex-bison;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>..\..\..\bin\tools\$(Configuration)\$(Platform)\</OutDir>
     <IntDir>..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
-    <IncludePath>..\Arguments;..\PreProcessor2;..\..\..\external\flex-bison;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\JWcppLib;..\Arguments;..\..\..\external\flex-bison;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>..\..\..\bin\tools\$(Configuration)\$(Platform)\</OutDir>
     <IntDir>..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
-    <IncludePath>..\Arguments;..\PreProcessor2;..\..\..\external\flex-bison;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\JWcppLib;..\Arguments;..\..\..\external\flex-bison;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">

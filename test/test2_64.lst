@@ -14,7 +14,7 @@ test2_64.asm
                                 .data
 00000000                    *   _DATA segment
                             *   assume cs:ERROR
-00000000  03000000              _x SDWORD 3
+00000000  05000000              _x SDWORD 5
 00000000                        .data?
 00000004                    *   _DATA ends
 00000000                    *   _BSS segment PARA FLAT PUBLIC 'BSS'
@@ -109,13 +109,13 @@ Symbols:
 @Cpu . . . . . . . . . . . . . .        Number           DDFh 
 @CurSeg  . . . . . . . . . . . .        Text   
 @DataSize  . . . . . . . . . . .        Number             0h 
-@Date  . . . . . . . . . . . . .        Text   10/14/26
+@Date  . . . . . . . . . . . . .        Text   10/15/26
 @FileCur . . . . . . . . . . . .        Text   test2_64.asm
 @FileName  . . . . . . . . . . .        Text   TEST2_64
 @Interface . . . . . . . . . . .        Number             7h 
 @Model . . . . . . . . . . . . .        Number             7h 
 @ReservedStack . . . . . . . . .        Number             0h 
-@Time  . . . . . . . . . . . . .        Text   12:18:05
+@Time  . . . . . . . . . . . . .        Text   09:54:49
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT

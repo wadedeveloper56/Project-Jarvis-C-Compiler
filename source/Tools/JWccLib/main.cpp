@@ -6,8 +6,6 @@
 #include "interpreter.h"
 #include "ArgumentTable.h"
 #include "GlobalVars.h"
-//#include "simplecpp.h"
-#include "preprocessor.h"
 #include "BaseCodeGenerator.h"
 #include "MasmCodeGenerator.h"
 #include "output.h"
@@ -15,8 +13,6 @@
 
 using namespace WadeSpace;
 using namespace std;
-//using namespace simplecpp;
-using namespace WadeSpace::PreProcessor;
 
 int main(int argc, char* argv[])
 {
@@ -138,12 +134,12 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		debug_printf("Parse starting");
+		cout << "Compiling starting" << endl;
 		compiler = make_shared<Compiler>();
-		compiler->compile(in, infiles, out, exitcode);
-		if (exitcode == 0)
+		bool compileResult = compiler->compile(in, out, infiles->filename[0]);
+		if (!compileResult)
 		{
-			cout << "Parse successful" << endl;
+			cout << "Compilation successful" << endl;
 		}
 		else
 		{

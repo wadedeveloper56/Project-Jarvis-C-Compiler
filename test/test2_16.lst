@@ -15,7 +15,7 @@ test2_16.asm
                                 .data
 00000000                    *   _DATA segment
                             *   assume cs:ERROR
-00000000  03000000              _x SDWORD 3
+00000000  05000000              _x SDWORD 5
 00000000                        .data?
 00000004                    *   _DATA ends
 00000000                    *   _BSS segment WORD  PUBLIC 'BSS'
@@ -111,12 +111,12 @@ Symbols:
 @Cpu . . . . . . . . . . . . . .        Number           507h 
 @CurSeg  . . . . . . . . . . . .        Text   
 @DataSize  . . . . . . . . . . .        Number             0h 
-@Date  . . . . . . . . . . . . .        Text   10/14/26
+@Date  . . . . . . . . . . . . .        Text   10/15/26
 @FileCur . . . . . . . . . . . .        Text   test2_16.asm
 @FileName  . . . . . . . . . . .        Text   TEST2_16
 @Interface . . . . . . . . . . .        Number             0h 
 @Model . . . . . . . . . . . . .        Number             2h 
-@Time  . . . . . . . . . . . . .        Text   12:18:05
+@Time  . . . . . . . . . . . . .        Text   09:54:49
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   DGROUP
@@ -126,4 +126,4 @@ _m . . . . . . . . . . . . . . .        DWord              4h _BSS
 _u . . . . . . . . . . . . . . .        DWord              0h _BSS 
 _x . . . . . . . . . . . . . . .        DWord              0h _DATA 
 
-test2_16.asm: 32 lines, 2 passes, 0 ms, 0 warnings, 0 errors
+test2_16.asm: 32 lines, 2 passes, 1 ms, 0 warnings, 0 errors
