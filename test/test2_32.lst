@@ -1,4 +1,4 @@
-JWasm v2.12pre, Oct 14 2026
+JWasm v2.12pre, Oct 16 2026
 test2_32.asm
                                 .386
                                 .model flat, c;
@@ -35,32 +35,67 @@ test2_32.asm
 00000000  55                *   push ebp
 00000001  8BEC              *   mov ebp, esp
 00000003  83EC04            *   sub esp, 4
-00000006                        	ret
-00000006  C9                *   leave
-00000007  C3                *   retn 
-00000008                        _func1 endp
+00000006  8B4508                	mov eax, DWORD PTR _a
+00000009  50                    	push eax
+0000000A  8B450C                	mov eax, DWORD PTR _b
+0000000D  50                    	push eax
+0000000E  B805000000            	mov eax, 5
+00000013  8BD8                  	mov ebx, eax
+00000015  58                    	pop eax
+00000016  0FAFC3                	imul eax, ebx
+00000019  8BD8                  	mov ebx, eax
+0000001B  58                    	pop eax
+0000001C  03C3                  	add eax, ebx
+0000001E  8945FC                	mov DWORD PTR _c, eax
+00000021  8B45FC                	mov eax, DWORD PTR _c
+00000024  8B45FC                	mov eax, DWORD PTR _c
+00000027                        	ret
+00000027  C9                *   leave
+00000028  C3                *   retn 
+00000029                        _func1 endp
 
-00000008                        _func2 PROC C, _a:SDWORD , _b:SDWORD 
+00000029                        _func2 PROC C, _a:SDWORD , _b:SDWORD 
                                 	LOCAL _c:SDWORD
-00000008  55                *   push ebp
-00000009  8BEC              *   mov ebp, esp
-0000000B  83EC04            *   sub esp, 4
-0000000E                        	ret
-0000000E  C9                *   leave
-0000000F  C3                *   retn 
-00000010                        _func2 endp
+00000029  55                *   push ebp
+0000002A  8BEC              *   mov ebp, esp
+0000002C  83EC04            *   sub esp, 4
+0000002F  8B4508                	mov eax, DWORD PTR _a
+00000032  50                    	push eax
+00000033  8B450C                	mov eax, DWORD PTR _b
+00000036  50                    	push eax
+00000037  B803000000            	mov eax, 3
+0000003C  8BD8                  	mov ebx, eax
+0000003E  58                    	pop eax
+0000003F  99                    	cdq
+00000040  F7FB                  	idiv ebx
+00000042  8BD8                  	mov ebx, eax
+00000044  58                    	pop eax
+00000045  03C3                  	add eax, ebx
+00000047  8945FC                	mov DWORD PTR _c, eax
+0000004A  8B45FC                	mov eax, DWORD PTR _c
+0000004D  8B45FC                	mov eax, DWORD PTR _c
+00000050                        	ret
+00000050  C9                *   leave
+00000051  C3                *   retn 
+00000052                        _func2 endp
 
-00000010                        _func3 PROC C
+00000052                        _func3 PROC C
                                 	LOCAL _a:SDWORD, _b:SDWORD
-00000010  55                *   push ebp
-00000011  8BEC              *   mov ebp, esp
-00000013  83EC08            *   sub esp, 8
-00000016                        	ret
-00000016  C9                *   leave
-00000017  C3                *   retn
-00000018                        _func3 endp
+00000052  55                *   push ebp
+00000053  8BEC              *   mov ebp, esp
+00000055  83EC08            *   sub esp, 8
+00000058  8B45FC                	mov eax, DWORD PTR _a
+0000005B  50                    	push eax
+0000005C  8B45F8                	mov eax, DWORD PTR _b
+0000005F  8BD8                  	mov ebx, eax
+00000061  58                    	pop eax
+00000062  03C3                  	add eax, ebx
+00000064                        	ret
+00000064  C9                *   leave
+00000065  C3                *   retn
+00000066                        _func3 endp
                                 end
-00000018                    *   _TEXT ends
+00000066                    *   _TEXT ends
 
 
 Macros:
@@ -81,22 +116,22 @@ Segments and Groups:
 FLAT . . . . . . . . . . . . . .        GROUP
 _BSS . . . . . . . . . . . . . .        32 Bit   00000008 DWord   Public  'BSS'
 _DATA  . . . . . . . . . . . . .        32 Bit   00000004 DWord   Public  'DATA'
-_TEXT  . . . . . . . . . . . . .        32 Bit   00000018 DWord   Public  'CODE'
+_TEXT  . . . . . . . . . . . . .        32 Bit   00000066 DWord   Public  'CODE'
 
 
 Procedures, parameters and locals:
 
                 N a m e                 Type     Value    Segment  Length
 
-_func1 . . . . . . . . . . . . .        P Near   00000000 _TEXT    00000008 Public   C
+_func1 . . . . . . . . . . . . .        P Near   00000000 _TEXT    00000029 Public   C
   _a . . . . . . . . . . . . . .        DWord             ebp + 0008
   _b . . . . . . . . . . . . . .        DWord             ebp + 000C
   _c . . . . . . . . . . . . . .        DWord             ebp - 0004
-_func2 . . . . . . . . . . . . .        P Near   00000008 _TEXT    00000008 Public   C
+_func2 . . . . . . . . . . . . .        P Near   00000029 _TEXT    00000029 Public   C
   _a . . . . . . . . . . . . . .        DWord             ebp + 0008
   _b . . . . . . . . . . . . . .        DWord             ebp + 000C
   _c . . . . . . . . . . . . . .        DWord             ebp - 0004
-_func3 . . . . . . . . . . . . .        P Near   00000010 _TEXT    00000008 Public   C
+_func3 . . . . . . . . . . . . .        P Near   00000052 _TEXT    00000014 Public   C
   _a . . . . . . . . . . . . . .        DWord             ebp - 0004
   _b . . . . . . . . . . . . . .        DWord             ebp - 0008
 
@@ -109,12 +144,12 @@ Symbols:
 @Cpu . . . . . . . . . . . . . .        Number           D0Fh 
 @CurSeg  . . . . . . . . . . . .        Text   
 @DataSize  . . . . . . . . . . .        Number             0h 
-@Date  . . . . . . . . . . . . .        Text   10/15/26
+@Date  . . . . . . . . . . . . .        Text   10/16/26
 @FileCur . . . . . . . . . . . .        Text   test2_32.asm
 @FileName  . . . . . . . . . . .        Text   TEST2_32
 @Interface . . . . . . . . . . .        Number             1h 
 @Model . . . . . . . . . . . . .        Number             7h 
-@Time  . . . . . . . . . . . . .        Text   09:54:49
+@Time  . . . . . . . . . . . . .        Text   12:02:02
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT
@@ -124,4 +159,4 @@ _m . . . . . . . . . . . . . . .        DWord              4h _BSS C
 _u . . . . . . . . . . . . . . .        DWord              0h _BSS C
 _x . . . . . . . . . . . . . . .        DWord              0h _DATA C
 
-test2_32.asm: 32 lines, 2 passes, 1 ms, 0 warnings, 0 errors
+test2_32.asm: 67 lines, 2 passes, 1 ms, 0 warnings, 0 errors

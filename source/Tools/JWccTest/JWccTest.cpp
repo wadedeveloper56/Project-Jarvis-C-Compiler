@@ -37,6 +37,73 @@ namespace JWccTest
 			Assert::IsTrue(s.find("_add PROC") != string::npos || s.find("_add PROC C") != string::npos);
 		}
 
+		TEST_METHOD(Integration_Add_AssignmentExpressionGeneratesCode)
+		{
+			istringstream in("int assign(int value) { value = 42; value += 3; return value; }");
+			ostringstream out;
+			const bool previousBit16 = bit16;
+			const bool previousBit32 = bit32;
+			const bool previousBit64 = bit64;
+			bit16 = false;
+			bit32 = false;
+			bit64 = true;
+			compiler = make_shared<Compiler>();
+			bool exitcode = compiler->compileFile(in, out);
+			bit16 = previousBit16;
+			bit32 = previousBit32;
+			bit64 = previousBit64;
+			Assert::AreEqual(false, exitcode);
+			const string generated = out.str();
+			Assert::IsTrue(generated.find("mov rax, 42") != string::npos);
+			Assert::IsTrue(generated.find("mov DWORD PTR _value, eax") != string::npos);
+			Assert::IsTrue(generated.find("add rax, rbx") != string::npos);
+		}
+
+		TEST_METHOD(Integration_Sub_AssignmentExpressionGeneratesCode)
+		{
+			istringstream in("int assign(int value) { value = 42; value -= 3; return value; }");
+			ostringstream out;
+			const bool previousBit16 = bit16;
+			const bool previousBit32 = bit32;
+			const bool previousBit64 = bit64;
+			bit16 = false;
+			bit32 = false;
+			bit64 = true;
+			compiler = make_shared<Compiler>();
+			bool exitcode = compiler->compileFile(in, out);
+			bit16 = previousBit16;
+			bit32 = previousBit32;
+			bit64 = previousBit64;
+			Assert::AreEqual(false, exitcode);
+			const string generated = out.str();
+			Assert::IsTrue(generated.find("mov rax, 42") != string::npos);
+			Assert::IsTrue(generated.find("mov DWORD PTR _value, eax") != string::npos);
+			Assert::IsTrue(generated.find("sub rax, rbx") != string::npos);
+		}
+
+		TEST_METHOD(Integration_MovUsesMatchingWidthsAndSignedExtensions)
+		{
+			istringstream in("int widen(signed char signedValue, unsigned char unsignedValue) { signedValue = 1; unsignedValue = 2; signedValue += unsignedValue; return signedValue; }");
+			ostringstream out;
+			const bool previousBit16 = bit16;
+			const bool previousBit32 = bit32;
+			const bool previousBit64 = bit64;
+			bit16 = false;
+			bit32 = false;
+			bit64 = true;
+			compiler = make_shared<Compiler>();
+			bool exitcode = compiler->compileFile(in, out);
+			bit16 = previousBit16;
+			bit32 = previousBit32;
+			bit64 = previousBit64;
+			Assert::AreEqual(false, exitcode);
+			const string generated = out.str();
+			Assert::IsTrue(generated.find("mov BYTE PTR _signedValue, al") != string::npos);
+			Assert::IsTrue(generated.find("mov BYTE PTR _unsignedValue, al") != string::npos);
+			Assert::IsTrue(generated.find("movsx rax, BYTE PTR _signedValue") != string::npos);
+			Assert::IsTrue(generated.find("movzx rax, BYTE PTR _unsignedValue") != string::npos);
+		}
+
 		TEST_METHOD(Integration_SemanticErrorPreventsGeneration)
 		{
 			istringstream in("int bad() { return 3.14; }");

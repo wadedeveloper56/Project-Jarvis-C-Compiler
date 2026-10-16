@@ -24,6 +24,63 @@ Compiler::Compiler()
 	enumList = make_shared<map<string, shared_ptr<EnumSpecifier>>>();
 }
 
+shared_ptr<ProgramData> Compiler::getProgramData() const { return programData; }
+shared_ptr<map<string, shared_ptr<DeclarationSpecifiersNode>>> Compiler::getTypedefList() const { return typedefList; }
+shared_ptr<map<string, shared_ptr<StructOrUnionSpecifier>>> Compiler::getStructList() const { return structList; }
+shared_ptr<map<string, shared_ptr<FunctionDefinition>>> Compiler::getFunctionList() const { return functionList; }
+void Compiler::setProgramData(shared_ptr<ProgramData> data) { programData = data; }
+void Compiler::setTypedefList(shared_ptr<map<string, shared_ptr<DeclarationSpecifiersNode>>> list) { typedefList = list; }
+void Compiler::setStructList(shared_ptr<map<string, shared_ptr<StructOrUnionSpecifier>>> list) { structList = list; }
+void Compiler::setFunctionList(shared_ptr<map<string, shared_ptr<FunctionDefinition>>> list) { functionList = list; }
+[[nodiscard]] bool Compiler::hasProgramData() const { return programData != nullptr; }
+[[nodiscard]] bool Compiler::hasTypedefList() const { return typedefList != nullptr; }
+[[nodiscard]] bool Compiler::hasStructList() const { return structList != nullptr; }
+[[nodiscard]] bool Compiler::hasFunctionList() const { return functionList != nullptr; }
+[[nodiscard]] bool Compiler::hasTypedef(const string& name) const { return typedefList->find(name) != typedefList->end(); }
+[[nodiscard]] bool Compiler::hasFunction(const string& name) const { return functionList->find(name) != functionList->end(); }
+[[nodiscard]] bool Compiler::hasStruct(const string& name) const { return structList->find(name) != structList->end(); }
+void Compiler::addTypedef(const string& name, shared_ptr<DeclarationSpecifiersNode> declaration) { typedefList->insert({ name, declaration }); }
+void Compiler::addFunction(const string& name, shared_ptr<FunctionDefinition> function) { functionList->insert({ name, function }); }
+void Compiler::addStruct(const string& name, shared_ptr<StructOrUnionSpecifier> structSpecifier) { structList->insert({ name, structSpecifier }); }
+void Compiler::addExternalDeclaration(shared_ptr<ExternalDeclaration> externalDeclaration) { programData->addExternalDeclaration(externalDeclaration); }
+void Compiler::addEnum(const string& name, shared_ptr<EnumSpecifier> enumSpecifier) { enumList->insert({ name, enumSpecifier }); }
+shared_ptr<StructOrUnionSpecifier> Compiler::findStruct(const string& name) const
+{
+	auto it = structList->find(name);
+	if (it != structList->end())
+	{
+		return it->second;
+	}
+	return nullptr;
+}
+shared_ptr<DeclarationSpecifiersNode> Compiler::findTypedef(const string& name) const
+{
+	auto it = typedefList->find(name);
+	if (it != typedefList->end())
+	{
+		return it->second;
+	}
+	return nullptr;
+}
+shared_ptr<FunctionDefinition> Compiler::findFunction(const string& name) const
+{
+	auto it = functionList->find(name);
+	if (it != functionList->end())
+	{
+		return it->second;
+	}
+	return nullptr;
+}
+shared_ptr<EnumSpecifier> Compiler::findEnum(const string& name) const
+{
+	auto it = enumList->find(name);
+	if (it != enumList->end())
+	{
+		return it->second;
+	}
+	return nullptr;
+}
+
 bool Compiler::compileFile(istream& inStr, ostream& out)
 {
 	Interpreter i;

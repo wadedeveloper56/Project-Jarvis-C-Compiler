@@ -20,12 +20,12 @@ namespace WadeSpace
 	public:
 		string name;
 		optional<TokenType> type;
-		bool pointer;
-		unsigned long long arraySize;
+		bool pointer = false;
+		unsigned long long arraySize = 1;
 		shared_ptr<Initializer> initializer;
 		string structName;
 		shared_ptr<StructOrUnionSpecifier> suSpec;
-		bool unsign;
+		bool unsign = false;
 		shared_ptr<ParameterTypeList> plist;
 
 		VariableData() = default;

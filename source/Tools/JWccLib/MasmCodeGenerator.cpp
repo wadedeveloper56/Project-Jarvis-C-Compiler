@@ -15,50 +15,331 @@ using namespace std;
 MasmCodeGenerator::MasmCodeGenerator(shared_ptr<vector<shared_ptr<VariableData>>> variableTable, shared_ptr<vector<shared_ptr<FunctionData>>> functionTable): BaseCodeGenerator(variableTable, functionTable)
 {}
 
-// provide file-local thread_local references to avoid access to private static members
-thread_local shared_ptr<vector<shared_ptr<VariableData>>> masm_current_locals = nullptr;
-thread_local shared_ptr<vector<shared_ptr<VariableData>>> masm_current_params = nullptr;
+static thread_local shared_ptr<vector<shared_ptr<VariableData>>> masm_current_locals;
+static thread_local shared_ptr<vector<shared_ptr<VariableData>>> masm_current_params;
+static thread_local shared_ptr<vector<shared_ptr<VariableData>>> masm_current_globals;
 
-static void asmResolveIdentifier(ostream& out, shared_ptr<TreeNodeData> left, shared_ptr<TreeNodeData> right, shared_ptr<TreeNodeData> current)
+static string asmAccumulatorRegister()
 {
-	if (current == nullptr) return;
-	if (current->getType() == NT_VAR_ACCESS && current->hasIdentifier())
+	if (bit16) return "ax";
+	if (bit32) return "eax";
+	return "rax";
+}
+
+static string asmSecondaryRegister()
+{
+	if (bit16) return "bx";
+	if (bit32) return "ebx";
+	return "rbx";
+}
+
+static string asmHighRegister()
+{
+	if (bit16) return "dx";
+	if (bit32) return "edx";
+	return "rdx";
+}
+
+static size_t asmArchitectureBytes()
+{
+	if (bit16) return 2;
+	if (bit32) return 4;
+	return 8;
+}
+
+static size_t asmVariableBytes(const VariableData& variable)
+{
+	if (variable.pointer) return asmArchitectureBytes();
+	if (!variable.type) return asmArchitectureBytes();
+	switch (variable.type.value())
 	{
-		string name = current->getIdentifier()->getSymbolName();
-		// search locals first
-		if (masm_current_locals)
+	case CHAR:
+	case BOOLT:
+		return 1;
+	case SHORTT:
+		return 2;
+	case INT:
+		return bit16 ? 2 : 4;
+	case LONG:
+		return 4;
+	case LONG_LONG:
+	case DOUBLE:
+		return 8;
+	case FLOAT:
+		return 4;
+	case LONG_DOUBLE:
+		return 10;
+	default:
+		return asmArchitectureBytes();
+	}
+}
+
+static string asmMemorySize(size_t bytes)
+{
+	if (bytes <= 1) return "BYTE";
+	if (bytes <= 2) return "WORD";
+	if (bytes <= 4) return "DWORD";
+	return "QWORD";
+}
+
+static string asmRegisterForBytes(size_t bytes)
+{
+	if (bytes <= 1) return "al";
+	if (bytes <= 2) return "ax";
+	if (bytes <= 4) return "eax";
+	return "rax";
+}
+
+static string asmHighRegisterForBytes(size_t bytes)
+{
+	if (bytes <= 1) return "dl";
+	if (bytes <= 2) return "dx";
+	if (bytes <= 4) return "edx";
+	return "rdx";
+}
+
+static shared_ptr<VariableData> asmFindVariable(const string& name)
+{
+	const shared_ptr<vector<shared_ptr<VariableData>>> tables[] =
+	{
+		masm_current_locals, masm_current_params, masm_current_globals
+	};
+	for (const auto& table : tables)
+	{
+		if (!table) continue;
+		for (const auto& variable : *table)
 		{
-			for (auto &lv : *masm_current_locals)
-			{
-				if (lv->name == name)
-				{
-					if (bit16) out << "\tmov ax, " << name << endl;
-					else if (bit32) out << "\tmov eax, " << name << endl;
-					else out << "\tmov rax, " << name << endl;
-					return;
-				}
-			}
-		}
-		// then params
-		if (masm_current_params)
-		{
-			for (auto &p : *masm_current_params)
-			{
-				if (p->name == name)
-				{
-					if (bit16) out << "\tmov ax, _" << name << endl;
-					else if (bit32) out << "\tmov eax, _" << name << endl;
-					else out << "\tmov rax, _" << name << endl;
-					return;
-				}
-			}
-		}
-		// fallback to global
-		if (masm_current_locals == nullptr && masm_current_params == nullptr)
-		{
-			// fall-through, expression evaluator will handle other node types
+			if (variable && variable->name == name) return variable;
 		}
 	}
+	return nullptr;
+}
+
+static string asmExpressionVariable(const string& name)
+{
+	return "_" + name;
+}
+
+static bool asmLoadVariable(ostream& out, const string& name)
+{
+	const string operand = asmExpressionVariable(name);
+	auto variable = asmFindVariable(name);
+	if (!variable)
+	{
+		const size_t registerBytes = asmArchitectureBytes();
+		out << "\tmov " << asmAccumulatorRegister() << ", " << asmMemorySize(registerBytes) << " PTR " << operand << endl;
+		return true;
+	}
+
+	const size_t sourceBytes = asmVariableBytes(*variable);
+	const size_t registerBytes = asmArchitectureBytes();
+	const string accumulator = asmAccumulatorRegister();
+	if (sourceBytes < registerBytes)
+	{
+		const string size = asmMemorySize(sourceBytes);
+		if (bit16)
+		{
+			out << "\tmov al, BYTE PTR " << operand << endl;
+			if (variable->unsign) out << "\txor ah, ah" << endl;
+			else out << "\tcbw" << endl;
+		}
+		else if (sourceBytes == 4 && registerBytes == 8)
+		{
+			if (variable->unsign) out << "\tmov eax, DWORD PTR " << operand << endl;
+			else out << "\tmovsxd rax, DWORD PTR " << operand << endl;
+		}
+		else
+		{
+			out << "\tmov" << (variable->unsign ? "zx " : "sx ") << accumulator << ", " << size << " PTR " << operand << endl;
+		}
+	}
+	else if (sourceBytes > registerBytes)
+	{
+		out << "\tmov " << accumulator << ", " << asmMemorySize(registerBytes) << " PTR " << operand << endl;
+	}
+	else
+	{
+		out << "\tmov " << accumulator << ", " << asmMemorySize(registerBytes) << " PTR " << operand << endl;
+	}
+	return true;
+}
+
+static void asmStoreVariable(ostream& out, const string& name)
+{
+	const string operand = asmExpressionVariable(name);
+	auto variable = asmFindVariable(name);
+	if (!variable)
+	{
+		out << "\tmov " << asmMemorySize(asmArchitectureBytes()) << " PTR " << operand << ", " << asmAccumulatorRegister() << endl;
+		return;
+	}
+
+	const size_t destinationBytes = asmVariableBytes(*variable);
+	const size_t registerBytes = asmArchitectureBytes();
+	if (destinationBytes <= registerBytes)
+	{
+		out << "\tmov " << asmMemorySize(destinationBytes) << " PTR " << operand << ", "
+			<< asmRegisterForBytes(destinationBytes) << endl;
+		return;
+	}
+
+	out << "\tmov " << asmMemorySize(registerBytes) << " PTR " << operand << ", " << asmAccumulatorRegister() << endl;
+	if (variable->unsign)
+	{
+		out << "\txor " << asmHighRegister() << ", " << asmHighRegister() << endl;
+	}
+	else if (bit16)
+	{
+		out << "\tcwd" << endl;
+	}
+	else if (bit32)
+	{
+		out << "\tcdq" << endl;
+	}
+	else
+	{
+		out << "\tcqo" << endl;
+	}
+	for (size_t offset = registerBytes; offset < destinationBytes;)
+	{
+		const size_t chunkBytes = destinationBytes - offset < registerBytes ? destinationBytes - offset : registerBytes;
+		out << "\tmov " << asmMemorySize(chunkBytes) << " PTR " << operand << "+" << offset << ", "
+			<< asmHighRegisterForBytes(chunkBytes) << endl;
+		offset += chunkBytes;
+	}
+}
+
+static shared_ptr<CToken> asmExpressionIdentifier(shared_ptr<TreeNodeData> data)
+{
+	if (!data) return nullptr;
+	if (data->hasIdentifier()) return data->getIdentifier();
+	return data->hasToken3() ? data->getToken3() : nullptr;
+}
+
+static string asmOperatorText(shared_ptr<CToken> op)
+{
+	if (!op) return "";
+	string text = op->getKeywordName();
+	return text.empty() ? op->getSymbolName() : text;
+}
+
+static bool emitMasmExpression(ostream& out, shared_ptr<TreeNode> node)
+{
+	if (!node || !node->hasData()) return false;
+
+	auto data = node->getData();
+	const string accumulator = asmAccumulatorRegister();
+	const string secondary = asmSecondaryRegister();
+
+	if (data->hasConstant())
+	{
+		auto integer = data->getIConst();
+		if (!integer) return false;
+		out << "\tmov " << accumulator << ", " << integer->getIntegerConst() << endl;
+		return true;
+	}
+
+	auto identifier = asmExpressionIdentifier(data);
+	if (identifier)
+	{
+		return asmLoadVariable(out, identifier->getSymbolName());
+	}
+
+	if (data->getType() == NT_OP && data->hasOp() && data->getOp())
+	{
+		const string op = asmOperatorText(data->getOp());
+		auto left = node->getLeft();
+		auto right = node->getRight();
+		if (op == "=" || op == "+=" || op == "-=" || op == "*=" || op == "/=" || op == "%=" ||
+			op == "&=" || op == "|=" || op == "^=" || op == "<<=" || op == ">>=")
+		{
+			if (!left || !left->hasData() || !right) return false;
+			auto targetIdentifier = asmExpressionIdentifier(left->getData());
+			if (!targetIdentifier) return false;
+			const string destination = targetIdentifier->getSymbolName();
+			if (op == "=")
+			{
+				if (!emitMasmExpression(out, right)) return false;
+			}
+			else
+			{
+				if (!asmLoadVariable(out, destination)) return false;
+				out << "\tpush " << accumulator << endl;
+				if (!emitMasmExpression(out, right)) return false;
+				if (op == "<<=" || op == ">>=")
+				{
+					out << "\tmov cl, al" << endl;
+					out << "\tpop " << accumulator << endl;
+					out << "\t" << (op == "<<=" ? "shl " : "sar ") << accumulator << ", cl" << endl;
+				}
+				else
+				{
+					out << "\tmov " << secondary << ", " << accumulator << endl;
+					out << "\tpop " << accumulator << endl;
+					if (op == "+=") out << "\tadd " << accumulator << ", " << secondary << endl;
+					else if (op == "-=") out << "\tsub " << accumulator << ", " << secondary << endl;
+					else if (op == "*=") out << "\timul " << accumulator << ", " << secondary << endl;
+					else if (op == "&=") out << "\tand " << accumulator << ", " << secondary << endl;
+					else if (op == "|=") out << "\tor " << accumulator << ", " << secondary << endl;
+					else if (op == "^=") out << "\txor " << accumulator << ", " << secondary << endl;
+					else
+					{
+						if (bit16) out << "\tcwd" << endl;
+						else if (bit32) out << "\tcdq" << endl;
+						else out << "\tcqo" << endl;
+						out << "\tidiv " << secondary << endl;
+						if (op == "%=") out << "\tmov " << accumulator << ", " << asmHighRegister() << endl;
+					}
+				}
+			}
+			asmStoreVariable(out, destination);
+			return asmLoadVariable(out, destination);
+		}
+
+		if (op == ",")
+		{
+			return emitMasmExpression(out, left) && emitMasmExpression(out, right);
+		}
+
+		if (op == "+" || op == "-" || op == "*" || op == "/" || op == "%" ||
+			op == "&" || op == "|" || op == "^")
+		{
+			if (!emitMasmExpression(out, left)) return false;
+			out << "\tpush " << accumulator << endl;
+			if (!emitMasmExpression(out, right)) return false;
+			out << "\tmov " << secondary << ", " << accumulator << endl;
+			out << "\tpop " << accumulator << endl;
+			if (op == "+") out << "\tadd " << accumulator << ", " << secondary << endl;
+			else if (op == "-") out << "\tsub " << accumulator << ", " << secondary << endl;
+			else if (op == "*") out << "\timul " << accumulator << ", " << secondary << endl;
+			else if (op == "&") out << "\tand " << accumulator << ", " << secondary << endl;
+			else if (op == "|") out << "\tor " << accumulator << ", " << secondary << endl;
+			else if (op == "^") out << "\txor " << accumulator << ", " << secondary << endl;
+			else
+			{
+				if (bit16) out << "\tcwd" << endl;
+				else if (bit32) out << "\tcdq" << endl;
+				else out << "\tcqo" << endl;
+				out << "\tidiv " << secondary << endl;
+				if (op == "%") out << "\tmov " << accumulator << ", " << asmHighRegister() << endl;
+			}
+			return true;
+		}
+	}
+
+	if (data->getType() == NT_UNARY && data->hasExp1() && data->getExp1())
+	{
+		if (!emitMasmExpression(out, data->getExp1()->getTree())) return false;
+		if (data->hasOp() && data->getOp())
+		{
+			const string op = asmOperatorText(data->getOp());
+			if (op == "-") out << "\tneg " << accumulator << endl;
+			else if (op == "~") out << "\tnot " << accumulator << endl;
+		}
+		return true;
+	}
+
+	return false;
 }
 
 string MasmCodeGenerator::vectorToCommaSeparatedList(const vector<string>& vec)
@@ -129,61 +410,54 @@ void MasmCodeGenerator::handleFunctionWithParameters(ostream& out, string name, 
 	out << "_" << name << " PROC C, " << paramListStr << endl;
 }
 
-static void jumpProcess(ostream& out, shared_ptr<TreeNodeData> left, shared_ptr<TreeNodeData> right, shared_ptr<TreeNodeData> current)
+void MasmCodeGenerator::handleIndividualFunctionStatements(ostream& out, TokenType returnType, shared_ptr<BaseStatement> statements)
 {
-	if (current != nullptr && left == nullptr && right == nullptr)
-	{
-		if (current->getConstant() != nullptr)
-		{
-			if (current->getIConst() != nullptr)
-			{
-				if (bit16) out << "\t" << "mov ax," << current->getIConst()->getIntegerConst() << endl;
-				else if (bit32) out << "\t" << "mov eax," << current->getIConst()->getIntegerConst() << endl;
-				else if (bit64) out << "\t" << "mov rax," << current->getIConst()->getIntegerConst() << endl;
-			}
-		}
-	}
-}
+	if (!statements || !statements->getStatementList()) return;
 
-void MasmCodeGenerator::handleIndividualFunctionStatements(ostream	& out, TokenType returnType, shared_ptr<BaseStatement> statements)
-{
-	for (shared_ptr<BaseStatement> node : *statements->getStatementList())
+	for (const auto& node : *statements->getStatementList())
 	{
+		if (!node) continue;
 		if (node->getOp() == expression_statement)
 		{
-			shared_ptr<BaseStatement> base_statement = node->getStatement();
-			shared_ptr<ExpressionTree> exp = base_statement->getExp();
-			NodeType nt = exp->getData()->getType();
-			if (nt == NT_FUNCTION_CALL)
+			auto baseStatement = node->getStatement();
+			auto expression = baseStatement ? baseStatement->getExp() : nullptr;
+			if (!expression || !expression->hasTree() || !expression->getData()) continue;
+
+			if (expression->getData()->getType() == NT_FUNCTION_CALL)
 			{
-				shared_ptr<vector<shared_ptr<ExpressionTree>>> parameters = exp->getData()->getArgumentList();
-				string functionName = exp->getLeft()->getData()->getToken3()->getSymbolName();
-				vector<string> list;
+				auto parameters = expression->getData()->getArgumentList();
+				auto callee = expression->getLeft();
+				if (!callee || !callee->hasData() || !callee->getData()->hasToken3()) continue;
+				string functionName = callee->getData()->getToken3()->getSymbolName();
+				vector<string> arguments;
 				if (parameters != nullptr)
 				{
-					for (shared_ptr<ExpressionTree> node2 : *parameters)
+					for (const auto& argument : *parameters)
 					{
-						string str = to_string(node2->getData()->getConstant()->getIConst()->getIntegerConst());
-						list.push_back(str);
+						string value = to_string(argument->getData()->getConstant()->getIConst()->getIntegerConst());
+						arguments.push_back(value);
 					}
-					out << "\t" << "invoke _" << functionName << ", " << vectorToCommaSeparatedList(list) << endl;
+					out << "\tinvoke _" << functionName << ", " << vectorToCommaSeparatedList(arguments) << endl;
 				}
 				else
 				{
-					out << "\t" << "invoke _" << functionName << endl;
+					out << "\tinvoke _" << functionName << endl;
 				}
+			}
+			else
+			{
+				emitMasmExpression(out, expression->getTree());
 			}
 		}
 		else if (node->getOp() == jump_statement)
 		{
-			shared_ptr<BaseStatement> base_statement = node->getStatement();
-			TokenType op = base_statement->getOp().value();
-			switch (op)
+			auto baseStatement = node->getStatement();
+			if (!baseStatement || !baseStatement->getOp()) continue;
+			if (baseStatement->getOp().value() == RETURN)
 			{
-				case RETURN:
-					base_statement->getExp()->evaluate(out, jumpProcess);
-					out << "\tret" << endl;
-					break;
+				auto expression = baseStatement->getExp();
+				if (expression && expression->hasTree()) emitMasmExpression(out, expression->getTree());
+				out << "\tret" << endl;
 			}
 		}
 	}
@@ -228,13 +502,13 @@ void MasmCodeGenerator::handleIndividualFunction(ostream& out, shared_ptr<Functi
 		}
 	}
 
-	// evaluate statements, resolving locals/params/globals by name
-	// set thread-local references for helper resolution
 	masm_current_locals = ptr->localVariables;
 	masm_current_params = parameters;
+	masm_current_globals = variableTable;
 	handleIndividualFunctionStatements(out, returnType.value(), statements);
 	masm_current_locals = nullptr;
 	masm_current_params = nullptr;
+	masm_current_globals = nullptr;
 
 	out << "_" << ptr->name << " endp" << endl;
 }
@@ -484,8 +758,9 @@ void MasmCodeGenerator::generateCode(ostream& out)
 {
 	if (bit16)
 	{
-		out << ".286" << endl;
+		out << "OPTION SEGMENT:USE16" << endl;
 		out << ".model small;" << endl;
+		out << ".386" << endl;
 	}
 	else if (bit32)
 	{

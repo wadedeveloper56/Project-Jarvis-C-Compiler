@@ -1,4 +1,4 @@
-JWasm v2.12pre, Oct 14 2026
+JWasm v2.12pre, Oct 16 2026
 test2_64.asm
                             *   .model FLAT
 00000000                    *   _TEXT segment PARA FLAT PUBLIC 'CODE'
@@ -35,32 +35,67 @@ test2_64.asm
 00000000  55                *   push rbp
 00000001  488BEC            *   mov rbp, rsp
 00000004  4883EC08          *   sub rsp, 8
-00000008                        	ret
-00000008  C9                *   leave
-00000009  C3                *   retn 
-0000000A                        _func1 endp
+00000008  48634510              	movsxd rax, DWORD PTR _a
+0000000C  50                    	push rax
+0000000D  48634518              	movsxd rax, DWORD PTR _b
+00000011  50                    	push rax
+00000012  48C7C005000000        	mov rax, 5
+00000019  488BD8                	mov rbx, rax
+0000001C  58                    	pop rax
+0000001D  480FAFC3              	imul rax, rbx
+00000021  488BD8                	mov rbx, rax
+00000024  58                    	pop rax
+00000025  4803C3                	add rax, rbx
+00000028  8945FC                	mov DWORD PTR _c, eax
+0000002B  486345FC              	movsxd rax, DWORD PTR _c
+0000002F  486345FC              	movsxd rax, DWORD PTR _c
+00000033                        	ret
+00000033  C9                *   leave
+00000034  C3                *   retn 
+00000035                        _func1 endp
 
-0000000A                        _func2 PROC C, _a:SDWORD , _b:SDWORD 
+00000035                        _func2 PROC C, _a:SDWORD , _b:SDWORD 
                                 	LOCAL _c:SDWORD
-0000000A  55                *   push rbp
-0000000B  488BEC            *   mov rbp, rsp
-0000000E  4883EC08          *   sub rsp, 8
-00000012                        	ret
-00000012  C9                *   leave
-00000013  C3                *   retn 
-00000014                        _func2 endp
+00000035  55                *   push rbp
+00000036  488BEC            *   mov rbp, rsp
+00000039  4883EC08          *   sub rsp, 8
+0000003D  48634510              	movsxd rax, DWORD PTR _a
+00000041  50                    	push rax
+00000042  48634518              	movsxd rax, DWORD PTR _b
+00000046  50                    	push rax
+00000047  48C7C003000000        	mov rax, 3
+0000004E  488BD8                	mov rbx, rax
+00000051  58                    	pop rax
+00000052  4899                  	cqo
+00000054  48F7FB                	idiv rbx
+00000057  488BD8                	mov rbx, rax
+0000005A  58                    	pop rax
+0000005B  4803C3                	add rax, rbx
+0000005E  8945FC                	mov DWORD PTR _c, eax
+00000061  486345FC              	movsxd rax, DWORD PTR _c
+00000065  486345FC              	movsxd rax, DWORD PTR _c
+00000069                        	ret
+00000069  C9                *   leave
+0000006A  C3                *   retn 
+0000006B                        _func2 endp
 
-00000014                        _func3 PROC C
+0000006B                        _func3 PROC C
                                 	LOCAL _a:SDWORD, _b:SDWORD
-00000014  55                *   push rbp
-00000015  488BEC            *   mov rbp, rsp
-00000018  4883EC08          *   sub rsp, 8
-0000001C                        	ret
-0000001C  C9                *   leave
-0000001D  C3                *   retn
-0000001E                        _func3 endp
+0000006B  55                *   push rbp
+0000006C  488BEC            *   mov rbp, rsp
+0000006F  4883EC08          *   sub rsp, 8
+00000073  486345FC              	movsxd rax, DWORD PTR _a
+00000077  50                    	push rax
+00000078  486345F8              	movsxd rax, DWORD PTR _b
+0000007C  488BD8                	mov rbx, rax
+0000007F  58                    	pop rax
+00000080  4803C3                	add rax, rbx
+00000083                        	ret
+00000083  C9                *   leave
+00000084  C3                *   retn
+00000085                        _func3 endp
                                 end
-0000001E                    *   _TEXT ends
+00000085                    *   _TEXT ends
 
 
 Macros:
@@ -81,22 +116,22 @@ Segments and Groups:
 FLAT . . . . . . . . . . . . . .        GROUP
 _BSS . . . . . . . . . . . . . .        64 Bit   00000008 Para    Public  'BSS'
 _DATA  . . . . . . . . . . . . .        64 Bit   00000004 Para    Public  'DATA'
-_TEXT  . . . . . . . . . . . . .        64 Bit   0000001E Para    Public  'CODE'
+_TEXT  . . . . . . . . . . . . .        64 Bit   00000085 Para    Public  'CODE'
 
 
 Procedures, parameters and locals:
 
                 N a m e                 Type     Value    Segment  Length
 
-_func1 . . . . . . . . . . . . .        P Near   00000000 _TEXT    0000000A Public   C
+_func1 . . . . . . . . . . . . .        P Near   00000000 _TEXT    00000035 Public   C
   _a . . . . . . . . . . . . . .        DWord             rbp + 0010
   _b . . . . . . . . . . . . . .        DWord             rbp + 0018
   _c . . . . . . . . . . . . . .        DWord             rbp - 0004
-_func2 . . . . . . . . . . . . .        P Near   0000000A _TEXT    0000000A Public   C
+_func2 . . . . . . . . . . . . .        P Near   00000035 _TEXT    00000036 Public   C
   _a . . . . . . . . . . . . . .        DWord             rbp + 0010
   _b . . . . . . . . . . . . . .        DWord             rbp + 0018
   _c . . . . . . . . . . . . . .        DWord             rbp - 0004
-_func3 . . . . . . . . . . . . .        P Near   00000014 _TEXT    0000000A Public   C
+_func3 . . . . . . . . . . . . .        P Near   0000006B _TEXT    0000001A Public   C
   _a . . . . . . . . . . . . . .        DWord             rbp - 0004
   _b . . . . . . . . . . . . . .        DWord             rbp - 0008
 
@@ -109,13 +144,13 @@ Symbols:
 @Cpu . . . . . . . . . . . . . .        Number           DDFh 
 @CurSeg  . . . . . . . . . . . .        Text   
 @DataSize  . . . . . . . . . . .        Number             0h 
-@Date  . . . . . . . . . . . . .        Text   10/15/26
+@Date  . . . . . . . . . . . . .        Text   10/16/26
 @FileCur . . . . . . . . . . . .        Text   test2_64.asm
 @FileName  . . . . . . . . . . .        Text   TEST2_64
 @Interface . . . . . . . . . . .        Number             7h 
 @Model . . . . . . . . . . . . .        Number             7h 
 @ReservedStack . . . . . . . . .        Number             0h 
-@Time  . . . . . . . . . . . . .        Text   09:54:49
+@Time  . . . . . . . . . . . . .        Text   12:02:02
 @Version . . . . . . . . . . . .        Text   800
 @code  . . . . . . . . . . . . .        Text   _TEXT
 @data  . . . . . . . . . . . . .        Text   FLAT
@@ -125,4 +160,4 @@ _m . . . . . . . . . . . . . . .        DWord              4h _BSS FASTCALL
 _u . . . . . . . . . . . . . . .        DWord              0h _BSS FASTCALL
 _x . . . . . . . . . . . . . . .        DWord              0h _DATA FASTCALL
 
-test2_64.asm: 31 lines, 2 passes, 0 ms, 0 warnings, 0 errors
+test2_64.asm: 66 lines, 2 passes, 0 ms, 0 warnings, 0 errors

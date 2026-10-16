@@ -25,61 +25,30 @@ namespace WadeSpace
 		bool StartPreProcessor(char  *filename, const char* name);
 		bool compile(istream& in, ostream& out, const string& filename);
 
-		[[nodiscard]] shared_ptr<ProgramData> getProgramData() const { return programData; }
-		[[nodiscard]] shared_ptr<map<string, shared_ptr<DeclarationSpecifiersNode>>> getTypedefList() const { return typedefList; }
-		[[nodiscard]] shared_ptr<map<string, shared_ptr<StructOrUnionSpecifier>>> getStructList() const { return structList; }
-		[[nodiscard]] shared_ptr<map<string, shared_ptr<FunctionDefinition>>> getFunctionList() const { return functionList; }
-		void setProgramData(shared_ptr<ProgramData> data) { programData = data; }
-		void setTypedefList(shared_ptr<map<string, shared_ptr<DeclarationSpecifiersNode>>> list) { typedefList = list; }
-		void setStructList(shared_ptr<map<string, shared_ptr<StructOrUnionSpecifier>>> list) { structList = list; }
-		void setFunctionList(shared_ptr<map<string, shared_ptr<FunctionDefinition>>> list) { functionList = list; }
-		[[nodiscard]] bool hasProgramData() const { return programData != nullptr; }
-		[[nodiscard]] bool hasTypedefList() const { return typedefList != nullptr; }
-		[[nodiscard]] bool hasStructList() const { return structList != nullptr; }
-		[[nodiscard]] bool hasFunctionList() const { return functionList != nullptr; }
-		[[nodiscard]] bool hasTypedef(const string& name) const { return typedefList->find(name) != typedefList->end(); }
-		[[nodiscard]] bool hasFunction(const string& name) const { return functionList->find(name) != functionList->end(); }
-		[[nodiscard]] bool hasStruct(const string& name) const { return structList->find(name) != structList->end(); }
-		void addTypedef(const string& name, shared_ptr<DeclarationSpecifiersNode> declaration) { typedefList->insert({ name, declaration }); }
-		void addFunction(const string& name, shared_ptr<FunctionDefinition> function) { functionList->insert({ name, function }); }
-		void addStruct(const string& name, shared_ptr<StructOrUnionSpecifier> structSpecifier) { structList->insert({ name, structSpecifier }); }
-		void addExternalDeclaration(shared_ptr<ExternalDeclaration> externalDeclaration) { programData->addExternalDeclaration(externalDeclaration); }
-		void addEnum(const string& name, shared_ptr<EnumSpecifier> enumSpecifier) { enumList->insert({ name, enumSpecifier }); }
-		shared_ptr<StructOrUnionSpecifier> findStruct(const string& name) const
-		{
-			auto it = structList->find(name);
-			if (it != structList->end())
-			{
-				return it->second;
-			}
-			return nullptr;
-		}
-		shared_ptr<DeclarationSpecifiersNode> findTypedef(const string& name) const
-		{
-			auto it = typedefList->find(name);
-			if (it != typedefList->end())
-			{
-				return it->second;
-			}
-			return nullptr;
-		}
-		shared_ptr<FunctionDefinition> findFunction(const string& name) const
-		{
-			auto it = functionList->find(name);
-			if (it != functionList->end())
-			{
-				return it->second;
-			}
-			return nullptr;
-		}
-		shared_ptr<EnumSpecifier> findEnum(const string& name) const
-		{
-			auto it = enumList->find(name);
-			if (it != enumList->end())
-			{
-				return it->second;
-			}
-			return nullptr;
-		}
+		[[nodiscard]] shared_ptr<ProgramData> getProgramData() const;
+		[[nodiscard]] shared_ptr<map<string, shared_ptr<DeclarationSpecifiersNode>>> getTypedefList() const;
+		[[nodiscard]] shared_ptr<map<string, shared_ptr<StructOrUnionSpecifier>>> getStructList() const;
+		[[nodiscard]] shared_ptr<map<string, shared_ptr<FunctionDefinition>>> getFunctionList() const;
+		void setProgramData(shared_ptr<ProgramData> data);
+		void setTypedefList(shared_ptr<map<string, shared_ptr<DeclarationSpecifiersNode>>> list);
+		void setStructList(shared_ptr<map<string, shared_ptr<StructOrUnionSpecifier>>> list);
+		void setFunctionList(shared_ptr<map<string, shared_ptr<FunctionDefinition>>> list);
+		[[nodiscard]] bool hasProgramData() const;
+		[[nodiscard]] bool hasTypedefList() const;
+		[[nodiscard]] bool hasStructList() const;
+		[[nodiscard]] bool hasFunctionList() const;
+		[[nodiscard]] bool hasTypedef(const string& name) const;
+		[[nodiscard]] bool hasFunction(const string& name) const;
+		[[nodiscard]] bool hasStruct(const string& name) const;
+
+		void addTypedef(const string& name, shared_ptr<DeclarationSpecifiersNode> declaration);
+		void addFunction(const string& name, shared_ptr<FunctionDefinition> function);
+		void addStruct(const string& name, shared_ptr<StructOrUnionSpecifier> structSpecifier);
+		void addExternalDeclaration(shared_ptr<ExternalDeclaration> externalDeclaration);
+		void addEnum(const string& name, shared_ptr<EnumSpecifier> enumSpecifier);
+		shared_ptr<StructOrUnionSpecifier> findStruct(const string& name) const;
+		shared_ptr<DeclarationSpecifiersNode> findTypedef(const string& name) const;
+		shared_ptr<FunctionDefinition> findFunction(const string& name) const;
+		shared_ptr<EnumSpecifier> findEnum(const string& name) const;
 	};
 }

@@ -118,6 +118,7 @@ void ProgramData::addExternalDeclaration(shared_ptr<ExternalDeclaration> data)
 TokenType ProgramData::getFunctionParameterType(shared_ptr<ParameterDeclaration> parameterDeclaration)
 {
 	TokenType type = UNKNOWN;
+	bool hasBaseType = false;
 	auto declaration_specifiers_list = parameterDeclaration->getDeclarationSpecifiers()->getDeclarationSpecifiersNodeList();
 	if (declaration_specifiers_list != nullptr)
 	{
@@ -125,11 +126,16 @@ TokenType ProgramData::getFunctionParameterType(shared_ptr<ParameterDeclaration>
 		{
 			if (ptr->getTypeSpecifier() != nullptr)
 			{
-				type = ptr->getTypeSpecifier()->getType().value();
+				TokenType candidate = ptr->getTypeSpecifier()->getType().value();
+				if (candidate != SIGNED && candidate != UNSIGNED)
+				{
+					type = candidate;
+					hasBaseType = true;
+				}
 			}
 		}
 	}
-	return type;
+	return hasBaseType ? type : INT;
 }
 
 string ProgramData::getParameterDeclarationName(shared_ptr<ParameterDeclaration> parameterDeclaration)
@@ -152,6 +158,7 @@ string ProgramData::getParameterDeclarationName(shared_ptr<ParameterDeclaration>
 TokenType ProgramData::getDeclarationSpecifiersType(shared_ptr<DeclarationSpecifiers> declaration_specifiers)
 {
 	TokenType type = UNKNOWN;
+	bool hasBaseType = false;
 	auto type_specifierList = declaration_specifiers->getDeclarationSpecifiersNodeList();
 	if (type_specifierList != nullptr)
 	{
@@ -159,11 +166,16 @@ TokenType ProgramData::getDeclarationSpecifiersType(shared_ptr<DeclarationSpecif
 		{
 			if (ptr->getTypeSpecifier() != nullptr)
 			{
-				type = ptr->getTypeSpecifier()->getType().value();
+				TokenType candidate = ptr->getTypeSpecifier()->getType().value();
+				if (candidate != SIGNED && candidate != UNSIGNED)
+				{
+					type = candidate;
+					hasBaseType = true;
+				}
 			}
 		}
 	}
-	return type;
+	return hasBaseType ? type : INT;
 }
 
 void ProgramData::handleFunction(shared_ptr<FunctionDefinition> declaration, shared_ptr<vector<shared_ptr<FunctionData>>> functionTable)
@@ -188,6 +200,13 @@ void ProgramData::handleFunction(shared_ptr<FunctionDefinition> declaration, sha
 				functionData->name = getParameterDeclarationName(parameterDeclaration);
 				functionData->pointer = parameterDeclaration->getDeclarator()->hasPointer();
 				functionData->type = getFunctionParameterType(parameterDeclaration);
+				for (const auto& specifier : *parameterDeclaration->getDeclarationSpecifiers()->getDeclarationSpecifiersNodeList())
+				{
+					if (specifier->getTypeSpecifier() && specifier->getTypeSpecifier()->getType() == UNSIGNED)
+					{
+						functionData->unsign = true;
+					}
+				}
 				data->parameters->push_back(functionData);
 			}
 		}
@@ -238,6 +257,10 @@ void ProgramData::handleDeclaration(shared_ptr<Declaration> declaration, shared_
 				if (temp == UNSIGNED)
 				{
 					unsign = true;
+				}
+				else if (temp == SIGNED)
+				{
+					unsign = false;
 				}
 				else if (temp == STRUCT || temp == UNION)
 				{
