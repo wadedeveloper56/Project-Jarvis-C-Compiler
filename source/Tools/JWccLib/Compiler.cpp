@@ -41,7 +41,7 @@ bool Compiler::compileFile(istream& inStr, ostream& out)
 
 	if (hasError)
 	{
-	    return true;
+		return false;
 	}
 
 	shared_ptr<BaseCodeGenerator> generator = programData->processGlobalVariables();

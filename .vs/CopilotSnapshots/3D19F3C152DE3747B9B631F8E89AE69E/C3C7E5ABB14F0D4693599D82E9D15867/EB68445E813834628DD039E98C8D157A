@@ -1,0 +1,469 @@
+﻿#include "pch.h"
+#include "SemanticAnalyzer.h"
+#include "ProgramData.h"
+#include "ExternalDeclaration.h"
+#include "InitDeclarator.h"
+#include "FunctionDefinition.h"
+#include "Diagnostic.h"
+#include "SymbolTable.h"
+#include "TypeInfo.h"
+
+
+using namespace WadeSpace;
+using namespace std;
+
+// Adapter for ExpressionTree::evaluate which requires a raw function pointer.
+static thread_local function<void(ostream&, shared_ptr<TreeNodeData>, shared_ptr<TreeNodeData>, shared_ptr<TreeNodeData>)>* g_sem_proc_ptr = nullptr;
+static void sem_process_adapter(ostream& out, shared_ptr<TreeNodeData> left, shared_ptr<TreeNodeData> right, shared_ptr<TreeNodeData> current)
+{
+	if (g_sem_proc_ptr && *g_sem_proc_ptr) (*g_sem_proc_ptr)(out, left, right, current);
+}
+
+vector<Diagnostic> SemanticAnalyzer::analyze(shared_ptr<ProgramData> programData)
+{
+	vector<Diagnostic> diagnostics;
+	if (!programData || !programData->hasProgram()) return diagnostics;
+
+	auto program = programData->getProgram();
+	SymbolTable symbols;
+
+	auto buildTypeInfo = [&](shared_ptr<DeclarationSpecifiers> declSpecs, shared_ptr<Declarator> declarator) -> TypeInfoPtr {
+		TypeInfoPtr base = nullptr;
+		if (declSpecs && declSpecs->hasDeclarationSpecifiersNodeList()) {
+			auto list = declSpecs->getDeclarationSpecifiersNodeList();
+			for (auto& node : *list) {
+				if (node->hasTypeSpecifier()) {
+					auto ts = node->getTypeSpecifier();
+					if (ts->hasType()) {
+						base = TypeInfo::makePrimitive(ts->getType().value());
+					}
+					else if (ts->hasStructOrUnionSpecifier() && ts->getStructOrUnionSpecifier()->hasName()) {
+						base = TypeInfo::makeStruct(ts->getStructOrUnionSpecifier()->getName()->getSymbolName());
+					}
+					break;
+				}
+			}
+		}
+		// handle declarator pointer -> pointer types
+		if (declarator && declarator->hasPointer()) {
+			base = TypeInfo::makePointer(base);
+		}
+		// handle function declarator (parameter list)
+		if (declarator && declarator->hasDirectDeclarator()) {
+			auto dd = declarator->getDirectDeclarator();
+			if (dd->hasParameterTypeList()) {
+				// build parameter types as primitives when possible
+				vector<TypeInfoPtr> params;
+				auto plist = dd->getParameterTypeList();
+				if (plist && plist->hasVectorParameterDeclaration()) {
+					for (auto& p : *plist->getVectorParameterDeclaration()) {
+						TypeInfoPtr pt = nullptr;
+						if (p->hasDeclarationSpecifiers() && p->getDeclarationSpecifiers()->hasDeclarationSpecifiersNodeList()) {
+							auto nlist = p->getDeclarationSpecifiers()->getDeclarationSpecifiersNodeList();
+							if (!nlist->empty() && (*nlist)[0]->hasTypeSpecifier()) {
+								auto ts = (*nlist)[0]->getTypeSpecifier();
+								if (ts->hasType()) pt = TypeInfo::makePrimitive(ts->getType().value());
+								else if (ts->hasStructOrUnionSpecifier() && ts->getStructOrUnionSpecifier()->hasName()) pt = TypeInfo::makeStruct(ts->getStructOrUnionSpecifier()->getName()->getSymbolName());
+							}
+						}
+						params.push_back(pt);
+					}
+				}
+				base = TypeInfo::makeFunction(base, params);
+			}
+		}
+		return base;
+	};
+
+			// helper: infer simple expression types and perform checks using post-order traversal
+			function<TypeInfoPtr(shared_ptr<ExpressionTree>)> analyzeExpression = [&](shared_ptr<ExpressionTree> expr)->TypeInfoPtr
+			{
+				if (!expr) return nullptr;
+				unordered_map<TreeNodeData*, TypeInfoPtr> inferred;
+
+				function<void(ostream&, shared_ptr<TreeNodeData>, shared_ptr<TreeNodeData>, shared_ptr<TreeNodeData>)> process =
+					[&](ostream& out, shared_ptr<TreeNodeData> left, shared_ptr<TreeNodeData> right, shared_ptr<TreeNodeData> current)
+				{
+					if (!current) return;
+
+					// constant
+					if (current->hasConstant())
+					{
+						auto t = current->getTokenType();
+						if (t.has_value()) inferred[current.get()] = TypeInfo::makePrimitive(t.value());
+						return;
+					}
+
+					// identifier leaf
+					if (current->hasIdentifier())
+					{
+						auto id = current->getIdentifier();
+						string name = id->getSymbolName();
+						auto sym = symbols.lookup(name);
+						if (!sym.has_value())
+						{
+							diagnostics.emplace_back(Diagnostic::Severity::Error, "Undefined identifier: " + name, "E101", id->getFileName(), id->getLine(), id->getColumn());
+						}
+						else
+						{
+							if (sym->type) inferred[current.get()] = sym->type;
+						}
+						return;
+					}
+
+					// variable access
+					if (current->getType() == NT_VAR_ACCESS && current->hasIdentifier())
+					{
+						auto idtok = current->getIdentifier();
+						string name = idtok->getSymbolName();
+						auto sym = symbols.lookup(name);
+						if (!sym.has_value())
+						{
+							diagnostics.emplace_back(Diagnostic::Severity::Error, "Undefined identifier: " + name, "E101", idtok->getFileName(), idtok->getLine(), idtok->getColumn());
+						}
+						else
+						{
+							static set<string> localInits;
+							if (localInits.find(name) == localInits.end())
+							{
+								diagnostics.emplace_back(Diagnostic::Severity::Warning, "Use of possibly uninitialized variable: " + name, "W201", idtok->getFileName(), idtok->getLine(), idtok->getColumn());
+							}
+							if (sym->type) inferred[current.get()] = sym->type;
+						}
+						return;
+					}
+
+					// operator nodes
+					if (current->getType() == NT_OP)
+					{
+						string op = current->hasOp() && current->getOp() ? current->getOp()->getSymbolName() : "";
+						TypeInfoPtr ltype = left && inferred.count(left.get()) ? inferred[left.get()] : nullptr;
+						TypeInfoPtr rtype = right && inferred.count(right.get()) ? inferred[right.get()] : nullptr;
+
+						if (op == "=")
+						{
+							if (left && left->hasIdentifier())
+							{
+								auto idtok = left->getIdentifier();
+								string name = idtok->getSymbolName();
+								auto sym = symbols.lookup(name);
+								if (!sym.has_value())
+								{
+									diagnostics.emplace_back(Diagnostic::Severity::Error, "Assignment to undefined identifier: " + name, "E101", idtok->getFileName(), idtok->getLine(), idtok->getColumn());
+								}
+								if (sym.has_value() && sym->type && rtype)
+								{
+									if (!sym->type->equals(*rtype))
+									{
+										diagnostics.emplace_back(Diagnostic::Severity::Error, "Type mismatch in assignment to '" + name + "'", "E102", idtok->getFileName(), idtok->getLine(), idtok->getColumn());
+									}
+								}
+								// mark initialized (local only)
+								// Note: integration with function-level initialized set is not handled here
+								inferred[current.get()] = sym.has_value() ? sym->type : rtype;
+							}
+						}
+						else
+						{
+							// arithmetic/operator: prefer primitive matching
+							if (ltype && rtype && !ltype->equals(*rtype))
+							{
+								int line = 0; string file = ""; int col = 0;
+								if (current->hasOp() && current->getOp()) { file = current->getOp()->getFileName(); line = current->getOp()->getLine(); col = current->getOp()->getColumn(); }
+								diagnostics.emplace_back(Diagnostic::Severity::Warning, "Type mismatch in operation", "W202", file, line, col);
+							}
+							inferred[current.get()] = ltype ? ltype : rtype;
+						}
+						return;
+					}
+
+					// function call
+					if (current->getType() == NT_FUNCTION_CALL)
+					{
+						TypeInfoPtr calleeType = left && inferred.count(left.get()) ? inferred[left.get()] : nullptr;
+						if (calleeType /* && calleeType->kind == TypeInfo::Kind::Function */)
+						{
+							size_t expected = calleeType->parameterTypes.size();
+							size_t provided = 0;
+							if (current->hasArgumentList() && current->getArgumentList()) provided = current->getArgumentList()->size();
+							if (expected != provided)
+							{
+								int line = 0; string file = ""; int col = 0;
+								if (current->hasToken1() && current->getToken1()) { file = current->getToken1()->getFileName(); line = current->getToken1()->getLine(); col = current->getToken1()->getColumn(); }
+								diagnostics.emplace_back(Diagnostic::Severity::Warning, "Function call argument count mismatch", "W203", file, line, col);
+							}
+							inferred[current.get()] = calleeType->returnType;
+						}
+						return;
+					}
+				};
+
+				// ExpressionTree::evaluate expects a raw function pointer; adapt our std::function 'process' using g_sem_proc_ptr and sem_process_adapter
+				g_sem_proc_ptr = &process;
+				auto root = expr->evaluate(cout, sem_process_adapter);
+				g_sem_proc_ptr = nullptr;
+				if (!root || !root->hasData()) return nullptr;
+				auto it = inferred.find(root->getData().get());
+				if (it != inferred.end()) return it->second;
+				return nullptr;
+			};
+
+	// First pass: declare typedefs and function signatures in global scope
+	for (auto& ext : *program)
+	{
+		if (ext->hasFunction())
+		{
+			auto fn = ext->getFunctionDefinition();
+			if (fn && fn->hasDeclarator() && fn->getDeclarator()->hasDirectDeclarator())
+			{
+				auto dd = fn->getDeclarator()->getDirectDeclarator();
+				if (dd->hasIdentifier())
+				{
+					string name = dd->getIdentifier()->getSymbolName();
+					SymbolInfo info;
+					info.kind = SymbolInfo::Kind::Function;
+					info.name = name;
+					// attach type info
+					info.type = buildTypeInfo(fn->getDeclarationSpecifiers(), fn->getDeclarator());
+					if (!symbols.declare(info))
+					{
+						int line = 0; string file = ""; int col = 0;
+						if (dd->hasIdentifier() && dd->getIdentifier()) { line = dd->getIdentifier()->getLine(); col = dd->getIdentifier()->getColumn(); file = dd->getIdentifier()->getFileName(); }
+						diagnostics.emplace_back(Diagnostic::Severity::Error, "Duplicate function definition: " + name, "E001", file, line, col);
+					}
+				}
+			}
+		}
+		else if (ext->hasDeclaration())
+		{
+			if (ext->isTypedef())
+			{
+				auto decl = ext->getDeclaration();
+				if (decl->hasVectorInitDeclarator())
+				{
+					for (auto& init : *decl->getVectorInitDeclarator())
+					{
+						string varName = init->getVariableName();
+						if (!varName.empty())
+						{
+							SymbolInfo info;
+							info.kind = SymbolInfo::Kind::Typedef;
+							info.name = varName;
+							// attach type info for typedef
+							info.type = buildTypeInfo(decl->getDeclarationSpecifiers(), init->getDeclarator());
+							if (!symbols.declare(info))
+							{
+								int line = 0; string file = ""; int col = 0;
+								if (init->hasDeclarator() && init->getDeclarator()->hasDirectDeclarator()) {
+									auto idd = init->getDeclarator()->getDirectDeclarator();
+									if (idd->hasIdentifier() && idd->getIdentifier()) { line = idd->getIdentifier()->getLine(); col = idd->getIdentifier()->getColumn(); file = idd->getIdentifier()->getFileName(); }
+								}
+								diagnostics.emplace_back(Diagnostic::Severity::Error, "Duplicate typedef name: " + varName, "E002", file, line, col);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Second pass: deeper per-function checks and block-level declarations
+	for (auto& ext : *program)
+	{
+		if (ext->hasFunction())
+		{
+			auto fn = ext->getFunctionDefinition();
+			if (!fn) continue;
+
+			// enter function scope
+			symbols.pushScope();
+			// track initialized variables within this function
+			set<string> initialized;
+			// capture function type (for return type checks)
+			TypeInfoPtr functionType = buildTypeInfo(fn->getDeclarationSpecifiers(), fn->getDeclarator());
+
+			// add parameters
+			if (fn->hasDeclarator() && fn->getDeclarator()->hasDirectDeclarator())
+			{
+				auto dd = fn->getDeclarator()->getDirectDeclarator();
+				if (dd->hasParameterTypeList())
+				{
+					auto params = dd->getParameterTypeList();
+					if (params->hasVectorParameterDeclaration())
+					{
+						for (auto& param : *params->getVectorParameterDeclaration())
+						{
+							if (param->hasDeclarator() && param->getDeclarator()->hasDirectDeclarator())
+							{
+								auto pdd = param->getDeclarator()->getDirectDeclarator();
+								if (pdd->hasIdentifier())
+								{
+									string pname = pdd->getIdentifier()->getSymbolName();
+									SymbolInfo sinfo;
+									sinfo.kind = SymbolInfo::Kind::Parameter;
+									sinfo.name = pname;
+									// attach parameter type
+									sinfo.type = buildTypeInfo(param->getDeclarationSpecifiers(), param->getDeclarator());
+									if (!symbols.declare(sinfo))
+									{
+										int line = 0; string file = ""; int col = 0;
+										if (pdd->hasIdentifier() && pdd->getIdentifier()) { line = pdd->getIdentifier()->getLine(); col = pdd->getIdentifier()->getColumn(); file = pdd->getIdentifier()->getFileName(); }
+										diagnostics.emplace_back(Diagnostic::Severity::Error, "Duplicate parameter name: " + pname, "E003", file, line, col);
+									}
+													// mark parameter initialized
+													initialized.insert(pname);
+								}
+							}
+						}
+					}
+				}
+			}
+
+			// process local declarations in function (very basic: find declarations attached to function)
+			if (fn->hasVectorDeclaration())
+			{
+				for (auto& decl : *fn->getVectorDeclaration())
+				{
+					if (decl->hasVectorInitDeclarator())
+					{
+						for (auto& init : *decl->getVectorInitDeclarator())
+						{
+							string varName = init->getVariableName();
+							if (!varName.empty())
+							{
+								SymbolInfo info;
+								info.kind = SymbolInfo::Kind::Variable;
+								info.name = varName;
+								// attach variable type from declaration specifiers if present
+								info.type = buildTypeInfo(decl->getDeclarationSpecifiers(), init->getDeclarator());
+								if (!symbols.declare(info))
+								{
+									int line = 0; string file = ""; int col = 0;
+									// try to get identifier location from init
+									if (init->hasDeclarator() && init->getDeclarator()->hasDirectDeclarator()) {
+										auto idd = init->getDeclarator()->getDirectDeclarator();
+										if (idd->hasIdentifier() && idd->getIdentifier()) { line = idd->getIdentifier()->getLine(); col = idd->getIdentifier()->getColumn(); file = idd->getIdentifier()->getFileName(); }
+									}
+									diagnostics.emplace_back(Diagnostic::Severity::Error, "Duplicate local declaration: " + varName, "E004", file, line, col);
+								}
+							}
+						}
+					}
+				}
+			}
+
+			// TODO: walk function body AST for identifier uses and more checks
+
+			// helper: check type compatibility with some relaxed rules (pointers/arrays)
+			auto typesCompatible = [&](TypeInfoPtr a, TypeInfoPtr b)->bool {
+				if (!a || !b) return false;
+				if (a->equals(*b)) return true;
+				if (a->kind == TypeInfo::Kind::Pointer && b->kind == TypeInfo::Kind::Pointer)
+				{
+					if (a->element && b->element) return a->element->equals(*b->element);
+					return false;
+				}
+				if (a->kind == TypeInfo::Kind::Array && b->kind == TypeInfo::Kind::Array)
+				{
+					if (a->element && b->element) return a->element->equals(*b->element);
+					return false;
+				}
+				// allow array -> pointer to element
+				if (a->kind == TypeInfo::Kind::Array && b->kind == TypeInfo::Kind::Pointer)
+				{
+					if (a->element && b->element) return a->element->equals(*b->element);
+					return false;
+				}
+				if (a->kind == TypeInfo::Kind::Pointer && b->kind == TypeInfo::Kind::Array)
+				{
+					if (a->element && b->element) return a->element->equals(*b->element);
+					return false;
+				}
+				return false;
+			};
+
+			// analyze statements recursively to find returns and expression uses
+			function<void(shared_ptr<BaseStatement>)> analyzeStatement = [&](shared_ptr<BaseStatement> stmt)
+			{
+				if (!stmt) return;
+				// return/jump statements
+				if (stmt->getOp().has_value() && stmt->getOp().value() == TokenType::RETURN)
+				{
+					// return may carry an expression
+					if (stmt->hasExp() && stmt->getExp())
+					{
+						auto rettype = analyzeExpression(stmt->getExp());
+						auto functionReturnType = functionType;
+						if (functionType && functionType->kind == TypeInfo::Kind::Function)
+						{
+							functionReturnType = functionType->returnType;
+						}
+						if (functionReturnType && rettype)
+						{
+							if (!typesCompatible(functionReturnType, rettype))
+							{
+								int line = 0; string file = ""; int col = 0;
+								if (stmt->hasExp() && stmt->getExp()) {
+									// try to get token from expression root
+									auto rt = stmt->getExp()->postOrderTraversal(cout, stmt->getExp()->evaluate(cout, sem_process_adapter), sem_process_adapter);
+								}
+								// fallback to statement op token
+								if (stmt->getIdentifier()) { file = stmt->getIdentifier()->getFileName(); line = stmt->getIdentifier()->getLine(); col = stmt->getIdentifier()->getColumn(); }
+								diagnostics.emplace_back(Diagnostic::Severity::Error, "Return type mismatch", "E201", file, line, col);
+							}
+						}
+					}
+				}
+				// declarations inside statement
+				if (stmt->hasDeclarationList() && stmt->getDeclarationList())
+				{
+					for (auto& d : *stmt->getDeclarationList())
+					{
+						if (d->hasVectorInitDeclarator())
+						{
+							for (auto& init : *d->getVectorInitDeclarator())
+							{
+								string vname = init->getVariableName();
+								if (!vname.empty())
+								{
+									// check initializer
+									if (init->hasInitializer() && init->getInitializer() && init->getInitializer()->hasAssignmentExpression())
+									{
+										auto itype = analyzeExpression(init->getInitializer()->getAssignmentExpression());
+										auto vtype = buildTypeInfo(d->getDeclarationSpecifiers(), init->getDeclarator());
+										if (vtype && itype && !typesCompatible(vtype, itype))
+										{
+											int line = 0; string file = ""; int col = 0;
+											if (init->hasDeclarator() && init->getDeclarator()->hasDirectDeclarator()) {
+												auto idd = init->getDeclarator()->getDirectDeclarator();
+												if (idd->hasIdentifier() && idd->getIdentifier()) { line = idd->getIdentifier()->getLine(); col = idd->getIdentifier()->getColumn(); file = idd->getIdentifier()->getFileName(); }
+											}
+											diagnostics.emplace_back(Diagnostic::Severity::Error, "Initializer type mismatch for '" + vname + "'", "E202", file, line, col);
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+
+				// traverse nested statements
+				if (stmt->hasStatement() && stmt->getStatement()) analyzeStatement(stmt->getStatement());
+				if (stmt->hasStatement2() && stmt->getStatement2()) analyzeStatement(stmt->getStatement2());
+				if (stmt->hasEs1() && stmt->getEs1()) analyzeStatement(stmt->getEs1());
+				if (stmt->hasEs2() && stmt->getEs2()) analyzeStatement(stmt->getEs2());
+				if (stmt->hasStatementList() && stmt->getStatementList()) {
+					for (auto& s : *stmt->getStatementList()) analyzeStatement(s);
+				}
+			};
+
+			// run analysis over function body
+			if (fn->hasBaseStatement() && fn->getBaseStatement()) analyzeStatement(fn->getBaseStatement());
+
+			// exit function scope
+			symbols.popScope();
+		}
+	}
+
+	return diagnostics;
+}

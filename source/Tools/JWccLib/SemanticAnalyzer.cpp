@@ -393,9 +393,14 @@ vector<Diagnostic> SemanticAnalyzer::analyze(shared_ptr<ProgramData> programData
 					if (stmt->hasExp() && stmt->getExp())
 					{
 						auto rettype = analyzeExpression(stmt->getExp());
-						if (functionType && functionType->returnType && rettype)
+						auto functionReturnType = functionType;
+						if (functionType && functionType->kind == TypeInfo::Kind::Function)
 						{
-							if (!typesCompatible(functionType->returnType, rettype))
+							functionReturnType = functionType->returnType;
+						}
+						if (functionReturnType && rettype)
+						{
+							if (!typesCompatible(functionReturnType, rettype))
 							{
 								int line = 0; string file = ""; int col = 0;
 								if (stmt->hasExp() && stmt->getExp()) {

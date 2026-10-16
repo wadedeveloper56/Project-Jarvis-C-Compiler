@@ -45,7 +45,7 @@ namespace JWccTest
 			bool exitcode = compiler->compileFile(in, out);
 			Assert::AreEqual(false, exitcode);
 			string s = out.str();
-			//Assert::IsTrue(s.find("E") != string::npos || s.find("error") != string::npos);
+			Assert::IsTrue(s.find("E") != string::npos || s.find("error") != string::npos);
 		}
 	};
 }
