@@ -1,4 +1,4 @@
-JWasm v2.12pre, Oct 16 2026
+JWasm v2.12pre, Oct 19 2026
 C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\32bit\test1.asm
                                 error: Return type mismatch
                            Error A2082: Must be in segment block
@@ -22,10 +22,10 @@ Symbols:
 
 @Cpu . . . . . . . . . . . . . .        Number           101h 
 @CurSeg  . . . . . . . . . . . .        Text   
-@Date  . . . . . . . . . . . . .        Text   10/16/26
+@Date  . . . . . . . . . . . . .        Text   10/19/26
 @FileCur . . . . . . . . . . . .        Text   C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\32bit\test1.asm
 @FileName  . . . . . . . . . . .        Text   TEST1
-@Time  . . . . . . . . . . . . .        Text   12:01:59
+@Time  . . . . . . . . . . . . .        Text   19:25:09
 @Version . . . . . . . . . . . .        Text   800
 __JWASM__  . . . . . . . . . . .        Number            D4h 
 
