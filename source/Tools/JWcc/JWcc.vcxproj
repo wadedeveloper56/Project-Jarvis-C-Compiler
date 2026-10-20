@@ -149,6 +149,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -195,6 +196,7 @@ copy /y "$(OutputPath)$(ProjectName).exe" "..\..\..\build\$(Configuration)\$(Pla
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

@@ -131,6 +131,8 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <ProgramDataBaseFileName />
       <BufferSecurityCheck>false</BufferSecurityCheck>
+      <SupportJustMyCode>true</SupportJustMyCode>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -175,6 +177,8 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <ProgramDataBaseFileName />
       <BufferSecurityCheck>false</BufferSecurityCheck>
+      <SupportJustMyCode>true</SupportJustMyCode>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
     <Link>
       <SubSystem>

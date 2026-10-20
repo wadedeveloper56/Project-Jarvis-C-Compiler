@@ -85,6 +85,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DosBox-x", "DosBox-x", "{93
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "freetype", "dosbox-x\vs\freetype\builds\windows\vc2010\freetype.vcxproj", "{78B079BD-9FC7-4B9E-B4A6-96DA0F00248B}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libpdcurses", "dosbox-x\vs\libpdcurses\libpdcurses.vcxproj", "{671232EC-C55C-4636-A75F-7E4B4C54C314}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		All|x64 = All|x64
@@ -529,6 +531,19 @@ Global
 		{78B079BD-9FC7-4B9E-B4A6-96DA0F00248B}.Release|x64.Build.0 = Release|x64
 		{78B079BD-9FC7-4B9E-B4A6-96DA0F00248B}.Release|x86.ActiveCfg = Release|Win32
 		{78B079BD-9FC7-4B9E-B4A6-96DA0F00248B}.Release|x86.Build.0 = Release|Win32
+		{671232EC-C55C-4636-A75F-7E4B4C54C314}.All|x64.ActiveCfg = Debug SDL2|x64
+		{671232EC-C55C-4636-A75F-7E4B4C54C314}.All|x86.ActiveCfg = Debug|Win32
+		{671232EC-C55C-4636-A75F-7E4B4C54C314}.All|x86.Build.0 = Debug|Win32
+		{671232EC-C55C-4636-A75F-7E4B4C54C314}.Debug|x64.ActiveCfg = Debug|x64
+		{671232EC-C55C-4636-A75F-7E4B4C54C314}.Debug|x64.Build.0 = Debug|x64
+		{671232EC-C55C-4636-A75F-7E4B4C54C314}.Debug|x86.ActiveCfg = Debug|Win32
+		{671232EC-C55C-4636-A75F-7E4B4C54C314}.Debug|x86.Build.0 = Debug|Win32
+		{671232EC-C55C-4636-A75F-7E4B4C54C314}.DefaultBuild|x64.ActiveCfg = Release SDL2|x64
+		{671232EC-C55C-4636-A75F-7E4B4C54C314}.DefaultBuild|x86.ActiveCfg = Release SDL2|Win32
+		{671232EC-C55C-4636-A75F-7E4B4C54C314}.Release|x64.ActiveCfg = Release|x64
+		{671232EC-C55C-4636-A75F-7E4B4C54C314}.Release|x64.Build.0 = Release|x64
+		{671232EC-C55C-4636-A75F-7E4B4C54C314}.Release|x86.ActiveCfg = Release|Win32
+		{671232EC-C55C-4636-A75F-7E4B4C54C314}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -569,6 +584,7 @@ Global
 		{3AD9B4FA-2EB4-4DB7-ADED-08DBF8CA9D71} = {8E079609-87D1-4FA1-A42D-E8B74F1F394E}
 		{07C330D8-C0C2-42B5-A94E-AE87DAB6420D} = {B13F3948-F457-488F-8331-91A94B5AF228}
 		{78B079BD-9FC7-4B9E-B4A6-96DA0F00248B} = {930F15F6-CE0A-4425-8180-D6B11B0EF8CF}
+		{671232EC-C55C-4636-A75F-7E4B4C54C314} = {930F15F6-CE0A-4425-8180-D6B11B0EF8CF}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {304C8F5A-4C05-4010-AC40-3A23AB443601}
