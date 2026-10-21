@@ -71,8 +71,8 @@
     <NMakePreprocessorDefinitions>WIN32;NDEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
     <NMakeReBuildCommandLine>cd wincon &amp;&amp; nmake -f Makefile.vc</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>cd wincon &amp;&amp; nmake -f Makefile.vc clean</NMakeCleanCommandLine>
-    <OutDir>$(SolutionDir)\Project-Jarvis-C-Compiler\..\..\..\bin\libraries\$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(SolutionDir)\Project-Jarvis-C-Compiler\..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
+    <OutDir>..\..\..\..\..\..\..\..\bin\libraries\$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>..\..\..\..\..\..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
     <RunCodeAnalysis>false</RunCodeAnalysis>
     <IncludePath>.\;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
@@ -80,8 +80,8 @@
     <NMakeBuildCommandLine>nmake -f wincon/Makefile.vc</NMakeBuildCommandLine>
     <NMakeOutput>libpdcurses.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>WIN32;_DEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
-    <OutDir>$(SolutionDir)\Project-Jarvis-C-Compiler\..\..\..\bin\libraries\$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(SolutionDir)\Project-Jarvis-C-Compiler\..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
+    <OutDir>..\..\..\..\..\..\..\..\bin\libraries\$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>..\..\..\..\..\..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
     <RunCodeAnalysis>false</RunCodeAnalysis>
     <IncludePath>.\;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
@@ -89,8 +89,8 @@
     <NMakeBuildCommandLine>nmake -f wincon/Makefile.vc</NMakeBuildCommandLine>
     <NMakeOutput>libpdcurses.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>_DEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
-    <OutDir>$(SolutionDir)\Project-Jarvis-C-Compiler\..\..\..\bin\libraries\$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(SolutionDir)\Project-Jarvis-C-Compiler\..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
+    <OutDir>..\..\..\..\..\..\..\..\bin\libraries\$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>..\..\..\..\..\..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
     <RunCodeAnalysis>false</RunCodeAnalysis>
     <IncludePath>.\;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
@@ -98,8 +98,8 @@
     <NMakeBuildCommandLine>nmake -f wincon/Makefile.vc</NMakeBuildCommandLine>
     <NMakeOutput>libpdcurses.exe</NMakeOutput>
     <NMakePreprocessorDefinitions>NDEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
-    <OutDir>$(SolutionDir)\Project-Jarvis-C-Compiler\..\..\..\bin\libraries\$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(SolutionDir)\Project-Jarvis-C-Compiler\..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
+    <OutDir>..\..\..\..\..\..\..\..\bin\libraries\$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>..\..\..\..\..\..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
     <RunCodeAnalysis>false</RunCodeAnalysis>
     <IncludePath>.\;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>

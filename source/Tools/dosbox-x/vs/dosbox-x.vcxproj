@@ -70,29 +70,29 @@
     <_ProjectFileVersion>14.0.23107.0</_ProjectFileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>$(SolutionDir)\Project-Jarvis-C-Compiler\..\..\..\bin\tools\$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(SolutionDir)\Project-Jarvis-C-Compiler\..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
+    <OutDir>..\..\..\..\..\..\..\..\bin\tools\$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>..\..\..\..\..\..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
     <IncludePath>C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src\hardware\snd_pc98\sound\getsnd;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src\hardware\snd_pc98\x11;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src\hardware\snd_pc98\common;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src\hardware\snd_pc98\generic;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src\hardware\snd_pc98\cbus;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src\hardware\snd_pc98\sound;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\vs\pcap;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\vs\freetype\include;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src\libs\mt32;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src\aviwriter;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\vs\libpng;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\vs\libpdcurses;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\vs\zlib;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\vs\sdlnet;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\vs\sdl\include;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\vs;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\include;$(IncludePath);$(DXSDK_DIR)Include</IncludePath>
     <LibraryPath>$(LibraryPath);$(DXSDK_DIR)Lib</LibraryPath>
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>$(SolutionDir)\Project-Jarvis-C-Compiler\..\..\..\bin\tools\$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(SolutionDir)\Project-Jarvis-C-Compiler\..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
+    <OutDir>..\..\..\..\..\..\..\..\bin\tools\$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>..\..\..\..\..\..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
     <IncludePath>C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src\hardware\snd_pc98\sound\getsnd;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src\hardware\snd_pc98\x11;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src\hardware\snd_pc98\common;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src\hardware\snd_pc98\generic;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src\hardware\snd_pc98\cbus;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src\hardware\snd_pc98\sound;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\vs\pcap;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\vs\freetype\include;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src\libs\mt32;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src\aviwriter;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\vs\libpng;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\vs\libpdcurses;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\vs\zlib;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\vs\sdlnet;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\vs\sdl\include;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\vs;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\include;$(IncludePath);$(DXSDK_DIR)Include</IncludePath>
     <LibraryPath>$(LibraryPath);$(DXSDK_DIR)Lib</LibraryPath>
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>$(SolutionDir)\Project-Jarvis-C-Compiler\..\..\..\bin\tools\$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(SolutionDir)\Project-Jarvis-C-Compiler\..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
+    <OutDir>..\..\..\..\..\..\..\..\bin\tools\$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>..\..\..\..\..\..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
     <IncludePath>C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src\hardware\snd_pc98\sound\getsnd;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src\hardware\snd_pc98\x11;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src\hardware\snd_pc98\common;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src\hardware\snd_pc98\generic;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src\hardware\snd_pc98\cbus;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src\hardware\snd_pc98\sound;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\vs\pcap;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\vs\freetype\include;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src\libs\mt32;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src\aviwriter;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\vs\libpng;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\vs\libpdcurses;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\vs\zlib;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\vs\sdlnet;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\vs\sdl\include;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\vs;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\include;$(IncludePath);$(DXSDK_DIR)Include</IncludePath>
     <LibraryPath>$(LibraryPath);$(DXSDK_DIR)Lib</LibraryPath>
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>$(SolutionDir)\Project-Jarvis-C-Compiler\..\..\..\bin\tools\$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(SolutionDir)\Project-Jarvis-C-Compiler\..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
+    <OutDir>..\..\..\..\..\..\..\..\bin\tools\$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>..\..\..\..\..\..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
     <IncludePath>C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src\hardware\snd_pc98\sound\getsnd;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src\hardware\snd_pc98\x11;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src\hardware\snd_pc98\common;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src\hardware\snd_pc98\generic;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src\hardware\snd_pc98\cbus;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src\hardware\snd_pc98\sound;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\vs\pcap;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\vs\freetype\include;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src\libs\mt32;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src\aviwriter;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\vs\libpng;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\vs\libpdcurses;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\vs\zlib;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\src;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\vs\sdlnet;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\vs\sdl\include;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\vs;C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\dosbox-x\include;$(IncludePath);$(DXSDK_DIR)Include</IncludePath>
     <LibraryPath>$(LibraryPath);$(DXSDK_DIR)Lib</LibraryPath>
     <RunCodeAnalysis>false</RunCodeAnalysis>
@@ -116,6 +116,8 @@
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <BufferSecurityCheck>false</BufferSecurityCheck>
+      <LanguageStandard>Default</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <AdditionalDependencies>winmm.lib;imm32.lib;dsound.lib;dxguid.lib;SetupAPI.lib;version.lib;Iphlpapi.lib;Ws2_32.lib;opengl32.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\libpdcurses.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\zlib.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\libpng.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\freetype.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\SDL.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\SDLmain.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\SDL_net.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -148,6 +150,8 @@
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <BufferSecurityCheck>false</BufferSecurityCheck>
+      <LanguageStandard>Default</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <AdditionalDependencies>winmm.lib;imm32.lib;dsound.lib;dxguid.lib;SetupAPI.lib;version.lib;Iphlpapi.lib;Ws2_32.lib;opengl32.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\libpdcurses.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\zlib.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\libpng.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\freetype.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\SDL.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\SDLmain.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\SDL_net.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -178,6 +182,8 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat>None</DebugInformationFormat>
       <BufferSecurityCheck>false</BufferSecurityCheck>
+      <LanguageStandard>Default</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <AdditionalDependencies>winmm.lib;imm32.lib;dsound.lib;dxguid.lib;SetupAPI.lib;version.lib;Iphlpapi.lib;Ws2_32.lib;opengl32.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\libpdcurses.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\zlib.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\libpng.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\freetype.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\SDL.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\SDLmain.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\SDL_net.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -212,6 +218,8 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat>None</DebugInformationFormat>
       <BufferSecurityCheck>false</BufferSecurityCheck>
+      <LanguageStandard>Default</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <AdditionalDependencies>winmm.lib;imm32.lib;dsound.lib;dxguid.lib;SetupAPI.lib;version.lib;Iphlpapi.lib;Ws2_32.lib;opengl32.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\libpdcurses.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\zlib.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\libpng.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\freetype.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\SDL.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\SDLmain.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\SDL_net.lib;%(AdditionalDependencies)</AdditionalDependencies>
