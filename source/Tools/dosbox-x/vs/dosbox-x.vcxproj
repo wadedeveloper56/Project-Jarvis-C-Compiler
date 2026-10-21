@@ -116,6 +116,8 @@
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <BufferSecurityCheck>false</BufferSecurityCheck>
+      <LanguageStandard>Default</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <AdditionalDependencies>winmm.lib;imm32.lib;dsound.lib;dxguid.lib;SetupAPI.lib;version.lib;Iphlpapi.lib;Ws2_32.lib;opengl32.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\libpdcurses.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\zlib.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\libpng.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\freetype.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\SDL.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\SDLmain.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\SDL_net.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -148,6 +150,8 @@
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <BufferSecurityCheck>false</BufferSecurityCheck>
+      <LanguageStandard>Default</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <AdditionalDependencies>winmm.lib;imm32.lib;dsound.lib;dxguid.lib;SetupAPI.lib;version.lib;Iphlpapi.lib;Ws2_32.lib;opengl32.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\libpdcurses.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\zlib.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\libpng.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\freetype.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\SDL.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\SDLmain.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\SDL_net.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -178,6 +182,8 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat>None</DebugInformationFormat>
       <BufferSecurityCheck>false</BufferSecurityCheck>
+      <LanguageStandard>Default</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <AdditionalDependencies>winmm.lib;imm32.lib;dsound.lib;dxguid.lib;SetupAPI.lib;version.lib;Iphlpapi.lib;Ws2_32.lib;opengl32.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\libpdcurses.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\zlib.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\libpng.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\freetype.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\SDL.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\SDLmain.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\SDL_net.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -212,6 +218,8 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat>None</DebugInformationFormat>
       <BufferSecurityCheck>false</BufferSecurityCheck>
+      <LanguageStandard>Default</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <AdditionalDependencies>winmm.lib;imm32.lib;dsound.lib;dxguid.lib;SetupAPI.lib;version.lib;Iphlpapi.lib;Ws2_32.lib;opengl32.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\libpdcurses.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\zlib.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\libpng.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\freetype.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\SDL.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\SDLmain.lib;$(SolutionDir)\..\..\bin\libraries\$(Configuration)\$(Platform)\SDL_net.lib;%(AdditionalDependencies)</AdditionalDependencies>
