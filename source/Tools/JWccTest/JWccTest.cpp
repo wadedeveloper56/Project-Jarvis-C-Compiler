@@ -23,21 +23,30 @@ using namespace WadeSpace;
 
 namespace JWccTest
 {
-	TEST_CLASS(JWccTest)
+	TEST_CLASS(JWcc_IntegrationTest)
 	{
 	public:
-		TEST_METHOD(Integration_CompileSimpleFunction)
+		TEST_METHOD(Integration_64Bit_CompileSimpleFunction)
 		{
 			istringstream in("int add(int a, int b) { return a + b; }");
 			ostringstream out;
+			const bool previousBit16 = bit16;
+			const bool previousBit32 = bit32;
+			const bool previousBit64 = bit64;
+			bit16 = false;
+			bit32 = false;
+			bit64 = true;
 			compiler = make_shared<Compiler>();
 			bool exitcode = compiler->compileFile(in, out);
+			bit16 = previousBit16;
+			bit32 = previousBit32;
+			bit64 = previousBit64;
 			Assert::AreEqual(false, exitcode);
 			string s = out.str();
 			Assert::IsTrue(s.find("_add PROC") != string::npos || s.find("_add PROC C") != string::npos);
 		}
 
-		TEST_METHOD(Integration_Add_AssignmentExpressionGeneratesCode)
+		TEST_METHOD(Integration_64Bit_Add_AssignmentExpressionGeneratesCode)
 		{
 			istringstream in("int assign(int value) { value = 42; value += 3; return value; }");
 			ostringstream out;
@@ -59,7 +68,51 @@ namespace JWccTest
 			Assert::IsTrue(generated.find("add rax, rbx") != string::npos);
 		}
 
-		TEST_METHOD(Integration_Sub_AssignmentExpressionGeneratesCode)
+		TEST_METHOD(Integration_32Bit_Add_AssignmentExpressionGeneratesCode)
+		{
+			istringstream in("int assign(int value) { value = 42; value += 3; return value; }");
+			ostringstream out;
+			const bool previousBit16 = bit16;
+			const bool previousBit32 = bit32;
+			const bool previousBit64 = bit64;
+			bit16 = false;
+			bit32 = true;
+			bit64 = false;
+			compiler = make_shared<Compiler>();
+			bool exitcode = compiler->compileFile(in, out);
+			bit16 = previousBit16;
+			bit32 = previousBit32;
+			bit64 = previousBit64;
+			Assert::AreEqual(false, exitcode);
+			const string generated = out.str();
+			Assert::IsTrue(generated.find("mov eax, 42") != string::npos);
+			Assert::IsTrue(generated.find("mov DWORD PTR _value, eax") != string::npos);
+			Assert::IsTrue(generated.find("add eax, ebx") != string::npos);
+		}
+
+		TEST_METHOD(Integration_16Bit_Add_AssignmentExpressionGeneratesCode)
+		{
+			istringstream in("int assign(int value) { value = 42; value += 3; return value; }");
+			ostringstream out;
+			const bool previousBit16 = bit16;
+			const bool previousBit32 = bit32;
+			const bool previousBit64 = bit64;
+			bit16 = true;
+			bit32 = false;
+			bit64 = false;
+			compiler = make_shared<Compiler>();
+			bool exitcode = compiler->compileFile(in, out);
+			bit16 = previousBit16;
+			bit32 = previousBit32;
+			bit64 = previousBit64;
+			Assert::AreEqual(false, exitcode);
+			const string generated = out.str();
+			Assert::IsTrue(generated.find("mov ax, 42") != string::npos);
+			Assert::IsTrue(generated.find("mov WORD PTR _value, ax") != string::npos);
+			Assert::IsTrue(generated.find("add ax, bx") != string::npos);
+		}
+
+		TEST_METHOD(Integration_64Bit_Sub_AssignmentExpressionGeneratesCode)
 		{
 			istringstream in("int assign(int value) { value = 42; value -= 3; return value; }");
 			ostringstream out;
@@ -81,7 +134,29 @@ namespace JWccTest
 			Assert::IsTrue(generated.find("sub rax, rbx") != string::npos);
 		}
 
-		TEST_METHOD(Integration_MovUsesMatchingWidthsAndSignedExtensions)
+		TEST_METHOD(Integration_64Bit_Mul_AssignmentExpressionGeneratesCode)
+		{
+			istringstream in("int assign(int value) { value = 42; value *= 3; return value; }");
+			ostringstream out;
+			const bool previousBit16 = bit16;
+			const bool previousBit32 = bit32;
+			const bool previousBit64 = bit64;
+			bit16 = false;
+			bit32 = false;
+			bit64 = true;
+			compiler = make_shared<Compiler>();
+			bool exitcode = compiler->compileFile(in, out);
+			bit16 = previousBit16;
+			bit32 = previousBit32;
+			bit64 = previousBit64;
+			Assert::AreEqual(false, exitcode);
+			const string generated = out.str();
+			Assert::IsTrue(generated.find("mov rax, 42") != string::npos);
+			Assert::IsTrue(generated.find("mov DWORD PTR _value, eax") != string::npos);
+			Assert::IsTrue(generated.find("imul rax, rbx") != string::npos);
+		}
+
+		TEST_METHOD(Integration_64Bit_MovUsesMatchingWidthsAndSignedExtensions)
 		{
 			istringstream in("int widen(signed char signedValue, unsigned char unsignedValue) { signedValue = 1; unsignedValue = 2; signedValue += unsignedValue; return signedValue; }");
 			ostringstream out;

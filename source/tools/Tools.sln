@@ -21,7 +21,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Assembler", "Assembler", "{
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Compiler", "Compiler", "{8E079609-87D1-4FA1-A42D-E8B74F1F394E}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "PEDumper", "PEDumper", "{3445479B-AD78-43AF-A730-869D32A248D0}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Portable Executable Info", "Portable Executable Info", "{3445479B-AD78-43AF-A730-869D32A248D0}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JWccLib", "JWccLib\JWccLib.vcxproj", "{55E11707-51C1-4126-9CE7-1D3EF7E9D7F0}"
 EndProject
