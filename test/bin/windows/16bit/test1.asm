@@ -1,1 +1,0 @@
-error: Return type mismatch

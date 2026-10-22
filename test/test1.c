@@ -1,8 +1,24 @@
-char var1;
-short var2;
-int var3;
+#define NUMBER 5
+int u;
+int x = NUMBER;
+int m;
 
-int main()
-{
-	return 5;
-}   
+int func1(int a, int b) {
+	int c;  
+	c=a + b * 5;
+	return c;
+}
+
+int func2(int a, int b) {
+	int c;
+	c = a + b / 3;
+	return c;
+}
+
+int main() {
+	int a;
+	int b;
+	a = func1(x, 4);
+	b = func2(m, 6);
+	return a+b;
+}

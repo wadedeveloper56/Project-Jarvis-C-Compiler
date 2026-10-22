@@ -1,11 +1,11 @@
 @ECHO ON
 SET LIB32=C:\PROGRA~2\WI3CF2~1\10\Lib\10.0.26100.0\um\32bit\shell32.lib"
 SET KLIB32=C:\PROGRA~2\WI3CF2~1\10\Lib\10.0.26100.0\um\32bit\kernel32.lib"
-SET LLIB52="C:\PROGRA~2\WI3CF2~1\10\Lib\10.0.26100.0\um\32bit\ntstc_msvcrt.lib"
+SET LLIB32="C:\PROGRA~2\WI3CF2~1\10\Lib\10.0.26100.0\um\32bit\ntstc_msvcrt.lib"
 
-SET LIB64="C:\PROGRA~2\WI3CF2~1\10\Lib\10.0.26100.0\um\64bit\shell32.lib"
-SET KLIB64="C:\PROGRA~2\WI3CF2~1\10\Lib\10.0.26100.0\um\64bit\kernel32.lib"
-SET LLIB64="C:\PROGRA~1\MICROS~2\18\Insiders\VC\Tools\MSVC\14.51.36231\lib\64bit\msvcrt.lib"
+SET LIB64=C:\Program Files (x86)\Windows Kits\10\Lib\10.0.28000.0\um\x64\shell32.lib
+SET KLIB64=C:\Program Files (x86)\Windows Kits\10\Lib\10.0.28000.0\um\x64\kernel32.lib
+SET LLIB64=C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.53.36911\lib\x64\msvcrt.lib
 
 SET CD=%CD%
 MKDIR %CD%\bin
@@ -13,45 +13,12 @@ MKDIR %CD%\bin\windows
 MKDIR %CD%\bin\windows\16bit
 MKDIR %CD%\bin\windows\32bit
 MKDIR %CD%\bin\windows\64bit
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWcc -b 64 -o %CD%\bin\windows\64bit\test1.asm test1.c > %CD%\bin\windows\64bit\test1.c.log
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWasm -win64 -Fl=%CD%\bin\windows\64bit\test1.lst -Sa -Fobin\windows\64bit\test1.obj %CD%\bin\windows\64bit\test1.asm
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWasm -win64 -Fl=%CD%\bin\windows\64bit\c064.lst -Sa -Fobin\windows\64bit\c064.obj c064.asm
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWlink format win pe option map=%CD%\bin\windows\64bit\test1.map file %CD%\bin\windows\64bit\test1.obj, %CD%\bin\windows\64bit\c064.obj lib %LIB64%,%KLIB64%,%LLIB64%  name %CD%\bin\windows\64bit\test1.exe
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\pedump -a %CD%\bin\windows\64bit\test1.obj > %CD%\bin\windows\64bit\test1.asm.log
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\pedump -a %CD%\bin\windows\64bit\c064.obj > %CD%\bin\windows\64bit\c064.asm.log
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\pedump -a %CD%\bin\windows\64bit\test1.exe > %CD%\bin\windows\64bit\test1.exe.log
+SET DIRECTORY=C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64
 
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWcc -b 32 -o %CD%\bin\windows\32bit\test1.asm test1.c > %CD%\bin\windows\32bit\test1.c.log
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWasm -coff -Fl=%CD%\bin\windows\32bit\test1.lst -Sa -Fobin\windows\32bit\test1.obj %CD%\bin\windows\32bit\test1.asm
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWasm -coff -Fl=%CD%\bin\windows\32bit\c032.lst -Sa -Fobin\windows\32bit\c032.obj c032.asm
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWlink format win pe option map=%CD%\bin\windows\32bit\test1.map file %CD%\bin\windows\32bit\test1.obj, %CD%\bin\windows\32bit\c032.obj lib %LIB32%,%KLIB32%  name %CD%\bin\windows\32bit\test1.exe
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\pedump -a %CD%\bin\windows\32bit\test1.obj > %CD%\bin\windows\32bit\test1.asm.log
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\pedump -a %CD%\bin\windows\32bit\c032.obj > %CD%\bin\windows\32bit\c032.asm.log
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\pedump -a %CD%\bin\windows\32bit\test1.exe > %CD%\bin\windows\32bit\test1.exe.log
-
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWcc -b 16 -o %CD%\bin\windows\16bit\test1.asm test1.c > %CD%\bin\windows\16bit\test1.c.log
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWasm -omf -Fl=%CD%\bin\windows\16bit\test1.lst -Sa -Fobin\windows\16bit\test1.obj %CD%\bin\windows\16bit\test1.asm
-REM C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWasm -coff -Fl=%CD%\bin\windows\32bit\c032.lst -Sa -Fobin\windows\32bit\c032.obj c032.asm
-REM C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWlink format win pe option map=%CD%\bin\windows\32bit\test1.map file %CD%\bin\windows\32bit\test1.obj, %CD%\bin\windows\32bit\c032.obj lib %LIB32%,%KLIB32%  name %CD%\bin\windows\32bit\test1.exe
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\pedump -a %CD%\bin\windows\16bit\test1.obj > %CD%\bin\windows\16bit\test1.asm.log
-REM C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\pedump -a %CD%\bin\windows\32bit\c032.obj > %CD%\bin\windows\32bit\c032.asm.log
-REM C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\pedump -a %CD%\bin\windows\32bit\test1.exe > %CD%\bin\windows\32bit\test1.exe.log
-
-REM C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWlib ?
-REM C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWmake --help --version
-REM C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWcpp --help --version
-REM C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWrc --help
-
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWcc -b 64 -o test2_64.asm test2.c > test2_64.c.log
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWasm -win64 -Fl=test2_64.lst -Sa -Fotest2_64.obj test2_64.asm
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\pedump -a test2_64.obj > test2_64.asm.log
-
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWcc -b 32 -o test2_32.asm test2.c > test2_32.c.log
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWasm -coff -Fl=test2_32.lst -Sa -Fotest2_32.obj test2_32.asm
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\pedump -a test2_32.obj > test2_32.asm.log
-
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWcc -b 16 -o test2_16.asm test2.c > test2_16.c.log
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWasm -omf -Fl=test2_16.lst -Sa -Fotest2_16.obj test2_16.asm
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\pedump -a test2_16.obj > test2_16.asm.log
-
-C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64\JWcpp -otest2.i test2.c
+%DIRECTORY%\JWcc -b 64 -o %CD%\bin\windows\64bit\test1.asm test1.c > %CD%\bin\windows\64bit\test1.c.log
+%DIRECTORY%\JWasm -win64 -Fl=%CD%\bin\windows\64bit\test1.lst -Sa -Fobin\windows\64bit\test1.obj %CD%\bin\windows\64bit\test1.asm
+%DIRECTORY%\JWasm -win64 -Fl=%CD%\bin\windows\64bit\c064.lst -Sa -Fobin\windows\64bit\c064.obj c064.asm
+%DIRECTORY%\JWlink @link64.lnk
+%DIRECTORY%\pedump -a %CD%\bin\windows\64bit\test1.obj > %CD%\bin\windows\64bit\test1.asm.log
+%DIRECTORY%\pedump -a %CD%\bin\windows\64bit\c064.obj > %CD%\bin\windows\64bit\c064.asm.log
+%DIRECTORY%\pedump -a %CD%\bin\windows\64bit\test1.exe > %CD%\bin\windows\64bit\test1.exe.log

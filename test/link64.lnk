@@ -1,0 +1,8 @@
+format win pe option 
+map=C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\64bit\test1.map 
+file C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\64bit\test1.obj
+file C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\64bit\c064.obj 
+lib "C:\Program Files (x86)\Windows Kits\10\Lib\10.0.28000.0\um\x64\shell32.lib"
+lib "C:\Program Files (x86)\Windows Kits\10\Lib\10.0.28000.0\um\x64\kernel32.lib"
+lib "C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.53.36911\lib\x64\msvcrt.lib"  
+name "C:\projects\OSDev\Project-Jarvis-C-Compiler\test\bin\windows\64bit\test1.exe"
