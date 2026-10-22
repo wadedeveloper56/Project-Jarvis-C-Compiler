@@ -7,7 +7,7 @@ File Type: 32-bit COFF OBJECT
 FILE HEADER VALUES
                14C Machine (Intel 386 or later processors and compatible processors)
                  3 (3) Number of Sections
-          6AD6B4E8 TimeDateStamp ->  n/a
+          6ADA6AD4 TimeDateStamp ->  n/a
                 F6 PointerToSymbolTable
                  B (11) NumberOfSymbols
                  0 (0) SizeOfOptionalHeader
@@ -31,7 +31,6 @@ SECTION HEADER #0 (0)
          Executable
          Readable
 
-RAW DATA #0 (0)
 RAW DATA #0 (0) - 102 bytes
 0x0:	push	ebp
 0x1:	mov	ebp, esp
