@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{96F30DDE-3FB2-4FBB-9FEA-5A2B43967F1D}</ProjectGuid>
+    <ProjectGuid>{A09D71C2-6D80-40D5-A02B-6278569C8140}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>orc</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
@@ -73,24 +73,28 @@
     <OutDir>..\..\..\bin\tools\$(Configuration)\$(Platform)\</OutDir>
     <IntDir>..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
     <RunCodeAnalysis>false</RunCodeAnalysis>
+    <IncludePath>..\jwcpp;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>..\..\..\bin\tools\$(Configuration)\$(Platform)\</OutDir>
     <IntDir>..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
     <RunCodeAnalysis>false</RunCodeAnalysis>
+    <IncludePath>..\jwcpp;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\..\..\bin\tools\$(Configuration)\$(Platform)\</OutDir>
     <IntDir>..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
     <RunCodeAnalysis>false</RunCodeAnalysis>
+    <IncludePath>..\jwcpp;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\..\..\bin\tools\$(Configuration)\$(Platform)\</OutDir>
     <IntDir>..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
     <RunCodeAnalysis>false</RunCodeAnalysis>
+    <IncludePath>..\jwcpp;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -229,25 +233,25 @@ copy /y "$(OutputPath)$(ProjectName).exe" "..\..\..\build\$(Configuration)\$(Pla
     <ClInclude Include="VersionInfo.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\ocpp\Errors.cpp" />
-    <ClCompile Include="..\ocpp\Floating.cpp" />
-    <ClCompile Include="..\ocpp\InputFile.cpp" />
-    <ClCompile Include="..\ocpp\MakeStubs.cpp" />
-    <ClCompile Include="..\ocpp\PipeArbitrator.cpp" />
-    <ClCompile Include="..\ocpp\ppCond.cpp" />
-    <ClCompile Include="..\ocpp\ppCtx.cpp" />
-    <ClCompile Include="..\ocpp\ppDefine.cpp" />
-    <ClCompile Include="..\ocpp\ppEmbed.cpp" />
-    <ClCompile Include="..\ocpp\ppError.cpp" />
-    <ClCompile Include="..\ocpp\ppExpr.cpp" />
-    <ClCompile Include="..\ocpp\ppFile.cpp" />
-    <ClCompile Include="..\ocpp\ppInclude.cpp" />
-    <ClCompile Include="..\ocpp\ppMacro.cpp" />
-    <ClCompile Include="..\ocpp\ppPragma.cpp" />
-    <ClCompile Include="..\ocpp\PreProcessor.cpp" />
-    <ClCompile Include="..\ocpp\SymbolTable.cpp" />
-    <ClCompile Include="..\ocpp\Token.cpp" />
-    <ClCompile Include="..\ocpp\TokenSettings.cpp" />
+    <ClCompile Include="..\JWcpp\Errors.cpp" />
+    <ClCompile Include="..\JWcpp\Floating.cpp" />
+    <ClCompile Include="..\JWcpp\InputFile.cpp" />
+    <ClCompile Include="..\JWcpp\MakeStubs.cpp" />
+    <ClCompile Include="..\JWcpp\PipeArbitrator.cpp" />
+    <ClCompile Include="..\JWcpp\ppCond.cpp" />
+    <ClCompile Include="..\JWcpp\ppCtx.cpp" />
+    <ClCompile Include="..\JWcpp\ppDefine.cpp" />
+    <ClCompile Include="..\JWcpp\ppEmbed.cpp" />
+    <ClCompile Include="..\JWcpp\ppError.cpp" />
+    <ClCompile Include="..\JWcpp\ppExpr.cpp" />
+    <ClCompile Include="..\JWcpp\ppFile.cpp" />
+    <ClCompile Include="..\JWcpp\ppInclude.cpp" />
+    <ClCompile Include="..\JWcpp\ppMacro.cpp" />
+    <ClCompile Include="..\JWcpp\ppPragma.cpp" />
+    <ClCompile Include="..\JWcpp\PreProcessor.cpp" />
+    <ClCompile Include="..\JWcpp\SymbolTable.cpp" />
+    <ClCompile Include="..\JWcpp\Token.cpp" />
+    <ClCompile Include="..\JWcpp\TokenSettings.cpp" />
     <ClCompile Include="Accelerators.cpp" />
     <ClCompile Include="Bitmap.cpp" />
     <ClCompile Include="Cursor.cpp" />
