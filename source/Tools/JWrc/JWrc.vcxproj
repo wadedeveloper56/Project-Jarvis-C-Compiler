@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{96F30DDE-3FB2-4FBB-9FEA-5A2B43967F1D}</ProjectGuid>
+    <ProjectGuid>{A09D71C2-6D80-40D5-A02B-6278569C8140}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>orc</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
