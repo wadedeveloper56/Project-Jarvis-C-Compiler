@@ -1493,4 +1493,7 @@
       <Filter>Header Files\XTensa</Filter>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="info.txt" />
+  </ItemGroup>
 </Project>
