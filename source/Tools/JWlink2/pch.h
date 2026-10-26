@@ -20,6 +20,8 @@
 #include <sstream>
 #include <unordered_set>
 #include <functional>
+#include <algorithm>
+
 
 #pragma warning(disable:4267)
 #pragma warning(disable:4244)
