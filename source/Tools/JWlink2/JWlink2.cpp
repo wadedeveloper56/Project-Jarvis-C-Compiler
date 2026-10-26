@@ -9,10 +9,11 @@ using namespace CLI;
 
 struct JwlinkConfig
 {
-    std::vector<std::string> system_format;
-    std::vector<std::string> obj_files;
-    std::vector<std::string> lib_files; // Holds the comprehensive list of libraries
-    std::string output_file;
+    string system_type;
+    string format_type;
+    vector<string> obj_files;
+    vector<string> lib_files; // Holds the comprehensive list of libraries
+    string output_file;
 };
 
 int main(int argc, const char* argv[]) {
@@ -23,18 +24,20 @@ int main(int argc, const char* argv[]) {
     App app("JWlink");
     JwlinkConfig config;
 
-    app.add_option("-s,--sys", config.system_format, "Specify output format")->delimiter(',');
-    app.add_option("files", config.obj_files, "Input object modules (.obj, .o)")->delimiter(',');
-    app.add_option("-l,--lib", config.lib_files, "Specify import libraries")->delimiter(','); // Splits "-l user32,gdi32" into separate elements automatically
+    app.add_option("SYS,--system", config.system_type, "Target operating system (e.g., win32, win64, hxdosr, elf64)");
+    app.add_option("FORM,--format", config.format_type, "Output executable format type (e.g., windows pe, elf, os2)");
+    app.add_option("-f,--files", config.obj_files, "Input object modules (.obj, .o)")->delimiter(',');
+    app.add_option("-l,--lib", config.lib_files, "Specify import libraries")->delimiter(',');
     app.add_option("-o,--out", config.output_file, "Explicit output binary path");
      
     CLI11_PARSE(app, argc, argv);
 
-    cout << "System Formats (" << config.system_format.size() << "):\n";
-    for (const auto& format : config.system_format) std::cout << "  - " << format  << "\n";
+    cout << "System Type: " << config.system_type << "\n";
+	cout << "Format Type: " << config.format_type << "\n";
+	cout << "Output File: " << config.output_file << "\n";
     cout << "Object Files (" << config.obj_files.size() << "):\n";
-    for (const auto& file : config.obj_files) std::cout << "  - " << file << "\n";
-    std::cout << "Libraries Linked (" << config.lib_files.size() << "):\n";
-    for (const auto& lib : config.lib_files) std::cout << "  - " << lib << "\n";
+    for (const auto& file : config.obj_files) cout << "  - " << file << "\n";
+    cout << "Libraries Linked (" << config.lib_files.size() << "):\n";
+    for (const auto& lib : config.lib_files) cout << "  - " << lib << "\n";
     return 0;
 }
