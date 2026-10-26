@@ -1,71 +1,106 @@
 #include "pch.h"
-#include "globals.h"
-#include <CLI/CLI.hpp>
-#include <iostream>
-#include <string>
 #include <iostream>
 #include <string>
 #include <vector>
+#include <map>
+#include <fstream>
 #include <sstream>
+#include <algorithm>
 
-using namespace std;
-using namespace CLI;
-
-struct JwlinkConfig
+enum class TokenType
 {
-    string system_type;
-    string format_type;
-    vector<string> obj_files;
-    vector<string> lib_files; // Holds the comprehensive list of libraries
-    string output_file;
-};
-
-#include <iostream>
-#include <string>
-#include <vector>
-#include <sstream>
-
-// Enumeration matching token types encountered during processing
-enum TokenType
-{
-    Directive,   // Primary keyword (e.g., FORMAT, FILE, OPTION)
-    Argument,    // Target or state modifier (e.g., WINDOWS, PE)
-    ListElement, // Comma-delimited entries (e.g., main.obj)
-    Delimiter    // Separators like commas or equal signs
+    Directive,
+    Argument,
+    ListElement,
+    Delimiter
 };
 
 struct LinkerParam
 {
-    string value;
-    enum TokenType type;
+    std::string value;
+    TokenType type;
 };
 
-// Replicates the processing logic for tokens, tracking quote states
-vector<LinkerParam> ProcessJwlinkArgs(const string& cmdLine) {
-    vector<LinkerParam> processedParams;
-    string currentToken;
+// Represents the deep parsed structural configuration:
+// Primary Directive -> List of clean positional Arguments/Sub-options
+using LinkerConfig = std::map<std::string, std::vector<std::string>>;
+
+// Represents specific broken down assignment maps (e.g., {"stack": "0x4000"})
+using SubOptionMap = std::map<std::string, std::string>;
+
+
+// 1. HANDLER: Indirect response files (@file) with comment stripping
+std::string ExpandResponseFiles(const std::string& inputStr) {
+    std::stringstream source(inputStr);
+    std::string word;
+    std::string accumulatedCommand;
+
+    while (source >> word)
+    {
+        // Look for the jwlink/wlink indirect reference indicator '@'
+        if (!word.empty() && word[0] == '@')
+        {
+            std::string filePath = word.substr(1);
+            // Strip wrap-around quotes if the user gave @'my options.lnk'
+            if (filePath.front() == '\'' && filePath.back() == '\'')
+            {
+                filePath = filePath.substr(1, filePath.length() - 2);
+            }
+
+            std::ifstream file(filePath);
+            if (!file.is_open())
+            {
+                std::cerr << "Warning: Could not open indirect file: " << filePath << "\n";
+                continue;
+            }
+
+            std::string line;
+            std::string fileContent;
+            while (std::getline(file, line))
+            {
+                // Strip hash comments or inline comment patterns if applicable
+                size_t commentPos = line.find('#');
+                if (commentPos != std::string::npos)
+                {
+                    line = line.substr(0, commentPos);
+                }
+                fileContent += line + " ";
+            }
+
+            // Recursively evaluate in case the response file references another response file
+            accumulatedCommand += ExpandResponseFiles(fileContent) + " ";
+        }
+        else
+        {
+            accumulatedCommand += word + " ";
+        }
+    }
+    return accumulatedCommand;
+}
+
+
+// 2. PARSER: Tokenizer identifying main directives and tokens
+std::vector<LinkerParam> TokenizeJwlinkString(const std::string& cmdLine) {
+    std::vector<LinkerParam> processedParams;
+    std::string currentToken;
     bool insideQuotes = false;
 
     for (size_t i = 0; i < cmdLine.length(); ++i)
     {
         char ch = cmdLine[i];
-
-        // Toggle quote state if an apostrophe (') is encountered
         if (ch == '\'')
         {
             insideQuotes = !insideQuotes;
-            continue; // Strip the apostrophe like jwlink does
+            continue; // Drop the literal quote markers
         }
 
         if (insideQuotes)
         {
-            // Treat everything literally inside single quotes
             currentToken += ch;
         }
         else
         {
-            // Delimiter evaluation outside of quotes
-            if (ch == ' ' || ch == '\t')
+            if (ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n')
             {
                 if (!currentToken.empty())
                 {
@@ -73,15 +108,14 @@ vector<LinkerParam> ProcessJwlinkArgs(const string& cmdLine) {
                     currentToken.clear();
                 }
             }
-            else if (ch == ',' || ch == '=')
-            {
+            else if (ch == ',')
+            { // Isolate list comma items but keep '=' for sub-option parsing
                 if (!currentToken.empty())
                 {
                     processedParams.push_back({ currentToken, TokenType::ListElement });
                     currentToken.clear();
                 }
-                string delim(1, ch);
-                processedParams.push_back({ delim, TokenType::Delimiter });
+                processedParams.push_back({ std::string(1, ch), TokenType::Delimiter });
             }
             else
             {
@@ -89,85 +123,136 @@ vector<LinkerParam> ProcessJwlinkArgs(const string& cmdLine) {
             }
         }
     }
-
-    // Flush any remaining tokens at end of string
     if (!currentToken.empty())
     {
         processedParams.push_back({ currentToken, TokenType::Argument });
     }
 
-    // Contextual Post-Processing: Assign Directive types
-    // Rules mimic Watcom style: structural context dictates if an argument is a master Directive
-    bool nextIsDirective = true;
-    for (auto& param : processedParams)
+    // Directives marking pass
+    for (size_t i = 0; i < processedParams.size(); ++i)
     {
-        if (nextIsDirective && param.type == TokenType::Argument)
+        std::string val = processedParams[i].value;
+        if (val == "format" || val == "file" || val == "option" || val == "op" || val == "lib" || val == "name")
         {
-            param.type = TokenType::Directive;
-            nextIsDirective = false;
+            processedParams[i].type = TokenType::Directive;
         }
-        // If we hit a comma delimiter, the next element continues the active list, not a directive
-        if (param.type == TokenType::Delimiter && param.value == ",")
+        else if (i == 0 && processedParams[i].type == TokenType::Argument)
         {
-            nextIsDirective = false;
-        }
-        // Specific top-level structural keywords reset directive state
-        if (param.value == "format" || param.value == "file" || param.value == "option" || param.value == "op")
-        {
-            param.type = TokenType::Directive;
+            processedParams[i].type = TokenType::Directive;
         }
     }
-
     return processedParams;
 }
 
-int main() {
-    // Mimics: jwlink format windows pe file main.obj, 'my lib file.obj' op eliminate, map
-    string mockInput = "format windows pe file main.obj, 'my lib file.obj' op eliminate, map";
 
-    cout << "Processing command line string:\n\"" << mockInput << "\"\n\n";
-    vector<LinkerParam> tokens = ProcessJwlinkArgs(mockInput);
+// 3. EXTRACTOR: Groups components into standard structure mapping
+LinkerConfig GroupDirectives(const std::vector<LinkerParam>& tokens) {
+    LinkerConfig config;
+    std::string currentDirective = "global";
 
-    cout << "Parsed Results:\n";
-    cout << "------------------------------------------\n";
     for (const auto& token : tokens)
     {
-        string typeStr;
-        switch (token.type)
+        if (token.type == TokenType::Delimiter) continue;
+
+        if (token.type == TokenType::Directive)
         {
-            case TokenType::Directive:   typeStr = "Directive"; break;
-            case TokenType::Argument:    typeStr = "Argument"; break;
-            case TokenType::ListElement: typeStr = "List Element"; break;
-            case TokenType::Delimiter:   typeStr = "Delimiter"; break;
+            currentDirective = token.value;
+            if (currentDirective == "op") currentDirective = "option"; // Standardize shorthand
+
+            if (config.find(currentDirective) == config.end())
+            {
+                config[currentDirective] = std::vector<std::string>();
+            }
         }
-        cout << "[" << typeStr << "] -> " << token.value << "\n";
+        else
+        {
+            config[currentDirective].push_back(token.value);
+        }
+    }
+    return config;
+}
+
+
+// 4. SUB-OPTION PARSER: Breaks down strings matching "key=value" pairs 
+SubOptionMap ParseSubOptions(const std::vector<std::string>& optionArguments) {
+    SubOptionMap subMap;
+    for (const auto& arg : optionArguments)
+    {
+        size_t equalSignPos = arg.find('=');
+        if (equalSignPos != std::string::npos)
+        {
+            std::string key = arg.substr(0, equalSignPos);
+            std::string value = arg.substr(equalSignPos + 1);
+
+            // Normalize casing to match jwlink's case-insensitive strategy
+            std::transform(key.begin(), key.end(), key.begin(), ::tolower);
+            subMap[key] = value;
+        }
+        else
+        {
+            // Standalone flags without explicit assignments (e.g. "eliminate" or "map")
+            std::string flag = arg;
+            std::transform(flag.begin(), flag.end(), flag.begin(), ::tolower);
+            subMap[flag] = "true";
+        }
+    }
+    return subMap;
+}
+
+
+// --- Execution Demonstration ---
+int main() {
+    // 1. Create a mock external response file on disk for demonstration purposes
+    std::ofstream mockFile("linkcmds.lnk");
+    if (mockFile.is_open())
+    {
+        mockFile << "file main.obj, utils.obj\n";
+        mockFile << "op stack=0x4000, eliminate, map\n"; // Option containing values and flags
+        mockFile.close();
     }
 
+    // Input command string referencing our response script using '@'
+    std::string rawCommandLine = "format win pe op stack=0x4000 option map=%CD%\\bin\\windows\\64bit\\test1.map file %CD%\\bin\\windows\\64bit\\test1.obj, %CD%\\bin\\windows\\64bit\\c064.obj lib %LIB64%,%KLIB64%,%LLIB64%  name %CD%\\bin\\windows\\64bit\\test1.exe";
+    std::cout << "Original CLI entry: \n  " << rawCommandLine << "\n\n";
+
+    // Unpack response contents recursively 
+    std::string fullyExpandedString = ExpandResponseFiles(rawCommandLine);
+    std::cout << "Fully expanded macro command string: \n  " << fullyExpandedString << "\n\n";
+
+    // Process parameters through our multi-phase layout
+    std::vector<LinkerParam> tokens = TokenizeJwlinkString(fullyExpandedString);
+    LinkerConfig configMap = GroupDirectives(tokens);
+
+    // Output grouped mapping entries
+    std::cout << "Structured Group Output:\n";
+    std::cout << "========================================\n";
+    for (const auto& [directive, arguments] : configMap)
+    {
+        std::cout << "Directive Block: [" << directive << "]\n";
+
+        // If we are looking at an 'option' block, apply the SubOption parsing pass
+        if (directive == "option")
+        {
+            SubOptionMap innerOptions = ParseSubOptions(arguments);
+            std::cout << "  -> Extracted Inner Options (Key/Value pairs):\n";
+            for (const auto& [key, value] : innerOptions)
+            {
+                std::cout << "     * " << key << " = " << value << "\n";
+            }
+        }
+        else
+        {
+            // For standard lists like 'file' elements
+            for (const auto& arg : arguments)
+            {
+                std::cout << "  -> Value item: " << arg << "\n";
+            }
+        }
+        std::cout << "----------------------------------------\n";
+    }
+
+    // Clean up mock file
+    std::remove("linkcmds.lnk");
     return 0;
 }
 
-int main2(int argc, const char* argv[]) {
-
-    printf("JWlink - 16/32/64 bit ELF/OMF/COFF supported linker v1.0 (C) Copyright 2025-2026 Christopher D. Wade.\n");
-    printf("All Rights Reserved\n");
-
-    App app("JWlink");
-    JwlinkConfig config;
-
-    app.add_option("SYS,--system", config.system_type, "Target operating system (e.g., win32, win64, hxdosr, elf64)");
-    app.add_option("FORM,--format", config.format_type, "Output executable format type (e.g., windows pe, elf, os2)");
-    app.add_option("-f,--files", config.obj_files, "Input object modules (.obj, .o)")->delimiter(',');
-    app.add_option("-l,--lib", config.lib_files, "Specify import libraries")->delimiter(',');
-    app.add_option("-o,--out", config.output_file, "Explicit output binary path");
-     
-    CLI11_PARSE(app, argc, argv);
-
-    cout << "System Type: " << config.system_type << "\n";
-	cout << "Format Type: " << config.format_type << "\n";
-	cout << "Output File: " << config.output_file << "\n";
-    cout << "Object Files (" << config.obj_files.size() << "):\n";
-    for (const auto& file : config.obj_files) cout << "  - " << file << "\n";
-    cout << "Libraries Linked (" << config.lib_files.size() << "):\n";
-    for (const auto& lib : config.lib_files) cout << "  - " << lib << "\n";
-    return 0;
-}
