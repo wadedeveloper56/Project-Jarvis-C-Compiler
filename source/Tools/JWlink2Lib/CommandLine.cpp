@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "CommandLine.h"
 
+int g_LinkStatus;
+
 CommandLine::CommandLine(int argc, char** argv) : m_argc(argc), m_argv(argv)
 {
 	g_LinkStatus = LNK_OK; // Initialize global status to OK at the start of the command line processing

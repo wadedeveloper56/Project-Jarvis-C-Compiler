@@ -3,7 +3,6 @@
 #include "CommandLine.h"
 
 using namespace std;
-int g_LinkStatus;
 
 int main(int argc, char* argv[]) {
     CommandLine* cmdLine = new CommandLine(argc, argv);
