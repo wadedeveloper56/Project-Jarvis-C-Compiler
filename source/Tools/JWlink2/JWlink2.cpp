@@ -16,53 +16,133 @@ struct LinkerParam
     TokenType type;
 };
 
-// Represents the deep parsed structural configuration:
-// Primary Directive -> List of clean positional Arguments/Sub-options
-using LinkerConfig = map<string, vector<string>>;
+using LinkerConfig = std::map<std::string, std::vector<std::string>>;
+using SubOptionMap = std::map<std::string, std::string>;
 
-// Represents specific broken down assignment maps (e.g., {"stack": "0x4000"})
-using SubOptionMap = map<string, string>;
+// ============================================================================
+// VALIDATION ENGINE
+// ============================================================================
+namespace Validation
+{
+    // Valid top-level jwlink directives (normalized to lowercase)
+    const std::set<std::string> ValidDirectives = {
+        "format", "file", "option", "op", "name", "library", "lib",
+        "path", "output", "debug", "import", "export", "system", "sys"
+    };
 
+    // Valid sub-options allowed inside an 'option' directive block
+    const std::set<std::string> ValidSubOptions = {
+        "stack", "offset", "eliminate", "map", "quiet", "verbose",
+        "caseexact", "cvpack", "nodefaultlibs", "start", "align"
+    };
 
-// 1. HANDLER: Indirect response files (@file) with comment stripping
-string ExpandResponseFiles(const string& inputStr) {
-    stringstream source(inputStr);
-    string word;
-    string accumulatedCommand;
+    // Valid platforms/subsystems allowed inside a 'format' directive block
+    const std::set<std::string> ValidFormats = {
+        "windows", "win", "pe", "os2", "dos", "elf", "raw", "novell", "qnx"
+    };
+
+    // Validates whether a top-level keyword is recognized
+    bool IsValidDirective(const std::string& directive) {
+        std::string lowerDir = directive;
+        std::transform(lowerDir.begin(), lowerDir.end(), lowerDir.begin(), ::tolower);
+        return ValidDirectives.find(lowerDir) != ValidDirectives.end();
+    }
+
+    // Validates sub-options and logs warnings for unknown elements
+    void ValidateConfig(const LinkerConfig& config) {
+        std::cout << "\n[Validation Report]\n";
+        std::cout << "----------------------------------------\n";
+        bool hasErrors = false;
+
+        for (const auto& [directive, arguments] : config)
+        {
+            // 1. Check top-level directives
+            if (directive != "global" && !IsValidDirective(directive))
+            {
+                std::cerr << " -> ERROR: Unknown top-level directive structural keyword: '" << directive << "'\n";
+                hasErrors = true;
+                continue;
+            }
+
+            // 2. Specialized internal checking for the 'option' block
+            if (directive == "option")
+            {
+                for (const auto& arg : arguments)
+                {
+                    // Isolate key from potential key=value formats
+                    size_t eqPos = arg.find('=');
+                    std::string key = (eqPos != std::string::npos) ? arg.substr(0, eqPos) : arg;
+                    std::transform(key.begin(), key.end(), key.begin(), ::tolower);
+
+                    if (ValidSubOptions.find(key) == ValidSubOptions.end())
+                    {
+                        std::cerr << " -> WARNING: Unrecognized sub-option or flag inside 'option': '" << key << "'\n";
+                        hasErrors = true;
+                    }
+                }
+            }
+
+            // 3. Specialized internal checking for the 'format' block
+            if (directive == "format")
+            {
+                for (const auto& arg : arguments)
+                {
+                    std::string lowerArg = arg;
+                    std::transform(lowerArg.begin(), lowerArg.end(), lowerArg.begin(), ::tolower);
+                    if (ValidFormats.find(lowerArg) == ValidFormats.end())
+                    {
+                        std::cerr << " -> WARNING: Unknown or unsupported target system platform format: '" << arg << "'\n";
+                        hasErrors = true;
+                    }
+                }
+            }
+        }
+
+        if (!hasErrors)
+        {
+            std::cout << " -> Linker properties validated successfully. Zero anomalies found.\n";
+        }
+        std::cout << "----------------------------------------\n\n";
+    }
+}
+
+// ============================================================================
+// PARSING CORE PIPELINE
+// ============================================================================
+
+std::string ExpandResponseFiles(const std::string& inputStr) {
+    std::stringstream source(inputStr);
+    std::string word;
+    std::string accumulatedCommand;
 
     while (source >> word)
     {
-        // Look for the jwlink/wlink indirect reference indicator '@'
         if (!word.empty() && word[0] == '@')
         {
-            string filePath = word.substr(1);
-            // Strip wrap-around quotes if the user gave @'my options.lnk'
+            std::string filePath = word.substr(1);
             if (filePath.front() == '\'' && filePath.back() == '\'')
             {
                 filePath = filePath.substr(1, filePath.length() - 2);
             }
 
-            ifstream file(filePath);
+            std::ifstream file(filePath);
             if (!file.is_open())
             {
-                cerr << "Warning: Could not open indirect file: " << filePath << "\n";
+                std::cerr << "Warning: Could not open indirect file: " << filePath << "\n";
                 continue;
             }
 
-            string line;
-            string fileContent;
-            while (getline(file, line))
+            std::string line;
+            std::string fileContent;
+            while (std::getline(file, line))
             {
-                // Strip hash comments or inline comment patterns if applicable
                 size_t commentPos = line.find('#');
-                if (commentPos != string::npos)
+                if (commentPos != std::string::npos)
                 {
                     line = line.substr(0, commentPos);
                 }
                 fileContent += line + " ";
             }
-
-            // Recursively evaluate in case the response file references another response file
             accumulatedCommand += ExpandResponseFiles(fileContent) + " ";
         }
         else
@@ -73,11 +153,9 @@ string ExpandResponseFiles(const string& inputStr) {
     return accumulatedCommand;
 }
 
-
-// 2. PARSER: Tokenizer identifying main directives and tokens
-vector<LinkerParam> TokenizeJwlinkString(const string& cmdLine) {
-    vector<LinkerParam> processedParams;
-    string currentToken;
+std::vector<LinkerParam> TokenizeJwlinkString(const std::string& cmdLine) {
+    std::vector<LinkerParam> processedParams;
+    std::string currentToken;
     bool insideQuotes = false;
 
     for (size_t i = 0; i < cmdLine.length(); ++i)
@@ -86,7 +164,7 @@ vector<LinkerParam> TokenizeJwlinkString(const string& cmdLine) {
         if (ch == '\'')
         {
             insideQuotes = !insideQuotes;
-            continue; // Drop the literal quote markers
+            continue;
         }
 
         if (insideQuotes)
@@ -104,13 +182,13 @@ vector<LinkerParam> TokenizeJwlinkString(const string& cmdLine) {
                 }
             }
             else if (ch == ',')
-            { // Isolate list comma items but keep '=' for sub-option parsing
+            {
                 if (!currentToken.empty())
                 {
                     processedParams.push_back({ currentToken, TokenType::ListElement });
                     currentToken.clear();
                 }
-                processedParams.push_back({ string(1, ch), TokenType::Delimiter });
+                processedParams.push_back({ std::string(1, ch), TokenType::Delimiter });
             }
             else
             {
@@ -123,11 +201,13 @@ vector<LinkerParam> TokenizeJwlinkString(const string& cmdLine) {
         processedParams.push_back({ currentToken, TokenType::Argument });
     }
 
-    // Directives marking pass
+    // Set directive tokens safely, deferring validation handling for downstream metrics reporting
     for (size_t i = 0; i < processedParams.size(); ++i)
     {
-        string val = processedParams[i].value;
-        if (val == "format" || val == "file" || val == "option" || val == "op" || val == "lib" || val == "name")
+        std::string val = processedParams[i].value;
+        std::transform(val.begin(), val.end(), val.begin(), ::tolower);
+
+        if (Validation::ValidDirectives.find(val) != Validation::ValidDirectives.end())
         {
             processedParams[i].type = TokenType::Directive;
         }
@@ -139,11 +219,9 @@ vector<LinkerParam> TokenizeJwlinkString(const string& cmdLine) {
     return processedParams;
 }
 
-
-// 3. EXTRACTOR: Groups components into standard structure mapping
-LinkerConfig GroupDirectives(const vector<LinkerParam>& tokens) {
+LinkerConfig GroupDirectives(const std::vector<LinkerParam>& tokens) {
     LinkerConfig config;
-    string currentDirective = "global";
+    std::string currentDirective = "global";
 
     for (const auto& token : tokens)
     {
@@ -152,11 +230,12 @@ LinkerConfig GroupDirectives(const vector<LinkerParam>& tokens) {
         if (token.type == TokenType::Directive)
         {
             currentDirective = token.value;
-            if (currentDirective == "op") currentDirective = "option"; // Standardize shorthand
+            std::transform(currentDirective.begin(), currentDirective.end(), currentDirective.begin(), ::tolower);
+            if (currentDirective == "op") currentDirective = "option";
 
             if (config.find(currentDirective) == config.end())
             {
-                config[currentDirective] = vector<string>();
+                config[currentDirective] = std::vector<std::string>();
             }
         }
         else
@@ -167,33 +246,27 @@ LinkerConfig GroupDirectives(const vector<LinkerParam>& tokens) {
     return config;
 }
 
-
-// 4. SUB-OPTION PARSER: Breaks down strings matching "key=value" pairs 
-SubOptionMap ParseSubOptions(const vector<string>& optionArguments) {
+SubOptionMap ParseSubOptions(const std::vector<std::string>& optionArguments) {
     SubOptionMap subMap;
     for (const auto& arg : optionArguments)
     {
         size_t equalSignPos = arg.find('=');
-        if (equalSignPos != string::npos)
+        if (equalSignPos != std::string::npos)
         {
-            string key = arg.substr(0, equalSignPos);
-            string value = arg.substr(equalSignPos + 1);
-
-            // Normalize casing to match jwlink's case-insensitive strategy
-            transform(key.begin(), key.end(), key.begin(), ::tolower);
+            std::string key = arg.substr(0, equalSignPos);
+            std::string value = arg.substr(equalSignPos + 1);
+            std::transform(key.begin(), key.end(), key.begin(), ::tolower);
             subMap[key] = value;
         }
         else
         {
-            // Standalone flags without explicit assignments (e.g. "eliminate" or "map")
-            string flag = arg;
-            transform(flag.begin(), flag.end(), flag.begin(), ::tolower);
+            std::string flag = arg;
+            std::transform(flag.begin(), flag.end(), flag.begin(), ::tolower);
             subMap[flag] = "true";
         }
     }
     return subMap;
 }
-
 
 // --- Execution Demonstration ---
 int main() {
@@ -209,16 +282,12 @@ int main() {
     // Input command string referencing our response script using '@'
     string rawCommandLine = "format win pe op stack=0x4000 option map=%CD%\\bin\\windows\\64bit\\test1.map file %CD%\\bin\\windows\\64bit\\test1.obj, %CD%\\bin\\windows\\64bit\\c064.obj lib %LIB64%,%KLIB64%,%LLIB64%  name %CD%\\bin\\windows\\64bit\\test1.exe";
     cout << "Original CLI entry: \n  " << rawCommandLine << "\n\n";
-
-    // Unpack response contents recursively 
     string fullyExpandedString = ExpandResponseFiles(rawCommandLine);
     cout << "Fully expanded macro command string: \n  " << fullyExpandedString << "\n\n";
-
-    // Process parameters through our multi-phase layout
     vector<LinkerParam> tokens = TokenizeJwlinkString(fullyExpandedString);
     LinkerConfig configMap = GroupDirectives(tokens);
+    Validation::ValidateConfig(configMap);
 
-    // Output grouped mapping entries
     cout << "Structured Group Output:\n";
     cout << "========================================\n";
     for (const auto& [directive, arguments] : configMap)
