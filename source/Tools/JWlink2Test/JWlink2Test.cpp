@@ -10,10 +10,10 @@ namespace JWlink2Test
 	{
 	public:
 		
-		TEST_METHOD(CommandLineTest1)
+		TEST_METHOD(TestMethod1)
 		{
 			int argc = 14;
-			char* argv[] = { "JWlink2.exe", "format","win","pe","option","map=C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\test\\bin\\windows\\64bit\\test1.map","file","C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\test\\bin\\windows\\64bit\\test1.obj,C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\test\\bin\\windows\\64bit\\c064.obj","lib","\"C:\\Program Files(x86)\\Windows Kits\\10\\Lib\\10.0.28000.0\\um\\x64\\shell32.lib\"","\"C:\\Program Files(x86)\\Windows Kits\\10\\Lib\\10.0.28000.0\\um\\x64\\kernel32.lib\"","\"C:\\Program Files\\Microsoft Visual Studio\\18\\Insiders\\VC\\Tools\\MSVC\\14.53.36911\\lib\\x64\\msvcrt.lib\"","name","C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\test\\bin\\windows\\64bit\\test1.exe"};
+			char* argv[] = { "JWlink2.exe", "format","win","pe","option","map=C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\test\\bin\\windows\\64bit\\test1.map","file","C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\test\\bin\\windows\\64bit\\test1.obj,C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\test\\bin\\windows\\64bit\\c064.obj","lib","\"C:\\Program Files(x86)\\Windows Kits\\10\\Lib\\10.0.28000.0\\um\\x64\\shell32.lib\"","\"C:\\Program Files(x86)\\Windows Kits\\10\\Lib\\10.0.28000.0\\um\\x64\\kernel32.lib\"","\"C:\\Program Files\\Microsoft Visual Studio\\18\\Insiders\\VC\\Tools\\MSVC\\14.53.36911\\lib\\x64\\msvcrt.lib\"","name","C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\test\\bin\\windows\\64bit\\test1.exe" };
 			CommandLine cmdLine(argc, argv);
 			cmdLine.ProcessCommandLine();
 			auto& configMap = cmdLine.GetConfigMap();
@@ -36,6 +36,7 @@ namespace JWlink2Test
 
 			const auto& nameValues = configMap["name"];
 			Assert::AreEqual(1, (int)nameValues.size());
+
 		}
 	};
 }

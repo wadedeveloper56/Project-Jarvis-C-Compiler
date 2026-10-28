@@ -1,5 +1,10 @@
 #include "pch.h"
 #include "CommandLine.h"
+#include "globals.h"
+#include <iostream>
+#include <set>
+#include <string>
+#include <iterator>
 
 int g_LinkStatus;
 
@@ -14,10 +19,10 @@ CommandLine::~CommandLine()
 
 namespace Validation
 {
-    const set<string> ValidDirectives = {
-        "format", "file", "option", "op", "name", "library", "lib",
-        "path", "output", "debug", "import", "export", "system", "sys"
-    };
+    //const set<string> ValidDirectives = {
+    //    "format", "file", "option", "op", "name", "library", "lib",
+    //    "path", "output", "debug", "import", "export", "system", "sys"
+    //};
 
     const set<string> ValidSubOptions = {
         "stack", "offset", "eliminate", "map", "quiet", "verbose",
@@ -56,7 +61,9 @@ namespace Validation
     bool IsValidDirective(const string& directive) {
         string lowerDir = directive;
         transform(lowerDir.begin(), lowerDir.end(), lowerDir.begin(), ::tolower);
-        return ValidDirectives.find(lowerDir) != ValidDirectives.end();
+        set<ParseEntry> ValidDirectives(Directives, Directives + 40);
+        ParseEntry target{ lowerDir, 0 };
+        return ValidDirectives.find(target) != ValidDirectives.end();
     }
 
     void ValidateConfig(const LinkerConfig& config) {
@@ -195,8 +202,9 @@ vector<LinkerParam> CommandLine::TokenizeJwlinkString(const string& cmdLine) {
     {
         string val = processedParams[i].value;
         transform(val.begin(), val.end(), val.begin(), ::tolower);
-
-        if (Validation::ValidDirectives.find(val) != Validation::ValidDirectives.end())
+        set<ParseEntry> Directives(Directives, Directives + 40);
+        ParseEntry target{ val, 0 };
+        if (Directives.find(target) != Directives.end())
         {
             processedParams[i].type = TokenType::Directive;
         }
