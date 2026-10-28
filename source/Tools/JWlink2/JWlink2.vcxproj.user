@@ -3,6 +3,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LocalDebuggerCommandArguments>format win pe op stack=0x4000 option map=%CD%\\bin\\windows\\64bit\\test1.map file %CD%\\bin\\windows\\64bit\\test1.obj, %CD%\\bin\\windows\\64bit\\c064.obj lib %LIB64%,%KLIB64%,%LLIB64%  name %CD%\\bin\\windows\\64bit\\test1.exe</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerCommandArgumentsHistory>format win pe op stack=0x4000 option map=Í%\\bin\\windows\\64bit\\test1.map file Í%\\bin\\windows\\64bit\\test1.obj, Í%\\bin\\windows\\64bit\\c064.obj lib %LIB64%,%KLIB64%,%LLIB64%  name Í%\\bin\\windows\\64bit\\test1.exe|</LocalDebuggerCommandArgumentsHistory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LocalDebuggerCommandArguments>format win pe op stack=0x4000 option map=%CD%\\bin\\windows\\64bit\\test1.map file %CD%\\bin\\windows\\64bit\\test1.obj, %CD%\\bin\\windows\\64bit\\c064.obj lib %LIB64%,%KLIB64%,%LLIB64%  name %CD%\\bin\\windows\\64bit\\test1.exe</LocalDebuggerCommandArguments>
@@ -16,6 +17,6 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerCommandArguments>format win pe op stack=0x4000 option map=%CD%\\bin\\windows\\64bit\\test1.map file %CD%\\bin\\windows\\64bit\\test1.obj, %CD%\\bin\\windows\\64bit\\c064.obj lib %LIB64%,%KLIB64%,%LLIB64%  name %CD%\\bin\\windows\\64bit\\test1.exe</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArgumentsHistory> --help|</LocalDebuggerCommandArgumentsHistory>
+    <LocalDebuggerCommandArgumentsHistory> --help|format win pe op stack=0x4000 option map=Í%\\bin\\windows\\64bit\\test1.map file Í%\\bin\\windows\\64bit\\test1.obj, Í%\\bin\\windows\\64bit\\c064.obj lib %LIB64%,%KLIB64%,%LLIB64%  name Í%\\bin\\windows\\64bit\\test1.exe|</LocalDebuggerCommandArgumentsHistory>
   </PropertyGroup>
 </Project>
