@@ -18,7 +18,7 @@ SET DIRECTORY=C:\projects\OSDev\Project-Jarvis-C-Compiler\bin\tools\Release\x64
 %DIRECTORY%\JWcc -b 64 -o %CD%\bin\windows\64bit\test1.asm test1.c > %CD%\bin\windows\64bit\test1.c.log
 %DIRECTORY%\JWasm -win64 -Fl=%CD%\bin\windows\64bit\test1.lst -Sa -Fobin\windows\64bit\test1.obj %CD%\bin\windows\64bit\test1.asm
 %DIRECTORY%\JWasm -win64 -Fl=%CD%\bin\windows\64bit\c064.lst -Sa -Fobin\windows\64bit\c064.obj c064.asm
-%DIRECTORY%\JWlink @link64.lnk
+%DIRECTORY%\JWlink format win pe option map=%CD%\bin\windows\64bit\test1.map file %CD%\bin\windows\64bit\test1.obj, %CD%\bin\windows\64bit\c064.obj lib "%LIB64%","%KLIB64%","%LLIB64%"  name %CD%\bin\windows\64bit\test1.exe
 %DIRECTORY%\pedump -a %CD%\bin\windows\64bit\test1.obj > %CD%\bin\windows\64bit\test1.asm.log
 %DIRECTORY%\pedump -a %CD%\bin\windows\64bit\c064.obj > %CD%\bin\windows\64bit\c064.asm.log
 %DIRECTORY%\pedump -a %CD%\bin\windows\64bit\test1.exe > %CD%\bin\windows\64bit\test1.exe.log
