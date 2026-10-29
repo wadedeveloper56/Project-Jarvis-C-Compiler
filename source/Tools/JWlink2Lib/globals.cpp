@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "structs.h"
 
+using namespace std;
+
 extern bool ProcFiles(void);
 extern bool ProcModFiles(void);
 extern bool ProcLibrary(void);
@@ -104,3 +106,23 @@ parse_entry Directives[] =
 #endif
     NULL
 };
+
+int _argc;
+char** _argv;
+void* SpawnStack;
+char* ArgSave;
+file_defext Extension;
+file_list** CurrFList;
+tok Token;
+commandflag CmdFlags;
+char* Name;
+sysblock* SysBlocks;
+sysblock* LinkCommands;
+path_entry* Path;           /* path for object files                */
+struct fmt_data FmtData;       /* format specific data */
+section* Root;           /* pointer to root information          */
+section* CurrSect;       /* current section for file processing  */
+::byte DBIFlag;
+int OvlNum;         /* current overlay number               */
+stateflag      LinkState;      /* flags to indicate linker state */
+cmdfilelist* CmdFile = NULL;

@@ -57,6 +57,9 @@
  #define _RAW       8
 #endif
 
+#define DO_OR_EQ(t,a,b,c) ((a) = ((t)((a) | (c))))
+#define DO_AND_EQ(t,a,b,c) ((a) = ((t)((a) & (c))))
+
 #pragma warning(disable:4267)
 #pragma warning(disable:4244)
 #pragma warning(disable:4018)
