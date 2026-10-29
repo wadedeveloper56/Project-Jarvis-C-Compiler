@@ -185,14 +185,13 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="CommandLine.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="globals.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="start.h" />
     <ClInclude Include="strutures.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="CommandLine.cpp" />
     <ClCompile Include="globals.cpp" />
     <ClCompile Include="JWlink2Lib.cpp" />
     <ClCompile Include="pch.cpp">
@@ -202,6 +201,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="procs.cpp" />
+    <ClCompile Include="start.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

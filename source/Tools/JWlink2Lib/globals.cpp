@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "globals.h"
+#include "structs.h"
 
 extern bool ProcFiles(void);
 extern bool ProcModFiles(void);
@@ -41,66 +41,66 @@ extern bool ProcMemory16M(void);
 extern bool ProcTransparent(void);
 extern bool ProcNewSegment(void);
 
-ParseEntry Directives[] = 
+parse_entry Directives[] = 
 {
     "File",         &ProcFiles,         MK_ALL, CF_HAVE_FILES,
-    "MODFile",      &ProcModFiles,      MK_ALL, (CommandFlag)0,
-    "Library",      &ProcLibrary,       MK_ALL, (CommandFlag)0,
-    "Name",         &ProcName,          MK_ALL, (CommandFlag)0,
-    "OPtion",       &ProcOptions,       MK_ALL, (CommandFlag)0,
-    "Debug",        &ProcDebug,         MK_ALL, (CommandFlag)0,
-    "SYStem",       &ProcSystem,        MK_ALL, (CommandFlag)0,
-    "LIBPath",      &ProcLibPath,       MK_ALL, (CommandFlag)0,
-    "LIBFile",      &ProcLibFile,       MK_ALL, (CommandFlag)CF_HAVE_FILES,
-    "Path",         &ProcPath,          MK_ALL, (CommandFlag)0,
-    "FORMat",       &ProcFormat,        MK_ALL, (CommandFlag)0,
-    "MODTrace",     &ProcModTrace,      MK_ALL, (CommandFlag)0,
-    "SYMTrace",     &ProcSymTrace,      MK_ALL, (CommandFlag)CF_AFTER_INC,
-    "Alias",        &ProcAlias,         MK_ALL, (CommandFlag)CF_AFTER_INC,
-    "REFerence",    &ProcReference,     MK_ALL, (CommandFlag)CF_AFTER_INC,
-    "DISAble",      &ProcDisable,       MK_ALL, (CommandFlag)0,
-    "SOrt",         &ProcSort,          MK_ALL, (CommandFlag)0,
-    "LANGuage",     &ProcLanguage,      MK_ALL, (CommandFlag)0,
-    "STARTLink",    &ProcStartLink,     MK_ALL, (CommandFlag)0,
-    "OPTLIB",       &ProcOptLib,        MK_ALL, (CommandFlag)0,
-    "ORDer",        &ProcOrder,         MK_ALL, (CommandFlag)0,
-    "OUTput",       &ProcOutput,        MK_ALL, (CommandFlag)0,
+    "MODFile",      &ProcModFiles,      MK_ALL, (commandflag)0,
+    "Library",      &ProcLibrary,       MK_ALL, (commandflag)0,
+    "Name",         &ProcName,          MK_ALL, (commandflag)0,
+    "OPtion",       &ProcOptions,       MK_ALL, (commandflag)0,
+    "Debug",        &ProcDebug,         MK_ALL, (commandflag)0,
+    "SYStem",       &ProcSystem,        MK_ALL, (commandflag)0,
+    "LIBPath",      &ProcLibPath,       MK_ALL, (commandflag)0,
+    "LIBFile",      &ProcLibFile,       MK_ALL, (commandflag)CF_HAVE_FILES,
+    "Path",         &ProcPath,          MK_ALL, (commandflag)0,
+    "FORMat",       &ProcFormat,        MK_ALL, (commandflag)0,
+    "MODTrace",     &ProcModTrace,      MK_ALL, (commandflag)0,
+    "SYMTrace",     &ProcSymTrace,      MK_ALL, (commandflag)CF_AFTER_INC,
+    "Alias",        &ProcAlias,         MK_ALL, (commandflag)CF_AFTER_INC,
+    "REFerence",    &ProcReference,     MK_ALL, (commandflag)CF_AFTER_INC,
+    "DISAble",      &ProcDisable,       MK_ALL, (commandflag)0,
+    "SOrt",         &ProcSort,          MK_ALL, (commandflag)0,
+    "LANGuage",     &ProcLanguage,      MK_ALL, (commandflag)0,
+    "STARTLink",    &ProcStartLink,     MK_ALL, (commandflag)0,
+    "OPTLIB",       &ProcOptLib,        MK_ALL, (commandflag)0,
+    "ORDer",        &ProcOrder,         MK_ALL, (commandflag)0,
+    "OUTput",       &ProcOutput,        MK_ALL, (commandflag)0,
 #ifdef _OS2
-    "RESource",     &ProcResource,      MK_PE, (CommandFlag)0,
-    "COMmit",       &ProcCommit,        MK_PE, (CommandFlag)0,
-    "ANONymousexport",&ProcAnonExport,  (ExeFormat)(MK_OS2 | MK_PE), (CommandFlag)CF_AFTER_INC,
+    "RESource",     &ProcResource,      MK_PE, (commandflag)0,
+    "COMmit",       &ProcCommit,        MK_PE, (commandflag)0,
+    "ANONymousexport",&ProcAnonExport,  (exe_format)(MK_OS2 | MK_PE), (commandflag)CF_AFTER_INC,
 #endif
 #if defined( _NOVELL ) || defined( _OS2 )
-    "IMPort",       &ProcImport,        (ExeFormat)(MK_NOVELL | MK_ELF | MK_OS2 | MK_PE), (CommandFlag)CF_AFTER_INC,
-    "EXPort",       &ProcExport,        (ExeFormat)(MK_NOVELL | MK_ELF | MK_OS2 | MK_PE | MK_WIN_VXD), (CommandFlag)CF_AFTER_INC,
+    "IMPort",       &ProcImport,        (exe_format)(MK_NOVELL | MK_ELF | MK_OS2 | MK_PE), (commandflag)CF_AFTER_INC,
+    "EXPort",       &ProcExport,        (exe_format)(MK_NOVELL | MK_ELF | MK_OS2 | MK_PE | MK_WIN_VXD), (commandflag)CF_AFTER_INC,
 #endif
 #if defined( _OS2 ) || defined( _QNXLOAD )
-    "SEGment",      &ProcSegment,       (ExeFormat)(MK_QNX | MK_OS2 | MK_PE | MK_WIN_VXD), (CommandFlag)0,
+    "SEGment",      &ProcSegment,       (exe_format)(MK_QNX | MK_OS2 | MK_PE | MK_WIN_VXD), (commandflag)0,
 #endif
 #ifdef _EXE
-    "OVerlay",      &ProcOverlay,       MK_OVERLAYS, (CommandFlag)0,
-    "Begin",        &ProcBegin,         MK_OVERLAYS, (CommandFlag)0,
-    "FIXedlib",     &ProcFixedLib,      MK_OVERLAYS, (CommandFlag)0,
-    "NOVector",     &ProcNoVector,      MK_OVERLAYS, (CommandFlag)CF_AFTER_INC,
-    "VEctor",       &ProcVector,        MK_OVERLAYS, (CommandFlag)CF_AFTER_INC,
-    "FORCEVEctor",  &ProcForceVector,   MK_OVERLAYS, (CommandFlag)CF_AFTER_INC,
+    "OVerlay",      &ProcOverlay,       MK_OVERLAYS, (commandflag)0,
+    "Begin",        &ProcBegin,         MK_OVERLAYS, (commandflag)0,
+    "FIXedlib",     &ProcFixedLib,      MK_OVERLAYS, (commandflag)0,
+    "NOVector",     &ProcNoVector,      MK_OVERLAYS, (commandflag)CF_AFTER_INC,
+    "VEctor",       &ProcVector,        MK_OVERLAYS, (commandflag)CF_AFTER_INC,
+    "FORCEVEctor",  &ProcForceVector,   MK_OVERLAYS, (commandflag)CF_AFTER_INC,
 #endif
 #if defined( _PHARLAP ) || defined( _DOS16M ) || defined( _OS2 ) || defined( _ELF )
-    "RUntime",      &ProcRuntime,       (ExeFormat)(MK_PHAR_LAP | MK_DOS16M | MK_PE | MK_ELF), (CommandFlag)0,
+    "RUntime",      &ProcRuntime,       (exe_format)(MK_PHAR_LAP | MK_DOS16M | MK_PE | MK_ELF), (commandflag)0,
 #endif
 #ifdef _NOVELL
-    "MODUle",       &ProcModule,        (ExeFormat)(MK_NOVELL | MK_ELF), (CommandFlag)0,
+    "MODUle",       &ProcModule,        (exe_format)(MK_NOVELL | MK_ELF), (commandflag)0,
 #endif
 #ifdef _DOS16M
-    "MEMory",       &ProcMemory16M,     (ExeFormat)(MK_DOS16M), (CommandFlag)0,
-    "TRansparent",  &ProcTransparent,   (ExeFormat)(MK_DOS16M), (CommandFlag)0,
+    "MEMory",       &ProcMemory16M,     (exe_format)(MK_DOS16M), (commandflag)0,
+    "TRansparent",  &ProcTransparent,   (exe_format)(MK_DOS16M), (commandflag)0,
 #endif
 #if defined( _OS2 ) || defined( _EXE ) || defined ( _QNXLOAD )
-    "NEWsegment",   &ProcNewSegment,    (ExeFormat)(MK_OS2_16BIT | MK_DOS | MK_QNX), (CommandFlag)0,
+    "NEWsegment",   &ProcNewSegment,    (exe_format)(MK_OS2_16BIT | MK_DOS | MK_QNX), (commandflag)0,
 #endif
 #ifdef _INT_DEBUG
-    "Xdbg",         &ProcXDbg,          MK_ALL, (CommandFlag)0,
-    "INTDBG",       &ProcIntDbg,        MK_ALL, (CommandFlag)0,
+    "Xdbg",         &ProcXDbg,          MK_ALL, (commandflag)0,
+    "INTDBG",       &ProcIntDbg,        MK_ALL, (commandflag)0,
 #endif
     NULL
 };

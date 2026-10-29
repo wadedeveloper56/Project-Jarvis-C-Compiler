@@ -31,7 +31,14 @@
 #include <unordered_set>
 #include <functional>
 #include <algorithm>
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <setjmp.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <io.h>
 #if defined( __QNX__ )
  #define _EXE       0
  #define _QNXLOAD   1

@@ -21,7 +21,31 @@
 #include <unordered_set>
 #include <functional>
 #include <algorithm>
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <setjmp.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <io.h>
+#if defined( __QNX__ )
+#define _EXE       0
+#define _QNXLOAD   1
+#define _OS2       2
+#define _PHARLAP   3
+#define _NOVELL    4
+#define _DOS16M    5
+#else
+#define _EXE       0
+#define _QNXLOAD   1
+#define _OS2       2
+#define _PHARLAP   3
+#define _NOVELL    4
+#define _DOS16M    5
+#define _ELF       6
+#define _RAW       8
+#endif
 
 #pragma warning(disable:4267)
 #pragma warning(disable:4244)
