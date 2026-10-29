@@ -195,9 +195,17 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="command.h" />
+    <ClInclude Include="exeos2.h" />
+    <ClInclude Include="formats.h" />
     <ClInclude Include="globals.h" />
+    <ClInclude Include="hash.h" />
     <ClInclude Include="JWlink2.h" />
+    <ClInclude Include="ldefext.h" />
+    <ClInclude Include="link.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="structs.h" />
+    <ClInclude Include="syms.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\JWlink2Lib\JWlink2Lib.vcxproj">
