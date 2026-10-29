@@ -3,6 +3,7 @@
 #include "CommandLine.h"
 
 using namespace std;
+using namespace WadeSpace;
 
 int main(int argc, char* argv[]) {
     CommandLine* cmdLine = new CommandLine(argc, argv);

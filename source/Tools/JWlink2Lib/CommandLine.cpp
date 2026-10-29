@@ -6,6 +6,9 @@
 #include <string>
 #include <iterator>
 
+using namespace std;
+using namespace WadeSpace;
+
 int g_LinkStatus;
 
 CommandLine::CommandLine(int argc, char** argv) : m_argc(argc), m_argv(argv)
