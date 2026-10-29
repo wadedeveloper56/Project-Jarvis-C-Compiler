@@ -1,16 +1,193 @@
 #include "pch.h"
 #include "CppUnitTest.h"
+#include "..\JWccLib\BaseCodeGenerator.h"
+#include <string>
+// test helpers
+#include "..\JWccLib\Declaration.h"
+#include "..\JWccLib\InitDeclarator.h"
+#include "..\JWccLib\DeclarationSpecifiers.h"
+#include "..\JWccLib\Declarator.h"
+#include "..\JWccLib\BaseStatement.h"
+#include "..\JWccLib\ProgramData.h"
+#include "..\JWccLib\FunctionDefinition.h"
+#include "..\JWccLib\ExternalDeclaration.h"
+#include "..\JWccLib\MasmCodeGenerator.h"
+#include "..\JWccLib\Token.h"
+#include "..\JWccLib\Compiler.h"
+#include "..\JWccLib\GlobalVars.h"
+#include <sstream>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
+using namespace std;
+using namespace WadeSpace;
 
 namespace JWccTest
 {
-	TEST_CLASS(JWccTest)
+	TEST_CLASS(JWcc_IntegrationTest)
 	{
 	public:
-		
-		TEST_METHOD(TestMethod1)
+		TEST_METHOD(Integration_64Bit_CompileSimpleFunction)
 		{
+			istringstream in("int add(int a, int b) { return a + b; }");
+			ostringstream out;
+			const bool previousBit16 = bit16;
+			const bool previousBit32 = bit32;
+			const bool previousBit64 = bit64;
+			bit16 = false;
+			bit32 = false;
+			bit64 = true;
+			compiler = make_shared<Compiler>();
+			bool exitcode = compiler->compileFile(in, out);
+			bit16 = previousBit16;
+			bit32 = previousBit32;
+			bit64 = previousBit64;
+			Assert::AreEqual(false, exitcode);
+			string s = out.str();
+			Assert::IsTrue(s.find("_add PROC") != string::npos || s.find("_add PROC C") != string::npos);
+		}
+
+		TEST_METHOD(Integration_64Bit_Add_AssignmentExpressionGeneratesCode)
+		{
+			istringstream in("int assign(int value) { value = 42; value += 3; return value; }");
+			ostringstream out;
+			const bool previousBit16 = bit16;
+			const bool previousBit32 = bit32;
+			const bool previousBit64 = bit64;
+			bit16 = false;
+			bit32 = false;
+			bit64 = true;
+			compiler = make_shared<Compiler>();
+			bool exitcode = compiler->compileFile(in, out);
+			bit16 = previousBit16;
+			bit32 = previousBit32;
+			bit64 = previousBit64;
+			Assert::AreEqual(false, exitcode);
+			const string generated = out.str();
+			Assert::IsTrue(generated.find("mov rax, 42") != string::npos);
+			Assert::IsTrue(generated.find("mov DWORD PTR _value, eax") != string::npos);
+			Assert::IsTrue(generated.find("add rax, rbx") != string::npos);
+		}
+
+		TEST_METHOD(Integration_32Bit_Add_AssignmentExpressionGeneratesCode)
+		{
+			istringstream in("int assign(int value) { value = 42; value += 3; return value; }");
+			ostringstream out;
+			const bool previousBit16 = bit16;
+			const bool previousBit32 = bit32;
+			const bool previousBit64 = bit64;
+			bit16 = false;
+			bit32 = true;
+			bit64 = false;
+			compiler = make_shared<Compiler>();
+			bool exitcode = compiler->compileFile(in, out);
+			bit16 = previousBit16;
+			bit32 = previousBit32;
+			bit64 = previousBit64;
+			Assert::AreEqual(false, exitcode);
+			const string generated = out.str();
+			Assert::IsTrue(generated.find("mov eax, 42") != string::npos);
+			Assert::IsTrue(generated.find("mov DWORD PTR _value, eax") != string::npos);
+			Assert::IsTrue(generated.find("add eax, ebx") != string::npos);
+		}
+
+		TEST_METHOD(Integration_16Bit_Add_AssignmentExpressionGeneratesCode)
+		{
+			istringstream in("int assign(int value) { value = 42; value += 3; return value; }");
+			ostringstream out;
+			const bool previousBit16 = bit16;
+			const bool previousBit32 = bit32;
+			const bool previousBit64 = bit64;
+			bit16 = true;
+			bit32 = false;
+			bit64 = false;
+			compiler = make_shared<Compiler>();
+			bool exitcode = compiler->compileFile(in, out);
+			bit16 = previousBit16;
+			bit32 = previousBit32;
+			bit64 = previousBit64;
+			Assert::AreEqual(false, exitcode);
+			const string generated = out.str();
+			Assert::IsTrue(generated.find("mov ax, 42") != string::npos);
+			Assert::IsTrue(generated.find("mov WORD PTR _value, ax") != string::npos);
+			Assert::IsTrue(generated.find("add ax, bx") != string::npos);
+		}
+
+		TEST_METHOD(Integration_64Bit_Sub_AssignmentExpressionGeneratesCode)
+		{
+			istringstream in("int assign(int value) { value = 42; value -= 3; return value; }");
+			ostringstream out;
+			const bool previousBit16 = bit16;
+			const bool previousBit32 = bit32;
+			const bool previousBit64 = bit64;
+			bit16 = false;
+			bit32 = false;
+			bit64 = true;
+			compiler = make_shared<Compiler>();
+			bool exitcode = compiler->compileFile(in, out);
+			bit16 = previousBit16;
+			bit32 = previousBit32;
+			bit64 = previousBit64;
+			Assert::AreEqual(false, exitcode);
+			const string generated = out.str();
+			Assert::IsTrue(generated.find("mov rax, 42") != string::npos);
+			Assert::IsTrue(generated.find("mov DWORD PTR _value, eax") != string::npos);
+			Assert::IsTrue(generated.find("sub rax, rbx") != string::npos);
+		}
+
+		TEST_METHOD(Integration_64Bit_Mul_AssignmentExpressionGeneratesCode)
+		{
+			istringstream in("int assign(int value) { value = 42; value *= 3; return value; }");
+			ostringstream out;
+			const bool previousBit16 = bit16;
+			const bool previousBit32 = bit32;
+			const bool previousBit64 = bit64;
+			bit16 = false;
+			bit32 = false;
+			bit64 = true;
+			compiler = make_shared<Compiler>();
+			bool exitcode = compiler->compileFile(in, out);
+			bit16 = previousBit16;
+			bit32 = previousBit32;
+			bit64 = previousBit64;
+			Assert::AreEqual(false, exitcode);
+			const string generated = out.str();
+			Assert::IsTrue(generated.find("mov rax, 42") != string::npos);
+			Assert::IsTrue(generated.find("mov DWORD PTR _value, eax") != string::npos);
+			Assert::IsTrue(generated.find("imul rax, rbx") != string::npos);
+		}
+
+		TEST_METHOD(Integration_64Bit_MovUsesMatchingWidthsAndSignedExtensions)
+		{
+			istringstream in("int widen(signed char signedValue, unsigned char unsignedValue) { signedValue = 1; unsignedValue = 2; signedValue += unsignedValue; return signedValue; }");
+			ostringstream out;
+			const bool previousBit16 = bit16;
+			const bool previousBit32 = bit32;
+			const bool previousBit64 = bit64;
+			bit16 = false;
+			bit32 = false;
+			bit64 = true;
+			compiler = make_shared<Compiler>();
+			bool exitcode = compiler->compileFile(in, out);
+			bit16 = previousBit16;
+			bit32 = previousBit32;
+			bit64 = previousBit64;
+			Assert::AreEqual(false, exitcode);
+			const string generated = out.str();
+			Assert::IsTrue(generated.find("mov BYTE PTR _signedValue, al") != string::npos);
+			Assert::IsTrue(generated.find("mov BYTE PTR _unsignedValue, al") != string::npos);
+			Assert::IsTrue(generated.find("movsx rax, BYTE PTR _signedValue") != string::npos);
+			Assert::IsTrue(generated.find("movzx rax, BYTE PTR _unsignedValue") != string::npos);
+		}
+
+		TEST_METHOD(Integration_SemanticErrorPreventsGeneration)
+		{
+			istringstream in("int bad() { return 3.14; }");
+			ostringstream out;
+			compiler = make_shared<Compiler>();
+			bool exitcode = compiler->compileFile(in, out);
+			Assert::AreEqual(false, exitcode);
+			string s = out.str();
+			Assert::IsTrue(s.find("E") != string::npos || s.find("error") != string::npos);
 		}
 	};
 }
