@@ -34,8 +34,69 @@ typedef unsigned long stateflag;
 #define CLEAR_ON_INC    (STOP_WORKING | INTERNAL_DEBUG | GOT_PREV_STRUCTS | MAKE_RELOCS | FMT_SPECIFIED | FMT_DECIDED | FMT_INITIALIZED)
 #define ORDER_FLAG_MASK (DOSSEG_FLAG | SPEC_ORDER_FLAG)
 
-extern parse_entry Directives[];
-extern parse_entry Models[];
+extern  parse_entry     PosDbgMods[];
+extern  parse_entry     DbgMods[];
+extern  parse_entry     SysBeginOptions[];
+extern  parse_entry     SysDeleteOptions[];
+extern  parse_entry     SysEndOptions[];
+extern  parse_entry     SortOptions[];
+extern  parse_entry     Directives[];
+extern  parse_entry     MainOptions[];
+extern  parse_entry     SysDirectives[];
+extern  parse_entry    Models[];
+extern  parse_entry    Languages[];
+extern  parse_entry      EndLinkOpt[];
+extern  parse_entry  RunOptions[];
+#ifdef _DOS16M
+extern bool     ProcTryExtended(void);
+extern bool     ProcTryLow(void);
+extern bool     ProcForceExtended(void);
+extern bool     ProcForceLow(void);
+extern  parse_entry  Strategies[];
+extern bool     ProcTStack(void);
+extern bool     ProcTData(void);
+extern  parse_entry  TransTypes[];
+#endif
+#ifdef _QNXLOAD
+extern  parse_entry QNXSegModel[];
+extern  parse_entry QNXSegDesc[];
+extern  parse_entry QNXFormats[];
+#endif
+#ifdef _PHARLAP
+extern  parse_entry  PharModels[];
+#endif
+#ifdef _NOVELL
+extern  parse_entry     NovModels[];
+extern  parse_entry      NovDBIOptions[];
+#endif
+extern  parse_entry     Sections[];
+extern  parse_entry     SectOptions[];
+extern  parse_entry     DosOptions[];
+#ifdef _OS2
+extern  parse_entry  SubFormats[];
+extern  parse_entry OS2FormatKeywords[];
+extern  parse_entry WindowsFormatKeywords[];
+extern  parse_entry NTFormatKeywords[];
+extern  parse_entry VXDFormatKeywords[];
+extern  parse_entry Init_Keywords[];
+extern  parse_entry Term_Keywords[];
+extern  parse_entry Exp_Keywords[];
+extern  parse_entry SegDesc[];
+extern  parse_entry SegTypeDesc[];
+extern  parse_entry SegModel[];
+extern  parse_entry CommitKeywords[];
+#endif
+#ifdef _ELF
+extern  parse_entry ELFFormatKeywords[];
+#endif
+#ifdef _RAW
+extern  parse_entry RawOptions[];
+#endif
+extern  parse_entry OrderOpts[];
+extern  parse_entry OrderClassOpts[];
+extern  parse_entry OrderSegOpts[];
+extern  parse_entry OutputOpts[];
+
 extern int _argc;
 extern char** _argv;
 extern void* SpawnStack;

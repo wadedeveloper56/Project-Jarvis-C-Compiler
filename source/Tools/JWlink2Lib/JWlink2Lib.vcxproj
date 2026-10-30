@@ -189,6 +189,16 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="cmd16m.h" />
+    <ClInclude Include="cmdall.h" />
+    <ClInclude Include="cmddos.h" />
+    <ClInclude Include="cmdelf.h" />
+    <ClInclude Include="cmdline.h" />
+    <ClInclude Include="cmdnov.h" />
+    <ClInclude Include="cmdos2.h" />
+    <ClInclude Include="cmdphar.h" />
+    <ClInclude Include="cmdqnx.h" />
+    <ClInclude Include="cmdraw.h" />
     <ClInclude Include="command.h" />
     <ClInclude Include="exeos2.h" />
     <ClInclude Include="formats.h" />
