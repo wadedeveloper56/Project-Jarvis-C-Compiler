@@ -1,6 +1,11 @@
 #include "pch.h"
 #include "globals.h"
 #include "start.h"
+#include "ntio.h"
+#include "util.h"
+
+#define INIT_FILE_NAME  "jwlink.lnk"
+#define INIT_FILE_ENV   "JWLINK_LNK"
 
 using namespace std;
 
@@ -30,69 +35,6 @@ void ResetCmdFile(void)
 	CurrSect = Root;
 	CurrFList = &Root->files;
 	DBIFlag = (::byte)0;        /*  default is only global information */
-}
-
-int _bgetcmd(char* buffer, int len)
-{
-	int     total;
-	int     i;
-	char* word;
-	char* p = NULL;
-	char** argv = &_argv[1];
-
-	--len; // reserve space for NULL byte
-
-	if (buffer && (len > 0))
-	{
-		p = buffer;
-		*p = '\0';
-	}
-
-	/* create approximation of original command line */
-	for (word = *argv++, i = 0, total = 0; word; word = *argv++)
-	{
-		i = strlen(word);
-		total += i;
-
-		if (p)
-		{
-			if (i >= len)
-			{
-				strncpy(p, word, len);
-				p[len] = '\0';
-				p = NULL;
-				len = 0;
-			}
-			else
-			{
-				strcpy(p, word);
-				p += i;
-				len -= i;
-			}
-		}
-		/* account for at least one space separating arguments */
-		if (*argv)
-		{
-			if (p)
-			{
-				*p++ = ' ';
-				--len;
-			}
-			++total;
-		}
-	}
-	return(total);
-}
-
-char* getcmd(char* buffer)
-{
-	_bgetcmd(buffer, 1024);
-	return(buffer);
-}
-
-void GetCmdLine(char* buff)
-{
-	getcmd(buff);
 }
 
 void NewCommandSource(char* name, char* buff, method how)
@@ -133,9 +75,26 @@ void NewCommandSource(char* name, char* buff, method how)
 	Token.quoted = 0;
 }
 
-void Help(void)
+void DoCmdParse(void)
 {
-	//LnkMsg(INF + MSG_USAGE, NULL);
+//	while (GetToken(SEP_END, TOK_INCLUDE_DOT) == FALSE)
+//	{
+//		if (ProcOne(Directives, SEP_NO, TRUE) == FALSE)
+//		{
+//			Syntax();
+//		}
+//		RestoreParser();
+//	}
+}
+
+bool IsStdOutConsole(void)
+{
+	return(QIsDevice(STDOUT_HANDLE));
+}
+
+void GetExtraCommands(void)
+{
+
 }
 
 void DoCmdFile(char* fname)
@@ -172,7 +131,7 @@ void DoCmdFile(char* fname)
 	if (*fname == '?')
 	{
 		Token.next = fname + 1;       // skip question mark.
-		Help();
+		//Help();
 
 	}
 	else if (*fname == '-' || *fname == '/')
@@ -180,7 +139,7 @@ void DoCmdFile(char* fname)
 		if (*(fname + 1) == '?' || *(fname + 1) == 'h')
 		{
 			Token.next = fname + 2;     // skip /?
-			Help();
+			//Help();
 		}
 	}
 	if (*fname == '\0')
@@ -239,12 +198,12 @@ void DoCmdFile(char* fname)
 #endif
 		if (FmtData.type & MK_OVERLAYS)
 		{
-			CmdOvlFini();
-			AddObjLib("wovl.lib", LIB_PRIORITY_MIN);     // add a reference to wovl.lib
+			//CmdOvlFini();
+			//AddObjLib("wovl.lib", LIB_PRIORITY_MIN);     // add a reference to wovl.lib
 		}
 	if (Name == NULL || !(CmdFlags & CF_HAVE_FILES))
 	{
-		Ignite();
+		//Ignite();
 		//LnkMsg(FTL + MSG_NO_FILES_FOUND, NULL);
 	}
 	namelen = strlen(Name);

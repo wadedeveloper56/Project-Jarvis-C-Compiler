@@ -126,3 +126,8 @@ section* CurrSect;       /* current section for file processing  */
 int OvlNum;         /* current overlay number               */
 stateflag      LinkState;      /* flags to indicate linker state */
 cmdfilelist* CmdFile = NULL;
+mapflag        MapFlags;       /* flags dealing with the map file */
+char* MapFName;       /* name of map file                     */
+char* SymFileName;
+group_entry* DBIGroups;
+linkflag       LinkFlags;      /* flags to indicate presence of parms  */

@@ -39,6 +39,9 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <io.h>
+#include <errno.h>
+#include <conio.h>
+
 #if defined( __QNX__ )
  #define _EXE       0
  #define _QNXLOAD   1

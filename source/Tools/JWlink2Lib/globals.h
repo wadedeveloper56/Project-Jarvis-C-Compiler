@@ -54,3 +54,8 @@ extern ::byte DBIFlag;
 extern int OvlNum;         /* current overlay number               */
 extern stateflag      LinkState;      /* flags to indicate linker state */
 extern cmdfilelist* CmdFile;
+extern mapflag        MapFlags;       /* flags dealing with the map file */
+extern char* MapFName;       /* name of map file                     */
+extern char* SymFileName;
+extern group_entry* DBIGroups;
+extern linkflag       LinkFlags;      /* flags to indicate presence of parms  */
