@@ -708,3 +708,65 @@ int ParseNumber(char* str, int radix)
 	*Token.next = value;
 	return(size);
 }
+
+bool ProcOne(parse_entry* entry, sep_type req, bool suicide)
+{
+	char* key;
+	char* ptr;
+	unsigned            plen;
+	bool                ret;
+	char                keybuff[20];
+
+	ret = GetToken(req, TOK_INCLUDE_DOT);
+	if (ret == FALSE)
+	{
+		return(ret);
+	}
+	while (entry->keyword != NULL)
+	{
+		key = entry->keyword;
+		ptr = Token.this1;
+		plen = Token.len;
+		for (;;)
+		{
+			if (plen == 0 && !isupper(*key))
+			{
+				if (HintFormat(entry->format))
+				{
+					ret = (*entry->rtn)();
+					DO_OR_EQ(commandflag, CmdFlags, |=, entry->flags);
+				}
+				else
+				{
+					strcpy(keybuff, entry->keyword);
+					_strupr(keybuff); /* jwlink: was strlwr() */
+					//LnkMsg(LOC + LINE + WRN + MSG_FORMAT_BAD_OPTION, "s", keybuff);
+					ret = TRUE;
+				}
+				return(ret);
+			}
+			if (*key == '\0' || tolower(*ptr) != tolower(*key)) break;
+			ptr++;
+			key++;
+			plen--;
+		}
+		/* here if this is no match */
+		entry++;
+	}
+	/* here if no match in table */
+	if (suicide)
+	{
+		//Syntax();
+	}
+	else
+	{
+		Token.thumb = REJECT;       /*  try again later */
+		ret = FALSE;
+	}
+	return(ret);
+}
+
+bool HintFormat(exe_format hint)
+{
+	return true;
+}

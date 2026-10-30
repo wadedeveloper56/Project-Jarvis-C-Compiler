@@ -21,3 +21,5 @@ void RestoreParser(void);
 void MapEscapeChar(void);
 unsigned MapDoubleByteChar(unsigned char c);
 int ParseNumber(char* str, int radix);
+bool ProcOne(parse_entry* entry, sep_type req, bool suicide);
+bool HintFormat(exe_format hint);

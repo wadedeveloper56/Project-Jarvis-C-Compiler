@@ -79,11 +79,11 @@ void DoCmdParse(void)
 {
 	while (GetToken(SEP_END, TOK_INCLUDE_DOT) == FALSE)
 	{
-//		if (ProcOne(Directives, SEP_NO, TRUE) == FALSE)
-//		{
+	if (ProcOne(Directives, SEP_NO, TRUE) == FALSE)
+		{
 //			Syntax();
-//		}
-//		RestoreParser();
+		}
+		RestoreParser();
 	}
 }
 
