@@ -90,6 +90,12 @@
     <ClInclude Include="cmdline.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="exe16m.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="load16m.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="JWlink2Lib.cpp">
@@ -111,6 +117,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="util.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cmd16m.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

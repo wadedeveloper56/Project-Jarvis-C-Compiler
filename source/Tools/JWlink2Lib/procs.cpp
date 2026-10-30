@@ -46,8 +46,5 @@ bool ProcVector(void){ return false;}
 bool ProcForceVector(void){ return false;}
 bool ProcRuntime(void){ return false;}
 bool ProcModule(void){ return false;}
-bool ProcMemory16M(void){ return false;}
-bool ProcTransparent(void){ return false;}
 bool ProcNewSegment(void){ return false;}
-
 bool ProcDos(void) { return false; }

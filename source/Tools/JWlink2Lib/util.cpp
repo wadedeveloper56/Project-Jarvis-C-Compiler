@@ -770,3 +770,119 @@ bool HintFormat(exe_format hint)
 {
 	return true;
 }
+
+bool HaveEquals(tokcontrol ctrl)
+{
+	if (GetToken(SEP_EQUALS, ctrl) == FALSE)
+	{
+		Token.this1 = Token.next;
+		/* collect the token that caused the problem */
+		GetToken(SEP_NO, ctrl);
+		return(FALSE);
+	}
+	return(TRUE);
+}
+
+bool GetLong(uint32_t* addr)
+{
+	uint32_t     value;
+	ord_state       ok;
+
+	if (!HaveEquals((tokcontrol)0)) return(FALSE);
+	ok = getatol(&value);
+	if (ok != ST_IS_ORDINAL)
+	{
+		return(FALSE);
+	}
+	else
+	{
+		*addr = value;
+	}
+	return(TRUE);
+}
+
+ord_state getatol(uint32_t* pnt)
+{
+	char* p;
+	unsigned        len;
+	//unsigned long   value;
+	uint32_t         value;
+	unsigned        radix;
+	bool            isvalid;
+	bool            isdig;
+	bool            gotdigit;
+	char            ch;
+
+	len = Token.len;
+	if (len == 0)
+		return(ST_NOT_ORDINAL);
+	p = Token.this1;
+	gotdigit = FALSE;
+	value = 0ul;
+	radix = 10;
+	if (len >= 2 && *p == '0')
+	{
+		--len;
+		++p;
+		if (tolower(*p) == 'x')
+		{
+			radix = 16;
+			++p;
+			--len;
+		}
+	}
+	for (; len != 0; --len)
+	{
+		ch = tolower(*p++);
+		if (ch == 'k')
+		{         // constant of the form 64k
+			if (len > 1 || !gotdigit)
+			{
+				return(ST_NOT_ORDINAL);
+			}
+			else
+			{
+				value <<= 10;        // value = value * 1024;
+			}
+		}
+		else if (ch == 'm')
+		{        // constant of the form 64M
+			if (len > 1 || !gotdigit)
+			{
+				return(ST_NOT_ORDINAL);
+			}
+			else
+			{
+				value <<= 20;
+			}
+		}
+		else
+		{
+			isdig = isdigit(ch);
+			if (radix == 10)
+			{
+				isvalid = isdig;
+			}
+			else
+			{
+				isvalid = isxdigit(ch);
+			}
+			if (!isvalid)
+			{
+				return(ST_NOT_ORDINAL);
+			}
+			value *= radix;
+			if (isdig)
+			{
+				value += ch - '0';
+			}
+			else
+			{
+				value += ch - 'a' + 10;
+			}
+			gotdigit = TRUE;
+		}
+	}
+	*pnt = value;
+	return(ST_IS_ORDINAL);
+}
