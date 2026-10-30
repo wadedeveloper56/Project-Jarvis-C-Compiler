@@ -77,14 +77,14 @@ void NewCommandSource(char* name, char* buff, method how)
 
 void DoCmdParse(void)
 {
-//	while (GetToken(SEP_END, TOK_INCLUDE_DOT) == FALSE)
-//	{
+	while (GetToken(SEP_END, TOK_INCLUDE_DOT) == FALSE)
+	{
 //		if (ProcOne(Directives, SEP_NO, TRUE) == FALSE)
 //		{
 //			Syntax();
 //		}
 //		RestoreParser();
-//	}
+	}
 }
 
 bool IsStdOutConsole(void)
