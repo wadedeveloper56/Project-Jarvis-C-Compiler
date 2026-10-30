@@ -1,5 +1,7 @@
 #pragma once
 
+#include "structs.h"
+
 #define NLCHAR         '\n'
 #define CTRLZ          '\32'
 #define _LinkerPrompt "JWLINK>"

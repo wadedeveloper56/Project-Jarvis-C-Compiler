@@ -1,4 +1,6 @@
 #include "pch.h"
+#include "util.h"
+#include "globals.h"
 
 bool ProcFiles(void){ return false;}
 bool ProcModFiles(void){ return false;}
@@ -10,7 +12,15 @@ bool ProcSystem(void){ return false;}
 bool ProcLibPath(void){ return false;}
 bool ProcLibFile(void){ return false;}
 bool ProcPath(void){ return false;}
-bool ProcFormat(void){ return false;}
+bool ProcFormat(void)
+{
+	if (LinkState & FMT_SPECIFIED)
+	{
+		//LnkMsg(LOC + LINE + FTL + MSG_MULTIPLE_MODES_FOUND, NULL);
+	}
+	LinkState |= FMT_SPECIFIED;
+	return(ProcOne(Models, SEP_NO, TRUE));
+}
 bool ProcModTrace(void){ return false;}
 bool ProcSymTrace(void){ return false;}
 bool ProcAlias(void){ return false;}
@@ -39,3 +49,5 @@ bool ProcModule(void){ return false;}
 bool ProcMemory16M(void){ return false;}
 bool ProcTransparent(void){ return false;}
 bool ProcNewSegment(void){ return false;}
+
+bool ProcDos(void) { return false; }

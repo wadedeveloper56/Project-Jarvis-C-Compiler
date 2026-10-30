@@ -34,7 +34,8 @@ typedef unsigned long stateflag;
 #define CLEAR_ON_INC    (STOP_WORKING | INTERNAL_DEBUG | GOT_PREV_STRUCTS | MAKE_RELOCS | FMT_SPECIFIED | FMT_DECIDED | FMT_INITIALIZED)
 #define ORDER_FLAG_MASK (DOSSEG_FLAG | SPEC_ORDER_FLAG)
 
-parse_entry Directives[];
+extern parse_entry Directives[];
+extern parse_entry Models[];
 extern int _argc;
 extern char** _argv;
 extern void* SpawnStack;

@@ -107,6 +107,36 @@ parse_entry Directives[] =
     NULL
 };
 
+extern bool ProcDos(void);
+
+parse_entry    Models[] = {
+    "Dos",          &ProcDos,           (exe_format)MK_DOS, (commandflag)0,
+/*
+#ifdef _OS2
+    "OS2",          &ProcOS2,           (exe_format)MK_ONLY_OS2, (commandflag)0,
+    "WINdows",      &ProcWindows,       (exe_format)(MK_WIN_NE | MK_PE | MK_WIN_VXD), (commandflag)0,
+#endif
+#ifdef _PHARLAP
+    "PHARlap",      &ProcPharLap,       (exe_format)MK_PHAR_LAP, (commandflag)0,
+#endif
+#ifdef _NOVELL
+    "NOVell",       &ProcNovell,        (exe_format)MK_NOVELL, (commandflag)0,
+#endif
+#ifdef _QNXLOAD
+    "QNX",          &ProcQNX,           (exe_format)MK_QNX, (commandflag)0,
+#endif
+#ifdef _DOS16M
+    "DOS16M",       &Proc16M,           (exe_format)MK_DOS16M, (commandflag)0,
+#endif
+#ifdef _ELF
+    "ELF",          &ProcELF,           (exe_format)MK_ELF, (commandflag)0,
+#endif
+#ifdef _RAW
+    "Raw",          &ProcRaw,           (exe_format)MK_RAW, (commandflag)0,
+#endif
+*/
+    NULL
+};
 int _argc;
 char** _argv;
 void* SpawnStack;
