@@ -886,3 +886,31 @@ ord_state getatol(uint32_t* pnt)
 	*pnt = value;
 	return(ST_IS_ORDINAL);
 }
+
+// FIXME: This is a stub for now.
+bool ProcArgListEx(bool (*rtn)(void), tokcontrol ctrl, cmdfilelist* resetpoint) { return false; }
+
+bool ProcArgList(bool (*rtn)(void), tokcontrol ctrl)
+{
+	return(ProcArgListEx(rtn, ctrl, NULL));
+}
+
+// FIXME: This is a stub for now.
+void HandleImport(length_name* intname, length_name* modname, length_name* extname, unsigned long ordinal) {}
+
+ord_state getatoi(uint16_t* pnt)
+{
+	uint32_t value;
+	ord_state   retval;
+
+	retval = getatol(&value);
+	if (retval == ST_IS_ORDINAL)
+	{
+		if (value > 0xffff)
+		{
+			return(ST_INVALID_ORDINAL);
+		}
+		*pnt = (unsigned)value;
+	}
+	return(retval);
+}

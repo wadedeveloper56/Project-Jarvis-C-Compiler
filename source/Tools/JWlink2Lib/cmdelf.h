@@ -1,5 +1,6 @@
 #pragma once 
 
+#include "structs.h"
 
 extern bool     ProcELF( void );
 extern bool     ProcELFDLL( void );

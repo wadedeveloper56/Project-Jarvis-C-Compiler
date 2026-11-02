@@ -1,5 +1,6 @@
 #pragma once 
 
+#include "structs.h"
 
 extern bool     ProcCommit( void );
 extern bool     ProcAnonExport( void );

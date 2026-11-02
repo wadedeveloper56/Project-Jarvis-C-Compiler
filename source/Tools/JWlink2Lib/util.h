@@ -27,3 +27,7 @@ bool ProcOne(parse_entry* entry, sep_type req, bool suicide);
 bool HintFormat(exe_format hint);
 bool GetLong(uint32_t* addr);
 ord_state getatol(uint32_t* pnt);
+bool ProcArgListEx(bool (*rtn)(void), tokcontrol ctrl, cmdfilelist* resetpoint);
+bool ProcArgList(bool (*rtn)(void), tokcontrol ctrl);
+void HandleImport(length_name* intname, length_name* modname, length_name* extname, unsigned long ordinal);
+ord_state getatoi(uint16_t* pnt);

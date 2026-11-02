@@ -219,6 +219,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cmd16m.cpp" />
+    <ClCompile Include="cmddos.cpp" />
+    <ClCompile Include="cmdelf.cpp" />
+    <ClCompile Include="cmdnov.cpp" />
+    <ClCompile Include="cmdos2.cpp" />
+    <ClCompile Include="cmdphar.cpp" />
     <ClCompile Include="globals.cpp" />
     <ClCompile Include="JWlink2Lib.cpp" />
     <ClCompile Include="ntio.cpp" />

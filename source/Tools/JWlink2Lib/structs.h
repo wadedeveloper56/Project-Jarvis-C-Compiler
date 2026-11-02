@@ -618,3 +618,4 @@ typedef struct order_segment
     unsigned            NoEmit : 1;
 } order_segment;
 
+#define NOT_IMP_BY_ORDINAL 0xFFFFFFFF
