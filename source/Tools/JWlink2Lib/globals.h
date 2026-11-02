@@ -121,3 +121,6 @@ extern char* MapFName;       /* name of map file                     */
 extern char* SymFileName;
 extern group_entry* DBIGroups;
 extern linkflag       LinkFlags;      /* flags to indicate presence of parms  */
+extern path_entry* LibPath;        /* path for library files               */
+extern file_list* ObjLibFiles;   /* list of library files (for searching)*/
+extern offset         StackSize;      /* size of stack                        */

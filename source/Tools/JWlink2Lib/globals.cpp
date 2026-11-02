@@ -635,3 +635,6 @@ char* MapFName;       /* name of map file                     */
 char* SymFileName;
 group_entry* DBIGroups;
 linkflag       LinkFlags;      /* flags to indicate presence of parms  */
+path_entry* LibPath;        /* path for library files               */
+file_list* ObjLibFiles;   /* list of library files (for searching)*/
+offset         StackSize;      /* size of stack                        */

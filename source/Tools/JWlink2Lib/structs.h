@@ -3,6 +3,12 @@
 #define FALSE 0
 #define TRUE 1
 
+#ifdef CASE_SENSITIVE
+#define FNAMECMPSTR      strcmp      /* for case  sensitive file systems */
+#else
+#define FNAMECMPSTR      _stricmp     /* for case insensitive file systems */
+#endif
+
 typedef unsigned f_handle;
 #define NIL_HANDLE -1
 typedef uint32_t offset;

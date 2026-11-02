@@ -219,6 +219,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cmd16m.cpp" />
+    <ClCompile Include="cmdall.cpp" />
     <ClCompile Include="cmddos.cpp" />
     <ClCompile Include="cmdelf.cpp" />
     <ClCompile Include="cmdnov.cpp" />
