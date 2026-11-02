@@ -887,16 +887,136 @@ ord_state getatol(uint32_t* pnt)
 	return(ST_IS_ORDINAL);
 }
 
+bool WildCard(bool (*rtn)(void), tokcontrol ctrl)
+{
+#if !defined( __UNIX__ )
+	//opendir - readdir wildcarding not supported here.
+	ctrl = ctrl;
+	return(rtn());
+#else
+	char* p;
+	char* start;
+	DIR* dir;
+	struct dirent* dirent;
+	char                drive[_MAX_DRIVE];
+	char                directory[_MAX_DIR];
+	char                name[_MAX_FNAME];
+	char                extin[_MAX_EXT];
+	char                pathin[_MAX_PATH];
+	bool                wildcrd;
+	bool                retval;
+
+	wildcrd = FALSE;
+	if (ctrl & TOK_IS_FILENAME)
+	{
+		p = Token.this1;
+		for (;;)
+		{               // check if wildcard
+   /* end of parm: NULLCHAR or blank */
+   //if( *p == '\'' ) break;     // don't wildcard a quoted string.
+			if (*p == '\'' || *p == '"') break;     // don't wildcard a quoted string.
+			if (*p == '\0') break;
+			if (*p == ' ') break;
+			if (*p == '?' || *p == '*')
+			{
+				wildcrd = TRUE;
+				break;
+			}
+			p++;
+		}
+	}
+	if (!wildcrd)
+	{
+		retval = rtn();
+	}
+	else
+	{
+		retval = TRUE;
+		/* expand file names */
+		start = tostring();
+		dir = opendir(start);
+		if (dir != NULL)
+		{
+			_splitpath(start, drive, directory, NULL, NULL);
+			for (;;)
+			{
+				dirent = readdir(dir);
+				if (dirent == NULL) break;
+				if (dirent->d_attr &
+					(_A_HIDDEN + _A_SYSTEM + _A_VOLID + _A_SUBDIR)) continue;
+				_splitpath(dirent->d_name, NULL, NULL, name, extin);
+				_makepath(pathin, drive, directory, name, extin);
+				Token.this1 = pathin;            // dangerous?
+				Token.len = strlen(pathin);
+				if (!(*rtn)())
+				{
+					Token.this1 = NULL;
+					Token.thumb = OK;   // make _sure_ we don't use Token.this1
+					retval = FALSE;
+					break;
+				}
+			}
+			closedir(dir);
+		}
+		else
+		{
+			retval = rtn();
+		}
+		_LnkFree(start);
+	}
+	return(retval);
+#endif
+}
+
+bool ProcArgListEx(bool (*rtn)(void), tokcontrol ctrl, cmdfilelist* resetpoint)
+{
+	bool bfilereset = FALSE;    /* did we _open a file and get reset ? */
+
+	if (GetTokenEx(SEP_LCURLY, ctrl, resetpoint, &bfilereset))
+	{
+		for (;;)
+		{
+			if (!WildCard(rtn, ctrl))
+			{
+				return(FALSE);
+			}
+			if (CheckFence())
+			{
+				break;
+			}
+			else if (!GetTokenEx(SEP_NO, ctrl, resetpoint, &bfilereset))
+			{
+				//LnkMsg(LOC + LINE + ERR + MSG_BAD_CURLY_LIST, NULL);
+				break;
+			}
+		}
+	}
+	else
+	{
+		if (resetpoint && bfilereset)
+			return(TRUE);
+		if (GetTokenEx(SEP_NO, ctrl, resetpoint, &bfilereset) == FALSE)
+			return(FALSE);
+		do
+		{
+			if (resetpoint && bfilereset)
+				return(TRUE);
+			if (!WildCard(rtn, ctrl))
+			{
+				return(FALSE);
+			}
+		} while (GetTokenEx(SEP_COMMA, ctrl, resetpoint, &bfilereset));
+	}
+	return(TRUE);
+}
+
 // FIXME: This is a stub for now.
-bool ProcArgListEx(bool (*rtn)(void), tokcontrol ctrl, cmdfilelist* resetpoint) { return false; }
+void HandleImport(length_name* intname, length_name* modname, length_name* extname, unsigned long ordinal) {}
 
 bool ProcArgList(bool (*rtn)(void), tokcontrol ctrl)
 {
 	return(ProcArgListEx(rtn, ctrl, NULL));
 }
-
-// FIXME: This is a stub for now.
-void HandleImport(length_name* intname, length_name* modname, length_name* extname, unsigned long ordinal) {}
 
 ord_state getatoi(uint16_t* pnt)
 {
@@ -913,4 +1033,22 @@ ord_state getatoi(uint16_t* pnt)
 		*pnt = (unsigned)value;
 	}
 	return(retval);
+}
+
+bool CheckFence(void)
+{
+	if (Token.thumb == REJECT)
+	{
+		if (Token.quoted) return(FALSE);   /* no fence inside quotes */
+		if (*Token.this1 == '}')
+		{
+			Token.this1++;
+			return(TRUE);
+		}
+	}
+	else
+	{
+		return(GetToken(SEP_RCURLY, (tokcontrol)0));
+	}
+	return(FALSE);
 }

@@ -31,3 +31,5 @@ bool ProcArgListEx(bool (*rtn)(void), tokcontrol ctrl, cmdfilelist* resetpoint);
 bool ProcArgList(bool (*rtn)(void), tokcontrol ctrl);
 void HandleImport(length_name* intname, length_name* modname, length_name* extname, unsigned long ordinal);
 ord_state getatoi(uint16_t* pnt);
+bool WildCard(bool (*rtn)(void), tokcontrol ctrl);
+bool CheckFence(void);
