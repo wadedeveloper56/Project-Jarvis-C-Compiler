@@ -298,8 +298,6 @@ bool GetTokenEx(sep_type req, tokcontrol ctrl, cmdfilelist* resetpoint, bool* pb
 	}
 }
 
-#define IS_WHITESPACE(ptr) (*(ptr) == ' ' || *(ptr) =='\t' || *(ptr) == '\r')
-
 void EatWhite(void)
 {
 	while (IS_WHITESPACE(Token.next))
@@ -1010,9 +1008,6 @@ bool ProcArgListEx(bool (*rtn)(void), tokcontrol ctrl, cmdfilelist* resetpoint)
 	return(TRUE);
 }
 
-// FIXME: This is a stub for now.
-void HandleImport(length_name* intname, length_name* modname, length_name* extname, unsigned long ordinal) {}
-
 bool ProcArgList(bool (*rtn)(void), tokcontrol ctrl)
 {
 	return(ProcArgListEx(rtn, ctrl, NULL));
@@ -1051,4 +1046,36 @@ bool CheckFence(void)
 		return(GetToken(SEP_RCURLY, (tokcontrol)0));
 	}
 	return(FALSE);
+}
+
+uint16_t blog_32(uint32_t value)
+{
+	uint16_t log;
+
+	if (value == 0)
+	{
+		return(0);
+	}
+	log = 31;
+	for (; ; )
+	{
+		if (value & 0x80000000)
+		{  // done if high bit on
+			break;
+		}
+		value <<= 1;            // shift left and decrease possible log.
+		log--;
+	}
+	return(log);
+}
+
+char* totext(void)
+/* get a possiblly quoted string */
+{
+	Token.thumb = REJECT;
+	if (!GetToken(SEP_NO, (tokcontrol)0))
+	{
+		GetToken(SEP_NO, TOK_INCLUDE_DOT);
+	}
+	return(tostring());
 }

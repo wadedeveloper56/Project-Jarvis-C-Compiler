@@ -2,125 +2,237 @@
 
 #include "structs.h"
 
-extern bool     ProcCommit( void );
-extern bool     ProcAnonExport( void );
-extern bool     ProcSingle( void );
-extern bool     ProcMultiple( void );
-extern bool     ProcNone( void );
-extern bool     ProcOldLibrary( void );
-extern bool     ProcModName( void );
-extern bool     ProcNewFiles( void );
-extern bool     ProcProtMode( void );
-extern bool     ProcDescription( void );
-extern bool     ProcObjAlign( void );
-extern bool     ProcRWRelocCheck( void );
-extern bool     ProcSelfRelative( void );
-extern bool     ProcInternalRelocs( void );
-extern bool     ProcToggleRelocsFlag( void );
-extern bool     ProcNoStdCall( void );
-extern bool     ProcResource( void );
-extern bool     ProcMixed1632( void );
+bool ProcOS2Import(void);
 
-extern bool     ProcRunNative( void );
-extern bool     ProcRunWindows( void );
-extern bool     ProcRunConsole( void );
-extern bool     ProcRunPosix( void );
-extern bool     ProcRunOS2( void );
-extern bool     ProcRunDosstyle( void );
+bool ProcOS2Export(void);
 
-extern bool     ProcOS2( void );
-extern bool     ProcWindows( void );
+bool ProcAnonExport(void);
 
-extern bool     ProcOS2DLL( void );
-extern bool     ProcLE( void );
-extern bool     ProcLX( void );
-extern bool     ProcPE( void );
-extern bool     ProcVXD( void );
-extern bool     ProcOldPE( void );
+bool ProcOS2Segment(void);
 
-extern bool     ProcPM( void );
-extern bool     ProcPMCompatible( void );
-extern bool     ProcPMFullscreen( void );
-extern bool     ProcPhysDevice( void );
-extern bool     ProcVirtDevice( void );
+entry_export* ProcWlibDLLImportEntry(void);
 
-extern bool     ProcMemory( void );
-extern bool     ProcFont( void );
-extern bool     ProcDPMI( void );
+bool GetWlibImports(void);
 
-extern bool     ProcTNT( void );
-extern bool     ProcHX( void );
+bool getimport(void);
 
-extern bool     ProcDynamicDriver( void );
-extern bool     ProcStaticDriver( void );
+bool getexport(void);
 
-extern bool     ProcLargeAddressAware( void );
-extern bool     ProcNoLargeAddressAware( void );
+bool ProcExpResident(void);
 
-extern bool     ProcInitGlobal( void );
-extern bool     ProcInitInstance( void );
-extern bool     ProcInitThread( void );
+bool ProcPrivate(void);
 
-extern bool     ProcTermGlobal( void );
-extern bool     ProcTermInstance( void );
-extern bool     ProcTermThread( void );
+bool ProcNoName(void);
 
-extern bool     ProcExpResident( void );
-extern bool     ProcPrivate( void );
+bool ProcOS2Alignment(void);
 
-extern bool     ProcOS2Class( void );
-extern bool     ProcSegType( void );
+bool ProcObjAlign(void);
 
-extern bool     ProcSegCode( void );
-extern bool     ProcSegData( void );
+bool ProcModName(void);
 
-extern bool     ProcPreload( void );
-extern bool     ProcLoadoncall( void );
-extern bool     ProcIopl( void );
-extern bool     ProcNoIopl( void );
-extern bool     ProcExecuteonly( void );
-extern bool     ProcExecuteread( void );
-extern bool     ProcShared( void );
-extern bool     ProcNonShared( void );
-extern bool     ProcReadOnly( void );
-extern bool     ProcReadWrite( void );
-extern bool     ProcWritable( void );
-extern bool     ProcExecutable( void );
-extern bool     ProcConforming( void );
-extern bool     ProcNonConforming( void );
-extern bool     ProcMovable( void );
-extern bool     ProcFixed( void );
-extern bool     ProcDiscardable( void );
-extern bool     ProcNonDiscardable( void );
-extern bool     ProcInvalid( void );
-extern bool     ProcContiguous( void );
-extern bool     ProcResident( void );
-extern bool     ProcNoName( void );
-extern bool     ProcOS2Dynamic( void );
-extern bool     ProcNonPermanent( void );
-extern bool     ProcPermanent( void );
-extern bool     ProcPageable( void );
-extern bool     ProcNonPageable( void );
+bool ProcNewFiles(void);
 
-extern bool     ProcCommitStack( void );
-extern bool     ProcCommitHeap( void );
+bool ProcProtMode(void);
 
-extern bool     ProcOS2Import( void );
-extern bool     ProcOS2Export( void );
-extern bool     ProcOS2Segment( void );
-extern bool     ProcOS2Alignment( void );
-extern bool     ProcOS2HeapSize( void );
-extern bool     ProcPENoRelocs( void );
+bool ProcOldLibrary(void);
 
-extern void     ChkBase( offset align );
-extern void     SetOS2Fmt( void );
-extern void     FreeOS2Fmt( void );
+bool ProcOS2HeapSize(void);
 
-/*
-//  These are PE only
-*/
-extern bool     ProcLinkVersion( void );
-extern bool     ProcOsVersion( void );
-extern bool     ProcChecksum( void );
-extern bool     ProcNXCompat( void );
-extern bool     ProcFuzzyExport( void );
+bool ProcDescription(void);
+
+bool ProcCommitStack(void);
+
+bool ProcCommitHeap(void);
+
+static bool AddCommit(void);
+
+bool ProcCommit(void);
+
+bool ProcRWRelocCheck(void);
+
+bool ProcSelfRelative(void);
+
+bool ProcInternalRelocs(void);
+
+bool ProcToggleRelocsFlag(void);
+
+bool ProcMixed1632(void);
+
+bool ProcPENoRelocs(void);
+
+bool ProcNoStdCall(void);
+
+bool ProcFuzzyExport(void);
+
+bool ProcOS2(void);
+
+bool ProcPE(void);
+
+#if 1 /* JWlink: [NO]LARGEADDRESSAWARE */
+bool ProcLargeAddressAware(void);
+
+bool ProcNoLargeAddressAware(void);
+#endif
+
+bool ProcVXD(void);
+
+bool ProcWindows(void);
+
+void ChkBase(offset align);;
+
+void SetOS2Fmt(void);
+
+void FreeOS2Fmt(void);
+
+bool ProcLE(void);
+
+bool ProcLX(void);
+
+bool ProcOS2DLL(void);
+
+bool ProcPhysDevice(void);
+
+bool ProcVirtDevice(void);
+
+bool ProcPM(void);
+
+bool ProcPMCompatible(void);
+
+bool ProcPMFullscreen(void);
+
+bool ProcMemory(void);
+
+bool ProcFont(void);
+
+/* jwlink: DPMI */
+bool ProcDPMI(void);
+
+bool ProcDynamicDriver(void);
+
+bool ProcStaticDriver(void);
+
+bool ProcInitGlobal(void);
+
+bool ProcInitInstance(void);
+
+bool ProcInitThread(void);
+
+bool ProcTermGlobal(void);
+
+bool ProcTermInstance(void);
+
+bool ProcTermThread(void);
+
+static bool getsegflags(void);
+
+bool ProcOS2Class(void);
+
+bool ProcSegType(void);
+
+bool ProcSegCode(void);
+
+bool ProcSegData(void);
+
+bool ProcPreload(void);
+
+bool ProcLoadoncall(void);
+
+bool ProcIopl(void);
+
+bool ProcNoIopl(void);
+
+bool ProcExecuteonly(void);
+
+bool ProcExecuteread(void);
+
+bool ProcReadOnly(void);
+
+bool ProcReadWrite(void);
+
+bool ProcShared(void);
+
+/* this is for linear models only - currently PE only */
+bool ProcWritable(void);
+/* this is for linear models only - currently PE only */
+bool ProcExecutable(void);;
+
+bool ProcNonShared(void);
+
+bool ProcConforming(void);
+
+bool ProcNonConforming(void);
+
+bool ProcMovable(void);
+
+bool ProcFixed(void);
+
+bool ProcNonPageable(void);
+
+bool ProcPageable(void);
+
+bool ProcDiscardable(void);
+
+bool ProcNonDiscardable(void);
+
+bool ProcOS2Dynamic(void);
+
+bool ProcInvalid(void);;
+
+bool ProcPermanent(void);
+
+bool ProcNonPermanent(void);
+
+bool ProcContiguous(void);
+
+bool ProcSingle(void);
+
+bool ProcMultiple(void);
+
+bool ProcNone(void);
+
+bool ProcRunNative(void);
+
+bool ProcRunWindows(void);
+
+bool ProcRunConsole(void);
+
+bool ProcRunPosix(void);
+
+bool ProcRunOS2(void);
+
+bool ProcRunDosstyle(void);
+
+bool ProcTNT(void);
+
+bool ProcHX(void);
+
+bool ProcNXCompat(void);
+
+static void ParseVersion(void);
+
+static bool AddResource(void);
+
+bool ProcResource(void);
+
+enum
+{
+	valid_result = 0x01,
+	major_valid = 0x02,
+	minor_valid = 0x04,
+	revision_valid = 0x08
+};
+
+typedef struct tagVersBlock
+{
+	uint32_t major;
+	uint32_t minor;
+	uint32_t revision;
+}VersBlock;
+
+static uint32_t ProcGenericVersion(VersBlock* pVers, uint32_t major_limit, uint32_t minor_limit, uint32_t revision_limit);
+
+bool     ProcLinkVersion(void);
+
+bool     ProcOsVersion(void);
+
+bool     ProcChecksum(void);

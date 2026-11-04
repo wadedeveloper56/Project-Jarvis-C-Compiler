@@ -96,6 +96,24 @@
     <ClInclude Include="load16m.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="objpass1.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="loadpe.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="loados2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="impexp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="lsymtab.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="exepe.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="JWlink2Lib.cpp">
@@ -138,6 +156,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="cmdall.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="objpass1.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="loadpe.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="impexp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="lsymtab.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

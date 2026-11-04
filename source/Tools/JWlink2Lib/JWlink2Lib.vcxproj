@@ -202,14 +202,20 @@
     <ClInclude Include="command.h" />
     <ClInclude Include="exe16m.h" />
     <ClInclude Include="exeos2.h" />
+    <ClInclude Include="exepe.h" />
     <ClInclude Include="formats.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="globals.h" />
     <ClInclude Include="hash.h" />
+    <ClInclude Include="impexp.h" />
     <ClInclude Include="ldefext.h" />
     <ClInclude Include="link.h" />
     <ClInclude Include="load16m.h" />
+    <ClInclude Include="loados2.h" />
+    <ClInclude Include="loadpe.h" />
+    <ClInclude Include="lsymtab.h" />
     <ClInclude Include="ntio.h" />
+    <ClInclude Include="objpass1.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="start.h" />
     <ClInclude Include="structs.h" />
@@ -226,8 +232,12 @@
     <ClCompile Include="cmdos2.cpp" />
     <ClCompile Include="cmdphar.cpp" />
     <ClCompile Include="globals.cpp" />
+    <ClCompile Include="impexp.cpp" />
     <ClCompile Include="JWlink2Lib.cpp" />
+    <ClCompile Include="loadpe.cpp" />
+    <ClCompile Include="lsymtab.cpp" />
     <ClCompile Include="ntio.cpp" />
+    <ClCompile Include="objpass1.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
