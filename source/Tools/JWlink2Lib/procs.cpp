@@ -50,9 +50,9 @@ bool ProcQNXExecuteread(void) { return false; }
 bool ProcQNXReadWrite(void) { return false; }
 //bool ProcSelfRelative(void) { return false; }
 //bool ProcOrdCopy(void) { return false; }
-bool ProcELFRNumber(void) { return false; }
+//bool ProcELFRNumber(void) { return false; }
 bool ProcModuleType4(void) { return false; }
-bool ProcELFRNetBSD(void) { return false; }
+//bool ProcELFRNetBSD(void) { return false; }
 bool ProcRaw(void) { return false; }
 bool ProcExportsDBI(void) { return false; }
 bool ProcPharFlat(void) { return false; }
@@ -90,7 +90,7 @@ bool ProcNIStack(void) { return false; }
 //bool ProcOrdNoEmit(void) { return false; }
 //bool ProcOpResource(void) { return false; }
 bool ProcMiniBuf(void) { return false; }
-bool ProcELFDLL(void) { return false; }
+//bool ProcELFDLL(void) { return false; }
 //bool ProcFillchar(void) { return false; }
 bool ProcNovDBI(void) { return false; }
 //bool ProcInvalid(void) { return false; }
@@ -187,7 +187,7 @@ bool ProcQNXReadOnly(void) { return false; }
 //bool ProcInternalRelocs(void) { return false; }
 bool ProcModuleType6(void) { return false; }
 //bool ProcVFRemoval(void) { return false; }
-bool ProcELFRLinux(void) { return false; }
+//bool ProcELFRLinux(void) { return false; }
 bool ProcRealBreak(void) { return false; }
 //bool ProcGDTSize(void) { return false; }
 //bool ProcInto(void) { return false; }
@@ -227,7 +227,7 @@ bool ProcHelp(void) { return false; }
 //bool ProcTryLow(void) { return false; }
 bool ProcMessages(void) { return false; }
 bool ProcLAN(void) { return false; }
-bool ProcELFRFBSD(void) { return false; }
+//bool ProcELFRFBSD(void) { return false; }
 bool ProcQNXPrivilege(void) { return false; }
 //bool ProcMangledNames(void) { return false; }
 //bool ProcGlobal(void) { return false; }
@@ -261,14 +261,14 @@ bool ProcRawBIN(void) { return false; }
 //bool ProcAuto(void) { return false; }
 //bool ProcForceLow(void) { return false; }
 //bool ProcNXCompat(void) { return false; }
-bool ProcELFRSVR4(void) { return false; }
+//bool ProcELFRSVR4(void) { return false; }
 //bool ProcDescription(void) { return false; }
 //bool ProcLine(void) { return false; }
 bool ProcNovDBIReferenced(void) { return false; }
 //bool ProcOS2DLL(void) { return false; }
 //bool ProcDosSeg(void) { return false; }
 //bool ProcAlphabetical(void) { return false; }
-bool ProcExtraSections(void) { return false; }
+//bool ProcExtraSections(void) { return false; }
 //bool ProcModName(void) { return false; }
 //bool ProcMixed1632(void) { return false; }
 //bool ProcPageable(void) { return false; }
@@ -278,7 +278,7 @@ bool ProcMaxiBuf(void) { return false; }
 //bool ProcTransparent(void) { return false; }
 bool ProcPriv(void) { return false; }
 //bool ProcOldLibrary(void) { return false; }
-bool ProcExportAll(void) { return false; }
+//bool ProcExportAll(void) { return false; }
 bool ProcMaxReal(void) { return false; }
 //bool ProcKorean(void) { return false; }
 bool ProcAutoUnload(void) { return false; }
@@ -302,7 +302,7 @@ bool ProcAutoUnload(void) { return false; }
 bool ProcMinReal(void) { return false; }
 //bool ProcChecksum(void) { return false; }
 //bool ProcRunWindows(void) { return false; }
-bool ProcELFRSolrs(void) { return false; }
+//bool ProcELFRSolrs(void) { return false; }
 //bool ProcRunNative(void) { return false; }
 bool ProcSharelib(void) { return false; }
 

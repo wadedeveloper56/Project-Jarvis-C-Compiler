@@ -201,6 +201,7 @@
     <ClInclude Include="cmdraw.h" />
     <ClInclude Include="command.h" />
     <ClInclude Include="exe16m.h" />
+    <ClInclude Include="exeelf.h" />
     <ClInclude Include="exeos2.h" />
     <ClInclude Include="exepe.h" />
     <ClInclude Include="formats.h" />

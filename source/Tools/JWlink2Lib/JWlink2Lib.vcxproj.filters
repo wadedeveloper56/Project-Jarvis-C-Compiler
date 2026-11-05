@@ -117,6 +117,9 @@
     <ClInclude Include="ovlstruc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="exeelf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="JWlink2Lib.cpp">

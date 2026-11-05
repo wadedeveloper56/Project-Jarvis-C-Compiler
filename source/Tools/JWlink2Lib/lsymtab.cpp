@@ -13,6 +13,7 @@ symbol* RefISymbol(char* name)
 	return(SymOp((sym_flags)(ST_CREATE | ST_REFERENCE), name, strlen(name)));
 }
 
+//FIXME: These functions are not implemented yet. They are just placeholders for now.
 symbol* SymOp(sym_flags op, char* symname, unsigned length)
 {
 	return nullptr;

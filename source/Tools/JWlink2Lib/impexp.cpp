@@ -8,10 +8,12 @@
 #include "loados2.h"
 #include "impexp.h"
 
+//FIXME: These functions are not implemented yet. They are just placeholders for now.
 void AddToExportList(entry_export* exp)
 {
 }
 
+//FIXME: These functions are not implemented yet. They are just placeholders for now.
 entry_export* AllocExport(char* name, unsigned len)
 {
 	return nullptr;
