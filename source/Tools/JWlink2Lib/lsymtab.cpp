@@ -18,3 +18,15 @@ symbol* SymOp(sym_flags op, char* symname, unsigned length)
 {
 	return nullptr;
 }
+
+//FIXME: These functions are not implemented yet. They are just placeholders for now.
+bool SetCurrentPrefix(const char* pszPrefix, unsigned nLen)
+{
+	return nullptr;
+}
+
+//FIXME: These functions are not implemented yet. They are just placeholders for now.
+symbol* SymOpNWPfx(sym_flags op, char* name, unsigned length, char* prefix, unsigned prefixLen)
+{
+	return nullptr;
+}

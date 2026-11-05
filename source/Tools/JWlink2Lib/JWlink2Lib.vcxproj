@@ -202,6 +202,7 @@
     <ClInclude Include="command.h" />
     <ClInclude Include="exe16m.h" />
     <ClInclude Include="exeelf.h" />
+    <ClInclude Include="exenov.h" />
     <ClInclude Include="exeos2.h" />
     <ClInclude Include="exepe.h" />
     <ClInclude Include="formats.h" />
@@ -212,6 +213,7 @@
     <ClInclude Include="ldefext.h" />
     <ClInclude Include="link.h" />
     <ClInclude Include="load16m.h" />
+    <ClInclude Include="loadnov.h" />
     <ClInclude Include="loados2.h" />
     <ClInclude Include="loadpe.h" />
     <ClInclude Include="lsymtab.h" />

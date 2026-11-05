@@ -1088,3 +1088,9 @@ outfilelist* NewOutFile(char* filename){	return(nullptr); }
 
 //FIXME: These functions are not implemented yet. They are just placeholders for now.
 void Vectorize(symbol* sym) {}
+
+//FIXME: These functions are not implemented yet. They are just placeholders for now.
+bool MatchOne(parse_entry* entry, sep_type req, char* match, unsigned len) { return false; }
+
+//FIXME: These functions are not implemented yet. They are just placeholders for now.
+name_list* AddNameTable(char* name, unsigned len, bool is_mod, name_list** owner) { return(nullptr); }

@@ -67,3 +67,6 @@ char* totext(void);
 void DBISectInit(section* sect);
 outfilelist* NewOutFile(char* filename);
 void Vectorize(symbol* sym);
+bool MatchOne(parse_entry* entry, sep_type req, char* match, unsigned len);
+name_list* AddNameTable(char* name, unsigned len, bool is_mod, name_list** owner);
+
