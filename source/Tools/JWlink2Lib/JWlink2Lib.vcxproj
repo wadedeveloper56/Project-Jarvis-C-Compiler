@@ -216,6 +216,7 @@
     <ClInclude Include="lsymtab.h" />
     <ClInclude Include="ntio.h" />
     <ClInclude Include="objpass1.h" />
+    <ClInclude Include="ovlstruc.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="start.h" />
     <ClInclude Include="structs.h" />

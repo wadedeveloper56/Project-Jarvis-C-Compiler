@@ -2,33 +2,76 @@
 
 using namespace std;
 
-extern bool     ProcOverlay( void );
-extern bool     ProcBegin( void );
-extern bool     ProcFixedLib( void );
-extern bool     ProcNoVector( void );
-extern bool     ProcVector( void );
-extern bool     ProcForceVector( void );
-extern bool     ProcSmall( void );
-extern bool     ProcDistribute( void );
-extern bool     ProcDynamic( void );
-extern bool     ProcStandard( void );
-extern bool     ProcNoIndirect( void );
-extern bool     ProcArea( void );
-extern bool     ProcPadSections(void);
-#if 1 /* JWlink */
-extern bool     ProcKnowEAS(void);
+void SetDosFmt(void);
+
+bool ProcDos(void);
+
+static void SetOvlClasses(void);
+
+static bool AddClass(void);
+
+bool ProcOverlay(void);
+
+bool ProcDistribute(void);
+
+bool ProcPadSections(void);
+
+bool ProcFixedLib(void);
+
+// this is an arbitrary non-zero value put in the sect->relocs field to
+// signify that ProcBegin already made a new section, so ProcSection
+// should not.
+
+#define SECT_ALREADY_MADE 1
+
+bool ProcBegin(void);
+
+bool ProcInto(void);
+
+static void NewArea(section* sect);
+
+static void MakeNonArea(void);
+
+bool ProcEnd(void);
+
+void MakeNewSection(void);
+
+bool ProcSection(void);
+
+bool ProcSmall(void);
+
+bool ProcCom(void);
+
+bool ProcDynamic(void);
+
+static bool AddNoVector(void);
+
+bool ProcNoVector(void);
+
+static bool AddVector(void);
+
+bool ProcVector(void);
+
+static bool AddForceVector(void);
+
+bool ProcForceVector(void);
+
+bool ProcAutoSection(void);
+
+bool ProcNoIndirect(void);
+
+#if 1 /* JWLink: KNOWEAS */
+bool ProcKnowEAS(void);
 #endif
+bool ProcStandard(void);
 
-extern bool     ProcDos( void );
-extern bool     ProcCom( void );
+bool ProcArea(void);
 
-extern bool     ProcSection( void );
-extern bool     ProcEnd( void );
-extern bool     ProcAutoSection( void );
-extern bool     ProcInto( void );
+void CmdOvlFini(void);
 
-extern void     SetDosFmt( void );
-extern void     MakeNewSection( void );
-extern void     CmdOvlFini( void );
-
-extern ::byte     OvlLevel;
+#ifdef _INT_DEBUG
+static void PrintOvl(void);
+static void PrintAreas(OVL_AREA* ovlarea);
+static void PrintSect(section* sect);
+#endif
+extern int     OvlLevel;

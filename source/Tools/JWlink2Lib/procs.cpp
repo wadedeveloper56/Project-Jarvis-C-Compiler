@@ -30,20 +30,20 @@
 bool ProcImport(void){ return false;}
 bool ProcExport(void){ return false;}
 bool ProcSegment(void){ return false;}
-bool ProcOverlay(void){ return false;}
-bool ProcBegin(void){ return false;}
-bool ProcFixedLib(void){ return false;}
-bool ProcNoVector(void){ return false;}
-bool ProcVector(void){ return false;}
-bool ProcForceVector(void){ return false;}
+//bool ProcOverlay(void){ return false;}
+//bool ProcBegin(void){ return false;}
+//bool ProcFixedLib(void){ return false;}
+//bool ProcNoVector(void){ return false;}
+//bool ProcVector(void){ return false;}
+//bool ProcForceVector(void){ return false;}
 //bool ProcRuntime(void){ return false;}
 bool ProcModule(void){ return false;}
 //bool ProcNewSegment(void){ return false;}
 
-bool ProcDistribute(void) { return false; }
+//bool ProcDistribute(void) { return false; }
 //bool ProcOsVersion(void) { return false; }
 //bool ProcStart(void) { return false; }
-bool ProcEnd(void) { return false; }
+//bool ProcEnd(void) { return false; }
 //bool ProcNoDosSeg(void) { return false; }
 bool ProcQNXExecuteread(void) { return false; }
 //bool ProcImplib(void) { return false; }
@@ -67,7 +67,7 @@ bool ProcHeapSize(void) { return false; }
 //bool ProcPrivate(void) { return false; }
 //bool ProcHshift(void) { return false; }
 //bool ProcNonPageable(void) { return false; }
-bool ProcAutoSection(void) { return false; }
+//bool ProcAutoSection(void) { return false; }
 //bool ProcReadOnly(void) { return false; }
 //bool ProcPMFullscreen(void) { return false; }
 //bool ProcEliminate(void) { return false; }
@@ -151,7 +151,7 @@ bool ProcQNXClass(void) { return false; }
 bool ProcPseudoPreemption(void) { return false; }
 //bool ProcNoDefLibs(void) { return false; }
 //bool ProcLocal(void) { return false; }
-bool ProcStandard(void) { return false; }
+//bool ProcStandard(void) { return false; }
 //bool ProcStatics(void) { return false; }
 //bool ProcVirtDevice(void) { return false; }
 bool ProcModuleType9(void) { return false; }
@@ -171,7 +171,7 @@ bool ProcMultiLoad(void) { return false; }
 //bool ProcCallBufs(void) { return false; }
 //bool ProcExecutable(void) { return false; }
 //bool ProcNewFiles(void) { return false; }
-bool ProcSmall(void) { return false; }
+//bool ProcSmall(void) { return false; }
 //bool ProcTryExtended(void) { return false; }
 //bool ProcOverload(void) { return false; }
 bool ProcMinData(void) { return false; }
@@ -179,7 +179,7 @@ bool ProcMinData(void) { return false; }
 //bool ProcNonPermanent(void) { return false; }
 //bool ProcKeyboard(void) { return false; }
 //bool ProcPE(void) { return false; }
-bool ProcNoIndirect(void) { return false; }
+//bool ProcNoIndirect(void) { return false; }
 //bool ProcNoCaseExact(void) { return false; }
 //bool ProcSelectors(void) { return false; }
 //bool ProcOutputStart(void) { return false; }
@@ -190,7 +190,7 @@ bool ProcModuleType6(void) { return false; }
 bool ProcELFRLinux(void) { return false; }
 bool ProcRealBreak(void) { return false; }
 //bool ProcGDTSize(void) { return false; }
-bool ProcInto(void) { return false; }
+//bool ProcInto(void) { return false; }
 //bool ProcOrdClass(void) { return false; }
 //bool ProcNoCache(void) { return false; }
 //bool ProcStaticDriver(void) { return false; }
@@ -200,7 +200,7 @@ bool ProcNLMFlags(void) { return false; }
 //bool ProcLE(void) { return false; }
 bool ProcCopyright(void) { return false; }
 //bool ProcStub(void) { return false; }
-bool ProcArea(void) { return false; }
+//bool ProcArea(void) { return false; }
 bool ProcOSDomain(void) { return false; }
 //bool ProcNoExtension(void) { return false; }
 //bool ProcTData(void) { return false; }
@@ -243,14 +243,14 @@ bool ProcNAM(void) { return false; }
 bool ProcThreadName(void) { return false; }
 //bool ProcStack(void) { return false; }
 //bool ProcNonDiscardable(void) { return false; }
-bool ProcDynamic(void) { return false; }
+//bool ProcDynamic(void) { return false; }
 //bool ProcUndefsOK(void) { return false; }
 //bool ProcOutputHshift(void) { return false; }
 //bool ProcNone(void) { return false; }
 bool ProcScreenName(void) { return false; }
 //bool ProcPMCompatible(void) { return false; }
 //bool ProcNoLargeAddressAware(void) { return false; }
-bool ProcKnowEAS(void) { return false; }
+//bool ProcKnowEAS(void) { return false; }
 //bool ProcLargeAddressAware(void) { return false; }
 //bool ProcSysEnd(void) { return false; }
 //bool ProcSymFile(void) { return false; }
@@ -283,7 +283,7 @@ bool ProcMaxReal(void) { return false; }
 //bool ProcKorean(void) { return false; }
 bool ProcAutoUnload(void) { return false; }
 //bool ProcRunOS2(void) { return false; }
-bool ProcPadSections(void) { return false; }
+//bool ProcPadSections(void) { return false; }
 //bool ProcExecuteread(void) { return false; }
 //bool ProcWatcomDBI(void) { return false; }
 //bool ProcOS2Dynamic(void) { return false; }
@@ -294,11 +294,11 @@ bool ProcPadSections(void) { return false; }
 //bool ProcNoStdCall(void) { return false; }
 //bool ProcToggleRelocsFlag(void) { return false; }
 //bool ProcMaxErrors(void) { return false; }
-bool ProcSection(void) { return false; }
+//bool ProcSection(void) { return false; }
 //bool ProcSysBegin(void) { return false; }
 //bool ProcOS2Class(void) { return false; }
 //bool ProcRunPosix(void) { return false; }
-bool ProcCom(void) { return false; }
+//bool ProcCom(void) { return false; }
 bool ProcMinReal(void) { return false; }
 //bool ProcChecksum(void) { return false; }
 //bool ProcRunWindows(void) { return false; }

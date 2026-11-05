@@ -5,7 +5,7 @@
 
 static void* LastFile;
 static file_list** LastLibFile;
-extern ::byte            OvlLevel;
+extern int            OvlLevel;
 
 void ResetCmdAll(void)
 {

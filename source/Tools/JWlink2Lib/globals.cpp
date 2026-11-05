@@ -638,3 +638,6 @@ linkflag       LinkFlags;      /* flags to indicate presence of parms  */
 path_entry* LibPath;        /* path for library files               */
 file_list* ObjLibFiles;   /* list of library files (for searching)*/
 offset         StackSize;      /* size of stack                        */
+list_of_names* OvlClasses;    /* list of classes to be overlayed       */
+section* NonSect;        /* non-overlay-class section            */
+uint16_t         AreaSize;

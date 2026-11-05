@@ -64,3 +64,6 @@ ord_state getatoi(uint16_t* pnt);
 bool CheckFence(void);
 uint16_t blog_32(uint32_t value);
 char* totext(void);
+void DBISectInit(section* sect);
+outfilelist* NewOutFile(char* filename);
+void Vectorize(symbol* sym);

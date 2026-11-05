@@ -1079,3 +1079,12 @@ char* totext(void)
 	}
 	return(tostring());
 }
+
+//FIXME: These functions are not implemented yet. They are just placeholders for now.
+void DBISectInit(section* sect) {}
+
+//FIXME: These functions are not implemented yet. They are just placeholders for now.
+outfilelist* NewOutFile(char* filename){	return(nullptr); }
+
+//FIXME: These functions are not implemented yet. They are just placeholders for now.
+void Vectorize(symbol* sym) {}
