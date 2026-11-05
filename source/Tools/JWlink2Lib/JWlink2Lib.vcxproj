@@ -205,6 +205,7 @@
     <ClInclude Include="exenov.h" />
     <ClInclude Include="exeos2.h" />
     <ClInclude Include="exepe.h" />
+    <ClInclude Include="exephar.h" />
     <ClInclude Include="formats.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="globals.h" />

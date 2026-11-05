@@ -120,10 +120,13 @@
     <ClInclude Include="exeelf.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="exenov.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="loadnov.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="exenov.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="exephar.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
