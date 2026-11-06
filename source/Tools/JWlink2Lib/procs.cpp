@@ -53,7 +53,7 @@
 //bool ProcELFRNumber(void) { return false; }
 //bool ProcModuleType4(void) { return false; }
 //bool ProcELFRNetBSD(void) { return false; }
-bool ProcRaw(void) { return false; }
+//bool ProcRaw(void) { return false; }
 //bool ProcExportsDBI(void) { return false; }
 //bool ProcPharFlat(void) { return false; }
 //bool ProcFuzzyExport(void) { return false; }
@@ -135,7 +135,7 @@ bool ProcRaw(void) { return false; }
 //bool ProcOrdSegNoEmit(void) { return false; }
 //bool ProcPackdata(void) { return false; }
 //bool ProcOffset(void) { return false; }
-bool ProcRawHEX(void) { return false; }
+//bool ProcRawHEX(void) { return false; }
 //bool ProcReentrant(void) { return false; }
 //bool ProcNoRelocs(void) { return false; }
 //bool ProcInitThread(void) { return false; }
@@ -256,7 +256,7 @@ bool ProcRawHEX(void) { return false; }
 //bool ProcSymFile(void) { return false; }
 //bool ProcVerbose(void) { return false; }
 //bool ProcIncremental(void) { return false; }
-bool ProcRawBIN(void) { return false; }
+//bool ProcRawBIN(void) { return false; }
 //bool ProcReadWrite(void) { return false; }
 //bool ProcAuto(void) { return false; }
 //bool ProcForceLow(void) { return false; }

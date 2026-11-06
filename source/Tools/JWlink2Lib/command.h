@@ -1,5 +1,7 @@
 #pragma once
 
+#include "File.h"
+
 typedef enum
 {
     MIDST,

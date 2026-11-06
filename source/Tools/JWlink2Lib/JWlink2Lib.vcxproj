@@ -241,6 +241,7 @@
     <ClCompile Include="cmdos2.cpp" />
     <ClCompile Include="cmdphar.cpp" />
     <ClCompile Include="cmdqnx.cpp" />
+    <ClCompile Include="cmdraw.cpp" />
     <ClCompile Include="globals.cpp" />
     <ClCompile Include="impexp.cpp" />
     <ClCompile Include="JWlink2Lib.cpp" />
