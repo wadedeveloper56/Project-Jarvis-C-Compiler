@@ -1,0 +1,536 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="framework.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\wres\h\filefmt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\wres\h\layer0.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\wres\h\layer1.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\wres\h\loadstr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\wres\h\mem2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\wres\h\mresfmt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\wres\h\opcl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\wres\h\read.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\wres\h\resaccel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\wres\h\resbitmp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\wres\h\resdiag.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\wres\h\reserr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\wres\h\resfmt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\wres\h\resfont.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\wres\h\resiccu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\wres\h\resmenu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\wres\h\resnamor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\wres\h\resraw.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\wres\h\resstr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\wres\h\restbar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\wres\h\resutil.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\wres\h\resver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\wres\h\util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\wres\h\varstr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\wres\h\wres.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\wres\h\wresall.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\wres\h\wresrtns.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\wres\h\wressetr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\wres\h\write.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\wres\h\wrmergdi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\dbtable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\depend.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\errors.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\errprt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\exelxobj.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\exeobj.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\exeres.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\exereslx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\exerespe.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\exeseg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\exeutil.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\global.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\iortns.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\keyword.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\keyword2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\leadbyte.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\os2res.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\param.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\pass2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\rcalloc0.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\rcalloc1.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\rcdll.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\rcio.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\rclayer0.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\rcldstr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\rcmem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\rcmsg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\rcstr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\rctypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\scan.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\scan2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\semaccel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\semantic.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\semdiag.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\semhelp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\semmenu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\semraw.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\semresfl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\semsingl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\semstr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\semtbar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\semutil.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\semver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\sharedio.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\tmpctl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\yydriver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rc\rc\h\yydrivr2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="rc\rc\c\exerespe.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\layer0.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\loadfind.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\loadres.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\loadstr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\mropnewf.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\mrrdrh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\ralliae.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\rclosef.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\rc\c\rcstr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\rdlli.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\rduint8.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\rduint16.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\rduint32.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\resaccel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\resbitmp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\resdiag.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\resfont.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\resiccu.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\resmenu.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\resnamor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\resraw.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\resseek.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\resstr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\restbar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\restell.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\resver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\rillia.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\rillib.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\ropenfro.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\ropenfrw.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\rrdstr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\rrlli.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\rrnamoor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sdkold.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\varstr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wraddres.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrauto.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrchkwrf.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrdelrs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrerror.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\rc\c\sharedio.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wresrtns.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrfilein.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrfindrs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrfirres.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrfree.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrfreedi.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrgetli.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrgetri.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrgetti.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrhidcmp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrhidexb.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrhidfno.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrhidfre.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrhidfrn.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrhidfrs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wridcmp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wridexby.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wridfnoo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wridfree.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wridfrnu.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wridfrst.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wridnacm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wridnfst.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wridtnoo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wridtonu.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wridtost.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrihidf.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wriidfn.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrinitdi.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrisempt.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrislr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wriswrf.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\write.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrmergdi.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrnextrs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wropnewf.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrreaddi.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrrewrid.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrrfrr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrrftr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrrfwrid.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrrhr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrrrr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrrtr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrrwrid.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrrwridn.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rc\wres\c\wrwritdi.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="rc\wres\c\mem2.x" />
+    <None Include="rc\wres\c\opcl.x" />
+    <None Include="rc\wres\c\read.x" />
+    <None Include="rc\wres\c\util.x" />
+    <None Include="rc\wres\c\wres.x" />
+    <None Include="rc\rc\h\rc.msg" />
+  </ItemGroup>
+</Project>
