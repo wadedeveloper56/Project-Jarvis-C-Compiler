@@ -641,3 +641,4 @@ offset         StackSize;      /* size of stack                        */
 list_of_names* OvlClasses;    /* list of classes to be overlayed       */
 section* NonSect;        /* non-overlay-class section            */
 uint16_t         AreaSize;
+mod_entry* CurrMod;        /* pointer to current mod_entry struct  */

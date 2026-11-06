@@ -225,6 +225,7 @@
     <ClInclude Include="ntio.h" />
     <ClInclude Include="objfree.h" />
     <ClInclude Include="objpass1.h" />
+    <ClInclude Include="objstrip.h" />
     <ClInclude Include="ovlstruc.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="ring.h" />
@@ -255,6 +256,7 @@
     <ClCompile Include="ntio.cpp" />
     <ClCompile Include="objfree.cpp" />
     <ClCompile Include="objpass1.cpp" />
+    <ClCompile Include="objstrip.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

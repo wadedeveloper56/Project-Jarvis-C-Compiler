@@ -24,3 +24,4 @@ typedef struct entry_export
 
 entry_export* AllocExport(char* name, unsigned len);
 void AddToExportList(entry_export* exp);
+void MSImportKeyword(symbol* sym, length_name* modname, length_name* extname, unsigned long ordinal);

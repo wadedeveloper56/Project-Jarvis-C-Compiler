@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdint.h>
 #include "structs.h"
 
 using namespace std;
@@ -127,3 +128,4 @@ extern offset         StackSize;      /* size of stack                        */
 extern list_of_names* OvlClasses;    /* list of classes to be overlayed       */
 extern section* NonSect;        /* non-overlay-class section            */
 extern uint16_t         AreaSize;
+extern mod_entry* CurrMod;        /* pointer to current mod_entry struct  */
