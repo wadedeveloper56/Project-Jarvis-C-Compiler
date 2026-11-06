@@ -206,6 +206,8 @@
     <ClInclude Include="exeos2.h" />
     <ClInclude Include="exepe.h" />
     <ClInclude Include="exephar.h" />
+    <ClInclude Include="exeqnx.h" />
+    <ClInclude Include="fileio.h" />
     <ClInclude Include="formats.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="globals.h" />
@@ -217,6 +219,7 @@
     <ClInclude Include="loadnov.h" />
     <ClInclude Include="loados2.h" />
     <ClInclude Include="loadpe.h" />
+    <ClInclude Include="loadqnx.h" />
     <ClInclude Include="lsymtab.h" />
     <ClInclude Include="ntio.h" />
     <ClInclude Include="objpass1.h" />
@@ -233,9 +236,11 @@
     <ClCompile Include="cmdall.cpp" />
     <ClCompile Include="cmddos.cpp" />
     <ClCompile Include="cmdelf.cpp" />
+    <ClCompile Include="cmdline.cpp" />
     <ClCompile Include="cmdnov.cpp" />
     <ClCompile Include="cmdos2.cpp" />
     <ClCompile Include="cmdphar.cpp" />
+    <ClCompile Include="cmdqnx.cpp" />
     <ClCompile Include="globals.cpp" />
     <ClCompile Include="impexp.cpp" />
     <ClCompile Include="JWlink2Lib.cpp" />

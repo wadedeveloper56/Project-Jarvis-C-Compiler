@@ -27,9 +27,9 @@
 //bool ProcResource(void){ return false;}
 //bool ProcCommit(void){ return false;}
 //bool ProcAnonExport(void){ return false;}
-bool ProcImport(void){ return false;}
-bool ProcExport(void){ return false;}
-bool ProcSegment(void){ return false;}
+//bool ProcImport(void){ return false;}
+//bool ProcExport(void){ return false;}
+//bool ProcSegment(void){ return false;}
 //bool ProcOverlay(void){ return false;}
 //bool ProcBegin(void){ return false;}
 //bool ProcFixedLib(void){ return false;}
@@ -45,9 +45,9 @@ bool ProcSegment(void){ return false;}
 //bool ProcStart(void) { return false; }
 //bool ProcEnd(void) { return false; }
 //bool ProcNoDosSeg(void) { return false; }
-bool ProcQNXExecuteread(void) { return false; }
+//bool ProcQNXExecuteread(void) { return false; }
 //bool ProcImplib(void) { return false; }
-bool ProcQNXReadWrite(void) { return false; }
+//bool ProcQNXReadWrite(void) { return false; }
 //bool ProcSelfRelative(void) { return false; }
 //bool ProcOrdCopy(void) { return false; }
 //bool ProcELFRNumber(void) { return false; }
@@ -60,7 +60,7 @@ bool ProcRaw(void) { return false; }
 //bool ProcInit00(void) { return false; }
 //bool ProcInitFF(void) { return false; }
 //bool ProcNovell(void) { return false; }
-bool ProcHeapSize(void) { return false; }
+//bool ProcHeapSize(void) { return false; }
 //bool ProcNoUndefsOK(void) { return false; }
 //bool ProcFixed(void) { return false; }
 //bool ProcDiscardable(void) { return false; }
@@ -76,10 +76,10 @@ bool ProcHeapSize(void) { return false; }
 //bool ProcNoName(void) { return false; }
 //bool ProcMemory16M(void) { return false; }
 //bool ProcCommitStack(void) { return false; }
-bool ProcQNX(void) { return false; }
+//bool ProcQNX(void) { return false; }
 //bool ProcMovable(void) { return false; }
 //bool ProcInt10(void) { return false; }
-bool ProcLongLived(void) { return false; }
+//bool ProcLongLived(void) { return false; }
 //bool ProcFarCalls(void) { return false; }
 //bool ProcCheck(void) { return false; }
 //bool ProcNonConforming(void) { return false; }
@@ -100,7 +100,7 @@ bool ProcLongLived(void) { return false; }
 //bool ProcRelocs(void) { return false; }
 //bool ProcHX(void) { return false; }
 //bool ProcVXD(void) { return false; }
-bool ProcLinearRelocs(void) { return false; }
+//bool ProcLinearRelocs(void) { return false; }
 //bool ProcPM(void) { return false; }
 //bool ProcRWRelocCheck(void) { return false; }
 //bool ProcOS2(void) { return false; }
@@ -123,21 +123,21 @@ bool ProcLinearRelocs(void) { return false; }
 //bool ProcRex(void) { return false; }
 //bool ProcPermanent(void) { return false; }
 //bool ProcVersion(void) { return false; }
-bool ProcAlignment(void) { return false; }
+//bool ProcAlignment(void) { return false; }
 //bool ProcCodeviewDBI(void) { return false; }
 //bool ProcWritable(void) { return false; }
 //bool ProcFlags(void) { return false; }
 //bool ProcNovDBIExports(void) { return false; }
 //bool ProcMultiple(void) { return false; }
-bool ProcQNXExecuteonly(void) { return false; }
+//bool ProcQNXExecuteonly(void) { return false; }
 //bool ProcMap(void) { return false; }
 //bool ProcNonShared(void) { return false; }
 //bool ProcOrdSegNoEmit(void) { return false; }
 //bool ProcPackdata(void) { return false; }
-bool ProcOffset(void) { return false; }
+//bool ProcOffset(void) { return false; }
 bool ProcRawHEX(void) { return false; }
 //bool ProcReentrant(void) { return false; }
-bool ProcNoRelocs(void) { return false; }
+//bool ProcNoRelocs(void) { return false; }
 //bool ProcInitThread(void) { return false; }
 //bool ProcType(void) { return false; }
 //bool ProcNoStub(void) { return false; }
@@ -146,7 +146,7 @@ bool ProcNoRelocs(void) { return false; }
 //bool ProcLX(void) { return false; }
 //bool ProcExit(void) { return false; }
 //bool ProcRedefsOK(void) { return false; }
-bool ProcQNXClass(void) { return false; }
+//bool ProcQNXClass(void) { return false; }
 //bool ProcNoFarCalls(void) { return false; }
 //bool ProcPseudoPreemption(void) { return false; }
 //bool ProcNoDefLibs(void) { return false; }
@@ -183,7 +183,7 @@ bool ProcQNXClass(void) { return false; }
 //bool ProcNoCaseExact(void) { return false; }
 //bool ProcSelectors(void) { return false; }
 //bool ProcOutputStart(void) { return false; }
-bool ProcQNXReadOnly(void) { return false; }
+//bool ProcQNXReadOnly(void) { return false; }
 //bool ProcInternalRelocs(void) { return false; }
 //bool ProcModuleType6(void) { return false; }
 //bool ProcVFRemoval(void) { return false; }
@@ -228,14 +228,14 @@ bool ProcQNXReadOnly(void) { return false; }
 //bool ProcMessages(void) { return false; }
 //bool ProcLAN(void) { return false; }
 //bool ProcELFRFBSD(void) { return false; }
-bool ProcQNXPrivilege(void) { return false; }
+//bool ProcQNXPrivilege(void) { return false; }
 //bool ProcMangledNames(void) { return false; }
 //bool ProcGlobal(void) { return false; }
 //bool ProcModuleType5(void) { return false; }
 //bool ProcNoIopl(void) { return false; }
 //bool ProcCommitHeap(void) { return false; }
 //bool ProcCache(void) { return false; }
-bool ProcQNXFlat(void) { return false; }
+//bool ProcQNXFlat(void) { return false; }
 //bool ProcInitGlobal(void) { return false; }
 //bool ProcNAM(void) { return false; }
 //bool ProcCase(void) { return false; }

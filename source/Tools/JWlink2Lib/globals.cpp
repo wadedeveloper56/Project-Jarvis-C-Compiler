@@ -615,13 +615,13 @@ int _argc;
 char** _argv;
 void* SpawnStack;
 char* ArgSave;
-file_defext Extension;
-file_list** CurrFList;
-tok Token;
-commandflag CmdFlags;
-char* Name;
-sysblock* SysBlocks;
-sysblock* LinkCommands;
+//file_defext Extension;
+//file_list** CurrFList;
+//tok Token;
+//commandflag CmdFlags;
+//char* Name;
+//sysblock* SysBlocks;
+//sysblock* LinkCommands;
 path_entry* Path;           /* path for object files                */
 struct fmt_data FmtData;       /* format specific data */
 section* Root;           /* pointer to root information          */

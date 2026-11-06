@@ -10,6 +10,11 @@ static  char* DefExt[] = {
 #include "ldefext.h"
 };
 
+bool IsStdOutConsole(void)
+{
+	return(QIsDevice(STDOUT_HANDLE));
+}
+
 char* ChkStrDup(char* str)
 {
 	size_t      len;
@@ -762,11 +767,6 @@ bool ProcOne(parse_entry* entry, sep_type req, bool suicide)
 		ret = FALSE;
 	}
 	return(ret);
-}
-
-bool HintFormat(exe_format hint)
-{
-	return true;
 }
 
 bool HaveEquals(tokcontrol ctrl)

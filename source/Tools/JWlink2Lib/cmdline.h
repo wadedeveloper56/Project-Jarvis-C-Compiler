@@ -1,5 +1,6 @@
 #pragma once 
 
+#include "structs.h"
 
 extern bool             ProcImport( void );
 extern bool             ProcExport( void );
