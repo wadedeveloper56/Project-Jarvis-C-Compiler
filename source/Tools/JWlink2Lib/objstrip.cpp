@@ -95,7 +95,7 @@ void RefSeg(segdata* seg)
 	edge = (edgelist*)seg->a.refs;
 	while (edge != NULL)
 	{
-		//FIXME DbgAssert(edge->issym == 0);
+		//DbgAssert(edge->issym == 0);
 		next = edge->next;
 		RefSeg(edge->u.seg);
 		FreeEdge(edge);
@@ -221,7 +221,7 @@ void DefStripSym(symbol* sym, segdata* seg)
 		next = list->next;
 		if (list->issym)
 		{
-			//FIXME DbgAssert(list->reverse_dir == 0);      
+			//DbgAssert(list->reverse_dir == 0);      
 			AddEdge(seg, list->u.sym);
 			FreeEdge(list);
 		}

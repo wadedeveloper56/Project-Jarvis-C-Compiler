@@ -52,7 +52,7 @@ static void verifyNotInRing(RING* ring, RING* elt)
 	RingIterBeg(ring, curr) {
 		if (curr == elt)
 		{
-			//FIXME LnkFatal("trying to insert element twice into a ring");
+			//LnkFatal("trying to insert element twice into a ring");
 		}
 	} RingIterEnd(curr)
 }
