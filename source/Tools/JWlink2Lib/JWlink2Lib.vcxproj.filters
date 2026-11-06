@@ -144,6 +144,9 @@
     <ClInclude Include="objfree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ring.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="JWlink2Lib.cpp">
@@ -216,6 +219,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="objfree.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ring.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ring2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

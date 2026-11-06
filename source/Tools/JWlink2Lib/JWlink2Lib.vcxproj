@@ -227,6 +227,7 @@
     <ClInclude Include="objpass1.h" />
     <ClInclude Include="ovlstruc.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="ring.h" />
     <ClInclude Include="start.h" />
     <ClInclude Include="structs.h" />
     <ClInclude Include="strutures.h" />
@@ -261,6 +262,8 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="procs.cpp" />
+    <ClCompile Include="ring.cpp" />
+    <ClCompile Include="ring2.cpp" />
     <ClCompile Include="start.cpp" />
     <ClCompile Include="util.cpp" />
   </ItemGroup>
