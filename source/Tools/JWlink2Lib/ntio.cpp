@@ -153,7 +153,7 @@ unsigned QRead(f_handle file, void* buffer, unsigned len, char* name)
 unsigned QWrite(f_handle file, void* buffer, unsigned len, char* name)
 {
     int     h;
-    char    rc_buff[RESOURCE_MAX_SIZE];
+    //char    rc_buff[RESOURCE_MAX_SIZE];
 
     if (len == 0)
         return(0);
@@ -381,7 +381,7 @@ time_t QFModTime(int handle)
 
 char WaitForKey(void)
 {
-    return getch();
+    return _getch();
 }
 
 int _bgetcmd(char* buffer, int len)
