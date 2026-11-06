@@ -21,9 +21,10 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>18.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{41C84AF9-E8AE-4348-98EB-29FDF38DFE26}</ProjectGuid>
+    <ProjectGuid>{96FA6FB6-AD78-45FE-B5ED-58EC0A466A41}</ProjectGuid>
     <RootNamespace>JWlinkLibOld</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>JWlinkLib2</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -369,6 +370,20 @@
     <None Include="h\lnkerror.msg" />
     <None Include="h\rcmsg.gh" />
     <None Include="h\wlink.msg" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\File\File.vcxproj">
+      <Project>{07c330d8-c0c2-42b5-a94e-ae87dab6420d}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\dwarf\dwarf.vcxproj">
+      <Project>{3f5a6a13-a2cb-4134-b6e7-c085418dab6f}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\orl\orl.vcxproj">
+      <Project>{c68546ec-6333-4259-a588-c2d94d311432}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\sdk\sdk.vcxproj">
+      <Project>{733aa481-f744-485c-952e-7f36c67389a9}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
