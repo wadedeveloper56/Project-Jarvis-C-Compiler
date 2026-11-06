@@ -138,6 +138,12 @@
     <ClInclude Include="exeqnx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="carve.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="objfree.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="JWlink2Lib.cpp">
@@ -201,6 +207,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="cmdraw.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="hash.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="carve.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="objfree.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -18,6 +18,7 @@
 #include "fileio.h"
 #include "loadqnx.h"
 #include "exeqnx.h"
+#include "objfree.h"
 
 bool ProcQNX(void)
 {
@@ -47,7 +48,7 @@ void SetQNXFmt(void)
 
 void FreeQNXFmt(void)
 {
-	//FIXME FreeSegFlags((seg_flags*)FmtData.u.qnx.seg_flags);
+	FreeSegFlags((seg_flags*)FmtData.u.qnx.seg_flags);
 }
 
 void CmdQNXFini(void)
