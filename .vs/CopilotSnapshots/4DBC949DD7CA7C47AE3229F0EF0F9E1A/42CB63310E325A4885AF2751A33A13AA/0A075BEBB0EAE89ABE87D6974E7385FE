@@ -1,0 +1,1873 @@
+﻿#include <algorithm>
+#include <array>
+#include <cctype>
+#include <charconv>
+#include <cstdint>
+#include <cstdlib>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <limits>
+#include <map>
+#include <optional>
+#include <set>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <type_traits>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
+namespace fs = std::filesystem;
+using Bytes = std::vector<std::uint8_t>;
+
+namespace {
+constexpr std::uint16_t MachineAmd64 = 0x8664;
+constexpr std::uint32_t SectionCntCode = 0x00000020;
+constexpr std::uint32_t SectionCntUninitializedData = 0x00000080;
+constexpr std::uint32_t SectionMemExecute = 0x20000000;
+constexpr std::uint32_t SectionMemRead = 0x40000000;
+constexpr std::uint32_t SectionMemWrite = 0x80000000;
+constexpr std::uint64_t ImageBase = 0x140000000ULL;
+constexpr std::uint32_t SectionAlignment = 0x1000;
+constexpr std::uint32_t FileAlignment = 0x200;
+
+[[noreturn]] void fail(const std::string& message) {
+	throw std::runtime_error(message);
+}
+
+void requireRange(const Bytes& bytes, std::size_t offset, std::size_t size, std::string_view what) {
+	if (offset > bytes.size() || size > bytes.size() - offset) {
+		fail("truncated " + std::string(what));
+	}
+}
+
+template <typename T>
+T readLe(const Bytes& bytes, std::size_t offset, std::string_view what) {
+	static_assert(std::is_unsigned_v<T>);
+	requireRange(bytes, offset, sizeof(T), what);
+	std::uint64_t value = 0;
+	for (std::size_t i = 0; i < sizeof(T); ++i) {
+		value |= static_cast<std::uint64_t>(bytes[offset + i]) << (i * 8);
+	}
+	return static_cast<T>(value);
+}
+
+template <typename T>
+void writeLe(Bytes& bytes, std::size_t offset, T value) {
+	static_assert(std::is_unsigned_v<T>);
+	if (offset > bytes.size() || sizeof(T) > bytes.size() - offset) {
+		fail("internal PE layout error");
+	}
+	for (std::size_t i = 0; i < sizeof(T); ++i) {
+		bytes[offset + i] = static_cast<std::uint8_t>(value >> (i * 8));
+	}
+}
+
+std::size_t alignUp(std::size_t value, std::size_t alignment) {
+	if (alignment == 0 || (alignment & (alignment - 1)) != 0) {
+		fail("invalid alignment in input object");
+	}
+	const auto remainder = value & (alignment - 1);
+	if (remainder == 0) {
+		return value;
+	}
+	const auto padding = alignment - remainder;
+	if (value > std::numeric_limits<std::size_t>::max() - padding) {
+		fail("input is too large");
+	}
+	return value + padding;
+}
+
+std::uint32_t toU32(std::size_t value, std::string_view what) {
+	if (value > std::numeric_limits<std::uint32_t>::max()) {
+		fail(std::string(what) + " exceeds the PE32+ size limit");
+	}
+	return static_cast<std::uint32_t>(value);
+}
+
+std::string fixedString(const Bytes& bytes, std::size_t offset, std::size_t length) {
+	requireRange(bytes, offset, length, "string field");
+	std::size_t end = offset;
+	while (end < offset + length && bytes[end] != 0) {
+		++end;
+	}
+	return std::string(reinterpret_cast<const char*>(bytes.data() + offset), end - offset);
+}
+
+std::string stringAt(const Bytes& bytes, std::size_t tableOffset, std::uint32_t tableSize, std::uint32_t stringOffset, std::string_view what) {
+	if (stringOffset < 4 || stringOffset >= tableSize) {
+		fail("invalid " + std::string(what) + " string-table offset");
+	}
+	const auto start = tableOffset + stringOffset;
+	requireRange(bytes, start, tableSize - stringOffset, what);
+	auto end = start;
+	while (end < tableOffset + tableSize && bytes[end] != 0) {
+		++end;
+	}
+	if (end == tableOffset + tableSize) {
+		fail("unterminated " + std::string(what) + " string");
+	}
+	return std::string(reinterpret_cast<const char*>(bytes.data() + start), end - start);
+}
+
+struct Relocation {
+	std::uint32_t offset = 0;
+	std::uint32_t symbolIndex = 0;
+	std::uint16_t type = 0;
+};
+
+struct InputSection {
+	std::string name;
+	std::uint32_t virtualSize = 0;
+	std::uint32_t characteristics = 0;
+	std::uint32_t alignment = 1;
+	std::uint8_t comdatSelection = 0;
+	std::uint16_t associatedSection = 0;
+	std::string comdatKey;
+	std::size_t leaderObject = std::numeric_limits<std::size_t>::max();
+	std::size_t leaderSection = std::numeric_limits<std::size_t>::max();
+	bool discarded = false;
+	Bytes data;
+	std::vector<Relocation> relocations;
+};
+
+struct CoffSymbol {
+	std::string name;
+	std::uint32_t value = 0;
+	std::int16_t sectionNumber = 0;
+	std::uint8_t storageClass = 0;
+	std::uint32_t weakTagIndex = 0;
+	std::uint32_t weakCharacteristics = 0;
+	bool auxiliary = false;
+};
+
+struct ObjectFile {
+	std::string name;
+	std::vector<InputSection> sections;
+	std::vector<CoffSymbol> symbols;
+};
+
+struct ImportedSymbol {
+	std::string publicName;
+	std::string dllName;
+	std::string importName;
+	std::uint16_t ordinalOrHint = 0;
+	std::uint8_t type = 0;
+	std::uint8_t nameType = 0;
+	bool byOrdinal = false;
+};
+
+ImportedSymbol parseImportObject(const Bytes& bytes, const std::string& path) {
+	requireRange(bytes, 0, 20, path + " import object");
+	if (readLe<std::uint16_t>(bytes, 0, path) != 0 || readLe<std::uint16_t>(bytes, 2, path) != 0xffff) {
+		fail(path + ": malformed COFF import object signature");
+	}
+	const auto machine = readLe<std::uint16_t>(bytes, 6, path);
+	if (machine != MachineAmd64) {
+		fail(path + ": import library member is not AMD64");
+	}
+	const auto dataSize = readLe<std::uint32_t>(bytes, 12, path);
+	const auto hint = readLe<std::uint16_t>(bytes, 16, path);
+	const auto typeInfo = readLe<std::uint16_t>(bytes, 18, path);
+	if ((typeInfo & 3) > 2 || ((typeInfo >> 2) & 7) > 4) {
+		fail(path + ": unsupported COFF import-object type or name encoding");
+	}
+	requireRange(bytes, 20, dataSize, path + " import-object strings");
+	auto readString = [&](std::size_t& offset) {
+		if (offset >= 20 + dataSize) {
+			fail(path + ": truncated COFF import-object strings");
+		}
+		const auto begin = offset;
+		while (offset < 20 + dataSize && bytes[offset] != 0) {
+			++offset;
+		}
+		if (offset == 20 + dataSize) {
+			fail(path + ": unterminated COFF import-object string");
+		}
+		std::string value(reinterpret_cast<const char*>(bytes.data() + begin), offset - begin);
+		++offset;
+		return value;
+	};
+	std::size_t cursor = 20;
+	ImportedSymbol result;
+	result.publicName = readString(cursor);
+	result.dllName = readString(cursor);
+	result.ordinalOrHint = hint;
+	result.type = static_cast<std::uint8_t>(typeInfo & 3);
+	result.nameType = static_cast<std::uint8_t>((typeInfo >> 2) & 7);
+	result.byOrdinal = result.nameType == 0;
+	if (result.publicName.empty() || result.dllName.empty()) {
+		fail(path + ": import object has an empty symbol or DLL name");
+	}
+	if (result.byOrdinal) {
+		result.importName = result.publicName;
+	} else if (result.nameType == 1) {
+		result.importName = result.publicName;
+	} else if (result.nameType == 2 || result.nameType == 3) {
+		result.importName = result.publicName;
+		if (!result.importName.empty() && (result.importName.front() == '?' || result.importName.front() == '@' || result.importName.front() == '_')) {
+			result.importName.erase(result.importName.begin());
+		}
+		if (result.nameType == 3) {
+			const auto decoration = result.importName.rfind('@');
+			if (decoration != std::string::npos) {
+				result.importName.erase(decoration);
+			}
+		}
+	} else {
+		result.importName = readString(cursor);
+	}
+	if (result.importName.empty() && !result.byOrdinal) {
+		fail(path + ": import object resolves to an empty import name");
+	}
+	return result;
+}
+
+std::uint32_t coffNameOffset(const Bytes& bytes, std::size_t offset) {
+	if (bytes[offset] == '/' && bytes[offset + 1] != 0) {
+		std::string text = fixedString(bytes, offset + 1, 7);
+		std::uint32_t result = 0;
+		const auto parsed = std::from_chars(text.data(), text.data() + text.size(), result);
+		if (parsed.ec != std::errc{} || parsed.ptr == text.data()) {
+			fail("invalid long COFF section name");
+		}
+		return result;
+	}
+	return 0;
+}
+
+ObjectFile parseObject(const Bytes& bytes, std::string name) {
+	requireRange(bytes, 0, 20, name);
+	const auto machine = readLe<std::uint16_t>(bytes, 0, name);
+	if (machine != MachineAmd64) {
+		std::ostringstream message;
+		message << name << ": expected AMD64 COFF object (machine 0x8664), got 0x" << std::hex << machine;
+		fail(message.str());
+	}
+	const auto sectionCount = readLe<std::uint16_t>(bytes, 2, name);
+	const auto symbolOffset = readLe<std::uint32_t>(bytes, 8, name);
+	const auto symbolCount = readLe<std::uint32_t>(bytes, 12, name);
+	const auto optionalSize = readLe<std::uint16_t>(bytes, 16, name);
+	const std::size_t sectionTable = 20u + optionalSize;
+	requireRange(bytes, sectionTable, static_cast<std::size_t>(sectionCount) * 40, name + " section table");
+
+	std::size_t stringTableOffset = 0;
+	std::uint32_t stringTableSize = 0;
+	if (symbolCount != 0) {
+		if (symbolOffset == 0) {
+			fail(name + ": missing COFF symbol table");
+		}
+		const auto symbolsBytes = static_cast<std::size_t>(symbolCount) * 18;
+		requireRange(bytes, symbolOffset, symbolsBytes, name + " symbol table");
+		stringTableOffset = static_cast<std::size_t>(symbolOffset) + symbolsBytes;
+		requireRange(bytes, stringTableOffset, 4, name + " string table");
+		stringTableSize = readLe<std::uint32_t>(bytes, stringTableOffset, name + " string table");
+		if (stringTableSize < 4) {
+			fail(name + ": invalid COFF string table size");
+		}
+		requireRange(bytes, stringTableOffset, stringTableSize, name + " string table");
+	}
+
+	ObjectFile object;
+	object.name = std::move(name);
+	object.sections.reserve(sectionCount);
+	for (std::uint16_t i = 0; i < sectionCount; ++i) {
+		const auto header = sectionTable + static_cast<std::size_t>(i) * 40;
+		const auto nameOffset = coffNameOffset(bytes, header);
+		std::string sectionName = fixedString(bytes, header, 8);
+		if (nameOffset != 0) {
+			if (stringTableSize == 0) {
+				fail(object.name + ": long section name without a COFF string table");
+			}
+			sectionName = stringAt(bytes, stringTableOffset, stringTableSize, nameOffset, "section");
+		}
+		if (sectionName.empty()) {
+			fail(object.name + ": section with an empty name");
+		}
+		InputSection section;
+		section.name = std::move(sectionName);
+		section.virtualSize = readLe<std::uint32_t>(bytes, header + 8, object.name);
+		const auto rawSize = readLe<std::uint32_t>(bytes, header + 16, object.name);
+		const auto rawOffset = readLe<std::uint32_t>(bytes, header + 20, object.name);
+		const auto relocationOffset = readLe<std::uint32_t>(bytes, header + 24, object.name);
+		const auto relocationCount = readLe<std::uint16_t>(bytes, header + 32, object.name);
+		section.characteristics = readLe<std::uint32_t>(bytes, header + 36, object.name);
+		const auto alignmentCode = (section.characteristics >> 20) & 0x0f;
+		if (alignmentCode > 14) {
+			fail(object.name + ": unsupported section alignment");
+		}
+		section.alignment = alignmentCode == 0 ? 1u : (1u << (alignmentCode - 1));
+		if (rawSize != 0) {
+			requireRange(bytes, rawOffset, rawSize, object.name + " section data");
+			section.data.assign(bytes.begin() + rawOffset, bytes.begin() + rawOffset + rawSize);
+		}
+		if (relocationCount == 0xffff) {
+			fail(object.name + ": extended COFF relocation tables are not supported");
+		}
+		if (relocationCount != 0) {
+			requireRange(bytes, relocationOffset, static_cast<std::size_t>(relocationCount) * 10, object.name + " relocation table");
+			section.relocations.reserve(relocationCount);
+			for (std::uint16_t r = 0; r < relocationCount; ++r) {
+				const auto entry = static_cast<std::size_t>(relocationOffset) + static_cast<std::size_t>(r) * 10;
+				section.relocations.push_back({
+					readLe<std::uint32_t>(bytes, entry, object.name),
+					readLe<std::uint32_t>(bytes, entry + 4, object.name),
+					readLe<std::uint16_t>(bytes, entry + 8, object.name)
+				});
+			}
+		}
+		if (section.virtualSize < rawSize) {
+			section.virtualSize = rawSize;
+		}
+		object.sections.push_back(std::move(section));
+	}
+
+	object.symbols.resize(symbolCount);
+	for (std::uint32_t i = 0; i < symbolCount;) {
+		const auto entry = static_cast<std::size_t>(symbolOffset) + static_cast<std::size_t>(i) * 18;
+		const auto nameZeroes = readLe<std::uint32_t>(bytes, entry, object.name);
+		const auto nameOffset = readLe<std::uint32_t>(bytes, entry + 4, object.name);
+		auto& symbol = object.symbols[i];
+		if (nameZeroes == 0) {
+			if (stringTableSize == 0) {
+				fail(object.name + ": symbol uses a missing COFF string table");
+			}
+			symbol.name = stringAt(bytes, stringTableOffset, stringTableSize, nameOffset, "symbol");
+		} else {
+			symbol.name = fixedString(bytes, entry, 8);
+		}
+		symbol.value = readLe<std::uint32_t>(bytes, entry + 8, object.name);
+		symbol.sectionNumber = static_cast<std::int16_t>(readLe<std::uint16_t>(bytes, entry + 12, object.name));
+		symbol.storageClass = bytes[entry + 16];
+		const auto auxiliaryCount = bytes[entry + 17];
+		if (auxiliaryCount > symbolCount - i - 1) {
+			fail(object.name + ": invalid COFF auxiliary symbol count");
+		}
+		if (auxiliaryCount != 0) {
+			const auto auxiliary = entry + 18;
+			if (symbol.storageClass == 105 && symbol.sectionNumber == 0) {
+				symbol.weakTagIndex = readLe<std::uint32_t>(bytes, auxiliary, object.name);
+				symbol.weakCharacteristics = readLe<std::uint32_t>(bytes, auxiliary + 4, object.name);
+			} else if (symbol.storageClass == 3 && symbol.sectionNumber > 0) {
+				auto& section = object.sections.at(static_cast<std::size_t>(symbol.sectionNumber - 1));
+				if ((section.characteristics & 0x00001000) != 0) {
+					section.comdatSelection = bytes[auxiliary + 14];
+					section.associatedSection = readLe<std::uint16_t>(bytes, auxiliary + 12, object.name);
+				}
+			}
+		}
+		for (std::uint32_t aux = 1; aux <= auxiliaryCount; ++aux) {
+			object.symbols[i + aux].auxiliary = true;
+		}
+		i += static_cast<std::uint32_t>(auxiliaryCount) + 1;
+	}
+	for (const auto& symbol : object.symbols) {
+		if (!symbol.auxiliary && symbol.storageClass == 2 && symbol.sectionNumber > 0 && static_cast<std::size_t>(symbol.sectionNumber) <= object.sections.size()) {
+			auto& section = object.sections[static_cast<std::size_t>(symbol.sectionNumber - 1)];
+			if (section.comdatSelection != 0 && section.comdatKey.empty()) {
+				section.comdatKey = symbol.name;
+			}
+		}
+	}
+	for (const auto& section : object.sections) {
+		if (section.comdatSelection > 7) {
+			fail(object.name + ": unsupported COMDAT selection type");
+		}
+		if (section.comdatSelection != 0 && section.comdatSelection != 5 && section.comdatKey.empty()) {
+			fail(object.name + ": COMDAT section has no external selection key");
+		}
+	}
+	for (const auto& section : object.sections) {
+		for (const auto& relocation : section.relocations) {
+			if (relocation.symbolIndex >= object.symbols.size() || object.symbols[relocation.symbolIndex].auxiliary) {
+				fail(object.name + ": relocation refers to an invalid COFF symbol");
+			}
+		}
+	}
+	return object;
+}
+
+struct ArchiveMember {
+	std::string name;
+	std::optional<ObjectFile> object;
+	std::optional<ImportedSymbol> imported;
+	bool selected = false;
+};
+
+std::size_t parseDecimal(const Bytes& bytes, std::size_t offset, std::size_t length, std::string_view what) {
+	const auto text = fixedString(bytes, offset, length);
+	const auto first = text.find_first_not_of(' ');
+	if (first == std::string::npos) {
+		return 0;
+	}
+	auto last = text.find_last_not_of(' ');
+	std::size_t value = 0;
+	const auto parsed = std::from_chars(text.data() + first, text.data() + last + 1, value);
+	if (parsed.ec != std::errc{} || parsed.ptr != text.data() + last + 1) {
+		fail("invalid archive " + std::string(what));
+	}
+	return value;
+}
+
+std::vector<ArchiveMember> parseArchive(const Bytes& bytes, const std::string& path) {
+	constexpr std::string_view magic = "!<arch>\n";
+	if (bytes.size() < magic.size() || !std::equal(magic.begin(), magic.end(), bytes.begin())) {
+		fail(path + ": not a Microsoft COFF library archive");
+	}
+	std::vector<ArchiveMember> members;
+	std::string longNames;
+	std::size_t position = magic.size();
+	while (position < bytes.size()) {
+		requireRange(bytes, position, 60, path + " archive member header");
+		if (bytes[position + 58] != '`' || bytes[position + 59] != '\n') {
+			fail(path + ": malformed archive member header");
+		}
+		const auto memberSize = parseDecimal(bytes, position + 48, 10, "member size");
+		const auto dataOffset = position + 60;
+		requireRange(bytes, dataOffset, memberSize, path + " archive member");
+		auto rawName = fixedString(bytes, position, 16);
+		while (!rawName.empty() && rawName.back() == ' ') {
+			rawName.pop_back();
+		}
+		std::string memberName = rawName;
+		if (memberName == "//") {
+			longNames.assign(reinterpret_cast<const char*>(bytes.data() + dataOffset), memberSize);
+		} else if (memberName != "/" && memberName != "/SYM64/") {
+			if (memberName.size() > 1 && memberName[0] == '/' && std::isdigit(static_cast<unsigned char>(memberName[1]))) {
+				std::size_t nameOffset = 0;
+				const auto parsed = std::from_chars(memberName.data() + 1, memberName.data() + memberName.size(), nameOffset);
+				if (parsed.ec != std::errc{} || nameOffset >= longNames.size()) {
+					fail(path + ": invalid archive long-name offset");
+				}
+				const auto end = longNames.find("/\n", nameOffset);
+				memberName = longNames.substr(nameOffset, end == std::string::npos ? std::string::npos : end - nameOffset);
+			} else if (memberName.size() > 1 && memberName.back() == '/') {
+				memberName.pop_back();
+			}
+			ArchiveMember member;
+			member.name = memberName;
+			if (memberSize >= 20) {
+				const auto machine = readLe<std::uint16_t>(bytes, dataOffset, path);
+				const auto signature = readLe<std::uint16_t>(bytes, dataOffset + 2, path);
+				if (machine == 0 && signature == 0xffff) {
+					Bytes importBytes(bytes.begin() + dataOffset, bytes.begin() + dataOffset + memberSize);
+					member.imported = parseImportObject(importBytes, path + "(" + memberName + ")");
+				} else if (machine == MachineAmd64) {
+					Bytes objectBytes(bytes.begin() + dataOffset, bytes.begin() + dataOffset + memberSize);
+					member.object = parseObject(objectBytes, path + "(" + memberName + ")");
+				}
+			}
+			members.push_back(std::move(member));
+		}
+		position = dataOffset + memberSize;
+		if ((position & 1) != 0) {
+			++position;
+		}
+	}
+	if (position != bytes.size()) {
+		fail(path + ": archive ends with an incomplete member");
+	}
+	return members;
+}
+
+Bytes readFile(const fs::path& path) {
+	std::ifstream input(path, std::ios::binary);
+	if (!input) {
+		fail("cannot open '" + path.string() + "'");
+	}
+	input.seekg(0, std::ios::end);
+	const auto length = input.tellg();
+	if (length < 0 || static_cast<std::uint64_t>(length) > std::numeric_limits<std::size_t>::max()) {
+		fail("cannot determine file size for '" + path.string() + "'");
+	}
+	Bytes bytes(static_cast<std::size_t>(length));
+	input.seekg(0, std::ios::beg);
+	if (!bytes.empty() && !input.read(reinterpret_cast<char*>(bytes.data()), static_cast<std::streamsize>(bytes.size()))) {
+		fail("failed reading '" + path.string() + "'");
+	}
+	return bytes;
+}
+
+struct OutputSection {
+	std::string name;
+	Bytes data;
+	std::size_t virtualSize = 0;
+	std::size_t alignment = 1;
+	std::uint32_t characteristics = 0;
+	std::uint32_t rva = 0;
+	std::uint32_t rawOffset = 0;
+	std::uint32_t rawSize = 0;
+};
+
+struct SectionMap {
+	std::size_t outputIndex = 0;
+	std::size_t offset = 0;
+};
+
+struct GlobalSymbol {
+	std::size_t objectIndex = 0;
+	std::size_t symbolIndex = 0;
+	std::size_t importIndex = std::numeric_limits<std::size_t>::max();
+	bool common = false;
+	bool imported = false;
+	bool importAddress = false;
+	bool weakUndefined = false;
+	std::size_t commonSize = 0;
+	std::size_t outputIndex = 0;
+	std::size_t outputOffset = 0;
+};
+
+struct ImportRecord {
+	ImportedSymbol symbol;
+	bool hasFunction = false;
+	bool hasData = false;
+	bool hasPublicSymbol = false;
+	std::size_t iatOffset = 0;
+	std::size_t hintNameOffset = 0;
+	std::size_t thunkOffset = 0;
+	std::size_t thunkSection = std::numeric_limits<std::size_t>::max();
+};
+
+struct ImportModule {
+	std::string name;
+	std::vector<std::size_t> imports;
+	std::size_t lookupOffset = 0;
+	std::size_t iatOffset = 0;
+	std::size_t nameOffset = 0;
+};
+
+struct BaseRelocation {
+	std::uint32_t rva = 0;
+	std::uint16_t type = 10;
+};
+
+struct LinkOptions {
+	fs::path output = "a.exe";
+	std::optional<std::string> entry;
+	std::optional<fs::path> mapFile;
+	std::vector<fs::path> libraryPaths;
+	std::uint64_t imageBase = ImageBase;
+	std::uint16_t subsystem = 3;
+	bool dynamicBase = true;
+	bool noLogo = false;
+	bool noDefaultLibraries = false;
+	std::vector<std::string> defaultLibraries;
+	std::vector<fs::path> inputs;
+};
+
+class Linker {
+public:
+	explicit Linker(LinkOptions options) : options_(std::move(options)) {}
+
+	void run() {
+		loadInputs();
+		resolveLibraries();
+		validateUnresolvedSymbols();
+		selectComdats();
+		buildSections();
+		prepareImports();
+		resolveGlobals();
+		prepareBaseRelocations();
+		layoutImage();
+		applyRelocations();
+		finalizeGeneratedData();
+		writeImage();
+	}
+
+private:
+	LinkOptions options_;
+	std::vector<ObjectFile> objects_;
+	std::vector<std::vector<ArchiveMember>> archives_;
+	std::vector<OutputSection> outputSections_;
+	std::vector<std::vector<SectionMap>> sectionMaps_;
+	std::unordered_map<std::string, GlobalSymbol> globals_;
+	std::vector<ImportRecord> imports_;
+	std::vector<ImportModule> importModules_;
+	std::vector<BaseRelocation> baseRelocations_;
+	std::size_t idataSection_ = std::numeric_limits<std::size_t>::max();
+	std::size_t relocSection_ = std::numeric_limits<std::size_t>::max();
+	std::size_t importDescriptorOffset_ = 0;
+	std::uint32_t importDirectoryRva_ = 0;
+	std::uint32_t importDirectorySize_ = 0;
+	std::uint32_t relocationDirectoryRva_ = 0;
+	std::uint32_t relocationDirectorySize_ = 0;
+
+	bool isDefined(const CoffSymbol& symbol) const {
+		return symbol.storageClass == 2 && (symbol.sectionNumber > 0 || symbol.sectionNumber == -1 || (symbol.sectionNumber == 0 && symbol.value != 0));
+	}
+
+	std::set<std::string> unresolvedNames() const {
+		std::set<std::string> defined;
+		std::set<std::string> unresolved;
+		for (const auto& object : objects_) {
+			for (const auto& symbol : object.symbols) {
+				if (symbol.auxiliary || symbol.name.empty()) {
+					continue;
+				}
+				if (symbol.storageClass == 2) {
+					if (isDefined(symbol)) {
+						defined.insert(symbol.name);
+					} else if (symbol.sectionNumber == 0 && symbol.value == 0) {
+						unresolved.insert(symbol.name);
+					}
+				} else if (symbol.storageClass == 105 && symbol.weakCharacteristics >= 2 && symbol.weakCharacteristics <= 3 && symbol.weakTagIndex < object.symbols.size()) {
+					const auto& fallback = object.symbols[symbol.weakTagIndex];
+					if (!fallback.auxiliary && !fallback.name.empty() && !defined.contains(fallback.name)) {
+						unresolved.insert(fallback.name);
+					}
+				}
+			}
+		}
+		for (const auto& imported : imports_) {
+			defined.insert("__imp_" + imported.symbol.publicName);
+			if (imported.hasPublicSymbol && (imported.hasFunction || imported.hasData)) {
+				defined.insert(imported.symbol.publicName);
+			}
+		}
+		for (const auto& name : defined) {
+			unresolved.erase(name);
+		}
+		if (options_.entry) {
+			if (!defined.contains(*options_.entry)) {
+				unresolved.insert(*options_.entry);
+			}
+		} else if (!defined.contains("mainCRTStartup") && !defined.contains("main")) {
+			unresolved.insert("mainCRTStartup");
+		}
+		return unresolved;
+	}
+
+	void validateUnresolvedSymbols() const {
+		const auto unresolved = unresolvedNames();
+		if (unresolved.empty()) {
+			return;
+		}
+		std::ostringstream message;
+		message << "unresolved external symbol" << (unresolved.size() == 1 ? " " : "s ");
+		bool first = true;
+		for (const auto& name : unresolved) {
+			message << (first ? "'" : ", '") << name << "'";
+			first = false;
+		}
+		if (!imports_.empty()) {
+			message << "; unresolved references remain after selecting DLL import objects";
+		} else {
+			message << "; supply an object or static library containing each definition";
+		}
+		fail(message.str());
+	}
+
+	fs::path resolveInputPath(const fs::path& path) const {
+		if (fs::exists(path) || path.has_parent_path()) {
+			return path;
+		}
+		for (const auto& directory : options_.libraryPaths) {
+			const auto candidate = directory / path;
+			if (fs::exists(candidate)) {
+				return candidate;
+			}
+		}
+		return path;
+	}
+
+	void loadInputs() {
+		for (const auto& library : options_.defaultLibraries) {
+			fs::path libraryPath(library);
+			if (libraryPath.extension().empty()) {
+				libraryPath += ".lib";
+			}
+			options_.inputs.push_back(resolveInputPath(libraryPath));
+		}
+		for (const auto& inputPath : options_.inputs) {
+			const auto path = resolveInputPath(inputPath);
+			const auto bytes = readFile(path);
+			if (bytes.size() >= 8 && std::string_view(reinterpret_cast<const char*>(bytes.data()), 8) == "!<arch>\n") {
+				auto archive = parseArchive(bytes, path.string());
+				archives_.push_back(std::move(archive));
+			} else {
+				objects_.push_back(parseObject(bytes, path.string()));
+			}
+		}
+	}
+
+	void resolveLibraries() {
+		for (;;) {
+				auto unresolved = unresolvedNames();
+			if (unresolved.empty()) {
+				return;
+			}
+			bool added = false;
+			for (std::size_t archiveIndex = 0; archiveIndex < archives_.size(); ++archiveIndex) {
+				auto& archive = archives_[archiveIndex];
+				for (auto& member : archive) {
+					if (member.selected) {
+						continue;
+					}
+					if (member.imported) {
+						const auto& imported = *member.imported;
+						const auto publicName = imported.publicName.rfind("__imp_", 0) == 0 ? imported.publicName.substr(6) : imported.publicName;
+						const auto iatName = "__imp_" + publicName;
+						if (!unresolved.contains(imported.publicName) && !unresolved.contains(iatName)) {
+							continue;
+						}
+						const auto normalizedName = [](const std::string& name) {
+							return name.rfind("__imp_", 0) == 0 ? name.substr(6) : name;
+						};
+						auto duplicate = std::find_if(imports_.begin(), imports_.end(), [&](const ImportRecord& record) {
+							return record.symbol.dllName == imported.dllName && record.symbol.importName == imported.importName && record.symbol.byOrdinal == imported.byOrdinal && record.symbol.publicName == normalizedName(imported.publicName);
+						});
+						if (duplicate == imports_.end()) {
+							ImportRecord record;
+							record.symbol = imported;
+							record.symbol.publicName = normalizedName(imported.publicName);
+							record.hasFunction = imported.type == 0 && imported.publicName.rfind("__imp_", 0) != 0;
+							record.hasData = imported.type != 0;
+							record.hasPublicSymbol = imported.publicName.rfind("__imp_", 0) != 0;
+							imports_.push_back(std::move(record));
+						} else {
+							duplicate->hasFunction = duplicate->hasFunction || (imported.type == 0 && imported.publicName.rfind("__imp_", 0) != 0);
+							duplicate->hasData = duplicate->hasData || imported.type != 0;
+							duplicate->hasPublicSymbol = duplicate->hasPublicSymbol || imported.publicName.rfind("__imp_", 0) != 0;
+						}
+						if (imported.publicName.rfind("__imp_", 0) != 0 && imported.type != 0) {
+							unresolved.erase(imported.publicName);
+						} else if (imported.publicName.rfind("__imp_", 0) != 0 && imported.type == 0) {
+							unresolved.erase(imported.publicName);
+						}
+						unresolved.erase(iatName);
+						member.selected = true;
+						added = true;
+						continue;
+					}
+					if (!member.object) {
+						continue;
+					}
+					const bool needed = std::any_of(member.object->symbols.begin(), member.object->symbols.end(), [&](const CoffSymbol& symbol) {
+						return isDefined(symbol) && unresolved.contains(symbol.name);
+					});
+					if (needed) {
+						for (const auto& symbol : member.object->symbols) {
+							if (isDefined(symbol)) {
+								unresolved.erase(symbol.name);
+							}
+						}
+						member.selected = true;
+						objects_.push_back(std::move(*member.object));
+						member.object.reset();
+						added = true;
+					}
+				}
+			}
+			if (!added) {
+				return;
+			}
+		}
+	}
+
+	void selectComdats() {
+		struct Candidate {
+			std::size_t objectIndex;
+			std::size_t sectionIndex;
+		};
+		std::unordered_map<std::string, Candidate> selected;
+		auto sameContents = [&](const InputSection& left, const ObjectFile& leftObject, const InputSection& right, const ObjectFile& rightObject) {
+			if (left.data != right.data || left.virtualSize != right.virtualSize || left.alignment != right.alignment || left.relocations.size() != right.relocations.size()) {
+				return false;
+			}
+			for (std::size_t i = 0; i < left.relocations.size(); ++i) {
+				const auto& a = left.relocations[i];
+				const auto& b = right.relocations[i];
+				if (a.offset != b.offset || a.type != b.type || leftObject.symbols[a.symbolIndex].name != rightObject.symbols[b.symbolIndex].name) {
+					return false;
+				}
+			}
+			return true;
+		};
+		for (std::size_t objectIndex = 0; objectIndex < objects_.size(); ++objectIndex) {
+			auto& object = objects_[objectIndex];
+			for (std::size_t sectionIndex = 0; sectionIndex < object.sections.size(); ++sectionIndex) {
+				auto& section = object.sections[sectionIndex];
+				if ((section.characteristics & 0x00001000) == 0) {
+					continue;
+				}
+				if (section.comdatSelection == 0 || (section.comdatSelection != 5 && section.comdatKey.empty())) {
+					fail(object.name + ": COMDAT section is missing its selection metadata or key");
+				}
+				if (section.comdatSelection == 5) {
+					continue;
+				}
+				const auto existing = selected.find(section.comdatKey);
+				if (existing == selected.end()) {
+					selected.emplace(section.comdatKey, Candidate{objectIndex, sectionIndex});
+					continue;
+				}
+				auto& winner = objects_[existing->second.objectIndex].sections[existing->second.sectionIndex];
+				if (winner.comdatSelection != section.comdatSelection) {
+					fail("inconsistent COMDAT selection for '" + section.comdatKey + "'");
+				}
+				const auto winnerSize = std::max(static_cast<std::size_t>(winner.virtualSize), winner.data.size());
+				const auto candidateSize = std::max(static_cast<std::size_t>(section.virtualSize), section.data.size());
+				bool replaceWinner = false;
+				switch (section.comdatSelection) {
+				case 1:
+					fail("duplicate NODUPLICATES COMDAT '" + section.comdatKey + "'");
+				case 2:
+					break;
+				case 3:
+					if (candidateSize != winnerSize) {
+						fail("SAME_SIZE COMDAT mismatch for '" + section.comdatKey + "'");
+					}
+					break;
+				case 4:
+					if (!sameContents(section, object, winner, objects_[existing->second.objectIndex])) {
+						fail("EXACT_MATCH COMDAT mismatch for '" + section.comdatKey + "'");
+					}
+					break;
+				case 6:
+					replaceWinner = candidateSize > winnerSize;
+					break;
+				case 7:
+					replaceWinner = true;
+					break;
+				default:
+					fail("unsupported COMDAT selection for '" + section.comdatKey + "'");
+				}
+				if (replaceWinner) {
+					winner.discarded = true;
+					section.leaderObject = objectIndex;
+					section.leaderSection = sectionIndex;
+					existing->second = {objectIndex, sectionIndex};
+				} else {
+					section.discarded = true;
+					section.leaderObject = existing->second.objectIndex;
+					section.leaderSection = existing->second.sectionIndex;
+				}
+			}
+		}
+		for (std::size_t objectIndex = 0; objectIndex < objects_.size(); ++objectIndex) {
+			auto& object = objects_[objectIndex];
+			for (std::size_t sectionIndex = 0; sectionIndex < object.sections.size(); ++sectionIndex) {
+				auto& section = object.sections[sectionIndex];
+				if ((section.characteristics & 0x00001000) == 0 || section.comdatSelection != 5) {
+					continue;
+				}
+				if (section.associatedSection == 0 || section.associatedSection > object.sections.size()) {
+					fail(object.name + ": associative COMDAT has an invalid parent section");
+				}
+				const auto parentIndex = static_cast<std::size_t>(section.associatedSection - 1);
+				const auto& parent = object.sections[parentIndex];
+				if (parent.comdatSelection == 0 || parent.comdatSelection == 5 || parent.comdatKey.empty()) {
+					fail(object.name + ": associative COMDAT parent is not a primary COMDAT section");
+				}
+				const auto selectedParent = selected.find(parent.comdatKey);
+				if (selectedParent == selected.end()) {
+					fail(object.name + ": associative COMDAT parent was not selected");
+				}
+				const auto winnerObjectIndex = selectedParent->second.objectIndex;
+				const auto winnerParentIndex = selectedParent->second.sectionIndex;
+				if (winnerObjectIndex == objectIndex && winnerParentIndex == parentIndex) {
+					continue;
+				}
+				std::size_t ordinal = 0;
+				for (std::size_t prior = 0; prior < sectionIndex; ++prior) {
+					const auto& candidate = object.sections[prior];
+					if (candidate.comdatSelection == 5 && candidate.associatedSection == section.associatedSection && candidate.name == section.name) {
+						++ordinal;
+					}
+				}
+				std::size_t matchingOrdinal = 0;
+				std::optional<std::size_t> leaderSection;
+				for (std::size_t candidateIndex = 0; candidateIndex < objects_[winnerObjectIndex].sections.size(); ++candidateIndex) {
+					const auto& candidate = objects_[winnerObjectIndex].sections[candidateIndex];
+					if (candidate.comdatSelection == 5 && candidate.associatedSection == winnerParentIndex + 1 && candidate.name == section.name) {
+						if (matchingOrdinal++ == ordinal) {
+							leaderSection = candidateIndex;
+							break;
+						}
+					}
+				}
+				section.discarded = true;
+				section.leaderObject = winnerObjectIndex;
+				section.leaderSection = leaderSection.value_or(winnerParentIndex);
+			}
+		}
+	}
+
+	void prepareImports() {
+		if (imports_.empty()) {
+			return;
+		}
+		std::map<std::string, std::size_t> moduleLookup;
+		for (std::size_t i = 0; i < imports_.size(); ++i) {
+			std::string key = imports_[i].symbol.dllName;
+			std::transform(key.begin(), key.end(), key.begin(), [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+			auto [found, inserted] = moduleLookup.emplace(key, importModules_.size());
+			if (inserted) {
+				ImportModule module;
+				module.name = imports_[i].symbol.dllName;
+				importModules_.push_back(std::move(module));
+			}
+			importModules_[found->second].imports.push_back(i);
+		}
+		InputSection idata;
+		idata.name = ".idata";
+		idata.alignment = 8;
+		idata.characteristics = 0x00000040 | SectionMemRead | SectionMemWrite;
+		const auto descriptorsSize = (importModules_.size() + 1) * 20;
+		idata.data.resize(descriptorsSize, 0);
+		for (auto& module : importModules_) {
+			idata.data.resize(alignUp(idata.data.size(), 8), 0);
+			module.lookupOffset = idata.data.size();
+			idata.data.resize(idata.data.size() + (module.imports.size() + 1) * 8, 0);
+		}
+		for (auto& module : importModules_) {
+			idata.data.resize(alignUp(idata.data.size(), 8), 0);
+			module.iatOffset = idata.data.size();
+			idata.data.resize(idata.data.size() + (module.imports.size() + 1) * 8, 0);
+			for (std::size_t i = 0; i < module.imports.size(); ++i) {
+				imports_[module.imports[i]].iatOffset = module.iatOffset + i * 8;
+			}
+		}
+		for (auto& module : importModules_) {
+			module.nameOffset = idata.data.size();
+			idata.data.insert(idata.data.end(), module.name.begin(), module.name.end());
+			idata.data.push_back(0);
+		}
+		for (auto& module : importModules_) {
+			for (const auto importIndex : module.imports) {
+				auto& record = imports_[importIndex];
+				idata.data.resize(alignUp(idata.data.size(), 2), 0);
+				record.hintNameOffset = idata.data.size();
+				idata.data.push_back(static_cast<std::uint8_t>(record.symbol.ordinalOrHint));
+				idata.data.push_back(static_cast<std::uint8_t>(record.symbol.ordinalOrHint >> 8));
+				idata.data.insert(idata.data.end(), record.symbol.importName.begin(), record.symbol.importName.end());
+				idata.data.push_back(0);
+			}
+		}
+		idata.virtualSize = toU32(idata.data.size(), "import section size");
+		idataSection_ = getOutputSection(idata);
+		auto& idataOutput = outputSections_[idataSection_];
+		const auto idataOffset = alignUp(idataOutput.virtualSize, 8);
+		importDescriptorOffset_ = idataOffset;
+		if (idataOutput.data.size() < idataOffset) {
+			idataOutput.data.resize(idataOffset, 0);
+		}
+		idataOutput.data.insert(idataOutput.data.end(), idata.data.begin(), idata.data.end());
+		idataOutput.virtualSize = idataOffset + idata.virtualSize;
+		for (auto& module : importModules_) {
+			module.lookupOffset += idataOffset;
+			module.iatOffset += idataOffset;
+			module.nameOffset += idataOffset;
+			for (const auto importIndex : module.imports) {
+				auto& record = imports_[importIndex];
+				record.iatOffset += idataOffset;
+				record.hintNameOffset += idataOffset;
+			}
+		}
+		for (const auto& module : importModules_) {
+			if (std::any_of(module.imports.begin(), module.imports.end(), [&](std::size_t index) { return imports_[index].hasFunction; })) {
+				InputSection text;
+				text.name = ".text";
+				text.alignment = 16;
+				text.characteristics = SectionCntCode | SectionMemRead | SectionMemExecute;
+				const auto textIndex = getOutputSection(text);
+				auto& textOutput = outputSections_[textIndex];
+				for (const auto importIndex : module.imports) {
+					auto& record = imports_[importIndex];
+					if (!record.hasFunction) {
+						continue;
+					}
+					textOutput.data.resize(alignUp(textOutput.data.size(), 16), 0x90);
+					record.thunkOffset = textOutput.data.size();
+					record.thunkSection = textIndex;
+					const std::array<std::uint8_t, 6> thunk{0xff, 0x25, 0, 0, 0, 0};
+					textOutput.data.insert(textOutput.data.end(), thunk.begin(), thunk.end());
+					textOutput.virtualSize = std::max(textOutput.virtualSize, textOutput.data.size());
+				}
+			}
+		}
+		importDirectorySize_ = toU32(descriptorsSize, "import directory size");
+	}
+
+	void prepareBaseRelocations() {
+		if (!options_.dynamicBase) {
+			return;
+		}
+		std::size_t count = 0;
+		for (const auto& object : objects_) {
+			for (const auto& section : object.sections) {
+				if (!section.discarded) {
+					count += static_cast<std::size_t>(std::count_if(section.relocations.begin(), section.relocations.end(), [](const Relocation& reloc) { return reloc.type == 1 || reloc.type == 2; }));
+				}
+			}
+		}
+		if (count == 0) {
+			return;
+		}
+		if (count > (std::numeric_limits<std::size_t>::max() - 8) / 12) {
+			fail("too many base relocations");
+		}
+		InputSection reloc;
+		reloc.name = ".reloc";
+		reloc.alignment = 4;
+		reloc.characteristics = 0x00000040 | 0x02000000 | SectionMemRead;
+		reloc.data.resize(count * 12, 0);
+		reloc.virtualSize = toU32(reloc.data.size(), "base relocation section size");
+		relocSection_ = getOutputSection(reloc);
+		auto& output = outputSections_[relocSection_];
+		if (!output.data.empty() || output.virtualSize != 0) {
+			fail("input .reloc section conflicts with linker-generated base relocations");
+		}
+		output.data = std::move(reloc.data);
+		output.virtualSize = output.data.size();
+	}
+
+	std::size_t getOutputSection(const InputSection& input) {
+		const auto subsection = input.name.find('$');
+		const auto outputName = input.name.substr(0, subsection);
+		for (std::size_t i = 0; i < outputSections_.size(); ++i) {
+			if (outputSections_[i].name == outputName) {
+				outputSections_[i].characteristics |= input.characteristics;
+				outputSections_[i].alignment = std::max(outputSections_[i].alignment, static_cast<std::size_t>(input.alignment));
+				return i;
+			}
+		}
+		OutputSection section;
+		section.name = outputName;
+		section.characteristics = input.characteristics;
+		section.alignment = input.alignment;
+		outputSections_.push_back(std::move(section));
+		return outputSections_.size() - 1;
+	}
+
+	void buildSections() {
+		sectionMaps_.resize(objects_.size());
+		for (std::size_t objectIndex = 0; objectIndex < objects_.size(); ++objectIndex) {
+			const auto& object = objects_[objectIndex];
+			auto& maps = sectionMaps_[objectIndex];
+			maps.resize(object.sections.size());
+			for (std::size_t sectionIndex = 0; sectionIndex < object.sections.size(); ++sectionIndex) {
+				const auto& input = object.sections[sectionIndex];
+				if (input.discarded) {
+					continue;
+				}
+				const auto outputIndex = getOutputSection(input);
+				auto& output = outputSections_[outputIndex];
+				const auto offset = alignUp(output.virtualSize, input.alignment);
+				if (input.data.size() > std::numeric_limits<std::size_t>::max() - offset || input.virtualSize > std::numeric_limits<std::size_t>::max() - offset) {
+					fail(object.name + ": section size overflow");
+				}
+				if (!input.data.empty()) {
+					if (output.data.size() < offset + input.data.size()) {
+						output.data.resize(offset + input.data.size(), 0);
+					}
+					std::copy(input.data.begin(), input.data.end(), output.data.begin() + offset);
+				}
+				output.virtualSize = std::max(offset + input.virtualSize, offset + input.data.size());
+				maps[sectionIndex] = {outputIndex, offset};
+			}
+		}
+		for (std::size_t objectIndex = 0; objectIndex < objects_.size(); ++objectIndex) {
+			for (std::size_t sectionIndex = 0; sectionIndex < objects_[objectIndex].sections.size(); ++sectionIndex) {
+				const auto& input = objects_[objectIndex].sections[sectionIndex];
+				if (!input.discarded) {
+					continue;
+				}
+				if (input.leaderObject >= objects_.size() || input.leaderSection >= sectionMaps_[input.leaderObject].size()) {
+					fail(objects_[objectIndex].name + ": missing selected COMDAT leader");
+				}
+				sectionMaps_[objectIndex][sectionIndex] = sectionMaps_[input.leaderObject][input.leaderSection];
+			}
+		}
+	}
+
+	void resolveGlobals() {
+		for (std::size_t objectIndex = 0; objectIndex < objects_.size(); ++objectIndex) {
+			const auto& object = objects_[objectIndex];
+			for (std::size_t symbolIndex = 0; symbolIndex < object.symbols.size(); ++symbolIndex) {
+				const auto& symbol = object.symbols[symbolIndex];
+				if (symbol.auxiliary || symbol.storageClass != 2 || symbol.name.empty()) {
+					continue;
+				}
+				if (symbol.sectionNumber > 0) {
+					if (static_cast<std::size_t>(symbol.sectionNumber) > object.sections.size()) {
+						fail(object.name + ": symbol refers to an invalid section");
+					}
+					if (object.sections[static_cast<std::size_t>(symbol.sectionNumber - 1)].discarded) {
+						continue;
+					}
+					GlobalSymbol definition{objectIndex, symbolIndex};
+					const auto [it, inserted] = globals_.emplace(symbol.name, definition);
+					if (!inserted) {
+						if (!it->second.common) {
+							fail("duplicate definition of symbol '" + symbol.name + "'");
+						}
+						it->second = definition;
+					}
+				} else if (symbol.sectionNumber == -1) {
+					GlobalSymbol definition{objectIndex, symbolIndex};
+					const auto [it, inserted] = globals_.emplace(symbol.name, definition);
+					if (!inserted) {
+						if (!it->second.common) {
+							fail("duplicate definition of symbol '" + symbol.name + "'");
+						}
+						it->second = definition;
+					}
+				} else if (symbol.sectionNumber == 0 && symbol.value != 0) {
+					const auto existing = globals_.find(symbol.name);
+					if (existing != globals_.end()) {
+						if (existing->second.common && symbol.value > existing->second.commonSize) {
+							auto& output = outputSections_[existing->second.outputIndex];
+							if (symbol.value > std::numeric_limits<std::size_t>::max() - existing->second.outputOffset) {
+								fail(object.name + ": common symbol size overflow");
+							}
+							output.virtualSize = std::max(output.virtualSize, existing->second.outputOffset + symbol.value);
+							existing->second.commonSize = symbol.value;
+						}
+						continue;
+					}
+					InputSection commonSection;
+					commonSection.name = ".bss";
+					commonSection.characteristics = SectionCntUninitializedData | SectionMemRead | SectionMemWrite;
+					commonSection.alignment = 8;
+					const auto outputIndex = getOutputSection(commonSection);
+					auto& output = outputSections_[outputIndex];
+					const auto offset = alignUp(output.virtualSize, 8);
+					if (symbol.value > std::numeric_limits<std::size_t>::max() - offset) {
+						fail(object.name + ": common symbol size overflow");
+					}
+					output.virtualSize = offset + symbol.value;
+					GlobalSymbol definition;
+					definition.objectIndex = objectIndex;
+					definition.symbolIndex = symbolIndex;
+					definition.common = true;
+					definition.commonSize = symbol.value;
+					definition.outputIndex = outputIndex;
+					definition.outputOffset = offset;
+					globals_.emplace(symbol.name, definition);
+				}
+			}
+		}
+		for (const auto& record : imports_) {
+			const auto importIndex = static_cast<std::size_t>(&record - imports_.data());
+			const auto iatName = record.symbol.publicName.rfind("__imp_", 0) == 0 ? record.symbol.publicName : "__imp_" + record.symbol.publicName;
+			auto addImportSymbol = [&](const std::string& name, bool importAddress) {
+				GlobalSymbol definition;
+				definition.imported = true;
+				definition.importAddress = importAddress;
+				definition.importIndex = importIndex;
+				if (!globals_.emplace(name, definition).second) {
+					fail("duplicate definition of imported symbol '" + name + "'");
+				}
+			};
+			if (record.hasPublicSymbol) {
+				addImportSymbol(record.symbol.publicName, record.hasFunction ? false : true);
+			}
+			addImportSymbol(iatName, true);
+		}
+		struct WeakExternal {
+			std::size_t objectIndex;
+			std::size_t symbolIndex;
+		};
+		std::vector<WeakExternal> weakExternals;
+		for (std::size_t objectIndex = 0; objectIndex < objects_.size(); ++objectIndex) {
+			const auto& object = objects_[objectIndex];
+			for (std::size_t symbolIndex = 0; symbolIndex < object.symbols.size(); ++symbolIndex) {
+				const auto& symbol = object.symbols[symbolIndex];
+				if (!symbol.auxiliary && symbol.storageClass == 105 && !symbol.name.empty() && symbol.weakTagIndex < object.symbols.size()) {
+					weakExternals.push_back({objectIndex, symbolIndex});
+				}
+			}
+		}
+		bool addedWeakAlias = true;
+		while (addedWeakAlias) {
+			addedWeakAlias = false;
+			for (const auto& weak : weakExternals) {
+				const auto& object = objects_[weak.objectIndex];
+				const auto& symbol = object.symbols[weak.symbolIndex];
+				if (globals_.contains(symbol.name)) {
+					continue;
+				}
+				const auto& fallback = object.symbols[symbol.weakTagIndex];
+				const auto target = globals_.find(fallback.name);
+				if (target != globals_.end()) {
+					globals_.emplace(symbol.name, target->second);
+					addedWeakAlias = true;
+				}
+			}
+		}
+		for (const auto& weak : weakExternals) {
+			const auto& object = objects_[weak.objectIndex];
+			const auto& symbol = object.symbols[weak.symbolIndex];
+			if (globals_.contains(symbol.name)) {
+				continue;
+			}
+			const auto& fallback = object.symbols[symbol.weakTagIndex];
+			if (symbol.weakCharacteristics == 1 || symbol.weakCharacteristics == 2) {
+				GlobalSymbol definition;
+				definition.weakUndefined = true;
+				globals_.emplace(symbol.name, definition);
+			} else if (symbol.weakCharacteristics == 3) {
+				fail(object.name + ": weak alias target '" + fallback.name + "' was not found");
+			} else {
+				fail(object.name + ": unsupported weak-external search mode");
+			}
+		}
+	}
+
+	bool symbolAddressIsImageRelative(std::size_t objectIndex, std::size_t symbolIndex) const {
+		const auto& symbol = objects_.at(objectIndex).symbols.at(symbolIndex);
+		if (symbol.sectionNumber > 0) {
+			return true;
+		}
+		const auto found = globals_.find(symbol.name);
+		if (found == globals_.end()) {
+			return false;
+		}
+		const auto& definition = found->second;
+		if (definition.imported || definition.common) {
+			return true;
+		}
+		return !definition.weakUndefined && definition.objectIndex < objects_.size() && definition.symbolIndex < objects_[definition.objectIndex].symbols.size() && objects_[definition.objectIndex].symbols[definition.symbolIndex].sectionNumber > 0;
+	}
+
+	std::uint64_t symbolAddress(std::size_t objectIndex, std::size_t symbolIndex) const {
+		const auto& object = objects_.at(objectIndex);
+		const auto& symbol = object.symbols.at(symbolIndex);
+		if (symbol.sectionNumber == -1) {
+			return symbol.value;
+		}
+		if (symbol.sectionNumber > 0) {
+			const auto& mapping = sectionMaps_.at(objectIndex).at(static_cast<std::size_t>(symbol.sectionNumber - 1));
+			return options_.imageBase + outputSections_.at(mapping.outputIndex).rva + mapping.offset + symbol.value;
+		}
+		const auto found = globals_.find(symbol.name);
+		if (found == globals_.end()) {
+			fail("unresolved external symbol '" + symbol.name + "'");
+		}
+		const auto& definition = found->second;
+		if (definition.weakUndefined) {
+			return 0;
+		}
+		if (definition.imported) {
+			const auto& imported = imports_.at(definition.importIndex);
+			const auto& output = outputSections_.at(idataSection_);
+			if (definition.importAddress || !imported.hasFunction) {
+				return options_.imageBase + output.rva + imported.iatOffset;
+			}
+			const auto& thunkSection = outputSections_.at(imported.thunkSection);
+			return options_.imageBase + thunkSection.rva + imported.thunkOffset;
+		}
+		if (definition.common) {
+			return options_.imageBase + outputSections_.at(definition.outputIndex).rva + definition.outputOffset;
+		}
+		const auto& definingObject = objects_.at(definition.objectIndex);
+		const auto& definingSymbol = definingObject.symbols.at(definition.symbolIndex);
+		if (definingSymbol.sectionNumber == -1) {
+			return definingSymbol.value;
+		}
+		const auto& mapping = sectionMaps_.at(definition.objectIndex).at(static_cast<std::size_t>(definingSymbol.sectionNumber - 1));
+		return options_.imageBase + outputSections_.at(mapping.outputIndex).rva + mapping.offset + definingSymbol.value;
+	}
+
+	std::uint32_t entryRva() const {
+		std::string entry;
+		if (options_.entry) {
+			entry = *options_.entry;
+		} else if (globals_.contains("mainCRTStartup")) {
+			entry = "mainCRTStartup";
+		} else if (globals_.contains("main")) {
+			entry = "main";
+		} else {
+			fail("no entry point found; use --entry <symbol> (for example, --entry main)");
+		}
+		const auto found = globals_.find(entry);
+		if (found == globals_.end()) {
+			fail("entry point symbol '" + entry + "' was not found");
+		}
+		const auto& definition = found->second;
+		if (definition.common || definition.imported || definition.weakUndefined) {
+			fail("entry point '" + entry + "' must be defined in an input code section");
+		}
+		const auto& symbol = objects_.at(definition.objectIndex).symbols.at(definition.symbolIndex);
+		if (symbol.sectionNumber <= 0) {
+			fail("entry point '" + entry + "' is not defined in a section");
+		}
+		const auto& mapping = sectionMaps_.at(definition.objectIndex).at(static_cast<std::size_t>(symbol.sectionNumber - 1));
+		const auto rva = static_cast<std::uint64_t>(outputSections_.at(mapping.outputIndex).rva) + mapping.offset + symbol.value;
+		return toU32(static_cast<std::size_t>(rva), "entry point RVA");
+	}
+
+	void layoutImage() {
+		if (outputSections_.empty()) {
+			fail("input objects contain no sections");
+		}
+		if (outputSections_.size() > 96) {
+			fail("PE image exceeds the Windows section-count limit");
+		}
+		const auto headersUnaligned = 0x80u + 4u + 20u + 240u + outputSections_.size() * 40u;
+		const auto headersSize = alignUp(headersUnaligned, FileAlignment);
+		std::size_t nextRva = SectionAlignment;
+		std::size_t nextRaw = headersSize;
+		for (auto& section : outputSections_) {
+			nextRva = alignUp(nextRva, SectionAlignment);
+			section.rva = toU32(nextRva, "section RVA");
+			const auto virtualSize = std::max(section.virtualSize, section.data.size());
+			if (virtualSize > std::numeric_limits<std::size_t>::max() - nextRva) {
+				fail("PE image size overflow");
+			}
+			nextRva += alignUp(virtualSize, SectionAlignment);
+			if (!section.data.empty()) {
+				nextRaw = alignUp(nextRaw, FileAlignment);
+				section.rawOffset = toU32(nextRaw, "section raw offset");
+				section.rawSize = toU32(alignUp(section.data.size(), FileAlignment), "section raw size");
+				nextRaw += section.rawSize;
+			}
+		}
+		const auto imageSize = toU32(nextRva, "PE image size");
+		toU32(nextRaw, "PE file size");
+		if (options_.imageBase > std::numeric_limits<std::uint64_t>::max() - imageSize) {
+			fail("image base and image size exceed the PE32+ address range");
+		}
+		(void)entryRva();
+	}
+
+	void finalizeGeneratedData() {
+		if (idataSection_ != std::numeric_limits<std::size_t>::max()) {
+			auto& idata = outputSections_[idataSection_];
+			importDirectoryRva_ = toU32(static_cast<std::size_t>(idata.rva) + importDescriptorOffset_, "import directory RVA");
+			for (std::size_t moduleIndex = 0; moduleIndex < importModules_.size(); ++moduleIndex) {
+				const auto& module = importModules_[moduleIndex];
+				const auto descriptor = importDescriptorOffset_ + moduleIndex * 20;
+				writeLe(idata.data, descriptor, toU32(static_cast<std::size_t>(idata.rva) + module.lookupOffset, "import lookup table RVA"));
+				writeLe(idata.data, descriptor + 12, toU32(static_cast<std::size_t>(idata.rva) + module.nameOffset, "import DLL name RVA"));
+				writeLe(idata.data, descriptor + 16, toU32(static_cast<std::size_t>(idata.rva) + module.iatOffset, "import address table RVA"));
+				for (std::size_t entryIndex = 0; entryIndex < module.imports.size(); ++entryIndex) {
+					const auto& record = imports_[module.imports[entryIndex]];
+					const auto thunk = record.symbol.byOrdinal
+						? (std::uint64_t{1} << 63) | record.symbol.ordinalOrHint
+						: static_cast<std::uint64_t>(idata.rva) + record.hintNameOffset;
+					writeLe(idata.data, module.lookupOffset + entryIndex * 8, thunk);
+					writeLe(idata.data, record.iatOffset, thunk);
+				}
+			}
+		}
+		for (const auto& record : imports_) {
+			if (!record.hasFunction) {
+				continue;
+			}
+			const auto& text = outputSections_.at(record.thunkSection);
+			const auto iatRva = static_cast<std::int64_t>(outputSections_.at(idataSection_).rva + record.iatOffset);
+			const auto nextInstruction = static_cast<std::int64_t>(text.rva + record.thunkOffset + 6);
+			const auto displacement = iatRva - nextInstruction;
+			if (displacement < std::numeric_limits<std::int32_t>::min() || displacement > std::numeric_limits<std::int32_t>::max()) {
+				fail("import thunk is out of range of its IAT entry");
+			}
+			writeLe(outputSections_[record.thunkSection].data, record.thunkOffset + 2, static_cast<std::uint32_t>(displacement));
+		}
+		if (relocSection_ != std::numeric_limits<std::size_t>::max() && !baseRelocations_.empty()) {
+			auto& reloc = outputSections_[relocSection_];
+			std::sort(baseRelocations_.begin(), baseRelocations_.end(), [](const BaseRelocation& left, const BaseRelocation& right) { return left.rva < right.rva; });
+			std::size_t cursor = 0;
+			for (std::size_t i = 0; i < baseRelocations_.size();) {
+				const auto page = baseRelocations_[i].rva & ~std::uint32_t{0xfff};
+				const auto blockStart = cursor;
+				cursor += 8;
+				std::size_t count = 0;
+				while (i < baseRelocations_.size() && (baseRelocations_[i].rva & ~std::uint32_t{0xfff}) == page) {
+					const auto entry = static_cast<std::uint16_t>((baseRelocations_[i].type << 12) | (baseRelocations_[i].rva & 0x0fff));
+					writeLe(reloc.data, cursor, entry);
+					cursor += 2;
+					++count;
+					++i;
+				}
+				if ((count & 1) != 0) {
+					writeLe(reloc.data, cursor, std::uint16_t{0});
+					cursor += 2;
+				}
+				writeLe(reloc.data, blockStart, page);
+				writeLe(reloc.data, blockStart + 4, toU32(cursor - blockStart, "base relocation block size"));
+			}
+			reloc.virtualSize = cursor;
+			relocationDirectoryRva_ = reloc.rva;
+			relocationDirectorySize_ = toU32(cursor, "base relocation directory size");
+		}
+	}
+
+	void applyRelocations() {
+		for (std::size_t objectIndex = 0; objectIndex < objects_.size(); ++objectIndex) {
+			const auto& object = objects_[objectIndex];
+			for (std::size_t inputIndex = 0; inputIndex < object.sections.size(); ++inputIndex) {
+				const auto& input = object.sections[inputIndex];
+				if (input.discarded) {
+					continue;
+				}
+				const auto& mapping = sectionMaps_[objectIndex][inputIndex];
+				auto& output = outputSections_[mapping.outputIndex];
+				for (const auto& relocation : input.relocations) {
+					if (relocation.type == 0) {
+						continue;
+					}
+					if (relocation.offset >= input.data.size()) {
+						fail(object.name + ": relocation offset is outside its section");
+					}
+					auto target = symbolAddress(objectIndex, relocation.symbolIndex);
+					const auto placeRva = static_cast<std::uint64_t>(output.rva) + mapping.offset + relocation.offset;
+					const auto outputOffset = mapping.offset + relocation.offset;
+					if (relocation.type == 1) {
+						if (input.data.size() - relocation.offset < 8) {
+							fail(object.name + ": ADDR64 relocation is outside initialized section data");
+						}
+						const auto addend = static_cast<std::int64_t>(readLe<std::uint64_t>(output.data, outputOffset, object.name));
+						const auto relocatedSigned = static_cast<std::int64_t>(target) + addend;
+						if (relocatedSigned < 0) {
+							fail(object.name + ": ADDR64 relocation underflow");
+						}
+						const auto relocated = static_cast<std::uint64_t>(relocatedSigned);
+						writeLe(output.data, outputOffset, relocated);
+						if (options_.dynamicBase && symbolAddressIsImageRelative(objectIndex, relocation.symbolIndex) && target >= options_.imageBase && target - options_.imageBase <= std::numeric_limits<std::uint32_t>::max() && relocated >= options_.imageBase && relocated - options_.imageBase <= std::numeric_limits<std::uint32_t>::max()) {
+							baseRelocations_.push_back({toU32(static_cast<std::size_t>(placeRva), "base relocation RVA"), 10});
+						}
+					} else if (relocation.type == 2 || relocation.type == 3 || (relocation.type >= 4 && relocation.type <= 9)) {
+						if (input.data.size() - relocation.offset < 4) {
+							fail(object.name + ": 32-bit relocation is outside initialized section data");
+						}
+						const auto addend = static_cast<std::int32_t>(readLe<std::uint32_t>(output.data, outputOffset, object.name));
+						std::int64_t relocated = 0;
+						if (relocation.type == 2) {
+							relocated = static_cast<std::int64_t>(target) + addend;
+						} else if (relocation.type == 3) {
+							relocated = static_cast<std::int64_t>(target) - static_cast<std::int64_t>(options_.imageBase) + addend;
+						} else {
+							const auto extra = static_cast<std::int64_t>(relocation.type - 4);
+							relocated = static_cast<std::int64_t>(target) + addend - static_cast<std::int64_t>(options_.imageBase + placeRva + 4 + extra);
+						}
+						const bool pcRelative = relocation.type >= 4;
+						const auto minimum = pcRelative ? static_cast<std::int64_t>(std::numeric_limits<std::int32_t>::min()) : 0;
+						const auto maximum = pcRelative ? static_cast<std::int64_t>(std::numeric_limits<std::int32_t>::max()) : static_cast<std::int64_t>(std::numeric_limits<std::uint32_t>::max());
+						if (relocated < minimum || relocated > maximum) {
+							fail(object.name + ": relocation result does not fit its 32-bit relocation type");
+						}
+						writeLe(output.data, outputOffset, static_cast<std::uint32_t>(relocated));
+						if (relocation.type == 2 && options_.dynamicBase && symbolAddressIsImageRelative(objectIndex, relocation.symbolIndex) && target >= options_.imageBase && target - options_.imageBase <= std::numeric_limits<std::uint32_t>::max() && relocated >= 0 && static_cast<std::uint64_t>(relocated) >= options_.imageBase && static_cast<std::uint64_t>(relocated) - options_.imageBase <= std::numeric_limits<std::uint32_t>::max()) {
+							baseRelocations_.push_back({toU32(static_cast<std::size_t>(placeRva), "base relocation RVA"), 3});
+						}
+					} else {
+						std::ostringstream message;
+						message << object.name << ": unsupported AMD64 relocation type 0x" << std::hex << relocation.type;
+						fail(message.str());
+					}
+				}
+			}
+		}
+	}
+
+	void writeImage() {
+		const auto headersSize = alignUp(0x80u + 4u + 20u + 240u + outputSections_.size() * 40u, FileAlignment);
+		std::size_t fileSize = headersSize;
+		std::size_t imageSize = SectionAlignment;
+		std::uint32_t codeSize = 0;
+		std::uint32_t initializedSize = 0;
+		std::uint32_t uninitializedSize = 0;
+		std::uint32_t baseOfCode = 0;
+		for (const auto& section : outputSections_) {
+			imageSize = std::max(imageSize, static_cast<std::size_t>(section.rva) + alignUp(std::max(section.virtualSize, section.data.size()), SectionAlignment));
+			if (section.rawSize != 0) {
+				fileSize = std::max(fileSize, static_cast<std::size_t>(section.rawOffset) + section.rawSize);
+			}
+			if ((section.characteristics & SectionCntCode) != 0) {
+				codeSize += section.rawSize;
+				if (baseOfCode == 0) {
+					baseOfCode = section.rva;
+				}
+			} else if ((section.characteristics & SectionCntUninitializedData) != 0) {
+				uninitializedSize += toU32(section.virtualSize, "uninitialized section size");
+			} else {
+				initializedSize += section.rawSize;
+			}
+		}
+		Bytes image(fileSize, 0);
+		image[0] = 'M';
+		image[1] = 'Z';
+		constexpr std::string_view dosMessage = "This program cannot be run in DOS mode.\r\n$";
+		std::copy(dosMessage.begin(), dosMessage.end(), image.begin() + 0x40);
+		writeLe(image, 0x3c, std::uint32_t{0x80});
+		image[0x80] = 'P';
+		image[0x81] = 'E';
+		const std::size_t coff = 0x84;
+		writeLe(image, coff, MachineAmd64);
+		writeLe(image, coff + 2, static_cast<std::uint16_t>(outputSections_.size()));
+		writeLe(image, coff + 16, std::uint16_t{240});
+		const auto fileCharacteristics = static_cast<std::uint16_t>(0x0022 | (relocationDirectorySize_ == 0 ? 0x0001 : 0));
+		writeLe(image, coff + 18, fileCharacteristics);
+		const std::size_t optional = coff + 20;
+		writeLe(image, optional, std::uint16_t{0x020b});
+		writeLe(image, optional + 4, codeSize);
+		writeLe(image, optional + 8, initializedSize);
+		writeLe(image, optional + 12, uninitializedSize);
+		writeLe(image, optional + 16, entryRva());
+		writeLe(image, optional + 20, baseOfCode);
+		writeLe(image, optional + 24, options_.imageBase);
+		writeLe(image, optional + 32, SectionAlignment);
+		writeLe(image, optional + 36, FileAlignment);
+		writeLe(image, optional + 40, std::uint16_t{6});
+		writeLe(image, optional + 48, std::uint16_t{6});
+		writeLe(image, optional + 56, toU32(imageSize, "PE image size"));
+		writeLe(image, optional + 60, toU32(headersSize, "PE headers size"));
+		writeLe(image, optional + 68, options_.subsystem);
+		const auto dllCharacteristics = static_cast<std::uint16_t>(0x0100 | ((options_.dynamicBase && relocationDirectorySize_ != 0) ? 0x0040 : 0));
+		writeLe(image, optional + 70, dllCharacteristics);
+		writeLe(image, optional + 72, std::uint64_t{0x100000});
+		writeLe(image, optional + 80, std::uint64_t{0x1000});
+		writeLe(image, optional + 88, std::uint64_t{0x100000});
+		writeLe(image, optional + 96, std::uint64_t{0x1000});
+		writeLe(image, optional + 108, std::uint32_t{16});
+		writeLe(image, optional + 120, importDirectoryRva_);
+		writeLe(image, optional + 124, importDirectorySize_);
+		writeLe(image, optional + 152, relocationDirectoryRva_);
+		writeLe(image, optional + 156, relocationDirectorySize_);
+		if (idataSection_ != std::numeric_limits<std::size_t>::max()) {
+			std::size_t iatStart = std::numeric_limits<std::size_t>::max();
+			std::size_t iatEnd = 0;
+			for (const auto& module : importModules_) {
+				iatStart = std::min(iatStart, module.iatOffset);
+				iatEnd = std::max(iatEnd, module.iatOffset + (module.imports.size() + 1) * 8);
+			}
+			writeLe(image, optional + 208, toU32(static_cast<std::size_t>(outputSections_[idataSection_].rva) + iatStart, "IAT RVA"));
+			writeLe(image, optional + 212, toU32(iatEnd - iatStart, "IAT size"));
+		}
+
+		const auto sectionHeaders = optional + 240;
+		for (std::size_t i = 0; i < outputSections_.size(); ++i) {
+			const auto& section = outputSections_[i];
+			const auto header = sectionHeaders + i * 40;
+			const auto nameLength = std::min<std::size_t>(section.name.size(), 8);
+			std::copy_n(section.name.begin(), nameLength, image.begin() + header);
+			writeLe(image, header + 8, toU32(std::max(section.virtualSize, section.data.size()), "section virtual size"));
+			writeLe(image, header + 12, section.rva);
+			writeLe(image, header + 16, section.rawSize);
+			writeLe(image, header + 20, section.rawOffset);
+			const auto characteristics = section.characteristics & ~std::uint32_t{0x00f01000};
+			writeLe(image, header + 36, characteristics);
+			if (section.rawSize != 0) {
+				std::copy(section.data.begin(), section.data.end(), image.begin() + section.rawOffset);
+			}
+		}
+
+		std::ofstream output(options_.output, std::ios::binary | std::ios::trunc);
+		if (!output) {
+			fail("cannot create '" + options_.output.string() + "'");
+		}
+		output.write(reinterpret_cast<const char*>(image.data()), static_cast<std::streamsize>(image.size()));
+		if (!output) {
+			fail("failed writing '" + options_.output.string() + "'");
+		}
+		if (options_.mapFile) {
+			std::ofstream map(*options_.mapFile);
+			if (!map) {
+				fail("cannot create map file '" + options_.mapFile->string() + "'");
+			}
+			map << "JWlink2 map for " << options_.output.string() << "\n\n";
+			for (const auto& [name, definition] : globals_) {
+				if (definition.weakUndefined) {
+					continue;
+				}
+				std::uint64_t address = 0;
+				if (definition.imported) {
+					const auto& imported = imports_[definition.importIndex];
+					if (definition.importAddress || !imported.hasFunction) {
+						address = options_.imageBase + outputSections_[idataSection_].rva + imported.iatOffset;
+					} else {
+						address = options_.imageBase + outputSections_[imported.thunkSection].rva + imported.thunkOffset;
+					}
+				} else if (definition.common) {
+					address = options_.imageBase + outputSections_[definition.outputIndex].rva + definition.outputOffset;
+				} else if (definition.objectIndex < objects_.size() && definition.symbolIndex < objects_[definition.objectIndex].symbols.size()) {
+					const auto& symbol = objects_[definition.objectIndex].symbols[definition.symbolIndex];
+					if (symbol.sectionNumber > 0) {
+						const auto& section = sectionMaps_[definition.objectIndex][static_cast<std::size_t>(symbol.sectionNumber - 1)];
+						address = options_.imageBase + outputSections_[section.outputIndex].rva + section.offset + symbol.value;
+					} else {
+						address = symbol.value;
+					}
+				}
+				map << std::hex << address << " " << name << "\n";
+			}
+			if (!map) {
+				fail("failed writing map file '" + options_.mapFile->string() + "'");
+			}
+		}
+		std::cout << "JWlink2: wrote " << options_.output.string() << " (" << image.size() << " bytes)\n";
+	}
+};
+
+std::string lowerAscii(std::string value) {
+	std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+	return value;
+}
+
+std::vector<std::string> tokenizeResponse(std::string_view text, const fs::path& path) {
+	std::vector<std::string> result;
+	std::string token;
+	bool quoted = false;
+	bool started = false;
+	for (std::size_t i = 0; i < text.size();) {
+		if (text[i] == '\\') {
+			std::size_t end = i;
+			while (end < text.size() && text[end] == '\\') {
+				++end;
+			}
+			const auto slashCount = end - i;
+			if (end < text.size() && text[end] == '"') {
+				token.append(slashCount / 2, '\\');
+				if ((slashCount & 1) != 0) {
+					token.push_back('"');
+				} else {
+					quoted = !quoted;
+				}
+				started = true;
+				i = end + 1;
+			} else {
+				token.append(slashCount, '\\');
+				started = true;
+				i = end;
+			}
+		} else if (text[i] == '"') {
+			quoted = !quoted;
+			started = true;
+			++i;
+		} else if (std::isspace(static_cast<unsigned char>(text[i])) && !quoted) {
+			if (started) {
+				result.push_back(std::move(token));
+				token.clear();
+				started = false;
+			}
+			++i;
+		} else {
+			token.push_back(text[i++]);
+			started = true;
+		}
+	}
+	if (quoted) {
+		fail(path.string() + ": unterminated quote in response file");
+	}
+	if (started) {
+		result.push_back(std::move(token));
+	}
+	return result;
+}
+
+void expandResponseFiles(const std::vector<std::string>& arguments, std::vector<std::string>& expanded, std::set<fs::path>& active, unsigned depth) {
+	if (depth > 32) {
+		fail("response-file nesting exceeds 32 levels");
+	}
+	for (const auto& argument : arguments) {
+		if (argument.size() <= 1 || argument[0] != '@') {
+			expanded.push_back(argument);
+			continue;
+		}
+		const auto path = fs::absolute(fs::path(argument.substr(1))).lexically_normal();
+		if (!active.insert(path).second) {
+			fail("response-file cycle involving '" + path.string() + "'");
+		}
+		std::ifstream input(path);
+		if (!input) {
+			fail("cannot open response file '" + path.string() + "'");
+		}
+		std::ostringstream content;
+		content << input.rdbuf();
+		if (!input.eof() && input.fail()) {
+			fail("failed reading response file '" + path.string() + "'");
+		}
+		auto nested = tokenizeResponse(content.str(), path);
+		expandResponseFiles(nested, expanded, active, depth + 1);
+		active.erase(path);
+	}
+}
+
+std::uint64_t parseUnsignedOption(std::string_view text, std::string_view optionName) {
+	int base = 10;
+	if (text.size() > 2 && text[0] == '0' && (text[1] == 'x' || text[1] == 'X')) {
+		base = 16;
+		text.remove_prefix(2);
+	}
+	std::uint64_t value = 0;
+	const auto parsed = std::from_chars(text.data(), text.data() + text.size(), value, base);
+	if (text.empty() || parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size()) {
+		fail("invalid value for " + std::string(optionName));
+	}
+	return value;
+}
+
+void printUsage() {
+	std::cout << "JWlink2 - AMD64 COFF to Windows PE32+ linker\n"
+				 "Usage: JWlink2 [options] input.obj [input.lib ...]\n"
+				 "  /OUT:<file>, -o <file>      Output executable (default: a.exe)\n"
+				 "  /ENTRY:<symbol>             Entry point (default: mainCRTStartup, then main)\n"
+				 "  /SUBSYSTEM:CONSOLE|WINDOWS  Select PE subsystem\n"
+				 "  /LIBPATH:<directory>        Search directory for libraries\n"
+				 "  /DEFAULTLIB:<library>       Add a library to the link\n"
+				 "  /BASE:<address>             Set preferred image base\n"
+				 "  /DYNAMICBASE | /FIXED       Enable ASLR relocations or fixed image\n"
+				 "  /MAP[:<file>]               Write a symbol map\n"
+				 "  @<file>                     Read additional options from a response file\n"
+				 "  -h, --help                  Show this help\n";
+}
+
+LinkOptions parseArguments(int argc, char** argv) {
+	LinkOptions options;
+	std::vector<std::string> supplied;
+	for (int i = 1; i < argc; ++i) {
+		supplied.emplace_back(argv[i]);
+	}
+	std::vector<std::string> arguments;
+	std::set<fs::path> activeResponses;
+	expandResponseFiles(supplied, arguments, activeResponses, 0);
+	std::vector<std::string> excludedLibraries;
+	bool mapUsesDefaultName = false;
+	bool parseOptions = true;
+	auto nextValue = [&](std::size_t& index, std::string_view option) -> std::string {
+		if (++index >= arguments.size()) {
+			fail(std::string(option) + " requires a value");
+		}
+		return arguments[index];
+	};
+	for (std::size_t i = 0; i < arguments.size(); ++i) {
+		const auto& argument = arguments[i];
+		if (parseOptions && argument == "--") {
+			parseOptions = false;
+			continue;
+		}
+		if (!parseOptions || argument.empty() || (argument[0] != '-' && argument[0] != '/')) {
+			options.inputs.emplace_back(argument);
+			continue;
+		}
+		std::size_t prefixLength = argument[0] == '/' ? 1 : (argument.size() > 1 && argument[1] == '-' ? 2 : 1);
+		const auto delimiter = argument.find_first_of(":=", prefixLength);
+		const auto optionName = lowerAscii(argument.substr(prefixLength, delimiter == std::string::npos ? std::string::npos : delimiter - prefixLength));
+		const bool shortOutputOption = argument[0] == '-' && prefixLength == 1 && delimiter == std::string::npos && optionName.size() > 1 && optionName[0] == 'o';
+		const bool shortEntryOption = argument[0] == '-' && prefixLength == 1 && delimiter == std::string::npos && optionName.size() > 1 && optionName[0] == 'e';
+		const bool shortPathOption = argument.size() > 1 && argument[0] == '-' && argument[1] == 'L' && prefixLength == 1;
+		std::optional<std::string> value;
+		if (delimiter != std::string::npos) {
+			value = argument.substr(delimiter + 1);
+		}
+		auto requireValue = [&](std::string_view spelling) {
+			return value ? *value : nextValue(i, spelling);
+		};
+		if (optionName == "h" || optionName == "help" || optionName == "?") {
+			printUsage();
+			std::exit(0);
+		} else if (optionName == "o" || optionName == "out" || shortOutputOption) {
+			options.output = shortOutputOption ? argument.substr(prefixLength + 1) : requireValue("/OUT");
+		} else if (optionName == "e" || optionName == "entry" || shortEntryOption) {
+			options.entry = shortEntryOption ? argument.substr(prefixLength + 1) : requireValue("/ENTRY");
+		} else if (optionName == "subsystem") {
+			auto subsystem = lowerAscii(requireValue("/SUBSYSTEM"));
+			const auto comma = subsystem.find(',');
+			if (comma != std::string::npos) {
+				subsystem.resize(comma);
+			}
+			if (subsystem == "console" || subsystem == "3") {
+				options.subsystem = 3;
+			} else if (subsystem == "windows" || subsystem == "2") {
+				options.subsystem = 2;
+			} else {
+				fail("unsupported subsystem '" + subsystem + "' (choose console or windows)");
+			}
+		} else if (optionName == "libpath" || shortPathOption) {
+			const auto paths = shortPathOption && !value && optionName.size() > 1 ? argument.substr(prefixLength + 1) : requireValue("/LIBPATH");
+			std::size_t start = 0;
+			while (start <= paths.size()) {
+				const auto end = paths.find(';', start);
+				const auto part = paths.substr(start, end == std::string::npos ? std::string::npos : end - start);
+				if (!part.empty()) {
+					options.libraryPaths.emplace_back(part);
+				}
+				if (end == std::string::npos) {
+					break;
+				}
+				start = end + 1;
+			}
+		} else if (optionName == "defaultlib" || (optionName.size() > 1 && optionName[0] == 'l')) {
+			const auto library = optionName == "defaultlib" ? requireValue("/DEFAULTLIB") : optionName.substr(1);
+			if (library.empty()) {
+				fail("/DEFAULTLIB requires a library name");
+			}
+			options.defaultLibraries.push_back(library);
+		} else if (optionName == "base") {
+			options.imageBase = parseUnsignedOption(requireValue("/BASE"), "/BASE");
+			if (options.imageBase == 0 || (options.imageBase & 0xffff) != 0) {
+				fail("/BASE must be a nonzero 64-KiB-aligned address");
+			}
+		} else if (optionName == "dynamicbase") {
+			options.dynamicBase = !value || lowerAscii(*value) != "no";
+		} else if (optionName == "fixed") {
+			options.dynamicBase = value && lowerAscii(*value) == "no";
+		} else if (optionName == "nodefaultlib") {
+			if (value) {
+				auto excluded = lowerAscii(fs::path(*value).filename().string());
+				if (fs::path(excluded).extension().empty()) {
+					excluded += ".lib";
+				}
+				excludedLibraries.push_back(std::move(excluded));
+			} else {
+				options.noDefaultLibraries = true;
+			}
+		} else if (optionName == "map") {
+			if (value && !value->empty()) {
+				options.mapFile = fs::path(*value);
+			} else {
+				mapUsesDefaultName = true;
+			}
+		} else if (optionName == "machine") {
+			const auto machine = lowerAscii(requireValue("/MACHINE"));
+			if (machine != "x64" && machine != "amd64") {
+				fail("JWlink2 only supports /MACHINE:X64");
+			}
+		} else if (optionName == "nologo") {
+			options.noLogo = true;
+		} else if (optionName == "nxcompat") {
+		} else if (optionName == "incremental") {
+			if (!value || lowerAscii(*value) != "no") {
+				fail("incremental linking is not supported; use /INCREMENTAL:NO");
+			}
+		} else {
+			fail("unsupported option '" + argument + "'");
+		}
+	}
+	if (options.noDefaultLibraries) {
+		options.defaultLibraries.clear();
+	} else if (!excludedLibraries.empty()) {
+		std::erase_if(options.defaultLibraries, [&](const std::string& library) {
+			auto normalized = lowerAscii(fs::path(library).filename().string());
+			if (fs::path(normalized).extension().empty()) {
+				normalized += ".lib";
+			}
+			return std::find(excludedLibraries.begin(), excludedLibraries.end(), normalized) != excludedLibraries.end();
+		});
+	}
+	if (mapUsesDefaultName && !options.mapFile) {
+		auto mapPath = options.output;
+		mapPath.replace_extension(".map");
+		options.mapFile = std::move(mapPath);
+	}
+	if (options.inputs.empty() && options.defaultLibraries.empty()) {
+		fail("no input object files or libraries were supplied; use --help for usage");
+	}
+	return options;
+}
+} // namespace
+
+int main(int argc, char** argv) {
+	try {
+		Linker(parseArguments(argc, argv)).run();
+		return 0;
+	} catch (const std::exception& error) {
+		std::cerr << "JWlink2: error: " << error.what() << '\n';
+		return 1;
+	}
+}

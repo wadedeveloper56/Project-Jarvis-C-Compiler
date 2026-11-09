@@ -1,6 +1,6 @@
 # JWlink2
 
-JWlink2 is a new, standalone AMD64 linker. Its first vertical slice reads x64 COFF `.obj` files and standard COFF `.lib` archives, extracts archive members needed to satisfy unresolved symbols, applies common AMD64 relocations, and writes a fixed-base Windows PE32+ executable.
+JWlink2 is an independent AMD64 linker that reads 64-bit COFF objects and Microsoft `.lib` archives and emits Windows PE32+ executables. The existing JWlink remains unchanged and is still the full-featured linker.
 
 ## Build
 
@@ -9,13 +9,16 @@ Build the `JWlink2` project in `source\Tools\Tools.sln` for either Win32 or x64.
 ## Usage
 
 ```text
-JWlink2 -o app.exe --entry main app.obj helpers.lib
+JWlink2 /OUT:app.exe /ENTRY:main /SUBSYSTEM:CONSOLE app.obj helpers.lib
+JWlink2 @link.rsp
 ```
 
-The default entry point is `mainCRTStartup`, falling back to `main`. The selected symbol is called directly by the Windows loader; JWlink2 does not initialize or link the C runtime yet, so the `main` fallback is for simple freestanding entry routines. Specify `--subsystem windows` for a GUI image; the default is `console`.
+The default entry point is `mainCRTStartup`, falling back to `main`. The selected symbol is called directly by the Windows loader; JWlink2 does not initialize or link the C runtime, so the `main` fallback is for freestanding entry routines. The default subsystem is console; use `/SUBSYSTEM:WINDOWS` for a GUI image.
 
-## Initial scope
+Supported options include `/OUT`, `/ENTRY`, `/SUBSYSTEM` (including a major.minor version), `/MACHINE:X64`, `/LIBPATH`, `/DEFAULTLIB`, `/NODEFAULTLIB`, `/BASE`, `/FIXED`, `/DYNAMICBASE`, `/NXCOMPAT`, `/MAP`, `/INCREMENTAL:NO`, and `@response-file`. GNU-style `-o`, `-L`, and `-l` forms are also accepted. Options with unsupported behavior fail explicitly.
 
-This version intentionally supports only AMD64 COFF objects and regular static-object members in Microsoft library archives. It supports `ADDR64`, `ADDR32`, `ADDR32NB`, `REL32`, and `REL32_1` through `REL32_5` relocations. Import-library records, DLL imports, bigobj/LTCG objects, debug data, PE base relocations/ASLR, and most PE linker options are not implemented. Unsupported architectures, malformed input, unresolved symbols, and unsupported relocations are errors. JWlink2 is not yet a replacement for JWlink or MSVC `link.exe` for general C/C++ programs.
+## Current scope
 
-The next architectural stages are import-library support and PE import/IAT generation, COMDAT and weak-symbol selection, base relocations, and broader command-line compatibility. The existing JWlink remains the full-featured linker while this implementation grows independently.
+JWlink2 supports AMD64 COFF objects, regular AMD64 object members in Microsoft archives, and short import-object members. It extracts archive members to satisfy unresolved references, generates PE import descriptors, lookup tables, IAT entries, and function thunks, and supports COMDAT selection (including associative sections) and weak externals. Supported AMD64 relocations are `ADDR64`, `ADDR32`, `ADDR32NB`, and `REL32` through `REL32_5`. `/DYNAMICBASE` emits base relocations for supported absolute addresses; `/FIXED` disables them. Map files report linked symbol addresses, including import thunks and IAT entries.
+
+Bigobj/LTCG objects, debug data, full C/C++ runtime startup, and many advanced `link.exe` options are not implemented. Unsupported architectures, malformed input, unresolved symbols, and unsupported options or relocations are errors. JWlink2 is an independently growing implementation, not yet a replacement for JWlink or MSVC `link.exe` for general C/C++ programs.
