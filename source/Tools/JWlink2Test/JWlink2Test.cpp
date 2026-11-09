@@ -271,7 +271,7 @@ public:
 
 void ModuleAnchor() {}
 
-fs::path linkerPath() {
+fs::path toolPath(const wchar_t* executableName) {
 	HMODULE module = nullptr;
 	const auto address = reinterpret_cast<LPCWSTR>(&ModuleAnchor);
 	Assert::IsTrue(GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, address, &module) != 0,
@@ -282,14 +282,17 @@ fs::path linkerPath() {
 	auto directory = fs::path(path).parent_path();
 	while (!directory.empty()) {
 		for (const auto& configuration : {L"Debug", L"Release"}) {
-			const auto candidate = directory / L"bin" / L"tools" / configuration / L"x64" / L"JWlink2.exe";
+			const auto candidate = directory / L"bin" / L"tools" / configuration / L"x64" / executableName;
 			if (fs::exists(candidate)) return candidate;
 		}
 		directory = directory.parent_path();
 	}
-	Assert::Fail(L"could not find the x64 JWlink2 build output from the test module location");
+	Assert::Fail(L"could not find the required x64 linker build output from the test module location");
 	return {};
 }
+
+fs::path jwlink2Path() { return toolPath(L"JWlink2.exe"); }
+fs::path jwlinkPath() { return toolPath(L"JWlink.exe"); }
 
 std::wstring quoteArgument(const std::wstring& value) {
 	std::wstring quoted = L"\"";
@@ -317,7 +320,7 @@ struct ProcessResult {
 	std::string output;
 };
 
-ProcessResult runLinker(const Workspace& workspace, const std::vector<std::wstring>& arguments) {
+ProcessResult runExecutable(const Workspace& workspace, const fs::path& executable, const std::vector<std::wstring>& arguments) {
 	SECURITY_ATTRIBUTES security{sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE};
 	HANDLE readPipe = nullptr;
 	HANDLE writePipe = nullptr;
@@ -330,7 +333,7 @@ ProcessResult runLinker(const Workspace& workspace, const std::vector<std::wstri
 	startup.hStdError = writePipe;
 	startup.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
 	PROCESS_INFORMATION process{};
-	std::wstring command = quoteArgument(linkerPath().wstring());
+	std::wstring command = quoteArgument(executable.wstring());
 	for (const auto& argument : arguments) {
 		command.push_back(L' ');
 		command += quoteArgument(argument);
@@ -339,7 +342,7 @@ ProcessResult runLinker(const Workspace& workspace, const std::vector<std::wstri
 	mutableCommand.push_back(L'\0');
 	const auto created = CreateProcessW(nullptr, mutableCommand.data(), nullptr, nullptr, TRUE, CREATE_NO_WINDOW, nullptr, workspace.path.c_str(), &startup, &process);
 	CloseHandle(writePipe);
-	Assert::IsTrue(created != 0, L"could not start JWlink2.exe");
+	Assert::IsTrue(created != 0, L"could not start linker process");
 	ProcessResult result;
 	char buffer[2048];
 	DWORD count = 0;
@@ -350,11 +353,15 @@ ProcessResult runLinker(const Workspace& workspace, const std::vector<std::wstri
 		TerminateProcess(process.hProcess, 0xffff);
 		WaitForSingleObject(process.hProcess, INFINITE);
 	}
-	Assert::IsTrue(wait == WAIT_OBJECT_0, L"JWlink2 did not exit within 10 seconds");
+	Assert::IsTrue(wait == WAIT_OBJECT_0, L"linker did not exit within 10 seconds");
 	GetExitCodeProcess(process.hProcess, &result.exitCode);
 	CloseHandle(process.hThread);
 	CloseHandle(process.hProcess);
 	return result;
+}
+
+ProcessResult runLinker(const Workspace& workspace, const std::vector<std::wstring>& arguments) {
+	return runExecutable(workspace, jwlink2Path(), arguments);
 }
 
 std::vector<std::wstring> outputArgs(const Workspace& workspace, const std::wstring& outputName = L"linked.exe") {
@@ -379,19 +386,40 @@ void assertFailureContains(const ProcessResult& result, const std::string& expec
 	Assert::IsTrue(result.output.find(expected) != std::string::npos, diagnostic.c_str());
 }
 
-std::size_t optionalHeader(const Bytes& image) {
-	Assert::IsTrue(image.size() >= 0x98, L"PE image is shorter than its headers");
+std::size_t peHeader(const Bytes& image) {
+	Assert::IsTrue(image.size() >= 0x40, L"PE image is shorter than its DOS header");
 	Assert::AreEqual<std::uint16_t>(0x5a4d, get16(image, 0), L"DOS signature");
-	Assert::AreEqual<std::uint32_t>(0x80, get32(image, 0x3c), L"PE signature offset");
-	Assert::AreEqual<std::uint32_t>(0x00004550, get32(image, 0x80), L"PE signature");
-	Assert::AreEqual<std::uint16_t>(0x20b, get16(image, 0x98), L"PE32+ optional header");
-	return 0x98;
+	const auto offset = static_cast<std::size_t>(get32(image, 0x3c));
+	Assert::IsTrue(offset <= image.size() && image.size() - offset >= 24, L"PE header is outside the file");
+	Assert::AreEqual<std::uint32_t>(0x00004550, get32(image, offset), L"PE signature");
+	return offset;
+}
+
+std::size_t optionalHeader(const Bytes& image) {
+	const auto pe = peHeader(image);
+	const auto coff = pe + 4;
+	const auto optional = coff + 20;
+	const auto optionalSize = get16(image, coff + 16);
+	Assert::IsTrue(optional <= image.size() && optionalSize <= image.size() - optional, L"optional header is outside the file");
+	Assert::IsTrue(optionalSize >= 2, L"optional header is missing its format field");
+	Assert::AreEqual<std::uint16_t>(0x20b, get16(image, optional), L"PE32+ optional header");
+	return optional;
+}
+
+std::size_t sectionTable(const Bytes& image) {
+	const auto pe = peHeader(image);
+	const auto coff = pe + 4;
+	return optionalHeader(image) + get16(image, coff + 16);
+}
+
+std::uint16_t peFileCharacteristics(const Bytes& image) {
+	return get16(image, peHeader(image) + 4 + 18);
 }
 
 std::size_t sectionHeader(const Bytes& image, const std::string& name) {
-	const auto optional = optionalHeader(image);
-	const auto sectionCount = get16(image, 0x86);
-	const auto table = optional + 240;
+	const auto pe = peHeader(image);
+	const auto sectionCount = get16(image, pe + 4 + 2);
+	const auto table = sectionTable(image);
 	for (std::size_t i = 0; i < sectionCount; ++i) {
 		const auto header = table + i * 40;
 		std::string sectionName(reinterpret_cast<const char*>(image.data() + header), strnlen_s(reinterpret_cast<const char*>(image.data() + header), 8));
@@ -402,8 +430,9 @@ std::size_t sectionHeader(const Bytes& image, const std::string& name) {
 }
 
 std::size_t rvaOffset(const Bytes& image, std::uint32_t rva) {
-	const auto table = optionalHeader(image) + 240;
-	const auto count = get16(image, 0x86);
+	const auto pe = peHeader(image);
+	const auto table = sectionTable(image);
+	const auto count = get16(image, pe + 4 + 2);
 	for (std::size_t i = 0; i < count; ++i) {
 		const auto section = table + i * 40;
 		const auto virtualSize = get32(image, section + 8);
@@ -478,6 +507,41 @@ public:
 		args.push_back(workspace.file(L"input.obj").wstring());
 		assertFailureContains(runLinker(workspace, args), "unsupported option '/DLL'");
 		assertNoOutput(workspace);
+	}
+
+	TEST_METHOD(RepresentativeObjectMatchesJWlinkPeBehavior) {
+		Workspace workspace;
+		const auto object = makeObject(
+			{TestSection{".text", {0xc3, 0x2a}}},
+			{TestSymbol{"main", 0, 1, 2, {}}});
+		workspace.write(L"input.obj", object);
+		auto jwlink2Args = outputArgs(workspace, L"jwlink2.exe");
+		jwlink2Args.push_back(workspace.file(L"input.obj").wstring());
+		assertSuccess(runExecutable(workspace, jwlink2Path(), jwlink2Args));
+		const auto jwlinkArgs = std::vector<std::wstring>{
+			L"format", L"win", L"pe", L"option", L"quiet,start=main",
+			L"file", workspace.file(L"input.obj").wstring(),
+			L"name", workspace.file(L"jwlink.exe").wstring()
+		};
+		assertSuccess(runExecutable(workspace, jwlinkPath(), jwlinkArgs));
+
+		const auto jwlink2Image = workspace.read(L"jwlink2.exe");
+		const auto jwlinkImage = workspace.read(L"jwlink.exe");
+		for (const auto* image : {&jwlink2Image, &jwlinkImage}) {
+			const auto optional = optionalHeader(*image);
+			const auto pe = peHeader(*image);
+			Assert::AreEqual<std::uint16_t>(0x8664, get16(*image, pe + 4), L"both linkers target AMD64");
+			Assert::IsTrue((peFileCharacteristics(*image) & 0x2000) == 0, L"both outputs are executables, not DLLs");
+			Assert::AreEqual<std::uint16_t>(3, get16(*image, optional + 68), L"both outputs use the console subsystem");
+			const auto entryRva = get32(*image, optional + 16);
+			const auto entryOffset = rvaOffset(*image, entryRva);
+			Assert::AreEqual<std::uint8_t>(0xc3, (*image)[entryOffset], L"both entry points execute the return instruction");
+			const auto text = sectionHeader(*image, ".text");
+			Assert::IsTrue(get32(*image, text + 16) >= 2, L"both images preserve initialized code bytes");
+			const auto textOffset = get32(*image, text + 20);
+			Assert::AreEqual<std::uint8_t>(0xc3, (*image)[textOffset], L"both images preserve the entry-point instruction");
+			Assert::AreEqual<std::uint8_t>(0x2a, (*image)[textOffset + 1], L"both images preserve the second code-section byte");
+		}
 	}
 
 	TEST_METHOD(Rel32ThroughRel32FiveAreAppliedWithCorrectPlaceBias) {

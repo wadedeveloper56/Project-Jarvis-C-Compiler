@@ -88,6 +88,10 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JWlink2", "JWlink2\JWlink2\JWlink2.vcxproj", "{8426ED9D-3D48-4BB2-BF91-0CCFAF02D77F}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JWlink2Test", "JWlink2Test\JWlink2Test.vcxproj", "{403C86C0-D367-719C-8540-C018ADC08718}"
+	ProjectSection(ProjectDependencies) = postProject
+		{8426ED9D-3D48-4BB2-BF91-0CCFAF02D77F} = {8426ED9D-3D48-4BB2-BF91-0CCFAF02D77F}
+		{A5BB8437-F6D6-4270-97F4-E763CF2738D8} = {A5BB8437-F6D6-4270-97F4-E763CF2738D8}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
