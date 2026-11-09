@@ -11,6 +11,7 @@
 #include <limits>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <vector>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -329,6 +330,37 @@ Bytes makeArchive(const std::vector<std::pair<std::string, Bytes>>& members) {
 	Bytes bytes(magic.begin(), magic.end());
 	for (const auto& member : members) appendArchiveMember(bytes, member.first, member.second);
 	return bytes;
+}
+
+Bytes decodeBase64(std::string_view encoded) {
+	constexpr std::string_view alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+	Bytes bytes;
+	std::uint32_t accumulator = 0;
+	unsigned int bitCount = 0;
+	for (const auto ch : encoded) {
+		if (ch == '=') break;
+		const auto value = alphabet.find(ch);
+		if (value == std::string_view::npos) throw std::runtime_error("invalid embedded MSVC archive fixture");
+		accumulator = (accumulator << 6) | static_cast<std::uint32_t>(value);
+		bitCount += 6;
+		if (bitCount >= 8) {
+			bitCount -= 8;
+			bytes.push_back(static_cast<std::uint8_t>(accumulator >> bitCount));
+			accumulator &= (std::uint32_t{1} << bitCount) - 1;
+		}
+	}
+	return bytes;
+}
+
+Bytes makeMsvcIndexedArchive() {
+	constexpr std::string_view encoded =
+		"ITxhcmNoPgovICAgICAgICAgICAgICAgMTc5NDI0MzU0MCAgICAgICAgICAgICAgMCAgICAgICAyMiAgICAgICAgYAoAAAABAAAAsmFyY2hpdmVIZWxwZXIALyAgICAgICAgICAgICAgIDE3OTQyNDM1NDAgICAgICAgICAgICAgIDAgICAgICAgMjggICAgICAgIGAKAQAAALIAAAABAAAAAQBhcmNoaXZlSGVscGVyAGhlbHBlci5vYmovICAgICAxNzk0MjQzNTQwICAgICAgICAgICAgICAxMDA2NjYgIDQ5OCAgICAgICBgCmSGAwDU+/FqPgEAAAkAAAAAAAAALnRleHQkbW4AAAAAAAAAAAEAAACMAAAAAAAAAAAAAAAAAAAAIABQYC5kYXRhAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAUMAuZGVidWckUwAAAAAAAAAAsAAAAI0AAAAAAAAAAAAAAAAAAABAABBCwwQAAADxAAAAogAAAGcAAREAAAAAQzpcZml4dHVyZVxoZWxwZXIub2JqAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADcAPBEDAgAA0AAAAAAAAAAAAA4ANQA3kAAATWljcm9zb2Z0IChSKSBNYWNybyBBc3NlbWJsZXIAAAAAAEBjb21wLmlkN5ADAf//AAADAEBmZWF0LjAwEAAAAP//AAADAC50ZXh0JG1uAAAAAAEAAAADAQEAAAAAAAAAAAAAAAAAAAAAAC5kYXRhAAAAAAAAAAIAAAADAQAAAAAAAAAAAAAAAAAAAAAAAC5kZWJ1ZyRTAAAAAAMAAAADAbAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAEAIAACABIAAABhcmNoaXZlSGVscGVyAA==";
+	return decodeBase64(encoded);
+}
+
+Bytes makeMsvcImportArchive() {
+	constexpr std::string_view encoded = "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";
+	return decodeBase64(encoded);
 }
 
 class Workspace {
@@ -837,6 +869,37 @@ public:
 		const auto iatRva = get32(image, descriptor + 16);
 		Assert::IsTrue(iatRva != 0, L"data import IAT is present");
 		Assert::IsTrue(get32(image, optionalHeader(image) + 16) != 0, L"entry RVA remains a valid section-based address");
+	}
+
+	TEST_METHOD(MsvcToolchainArchiveIndexesSelectRegularObjectMember) {
+		Workspace workspace;
+		TestSection text{".text", {0xe8, 0, 0, 0, 0, 0xc3}};
+		text.relocations = {{1, 1, 4}};
+		workspace.write(L"input.obj", makeObject({text}, {TestSymbol{"main", 0, 1, 2, {}}, TestSymbol{"archiveHelper", 0, 0, 2, {}}}));
+		workspace.write(L"toolchain.lib", makeMsvcIndexedArchive());
+		auto args = outputArgs(workspace);
+		args.push_back(workspace.file(L"input.obj").wstring());
+		args.push_back(workspace.file(L"toolchain.lib").wstring());
+		assertSuccess(runLinker(workspace, args));
+		const auto image = workspace.read(L"linked.exe");
+		const auto textHeader = sectionHeader(image, ".text");
+		const auto raw = get32(image, textHeader + 20);
+		const auto target = static_cast<std::size_t>(raw) + 5 + get32(image, raw + 1);
+		Assert::IsTrue(target < image.size(), L"MSVC archive symbol index resolves the call target within the linked image");
+		Assert::AreEqual<std::uint8_t>(0xc3, image[target], L"toolchain-generated archive member code is included");
+	}
+
+	TEST_METHOD(MalformedMsvcArchiveIndexIsRejected) {
+		Workspace workspace;
+		auto archive = makeMsvcIndexedArchive();
+		archive.at(68) = 0xff;
+		archive.at(69) = 0xff;
+		archive.at(70) = 0xff;
+		archive.at(71) = 0xff;
+		workspace.write(L"malformed.lib", archive);
+		auto args = outputArgs(workspace);
+		args.push_back(workspace.file(L"malformed.lib").wstring());
+		assertFailureContains(runLinker(workspace, args), "invalid first archive linker-member symbol count");
 	}
 
 	TEST_METHOD(StaticArchiveExtractsOnlyNeededObjectMember) {

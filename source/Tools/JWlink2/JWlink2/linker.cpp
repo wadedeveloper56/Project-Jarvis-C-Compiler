@@ -554,6 +554,17 @@ struct ArchiveMember {
 	bool selected = false;
 };
 
+struct Archive {
+	std::vector<ArchiveMember> members;
+	std::unordered_map<std::string, std::vector<std::size_t>> symbolMembers;
+	bool hasSymbolIndex = false;
+};
+
+struct PendingArchiveSymbol {
+	std::string name;
+	std::uint64_t memberOffset = 0;
+};
+
 std::size_t parseDecimal(const Bytes& bytes, std::size_t offset, std::size_t length, std::string_view what) {
 	const auto text = fixedString(bytes, offset, length);
 	const auto first = text.find_first_not_of(' ');
@@ -569,13 +580,143 @@ std::size_t parseDecimal(const Bytes& bytes, std::size_t offset, std::size_t len
 	return value;
 }
 
-std::vector<ArchiveMember> parseArchive(const Bytes& bytes, const std::string& path) {
+std::uint32_t readBigEndian32(const Bytes& bytes, std::size_t offset, std::string_view what) {
+	requireRange(bytes, offset, 4, what);
+	return (static_cast<std::uint32_t>(bytes[offset]) << 24) |
+		(static_cast<std::uint32_t>(bytes[offset + 1]) << 16) |
+		(static_cast<std::uint32_t>(bytes[offset + 2]) << 8) |
+		static_cast<std::uint32_t>(bytes[offset + 3]);
+}
+
+std::uint64_t readBigEndian64(const Bytes& bytes, std::size_t offset, std::string_view what) {
+	requireRange(bytes, offset, 8, what);
+	std::uint64_t value = 0;
+	for (std::size_t i = 0; i < 8; ++i) {
+		value = (value << 8) | bytes[offset + i];
+	}
+	return value;
+}
+
+std::vector<PendingArchiveSymbol> parseFirstLinkerMember(const Bytes& bytes, std::size_t offset, std::size_t size, const std::string& path) {
+	requireRange(bytes, offset, size, path + " first linker member");
+	if (size < 4) {
+		fail(path + ": truncated first archive linker member");
+	}
+	const auto count = readBigEndian32(bytes, offset, path + " first archive linker member");
+	if (count > (size - 4) / 4) {
+		fail(path + ": invalid first archive linker-member symbol count");
+	}
+	const auto namesOffset = offset + 4 + static_cast<std::size_t>(count) * 4;
+	const auto namesEnd = offset + size;
+	std::vector<PendingArchiveSymbol> symbols;
+	symbols.reserve(count);
+	std::size_t cursor = namesOffset;
+	for (std::uint32_t i = 0; i < count; ++i) {
+		if (cursor >= namesEnd) {
+			fail(path + ": truncated first archive linker-member names");
+		}
+		const auto end = std::find(bytes.begin() + cursor, bytes.begin() + namesEnd, 0);
+		if (end == bytes.begin() + namesEnd) {
+			fail(path + ": unterminated first archive linker-member name");
+		}
+		const auto nameEnd = static_cast<std::size_t>(end - bytes.begin());
+		const std::string name(reinterpret_cast<const char*>(bytes.data() + cursor), nameEnd - cursor);
+		const auto memberOffset = readBigEndian32(bytes, offset + 4 + static_cast<std::size_t>(i) * 4, path + " first archive linker member");
+		if (name.empty() || memberOffset < 8) {
+			fail(path + ": invalid first archive linker-member entry");
+		}
+		symbols.push_back({name, memberOffset});
+		cursor = nameEnd + 1;
+	}
+	return symbols;
+}
+
+std::vector<PendingArchiveSymbol> parseSecondLinkerMember(const Bytes& bytes, std::size_t offset, std::size_t size, const std::string& path) {
+	requireRange(bytes, offset, size, path + " second linker member");
+	if (size < 4) {
+		fail(path + ": truncated second archive linker member");
+	}
+	const auto memberCount = readLe<std::uint32_t>(bytes, offset, path + " second archive linker member");
+	if (memberCount > (size - 4) / 4) {
+		fail(path + ": invalid second archive linker-member member count");
+	}
+	const auto symbolCountOffset = offset + 4 + static_cast<std::size_t>(memberCount) * 4;
+	requireRange(bytes, symbolCountOffset, 4, path + " second archive linker member");
+	const auto symbolCount = readLe<std::uint32_t>(bytes, symbolCountOffset, path + " second archive linker member");
+	const auto indicesOffset = symbolCountOffset + 4;
+	if (symbolCount > (offset + size - indicesOffset) / 2) {
+		fail(path + ": invalid second archive linker-member symbol count");
+	}
+	const auto namesOffset = indicesOffset + static_cast<std::size_t>(symbolCount) * 2;
+	const auto namesEnd = offset + size;
+	std::vector<PendingArchiveSymbol> symbols;
+	symbols.reserve(symbolCount);
+	std::size_t cursor = namesOffset;
+	for (std::uint32_t i = 0; i < symbolCount; ++i) {
+		const auto memberIndex = readLe<std::uint16_t>(bytes, indicesOffset + static_cast<std::size_t>(i) * 2, path + " second archive linker member");
+		if (memberIndex == 0 || memberIndex > memberCount || cursor >= namesEnd) {
+			fail(path + ": invalid second archive linker-member symbol entry");
+		}
+		const auto end = std::find(bytes.begin() + cursor, bytes.begin() + namesEnd, 0);
+		if (end == bytes.begin() + namesEnd) {
+			fail(path + ": unterminated second archive linker-member name");
+		}
+		const auto nameEnd = static_cast<std::size_t>(end - bytes.begin());
+		const std::string name(reinterpret_cast<const char*>(bytes.data() + cursor), nameEnd - cursor);
+		const auto memberOffset = readLe<std::uint32_t>(bytes, offset + 4 + static_cast<std::size_t>(memberIndex - 1) * 4, path + " second archive linker member");
+		if (name.empty() || memberOffset < 8) {
+			fail(path + ": invalid second archive linker-member entry");
+		}
+		symbols.push_back({name, memberOffset});
+		cursor = nameEnd + 1;
+	}
+	return symbols;
+}
+
+std::vector<PendingArchiveSymbol> parseSym64LinkerMember(const Bytes& bytes, std::size_t offset, std::size_t size, const std::string& path) {
+	requireRange(bytes, offset, size, path + " 64-bit linker member");
+	if (size < 8) {
+		fail(path + ": truncated 64-bit archive linker member");
+	}
+	const auto count = readBigEndian64(bytes, offset, path + " 64-bit archive linker member");
+	if (count > (size - 8) / 8) {
+		fail(path + ": invalid 64-bit archive linker-member symbol count");
+	}
+	const auto namesOffset = offset + 8 + static_cast<std::size_t>(count) * 8;
+	const auto namesEnd = offset + size;
+	std::vector<PendingArchiveSymbol> symbols;
+	symbols.reserve(static_cast<std::size_t>(count));
+	std::size_t cursor = namesOffset;
+	for (std::uint64_t i = 0; i < count; ++i) {
+		if (cursor >= namesEnd) {
+			fail(path + ": truncated 64-bit archive linker-member names");
+		}
+		const auto end = std::find(bytes.begin() + cursor, bytes.begin() + namesEnd, 0);
+		if (end == bytes.begin() + namesEnd) {
+			fail(path + ": unterminated 64-bit archive linker-member name");
+		}
+		const auto nameEnd = static_cast<std::size_t>(end - bytes.begin());
+		const std::string name(reinterpret_cast<const char*>(bytes.data() + cursor), nameEnd - cursor);
+		const auto memberOffset = readBigEndian64(bytes, offset + 8 + static_cast<std::size_t>(i) * 8, path + " 64-bit archive linker member");
+		if (name.empty() || memberOffset < 8) {
+			fail(path + ": invalid 64-bit archive linker-member entry");
+		}
+		symbols.push_back({name, memberOffset});
+		cursor = nameEnd + 1;
+	}
+	return symbols;
+}
+
+Archive parseArchive(const Bytes& bytes, const std::string& path) {
 	constexpr std::string_view magic = "!<arch>\n";
 	if (bytes.size() < magic.size() || !std::equal(magic.begin(), magic.end(), bytes.begin())) {
 		fail(path + ": not a Microsoft COFF library archive");
 	}
-	std::vector<ArchiveMember> members;
+	Archive archive;
+	std::vector<PendingArchiveSymbol> pendingSymbols;
+	std::unordered_map<std::size_t, std::size_t> memberByOffset;
 	std::string longNames;
+	std::size_t linkerMemberCount = 0;
 	std::size_t position = magic.size();
 	while (position < bytes.size()) {
 		requireRange(bytes, position, 60, path + " archive member header");
@@ -592,7 +733,22 @@ std::vector<ArchiveMember> parseArchive(const Bytes& bytes, const std::string& p
 		std::string memberName = rawName;
 		if (memberName == "//") {
 			longNames.assign(reinterpret_cast<const char*>(bytes.data() + dataOffset), memberSize);
-		} else if (memberName != "/" && memberName != "/SYM64/") {
+		} else if (memberName == "/") {
+			archive.hasSymbolIndex = true;
+			if (linkerMemberCount++ == 0) {
+				auto symbols = parseFirstLinkerMember(bytes, dataOffset, memberSize, path);
+				pendingSymbols.insert(pendingSymbols.end(), std::make_move_iterator(symbols.begin()), std::make_move_iterator(symbols.end()));
+			} else if (linkerMemberCount == 2) {
+				auto symbols = parseSecondLinkerMember(bytes, dataOffset, memberSize, path);
+				pendingSymbols.insert(pendingSymbols.end(), std::make_move_iterator(symbols.begin()), std::make_move_iterator(symbols.end()));
+			} else {
+				fail(path + ": archive contains more than two Microsoft linker members");
+			}
+		} else if (memberName == "/SYM64/") {
+			archive.hasSymbolIndex = true;
+			auto symbols = parseSym64LinkerMember(bytes, dataOffset, memberSize, path);
+			pendingSymbols.insert(pendingSymbols.end(), std::make_move_iterator(symbols.begin()), std::make_move_iterator(symbols.end()));
+		} else {
 			if (memberName.size() > 1 && memberName[0] == '/' && std::isdigit(static_cast<unsigned char>(memberName[1]))) {
 				std::size_t nameOffset = 0;
 				const auto parsed = std::from_chars(memberName.data() + 1, memberName.data() + memberName.size(), nameOffset);
@@ -622,7 +778,8 @@ std::vector<ArchiveMember> parseArchive(const Bytes& bytes, const std::string& p
 					member.object = parseObject(objectBytes, path + "(" + memberName + ")");
 				}
 			}
-			members.push_back(std::move(member));
+			memberByOffset.emplace(position, archive.members.size());
+			archive.members.push_back(std::move(member));
 		}
 		position = dataOffset + memberSize;
 		if ((position & 1) != 0) {
@@ -632,7 +789,17 @@ std::vector<ArchiveMember> parseArchive(const Bytes& bytes, const std::string& p
 	if (position != bytes.size()) {
 		fail(path + ": archive ends with an incomplete member");
 	}
-	return members;
+	for (const auto& symbol : pendingSymbols) {
+		if (symbol.memberOffset > std::numeric_limits<std::size_t>::max()) {
+			fail(path + ": archive linker member references an invalid object-member offset");
+		}
+		const auto member = memberByOffset.find(static_cast<std::size_t>(symbol.memberOffset));
+		if (member == memberByOffset.end()) {
+			fail(path + ": archive linker member references an invalid object-member offset");
+		}
+		archive.symbolMembers[symbol.name].push_back(member->second);
+	}
+	return archive;
 }
 
 Bytes readFile(const fs::path& path) {
@@ -739,7 +906,7 @@ public:
 private:
 	LinkOptions options_;
 	std::vector<ObjectFile> objects_;
-	std::vector<std::vector<ArchiveMember>> archives_;
+	std::vector<Archive> archives_;
 	std::vector<OutputSection> outputSections_;
 	std::vector<std::vector<SectionMap>> sectionMaps_;
 	std::unordered_map<std::string, GlobalSymbol> globals_;
@@ -1037,7 +1204,21 @@ private:
 			bool added = false;
 			for (std::size_t archiveIndex = 0; archiveIndex < archives_.size(); ++archiveIndex) {
 				auto& archive = archives_[archiveIndex];
-				for (auto& member : archive) {
+				std::set<std::size_t> candidateMembers;
+				if (archive.hasSymbolIndex) {
+					for (const auto& name : unresolved) {
+						const auto indexed = archive.symbolMembers.find(name);
+						if (indexed != archive.symbolMembers.end()) {
+							candidateMembers.insert(indexed->second.begin(), indexed->second.end());
+						}
+					}
+				} else {
+					for (std::size_t memberIndex = 0; memberIndex < archive.members.size(); ++memberIndex) {
+						candidateMembers.insert(memberIndex);
+					}
+				}
+				for (const auto memberIndex : candidateMembers) {
+					auto& member = archive.members.at(memberIndex);
 					if (member.selected) {
 						continue;
 					}
