@@ -1116,6 +1116,33 @@ public:
 		Assert::IsTrue(fs::exists(workspace.file(L"short.map")), L"/MAP creates a map beside the executable");
 	}
 
+	TEST_METHOD(LtcgAndLlvmBitcodeInputsAreExplicitlyUnsupported) {
+		Workspace rawWorkspace;
+		const auto rawBitcode = Bytes{'B', 'C', 0xc0, 0xde, 0x00, 0x00, 0x00, 0x00};
+		rawWorkspace.write(L"input.obj", rawBitcode);
+		auto args = outputArgs(rawWorkspace);
+		args.push_back(rawWorkspace.file(L"input.obj").wstring());
+		assertFailureContains(runLinker(rawWorkspace, args), "LLVM bitcode/LTCG input is not supported");
+		assertNoOutput(rawWorkspace);
+
+		Workspace wrappedWorkspace;
+		const auto wrappedBitcode = Bytes{0xde, 0xc0, 0x17, 0x0b, 0x00, 0x00, 0x00, 0x00};
+		wrappedWorkspace.write(L"input.obj", wrappedBitcode);
+		auto wrappedArgs = outputArgs(wrappedWorkspace);
+		wrappedArgs.push_back(wrappedWorkspace.file(L"input.obj").wstring());
+		assertFailureContains(runLinker(wrappedWorkspace, wrappedArgs), "LLVM bitcode/LTCG input is not supported");
+
+		Workspace sectionWorkspace;
+		const auto sectionObject = makeObject({TestSection{".llvmbc", rawBitcode, 0x40000040}, TestSection{".text", {0xc3}}},
+			{TestSymbol{"main", 0, 2, 2, {}}});
+		assertFailureContains(linkObject(sectionWorkspace, sectionObject), "LLVM bitcode/LTCG section '.llvmbc' is not supported");
+
+		Workspace archiveWorkspace;
+		archiveWorkspace.write(L"input.lib", makeArchive({{"module.obj", rawBitcode}}));
+		assertFailureContains(runLinker(archiveWorkspace, {L"/OUT:" + archiveWorkspace.file(L"linked.exe").wstring(), archiveWorkspace.file(L"input.lib").wstring()}),
+			"input.lib(module.obj): LLVM bitcode/LTCG input is not supported");
+	}
+
 	TEST_METHOD(MalformedTruncatedObjectReportsErrorAndWritesNoImage) {
 		Workspace workspace;
 		workspace.write(L"input.obj", Bytes{0x64, 0x86, 0x01});

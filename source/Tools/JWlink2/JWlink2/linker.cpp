@@ -229,6 +229,22 @@ ImportedSymbol parseImportObject(const Bytes& bytes, const std::string& path) {
 	return result;
 }
 
+bool hasBitcodeMagic(const Bytes& bytes, std::size_t offset, std::size_t size) {
+	if (size < 4 || offset > bytes.size() || size > bytes.size() - offset) {
+		return false;
+	}
+	const auto* data = bytes.data() + offset;
+	const bool rawBitcode = data[0] == 0x42 && data[1] == 0x43 && data[2] == 0xc0 && data[3] == 0xde;
+	const bool wrappedBitcode = data[0] == 0xde && data[1] == 0xc0 && data[2] == 0x17 && data[3] == 0x0b;
+	return rawBitcode || wrappedBitcode;
+}
+
+void rejectBitcode(const Bytes& bytes, std::size_t offset, std::size_t size, const std::string& inputName) {
+	if (hasBitcodeMagic(bytes, offset, size)) {
+		fail(inputName + ": LLVM bitcode/LTCG input is not supported; compile without LTO or provide native AMD64 COFF objects");
+	}
+}
+
 std::uint32_t coffNameOffset(const Bytes& bytes, std::size_t offset) {
 	if (bytes[offset] == '/' && bytes[offset + 1] != 0) {
 		std::string text = fixedString(bytes, offset + 1, 7);
@@ -405,6 +421,10 @@ ObjectFile parseObject(const Bytes& bytes, std::string name) {
 		}
 		if (sectionName.empty()) {
 			fail(object.name + ": section with an empty name");
+		}
+		const auto normalizedSectionName = lowerAscii(sectionName);
+		if (normalizedSectionName == ".llvmbc" || normalizedSectionName == ".llvm.lto" || normalizedSectionName.rfind(".lto$", 0) == 0) {
+			fail(object.name + ": LLVM bitcode/LTCG section '" + sectionName + "' is not supported; compile without LTO or provide native AMD64 COFF objects");
 		}
 		InputSection section;
 		section.name = std::move(sectionName);
@@ -586,6 +606,7 @@ std::vector<ArchiveMember> parseArchive(const Bytes& bytes, const std::string& p
 			}
 			ArchiveMember member;
 			member.name = memberName;
+			rejectBitcode(bytes, dataOffset, memberSize, path + "(" + memberName + ")");
 			if (memberSize >= 20) {
 				const auto machine = readLe<std::uint16_t>(bytes, dataOffset, path);
 				const auto signature = readLe<std::uint16_t>(bytes, dataOffset + 2, path);
@@ -864,6 +885,7 @@ private:
 	void loadInput(const fs::path& inputPath) {
 		const auto path = resolveInputPath(inputPath);
 		const auto bytes = readFile(path);
+		rejectBitcode(bytes, 0, bytes.size(), path.string());
 		if (bytes.size() >= 8 && std::string_view(reinterpret_cast<const char*>(bytes.data()), 8) == "!<arch>\n") {
 			auto archive = parseArchive(bytes, path.string());
 			archives_.push_back(std::move(archive));
