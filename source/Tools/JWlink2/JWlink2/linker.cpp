@@ -277,46 +277,6 @@ std::uint64_t parseDirectiveNumber(std::string_view text, const std::string& obj
 	return value;
 }
 
-ExportDirective parseExportDirective(std::string_view value, const std::string& objectName) {
-	ExportDirective directive;
-	const auto firstComma = value.find(',');
-	const auto symbol = value.substr(0, firstComma);
-	const auto equals = symbol.find('=');
-	directive.name = std::string(symbol.substr(0, equals));
-	directive.internalName = equals == std::string_view::npos ? directive.name : std::string(symbol.substr(equals + 1));
-	if (directive.name.empty() || directive.internalName.empty()) {
-		fail(objectName + ": .drectve /EXPORT requires a public and internal symbol name");
-	}
-	bool ordinalSpecified = false;
-	std::size_t cursor = firstComma;
-	while (cursor != std::string_view::npos) {
-		const auto next = value.find(',', cursor + 1);
-		const auto attribute = value.substr(cursor + 1, next == std::string_view::npos ? std::string_view::npos : next - cursor - 1);
-		const auto normalized = lowerAscii(std::string(attribute));
-		if (normalized == "noname") {
-			directive.noname = true;
-		} else if (normalized == "data" || normalized == "private") {
-		} else if (!attribute.empty() && attribute.front() == '@') {
-			if (ordinalSpecified) {
-				fail(objectName + ": .drectve /EXPORT specifies more than one ordinal");
-			}
-			ordinalSpecified = true;
-			const auto ordinal = parseDirectiveNumber(attribute.substr(1), objectName, "/EXPORT ordinal");
-			if (ordinal == 0 || ordinal > std::numeric_limits<std::uint16_t>::max()) {
-				fail(objectName + ": .drectve /EXPORT ordinal must be between 1 and 65535");
-			}
-			directive.ordinal = static_cast<std::uint16_t>(ordinal);
-		} else {
-			fail(objectName + ": unsupported .drectve /EXPORT attribute '" + std::string(attribute) + "'");
-		}
-		cursor = next;
-	}
-	if (directive.noname && !directive.ordinal) {
-		fail(objectName + ": .drectve /EXPORT NONAME requires an ordinal");
-	}
-	return directive;
-}
-
 std::vector<std::string> tokenizeDirectives(const Bytes& bytes, const std::string& objectName) {
 	std::vector<std::string> tokens;
 	std::string token;
@@ -873,6 +833,8 @@ struct ExportOutput {
 	std::string internalName;
 	std::uint16_t ordinal = 0;
 	bool noname = false;
+	bool data = false;
+	bool privateExport = false;
 	std::size_t addressOffset = 0;
 	std::size_t nameOffset = 0;
 	std::size_t ordinalOffset = 0;
@@ -888,6 +850,10 @@ public:
 	explicit Linker(LinkOptions options) : options_(std::move(options)) {}
 
 	void run() {
+		if (options_.importLibrary && lowerAscii(fs::absolute(*options_.importLibrary).lexically_normal().string()) == lowerAscii(fs::absolute(options_.output).lexically_normal().string())) {
+			fail("import-library output path must differ from the image output path");
+		}
+		loadDefinitionFile();
 		loadInputs();
 		resolveLibraries();
 		validateUnresolvedSymbols();
@@ -896,6 +862,9 @@ public:
 		prepareImports();
 		resolveGlobals();
 		prepareExports();
+		if (options_.importLibrarySpecified && std::none_of(exportRecords_.begin(), exportRecords_.end(), [](const ExportOutput& record) { return !record.privateExport; })) {
+			fail("/IMPLIB requested but the DLL has no importable exports");
+		}
 		prepareBaseRelocations();
 		layoutImage();
 		applyRelocations();
@@ -1010,6 +979,10 @@ private:
 			if (!defined.contains(*options_.entry)) {
 				unresolved.insert(*options_.entry);
 			}
+		} else if (options_.dll) {
+			if (!options_.noEntry && !defined.contains("DllMainCRTStartup")) {
+				unresolved.insert("DllMainCRTStartup");
+			}
 		} else if (!defined.contains("mainCRTStartup") && !defined.contains("main")) {
 			unresolved.insert("mainCRTStartup");
 		}
@@ -1017,7 +990,10 @@ private:
 	}
 
 	void validateUnresolvedSymbols() const {
-		const auto unresolved = unresolvedNames();
+		auto unresolved = unresolvedNames();
+		if (options_.dll && !options_.entry && !options_.noEntry) {
+			unresolved.erase("DllMainCRTStartup");
+		}
 		if (unresolved.empty()) {
 			return;
 		}
@@ -1107,6 +1083,9 @@ private:
 			if (value.empty()) {
 				fail(objectName + ": .drectve /ENTRY requires a symbol name");
 			}
+			if (options_.noEntry) {
+				fail("/NOENTRY conflicts with .drectve /ENTRY");
+			}
 			if (!options_.entrySpecified) {
 				if (options_.entry && *options_.entry != value) {
 					fail("conflicting .drectve /ENTRY values '" + *options_.entry + "' and '" + value + "'");
@@ -1181,6 +1160,58 @@ private:
 			if (loadedDefaultLibraryPaths_.insert(identity).second) {
 				loadInput(resolvedPath);
 			}
+		}
+	}
+
+	void loadDefinitionFile() {
+		if (!options_.definitionFile) {
+			return;
+		}
+		std::ifstream input(*options_.definitionFile);
+		if (!input) {
+			fail("cannot open definition file '" + options_.definitionFile->string() + "'");
+		}
+		bool inExports = false;
+		std::string line;
+		std::size_t lineNumber = 0;
+		while (std::getline(input, line)) {
+			++lineNumber;
+			const auto comment = line.find(';');
+			if (comment != std::string::npos) line.resize(comment);
+			std::istringstream words(line);
+			std::vector<std::string> tokens;
+			for (std::string token; words >> token;) {
+				if (token.size() >= 2 && token.front() == '"' && token.back() == '"') token = token.substr(1, token.size() - 2);
+				tokens.push_back(std::move(token));
+			}
+			if (tokens.empty()) continue;
+			const auto keyword = lowerAscii(tokens.front());
+			if (keyword == "library" || keyword == "name") {
+				if (tokens.size() != 2 || tokens[1].empty()) {
+					fail(options_.definitionFile->string() + ":" + std::to_string(lineNumber) + ": " + tokens.front() + " requires exactly one module name");
+				}
+				options_.moduleName = tokens[1];
+				continue;
+			}
+			if (keyword == "exports") {
+				inExports = true;
+				tokens.erase(tokens.begin());
+				if (tokens.empty()) continue;
+			} else if (!inExports) {
+				fail(options_.definitionFile->string() + ":" + std::to_string(lineNumber) + ": unsupported .def statement '" + tokens.front() + "'");
+			}
+			std::string specification = tokens.front();
+			for (std::size_t i = 1; i < tokens.size(); ++i) {
+				const auto attribute = lowerAscii(tokens[i]);
+				if (tokens[i].empty() || (tokens[i][0] != '@' && attribute != "noname" && attribute != "data" && attribute != "private")) {
+					fail(options_.definitionFile->string() + ":" + std::to_string(lineNumber) + ": unsupported .def export attribute '" + tokens[i] + "'");
+				}
+				specification += "," + tokens[i];
+			}
+			options_.exports.push_back(parseExportDirective(specification, options_.definitionFile->string() + ":" + std::to_string(lineNumber)));
+		}
+		if (!input.eof() && input.fail()) {
+			fail("failed reading definition file '" + options_.definitionFile->string() + "'");
 		}
 	}
 
@@ -1565,6 +1596,8 @@ private:
 			output.internalName = directive.internalName;
 			output.ordinal = ordinal;
 			output.noname = directive.noname;
+			output.data = directive.data;
+			output.privateExport = directive.privateExport;
 			exportRecords_.push_back(std::move(output));
 		}
 		std::sort(exportRecords_.begin(), exportRecords_.end(), [](const ExportOutput& left, const ExportOutput& right) { return left.name < right.name; });
@@ -1589,7 +1622,7 @@ private:
 		exportOrdinalsOffset_ = exportNamesOffset_ + namedCount * 4;
 		exportModuleNameOffset_ = exportOrdinalsOffset_ + namedCount * 2;
 		section.data.resize(exportModuleNameOffset_, 0);
-		const auto moduleName = options_.output.filename().string();
+		const auto moduleName = dllModuleName();
 		section.data.insert(section.data.end(), moduleName.begin(), moduleName.end());
 		section.data.push_back(0);
 		for (auto& record : exportRecords_) {
@@ -1922,10 +1955,25 @@ private:
 		return options_.imageBase + outputSections_.at(mapping.outputIndex).rva + mapping.offset + definingSymbol.value;
 	}
 
+	std::string dllModuleName() const {
+		if (!options_.moduleName.empty()) {
+			auto name = fs::path(options_.moduleName).filename().string();
+			if (fs::path(name).extension().empty()) name += ".dll";
+			return name;
+		}
+		return options_.output.filename().string();
+	}
+
 	std::uint32_t entryRva() const {
+		if (options_.dll && options_.noEntry) {
+			return 0;
+		}
 		std::string entry;
 		if (options_.entry) {
 			entry = *options_.entry;
+		} else if (options_.dll) {
+			if (!globals_.contains("DllMainCRTStartup")) return 0;
+			entry = "DllMainCRTStartup";
 		} else if (globals_.contains("mainCRTStartup")) {
 			entry = "mainCRTStartup";
 		} else if (globals_.contains("main")) {
@@ -2143,6 +2191,136 @@ private:
 		}
 	}
 
+	void writeImportLibrary() {
+		if (!options_.dll || exportRecords_.empty()) {
+			if (options_.importLibrarySpecified && exportRecords_.empty()) {
+				fail("/IMPLIB requested but the DLL has no exports");
+			}
+			return;
+		}
+		std::vector<const ExportOutput*> exported;
+		for (const auto& record : exportRecords_) {
+			if (!record.privateExport) exported.push_back(&record);
+		}
+		if (exported.empty()) {
+			if (options_.importLibrarySpecified) fail("/IMPLIB requested but all DLL exports are PRIVATE");
+			return;
+		}
+		struct ImportMember {
+			std::string name;
+			Bytes contents;
+		};
+		struct ArchiveSymbol {
+			std::string name;
+			std::size_t memberIndex;
+		};
+		const auto dllName = dllModuleName();
+		std::vector<ImportMember> members;
+		std::vector<ArchiveSymbol> symbols;
+		std::set<std::string> indexedNames;
+		for (const auto* record : exported) {
+			if (record->name.rfind("__imp_", 0) == 0 || !indexedNames.insert(record->name).second || !indexedNames.insert("__imp_" + record->name).second) {
+				fail("DLL export names conflict in the generated import library");
+			}
+			Bytes importObject(20, 0);
+			const auto importNameType = record->noname ? 0u : 1u;
+			const auto typeInfo = static_cast<std::uint16_t>((record->data ? 1u : 0u) | (importNameType << 2));
+			writeLe(importObject, 0, std::uint16_t{0});
+			writeLe(importObject, 2, std::uint16_t{0xffff});
+			writeLe(importObject, 4, std::uint16_t{0});
+			writeLe(importObject, 6, MachineAmd64);
+			writeLe(importObject, 8, std::uint32_t{0});
+			writeLe(importObject, 16, record->noname ? record->ordinal : std::uint16_t{0});
+			writeLe(importObject, 18, typeInfo);
+			Bytes strings;
+			strings.insert(strings.end(), record->name.begin(), record->name.end());
+			strings.push_back(0);
+			strings.insert(strings.end(), dllName.begin(), dllName.end());
+			strings.push_back(0);
+			writeLe(importObject, 12, toU32(strings.size(), "import-object string size"));
+			importObject.insert(importObject.end(), strings.begin(), strings.end());
+			const auto memberIndex = members.size();
+			members.push_back({"imp" + std::to_string(memberIndex) + ".obj", std::move(importObject)});
+			symbols.push_back({record->name, memberIndex});
+			symbols.push_back({"__imp_" + record->name, memberIndex});
+		}
+		std::sort(symbols.begin(), symbols.end(), [](const ArchiveSymbol& left, const ArchiveSymbol& right) { return left.name < right.name; });
+		if (members.size() > std::numeric_limits<std::uint16_t>::max()) {
+			fail("generated import library exceeds the Microsoft archive index limit");
+		}
+		auto appendLe32 = [](Bytes& bytes, std::uint32_t value) {
+			const auto offset = bytes.size();
+			bytes.resize(offset + 4, 0);
+			writeLe(bytes, offset, value);
+		};
+		auto appendBe32 = [](Bytes& bytes, std::uint32_t value) {
+			bytes.push_back(static_cast<std::uint8_t>(value >> 24));
+			bytes.push_back(static_cast<std::uint8_t>(value >> 16));
+			bytes.push_back(static_cast<std::uint8_t>(value >> 8));
+			bytes.push_back(static_cast<std::uint8_t>(value));
+		};
+		auto symbolNamesSize = [&]() {
+			std::size_t size = 0;
+			for (const auto& symbol : symbols) size += symbol.name.size() + 1;
+			return size;
+		};
+		const auto namesSize = symbolNamesSize();
+		const auto firstSize = 4 + symbols.size() * 4 + namesSize;
+		const auto secondSize = 4 + members.size() * 4 + 4 + symbols.size() * 2 + namesSize;
+		auto paddedMemberSize = [](std::size_t size) { return size + (size & 1); };
+		std::vector<std::uint32_t> memberOffsets(members.size());
+		std::size_t nextMemberOffset = 8 + 60 + paddedMemberSize(firstSize) + 60 + paddedMemberSize(secondSize);
+		for (std::size_t i = 0; i < members.size(); ++i) {
+			memberOffsets[i] = toU32(nextMemberOffset, "import-library member offset");
+			nextMemberOffset += 60 + paddedMemberSize(members[i].contents.size());
+		}
+		Bytes firstIndex;
+		appendBe32(firstIndex, toU32(symbols.size(), "archive symbol count"));
+		for (const auto& symbol : symbols) appendBe32(firstIndex, memberOffsets[symbol.memberIndex]);
+		for (const auto& symbol : symbols) {
+			firstIndex.insert(firstIndex.end(), symbol.name.begin(), symbol.name.end());
+			firstIndex.push_back(0);
+		}
+		Bytes secondIndex;
+		appendLe32(secondIndex, toU32(members.size(), "archive member count"));
+		for (const auto offset : memberOffsets) appendLe32(secondIndex, offset);
+		appendLe32(secondIndex, toU32(symbols.size(), "archive symbol count"));
+		for (const auto& symbol : symbols) {
+			const auto index = static_cast<std::uint16_t>(symbol.memberIndex + 1);
+			secondIndex.push_back(static_cast<std::uint8_t>(index));
+			secondIndex.push_back(static_cast<std::uint8_t>(index >> 8));
+		}
+		for (const auto& symbol : symbols) {
+			secondIndex.insert(secondIndex.end(), symbol.name.begin(), symbol.name.end());
+			secondIndex.push_back(0);
+		}
+		Bytes archive{'!', '<', 'a', 'r', 'c', 'h', '>', '\n'};
+		auto appendField = [](Bytes& bytes, std::string value, std::size_t width) {
+			if (value.size() > width) fail("generated archive header field is too long");
+			value.resize(width, ' ');
+			bytes.insert(bytes.end(), value.begin(), value.end());
+		};
+		auto appendMember = [&](const std::string& name, const Bytes& contents) {
+			appendField(archive, name, 16);
+			appendField(archive, "0", 12);
+			appendField(archive, "0", 6);
+			appendField(archive, "0", 6);
+			appendField(archive, "100644", 8);
+			appendField(archive, std::to_string(contents.size()), 10);
+			archive.push_back('`');
+			archive.push_back('\n');
+			archive.insert(archive.end(), contents.begin(), contents.end());
+			if ((archive.size() & 1) != 0) archive.push_back('\n');
+		};
+		appendMember("/", firstIndex);
+		appendMember("/", secondIndex);
+		for (const auto& member : members) appendMember(member.name + "/", member.contents);
+		std::ofstream output(*options_.importLibrary, std::ios::binary | std::ios::trunc);
+		if (!output) fail("cannot create import library '" + options_.importLibrary->string() + "'");
+		output.write(reinterpret_cast<const char*>(archive.data()), static_cast<std::streamsize>(archive.size()));
+		if (!output) fail("failed writing import library '" + options_.importLibrary->string() + "'");
+	}
+
 	void writeImage() {
 		const auto headersSize = alignUp(0x80u + 4u + 20u + 240u + outputSections_.size() * 40u, options_.fileAlignment);
 		std::size_t fileSize = headersSize;
@@ -2179,7 +2357,7 @@ private:
 		writeLe(image, coff, MachineAmd64);
 		writeLe(image, coff + 2, static_cast<std::uint16_t>(outputSections_.size()));
 		writeLe(image, coff + 16, std::uint16_t{240});
-		const auto fileCharacteristics = static_cast<std::uint16_t>(0x0022 | (relocationDirectorySize_ == 0 ? 0x0001 : 0));
+		const auto fileCharacteristics = static_cast<std::uint16_t>(0x0022 | (options_.dll ? 0x2000 : 0) | (relocationDirectorySize_ == 0 ? 0x0001 : 0));
 		writeLe(image, coff + 18, fileCharacteristics);
 		const std::size_t optional = coff + 20;
 		writeLe(image, optional, std::uint16_t{0x020b});
@@ -2281,6 +2459,7 @@ private:
 				fail("failed writing map file '" + options_.mapFile->string() + "'");
 			}
 		}
+		writeImportLibrary();
 		std::cout << "JWlink2: wrote " << options_.output.string() << " (" << image.size() << " bytes)\n";
 	}
 };

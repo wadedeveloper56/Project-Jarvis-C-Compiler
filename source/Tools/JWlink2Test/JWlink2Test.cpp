@@ -708,14 +708,117 @@ public:
 		Assert::IsTrue((get16(image, 0x96) & 0x2000) == 0, L"supported output is a PE executable, not a DLL");
 	}
 
-	TEST_METHOD(DllOutputIsOutsideSupportedBoundary) {
+
+	TEST_METHOD(DllExportsGenerateRoundTrippableImportLibrary) {
 		Workspace workspace;
-		workspace.write(L"input.obj", makeEntryObject());
-		auto args = outputArgs(workspace);
-		args.insert(args.begin(), L"/DLL");
-		args.push_back(workspace.file(L"input.obj").wstring());
-		assertFailureContains(runLinker(workspace, args), "unsupported option '/DLL'");
-		assertNoOutput(workspace);
+		workspace.write(L"dll.obj", makeObject({TestSection{".text", {0xc3}}}, {TestSymbol{"api", 0, 1, 2, {}}}));
+		assertSuccess(runLinker(workspace, {L"/DLL", L"/EXPORT:api", L"/IMPLIB:api-imports.lib", workspace.file(L"dll.obj").wstring()}));
+		const auto dll = workspace.read(L"a.dll");
+		const auto pe = peHeader(dll);
+		const auto optional = optionalHeader(dll);
+		Assert::IsTrue((get16(dll, pe + 22) & 0x2000) != 0, L"DLL characteristic is set");
+		Assert::AreEqual<std::uint32_t>(0, get32(dll, optional + 16), L"DLL without a startup routine has no entry point");
+		const auto exportRva = get32(dll, optional + 112);
+		Assert::IsTrue(exportRva != 0, L"export directory is present");
+		const auto exportDirectory = rvaOffset(dll, exportRva);
+		Assert::IsTrue(cStringAtRva(dll, get32(dll, exportDirectory + 12)) == "a.dll", L"export directory module name");
+		Assert::IsTrue(fs::exists(workspace.file(L"api-imports.lib")), L"/IMPLIB selects the generated import-library path");
+
+		TestSection clientText{".text", Bytes(16, 0)};
+		clientText.relocations = {{0, 1, 4}, {8, 2, 4}};
+		workspace.write(L"client.obj", makeObject({clientText}, {TestSymbol{"main", 0, 1, 2, {}}, TestSymbol{"api", 0, 0, 2, {}}, TestSymbol{"__imp_api", 0, 0, 2, {}}}));
+		assertSuccess(runLinker(workspace, {L"/OUT:" + workspace.file(L"client.exe").wstring(), L"/ENTRY:main", workspace.file(L"client.obj").wstring(), workspace.file(L"api-imports.lib").wstring()}));
+		const auto client = workspace.read(L"client.exe");
+		const auto clientTextHeader = sectionHeader(client, ".text");
+		const auto textRaw = get32(client, clientTextHeader + 20);
+		const auto textRva = get32(client, clientTextHeader + 12);
+		const auto apiThunkRva = static_cast<std::uint32_t>(static_cast<std::int64_t>(textRva) + 4 + static_cast<std::int32_t>(get32(client, textRaw)));
+		const auto apiOffset = rvaOffset(client, apiThunkRva);
+		Assert::AreEqual<std::uint8_t>(0xff, client[apiOffset], L"import library provides a callable function thunk");
+		const auto importRva = get32(client, optionalHeader(client) + 120);
+		Assert::IsTrue(importRva != 0, L"round-trip link includes import descriptors");
+		const auto descriptor = rvaOffset(client, importRva);
+		Assert::IsTrue(cStringAtRva(client, get32(client, descriptor + 12)) == "a.dll", L"generated import object names its DLL");
+	}
+
+	TEST_METHOD(DefinitionFileAndDllEntryPointOptionsAreHonored) {
+		Workspace workspace;
+		TestSection text{".text", {0xc3, 0xc3}};
+		TestSection data{".data", {0x5a}, 0xc0000040};
+		workspace.write(L"dll.obj", makeObject({text, data}, {
+			TestSymbol{"DllMainCRTStartup", 0, 1, 2, {}}, TestSymbol{"internalFn", 1, 1, 2, {}}, TestSymbol{"globalData", 0, 2, 2, {}}
+		}));
+		workspace.writeText(L"module.def", L"LIBRARY fixture\nEXPORTS\n api=internalFn @5\n table=globalData @8 DATA\n ordinal=internalFn @11 NONAME\n hidden=internalFn PRIVATE\n");
+		assertSuccess(runLinker(workspace, {L"/DLL", L"/DEF:" + workspace.file(L"module.def").wstring(), L"/OUT:" + workspace.file(L"custom.dll").wstring(), workspace.file(L"dll.obj").wstring()}));
+		const auto dll = workspace.read(L"custom.dll");
+		const auto optional = optionalHeader(dll);
+		const auto entryRva = get32(dll, optional + 16);
+		Assert::AreEqual<std::uint32_t>(get32(dll, sectionHeader(dll, ".text") + 12), entryRva, L"DLL defaults to DllMainCRTStartup when present");
+		const auto exportDirectory = rvaOffset(dll, get32(dll, optional + 112));
+		Assert::IsTrue(cStringAtRva(dll, get32(dll, exportDirectory + 12)) == "fixture.dll", L".def LIBRARY name controls the export module name");
+		Assert::AreEqual<std::uint32_t>(11, get32(dll, exportDirectory + 20), L"export ordinal table spans assigned ordinals");
+		Assert::AreEqual<std::uint32_t>(3, get32(dll, exportDirectory + 24), L"named exports include DATA and PRIVATE but omit NONAME");
+		Assert::IsTrue(fs::exists(workspace.file(L"custom.lib")), L".def DLL emits the default import library");
+
+		TestSection clientText{".text", Bytes(20, 0)};
+		clientText.relocations = {{0, 1, 4}, {8, 2, 4}, {16, 3, 4}};
+		workspace.write(L"client.obj", makeObject({clientText}, {TestSymbol{"main", 0, 1, 2, {}}, TestSymbol{"api", 0, 0, 2, {}}, TestSymbol{"__imp_table", 0, 0, 2, {}}, TestSymbol{"ordinal", 0, 0, 2, {}}}));
+		assertSuccess(runLinker(workspace, {L"/OUT:" + workspace.file(L"client.exe").wstring(), L"/ENTRY:main", workspace.file(L"client.obj").wstring(), workspace.file(L"custom.lib").wstring()}));
+		const auto client = workspace.read(L"client.exe");
+		const auto importRva = get32(client, optionalHeader(client) + 120);
+		const auto descriptor = rvaOffset(client, importRva);
+		Assert::IsTrue(cStringAtRva(client, get32(client, descriptor + 12)) == "fixture.dll", L".def module name is carried into generated imports");
+		const auto clientTextHeader = sectionHeader(client, ".text");
+		const auto textRaw = get32(client, clientTextHeader + 20);
+		const auto textRva = get32(client, clientTextHeader + 12);
+		const auto dataIatRva = static_cast<std::uint32_t>(static_cast<std::int64_t>(textRva) + 12 + static_cast<std::int32_t>(get32(client, textRaw + 8)));
+		const auto lookupOffset = rvaOffset(client, get32(client, descriptor));
+		const auto iatRva = get32(client, descriptor + 16);
+		bool foundDataImport = false;
+		for (std::size_t index = 0;; ++index) {
+			const auto nameRva = get64(client, lookupOffset + index * 8);
+			if (nameRva == 0) break;
+			if ((nameRva & (std::uint64_t{1} << 63)) != 0) continue;
+			const auto nameOffset = rvaOffset(client, static_cast<std::uint32_t>(nameRva)) + 2;
+			const std::string importedName(reinterpret_cast<const char*>(client.data() + nameOffset));
+			if (importedName == "table") {
+				Assert::AreEqual<std::uint32_t>(iatRva + static_cast<std::uint32_t>(index * 8), dataIatRva, L"DATA import resolves exactly to its generated IAT slot");
+				foundDataImport = true;
+			}
+		}
+		Assert::IsTrue(foundDataImport, L"DATA import is present in the generated lookup table");
+		const auto ordinalLookup = rvaOffset(client, get32(client, descriptor));
+		bool foundOrdinalImport = false;
+		for (std::size_t index = 0;; ++index) {
+			const auto thunk = get64(client, ordinalLookup + index * 8);
+			if (thunk == 0) break;
+			if ((thunk & (std::uint64_t{1} << 63)) != 0 && (thunk & 0xffff) == 11) foundOrdinalImport = true;
+		}
+		Assert::IsTrue(foundOrdinalImport, L"NONAME export is imported by its assigned ordinal");
+		TestSection privateText{".text", Bytes(8, 0)};
+		privateText.relocations = {{0, 1, 4}};
+		workspace.write(L"private-client.obj", makeObject({privateText}, {TestSymbol{"main", 0, 1, 2, {}}, TestSymbol{"hidden", 0, 0, 2, {}}}));
+		assertFailureContains(runLinker(workspace, {L"/OUT:" + workspace.file(L"private-client.exe").wstring(), L"/ENTRY:main", workspace.file(L"private-client.obj").wstring(), workspace.file(L"custom.lib").wstring()}), "unresolved external symbol 'hidden'");
+	}
+
+	TEST_METHOD(DllNoEntryAndInvalidImportLibraryRequestsAreHandled) {
+		Workspace workspace;
+		workspace.write(L"dll.obj", makeObject({TestSection{".text", {0xc3}}}, {TestSymbol{"api", 0, 1, 2, {}}}));
+		assertSuccess(runLinker(workspace, {L"/DLL", L"/NOENTRY", L"/EXPORT:api", L"/OUT:" + workspace.file(L"noentry.dll").wstring(), workspace.file(L"dll.obj").wstring()}));
+		const auto noEntryImage = workspace.read(L"noentry.dll");
+		Assert::AreEqual<std::uint32_t>(0, get32(noEntryImage, optionalHeader(noEntryImage) + 16), L"/NOENTRY leaves the DLL entry RVA zero");
+		assertSuccess(runLinker(workspace, {L"/DLL", L"/ENTRY:api", L"/EXPORT:api", L"/OUT:" + workspace.file(L"explicit.dll").wstring(), workspace.file(L"dll.obj").wstring()}));
+		const auto explicitEntryImage = workspace.read(L"explicit.dll");
+		Assert::AreEqual<std::uint32_t>(get32(explicitEntryImage, sectionHeader(explicitEntryImage, ".text") + 12), get32(explicitEntryImage, optionalHeader(explicitEntryImage) + 16), L"/ENTRY selects an explicit DLL entry point");
+		Workspace invalidWorkspace;
+		invalidWorkspace.write(L"plain.obj", makeEntryObject());
+		assertFailureContains(runLinker(invalidWorkspace, {L"/DLL", L"/IMPLIB:requested.lib", L"/OUT:" + invalidWorkspace.file(L"empty.dll").wstring(), invalidWorkspace.file(L"plain.obj").wstring()}), "DLL has no importable exports");
+		assertNoOutput(invalidWorkspace, L"empty.dll");
+		Assert::IsFalse(fs::exists(invalidWorkspace.file(L"requested.lib")), L"failed DLL link does not create an import library");
+		assertFailureContains(runLinker(invalidWorkspace, {L"/DLL", L"/NOENTRY", L"/ENTRY:main", invalidWorkspace.file(L"plain.obj").wstring()}), "/NOENTRY is valid only for a DLL without /ENTRY");
+		assertFailureContains(runLinker(invalidWorkspace, {L"/DLL", L"/EXPORT:missing", invalidWorkspace.file(L"plain.obj").wstring()}), "unresolved external symbol 'missing'");
+		assertFailureContains(runLinker(invalidWorkspace, {L"/DLL", L"/EXPORT:main", L"/EXPORT:main", invalidWorkspace.file(L"plain.obj").wstring()}), "duplicate export name 'main'");
+		assertFailureContains(runLinker(invalidWorkspace, {L"/DLL", L"/EXPORT:main", L"/OUT:" + invalidWorkspace.file(L"same.dll").wstring(), L"/IMPLIB:" + invalidWorkspace.file(L"same.dll").wstring(), invalidWorkspace.file(L"plain.obj").wstring()}), "import-library output path must differ");
 	}
 
 	TEST_METHOD(RepresentativeObjectMatchesJWlinkPeBehavior) {

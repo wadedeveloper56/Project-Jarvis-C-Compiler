@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -15,12 +16,19 @@ struct ExportDirective {
 	std::string internalName;
 	std::optional<std::uint16_t> ordinal;
 	bool noname = false;
+	bool data = false;
+	bool privateExport = false;
 };
+
+ExportDirective parseExportDirective(std::string_view value, const std::string& context);
 
 struct LinkOptions {
 	fs::path output = "a.exe";
 	std::optional<std::string> entry;
 	std::optional<fs::path> mapFile;
+	std::optional<fs::path> definitionFile;
+	std::optional<fs::path> importLibrary;
+	std::string moduleName;
 	std::vector<fs::path> libraryPaths;
 	std::uint64_t imageBase = 0x140000000ULL;
 	std::uint16_t subsystem = 3;
@@ -40,6 +48,10 @@ struct LinkOptions {
 	std::uint32_t commonAlignment = 8;
 	bool entrySpecified = false;
 	bool sectionAlignmentSpecified = false;
+	bool outputSpecified = false;
+	bool dll = false;
+	bool noEntry = false;
+	bool importLibrarySpecified = false;
 	std::vector<fs::path> inputs;
 };
 

@@ -14,9 +14,9 @@ An item is complete only when implemented, covered by a regression test, and che
 
 ### Supported compatibility boundary
 
-JWlink2's target is a native Windows **AMD64 (x64) PE32+ executable**. It accepts AMD64 COFF object files and the documented Microsoft library-member formats and emits an executable image using the console or Windows subsystem. This is the output target regardless of whether the JWlink2 tool itself was built for Win32 or x64. `/DLL` is not supported. An AMD64 machine field, PE32+ optional header, non-DLL executable characteristic, and default console subsystem are asserted by `ValidAmd64ObjectProducesPe32PlusWithDefaultBaseAndEntry`; unsupported DLL output and non-AMD64 input/machine requests are checked by `DllOutputIsOutsideSupportedBoundary`, `NonAmd64ObjectIsRejected`, and `CommandLineAndResponseFileErrorsAreReported` in `JWlink2Test`.
+JWlink2 targets native Windows **AMD64 (x64) PE32+ executables and DLLs**. It accepts AMD64 COFF object files and the documented Microsoft library-member formats and emits executable or DLL images using the console or Windows subsystem. This is the output target regardless of whether the JWlink2 tool itself was built for Win32 or x64. An AMD64 machine field, PE32+ optional header, executable/DLL characteristics, entry point, import-library round-trip, and default console subsystem are covered by `JWlink2Test`; non-AMD64 input/machine requests remain unsupported.
 
-Intentionally out of scope as JWlink output targets are 16-bit DOS COM/MZ and Windows NE, OS/2 NE/LE/LX, Windows VxD, Phar Lap, Novell NLM, DOS/16M, QNX, ELF, raw BIN/HEX, and non-AMD64 Windows images. Windows PE DLLs and drivers are also outside this boundary. These are JWlink's broader formats, not compatibility promises for JWlink2. LTCG inputs and full runtime startup remain separate input/runtime limitations, even when the desired output is an AMD64 PE executable.
+Intentionally out of scope as JWlink output targets are 16-bit DOS COM/MZ and Windows NE, OS/2 NE/LE/LX, Windows VxD, Phar Lap, Novell NLM, DOS/16M, QNX, ELF, raw BIN/HEX, non-AMD64 Windows images, and Windows drivers. These are JWlink's broader formats, not compatibility promises for JWlink2. LTCG inputs and full runtime startup remain separate input/runtime limitations, even when the desired output is an AMD64 PE executable or DLL.
 
 ### Repository inventory (2026-11-09)
 
@@ -51,7 +51,7 @@ This is an inventory of checked-in repository usage, not a claim that no develop
 
 ## Windows image generation
 
-- [ ] Support DLL output, including exports, `.def` files, `/EXPORT`, import-library generation, and DLL entry-point behavior.
+- [x] Support AMD64 DLL output with PE DLL characteristics, export directories, `.def` `LIBRARY`/`NAME` and `EXPORTS` entries, `/EXPORT`, indexed short-import-object import libraries (`/IMPLIB`), and DLL entry-point selection (`DllMainCRTStartup`, `/ENTRY`, and `/NOENTRY`); cover import-library round-tripping and PE metadata in `JWlink2Test`.
 - [ ] Preserve and correctly emit required runtime metadata and directories, including AMD64 exception/unwind tables, TLS, load configuration, and resources where required by baseline inputs.
 - [ ] Support delay-loaded imports and their associated PE metadata when used by existing builds.
 - [ ] Add debug information support, including CodeView object data and the expected PDB output workflow.
@@ -61,7 +61,7 @@ This is an inventory of checked-in repository usage, not a claim that no develop
 ## Command-line compatibility
 
 - [ ] Inventory JWlink options used by real builds and implement their semantics; maintain a tested accepted/unsupported option matrix.
-- [ ] Add commonly used missing controls as required by that inventory, such as `/INCLUDE`, `/WHOLEARCHIVE`, `/DLL`, `/DEF`, `/EXPORT`, `/IMPLIB`, `/DEBUG`, `/PDB`, `/MANIFEST`, `/DELAYLOAD`, `/SECTION`, `/MERGE`, `/STACK`, `/HEAP`, and `/VERBOSE`.
+- [ ] Add commonly used missing controls as required by that inventory, such as `/INCLUDE`, `/WHOLEARCHIVE`, `/DEBUG`, `/PDB`, `/MANIFEST`, `/DELAYLOAD`, `/SECTION`, `/MERGE`, `/STACK`, `/HEAP`, and `/VERBOSE`.
 - [ ] Match option precedence, quoting, path resolution, response-file nesting/encoding, environment-variable expansion, and library search order where JWlink relies on them.
 - [ ] Match relevant defaults and diagnostics: output naming, entry point, subsystem, default libraries, duplicate/unresolved symbol reporting, and exit codes.
 

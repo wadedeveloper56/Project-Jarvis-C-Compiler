@@ -119,8 +119,13 @@ std::uint64_t parseUnsignedOption(std::string_view text, std::string_view option
 void printUsage() {
 	std::cout << "JWlink2 - AMD64 COFF to Windows PE32+ linker\n"
 				 "Usage: JWlink2 [options] input.obj [input.lib ...]\n"
-				 "  /OUT:<file>, -o <file>      Output executable (default: a.exe)\n"
-				 "  /ENTRY:<symbol>             Entry point (default: mainCRTStartup, then main)\n"
+				 "  /OUT:<file>, -o <file>      Output image (default: a.exe or a.dll)\n"
+				 "  /DLL                        Create a DLL\n"
+				 "  /DEF:<file>                 Read module name and exports from a .def file\n"
+				 "  /EXPORT:<spec>              Export a symbol\n"
+				 "  /IMPLIB[:<file>]            Write a DLL import library\n"
+				 "  /ENTRY:<symbol>             Set the image entry point\n"
+				 "  /NOENTRY                    Omit the DLL entry point\n"
 				 "  /SUBSYSTEM:CONSOLE|WINDOWS  Select PE subsystem\n"
 				 "  /LIBPATH:<directory>        Search directory for libraries\n"
 				 "  /DEFAULTLIB:<library>       Add a library to the link\n"
@@ -133,6 +138,49 @@ void printUsage() {
 }
 
 } // namespace
+
+ExportDirective parseExportDirective(std::string_view value, const std::string& context) {
+	ExportDirective directive;
+	const auto firstComma = value.find(',');
+	const auto symbol = value.substr(0, firstComma);
+	const auto equals = symbol.find('=');
+	directive.name = std::string(symbol.substr(0, equals));
+	directive.internalName = equals == std::string_view::npos ? directive.name : std::string(symbol.substr(equals + 1));
+	if (directive.name.empty() || directive.internalName.empty()) {
+		fail(context + ": /EXPORT requires a public and internal symbol name");
+	}
+	bool ordinalSpecified = false;
+	std::size_t cursor = firstComma;
+	while (cursor != std::string_view::npos) {
+		const auto next = value.find(',', cursor + 1);
+		const auto attribute = value.substr(cursor + 1, next == std::string_view::npos ? std::string_view::npos : next - cursor - 1);
+		const auto normalized = lowerAscii(std::string(attribute));
+		if (normalized == "noname") {
+			directive.noname = true;
+		} else if (normalized == "data") {
+			directive.data = true;
+		} else if (normalized == "private") {
+			directive.privateExport = true;
+		} else if (!attribute.empty() && attribute.front() == '@') {
+			if (ordinalSpecified) {
+				fail(context + ": /EXPORT specifies more than one ordinal");
+			}
+			ordinalSpecified = true;
+			const auto ordinal = parseUnsignedOption(attribute.substr(1), "/EXPORT ordinal");
+			if (ordinal == 0 || ordinal > std::numeric_limits<std::uint16_t>::max()) {
+				fail(context + ": /EXPORT ordinal must be between 1 and 65535");
+			}
+			directive.ordinal = static_cast<std::uint16_t>(ordinal);
+		} else {
+			fail(context + ": unsupported /EXPORT attribute '" + std::string(attribute) + "'");
+		}
+		cursor = next;
+	}
+	if (directive.noname && !directive.ordinal) {
+		fail(context + ": /EXPORT NONAME requires an ordinal");
+	}
+	return directive;
+}
 
 LinkOptions parseArguments(int argc, char** argv) {
 	LinkOptions options;
@@ -183,6 +231,20 @@ LinkOptions parseArguments(int argc, char** argv) {
 			std::exit(0);
 		} else if (optionName == "o" || optionName == "out") {
 			options.output = requireValue("/OUT");
+			options.outputSpecified = true;
+		} else if (optionName == "dll") {
+			if (value) fail("/DLL does not accept a value");
+			options.dll = true;
+		} else if (optionName == "def") {
+			options.definitionFile = requireValue("/DEF");
+		} else if (optionName == "export") {
+			options.exports.push_back(parseExportDirective(requireValue("/EXPORT"), "/EXPORT"));
+		} else if (optionName == "implib") {
+			options.importLibrarySpecified = true;
+			if (value && !value->empty()) options.importLibrary = fs::path(*value);
+		} else if (optionName == "noentry") {
+			if (value) fail("/NOENTRY does not accept a value");
+			options.noEntry = true;
 		} else if (optionName == "e" || optionName == "entry") {
 			options.entry = requireValue("/ENTRY");
 			options.entrySpecified = true;
@@ -293,6 +355,20 @@ LinkOptions parseArguments(int argc, char** argv) {
 		} else {
 			fail("unsupported option '" + argument + "'");
 		}
+	}
+	if (options.noEntry && (!options.dll || options.entrySpecified)) {
+		fail("/NOENTRY is valid only for a DLL without /ENTRY");
+	}
+	if (options.importLibrarySpecified && !options.dll) {
+		fail("/IMPLIB requires /DLL");
+	}
+	if (options.dll && !options.outputSpecified) {
+		options.output.replace_extension(".dll");
+	}
+	if (options.dll && !options.importLibrary) {
+		auto libraryPath = options.output;
+		libraryPath.replace_extension(".lib");
+		options.importLibrary = std::move(libraryPath);
 	}
 	if (options.noDefaultLibraries) {
 		options.defaultLibraries.clear();
