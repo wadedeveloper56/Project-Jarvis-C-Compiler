@@ -176,6 +176,10 @@ Bytes makeEntryObject(const std::string& entry = "main") {
 	return makeObject({TestSection{".text", {0xc3}}}, {TestSymbol{entry, 0, 1, 2, {}}});
 }
 
+TestSection makeDirectiveSection(const std::string& directives) {
+	return TestSection{".drectve", Bytes(directives.begin(), directives.end()), 0x00100a00};
+}
+
 Bytes makeComdatObject(const std::string& key, const Bytes& content, std::uint8_t selection) {
 	TestSection section{".text$comdat", content, 0x60001020};
 	TestSymbol sectionSymbol{".text$comdat", 0, 1, 3, {sectionAux(static_cast<std::uint32_t>(content.size()), 0, selection)}};
@@ -416,6 +420,18 @@ std::uint16_t peFileCharacteristics(const Bytes& image) {
 	return get16(image, peHeader(image) + 4 + 18);
 }
 
+bool hasSection(const Bytes& image, const std::string& name) {
+	const auto pe = peHeader(image);
+	const auto sectionCount = get16(image, pe + 4 + 2);
+	const auto table = sectionTable(image);
+	for (std::size_t i = 0; i < sectionCount; ++i) {
+		const auto header = table + i * 40;
+		const std::string sectionName(reinterpret_cast<const char*>(image.data() + header), strnlen_s(reinterpret_cast<const char*>(image.data() + header), 8));
+		if (sectionName == name) return true;
+	}
+	return false;
+}
+
 std::size_t sectionHeader(const Bytes& image, const std::string& name) {
 	const auto pe = peHeader(image);
 	const auto sectionCount = get16(image, pe + 4 + 2);
@@ -512,11 +528,10 @@ public:
 	TEST_METHOD(RepresentativeObjectMatchesJWlinkPeBehavior) {
 		Workspace workspace;
 		const auto object = makeObject(
-			{TestSection{".text", {0xc3, 0x2a}}},
+			{TestSection{".text", {0xc3, 0x2a}}, makeDirectiveSection("-entry:main ")},
 			{TestSymbol{"main", 0, 1, 2, {}}});
 		workspace.write(L"input.obj", object);
-		auto jwlink2Args = outputArgs(workspace, L"jwlink2.exe");
-		jwlink2Args.push_back(workspace.file(L"input.obj").wstring());
+		const auto jwlink2Args = std::vector<std::wstring>{L"/OUT:" + workspace.file(L"jwlink2.exe").wstring(), workspace.file(L"input.obj").wstring()};
 		assertSuccess(runExecutable(workspace, jwlink2Path(), jwlink2Args));
 		const auto jwlinkArgs = std::vector<std::wstring>{
 			L"format", L"win", L"pe", L"option", L"quiet,start=main",
@@ -704,6 +719,128 @@ public:
 		args.insert(args.begin() + 1, L"/LIBPATH:" + (workspace.path / L"lib").wstring());
 		args.push_back(workspace.file(L"input.obj").wstring());
 		assertSuccess(runLinker(workspace, args));
+	}
+
+	TEST_METHOD(CoffDirectiveEntryPointIsHonoredAndDirectiveSectionIsConsumed) {
+		Workspace workspace;
+		const auto object = makeObject(
+			{TestSection{".text", {0xc3}}, makeDirectiveSection("-entry:mainCRTStartup ")},
+			{TestSymbol{"mainCRTStartup", 0, 1, 2, {}}});
+		workspace.write(L"input.obj", object);
+		assertSuccess(runLinker(workspace, {L"/OUT:" + workspace.file(L"linked.exe").wstring(), workspace.file(L"input.obj").wstring()}));
+		const auto image = workspace.read(L"linked.exe");
+		Assert::AreEqual<std::uint32_t>(0x1000, get32(image, optionalHeader(image) + 16), L".drectve entry selects the startup symbol");
+		Assert::IsFalse(hasSection(image, ".drectve"), L"linker directives are not emitted as an image section");
+	}
+
+	TEST_METHOD(CoffDefaultLibraryDirectiveLoadsLibraryWithQuotedName) {
+		Workspace workspace;
+		TestSection text{".text", Bytes(4, 0)};
+		text.relocations = {{0, 1, 4}};
+		const auto object = makeObject({text, makeDirectiveSection("-defaultlib:\"helpers.lib\"")},
+			{TestSymbol{"main", 0, 1, 2, {}}, TestSymbol{"helper", 0, 0, 2, {}}});
+		workspace.write(L"input.obj", object);
+		workspace.write(L"helpers.lib", makeArchive({{"helper.obj", makeObject({TestSection{".text", {0xc3}}}, {TestSymbol{"helper", 0, 1, 2, {}}})}}));
+		assertSuccess(runLinker(workspace, {L"/OUT:" + workspace.file(L"linked.exe").wstring(), L"/ENTRY:main", workspace.file(L"input.obj").wstring()}));
+		Assert::IsTrue(hasSection(workspace.read(L"linked.exe"), ".text"), L"default-library member was linked");
+	}
+
+	TEST_METHOD(CoffDirectivesFromSelectedArchiveMembersAreProcessed) {
+		Workspace workspace;
+		TestSection entryText{".text", Bytes(4, 0)};
+		entryText.relocations = {{0, 1, 4}};
+		workspace.write(L"input.obj", makeObject({entryText}, {TestSymbol{"main", 0, 1, 2, {}}, TestSymbol{"helper", 0, 0, 2, {}}}));
+		TestSection helperText{".text", Bytes(4, 0)};
+		helperText.relocations = {{0, 1, 4}};
+		const auto helper = makeObject({helperText, makeDirectiveSection("-defaultlib:secondary.lib")},
+			{TestSymbol{"helper", 0, 1, 2, {}}, TestSymbol{"secondarySymbol", 0, 0, 2, {}}});
+		const auto unused = makeObject({makeDirectiveSection("-unknown:ignored-unless-selected")}, {TestSymbol{"unusedSymbol", 0, 0, 2, {}}});
+		workspace.write(L"outer.lib", makeArchive({{"helper.obj", helper}, {"unused.obj", unused}}));
+		workspace.write(L"secondary.lib", makeArchive({{"secondary.obj", makeObject({TestSection{".data", {0x6b}, 0xc0000040}}, {TestSymbol{"secondarySymbol", 0, 1, 2, {}}})}}));
+		auto args = outputArgs(workspace);
+		args.push_back(workspace.file(L"input.obj").wstring());
+		args.push_back(workspace.file(L"outer.lib").wstring());
+		assertSuccess(runLinker(workspace, args));
+		const auto image = workspace.read(L"linked.exe");
+		const auto data = sectionHeader(image, ".data");
+		Assert::AreEqual<std::uint8_t>(0x6b, image[get32(image, data + 20)], L"selected member default library is loaded and unused member directives are ignored");
+	}
+
+	TEST_METHOD(CoffIncludeDirectiveForcesArchiveMemberExtraction) {
+		Workspace workspace;
+		const auto object = makeObject({TestSection{".text", {0xc3}}, makeDirectiveSection("-include:forcedSymbol")},
+			{TestSymbol{"main", 0, 1, 2, {}}});
+		workspace.write(L"input.obj", object);
+		workspace.write(L"forced.lib", makeArchive({{"forced.obj", makeObject({TestSection{".data", {0x5a}, 0xc0000040}}, {TestSymbol{"forcedSymbol", 0, 1, 2, {}}})}}));
+		assertSuccess(runLinker(workspace, {L"/OUT:" + workspace.file(L"linked.exe").wstring(), L"/ENTRY:main", workspace.file(L"input.obj").wstring(), workspace.file(L"forced.lib").wstring()}));
+		const auto image = workspace.read(L"linked.exe");
+		const auto data = sectionHeader(image, ".data");
+		Assert::AreEqual<std::uint8_t>(0x5a, image[get32(image, data + 20)], L"forced archive member contributes its data");
+	}
+
+	TEST_METHOD(CoffAlignDirectiveSetsSectionAndFileAlignment) {
+		Workspace workspace;
+		const auto object = makeObject({TestSection{".text", {0xc3}}, makeDirectiveSection("-ALIGN:0x200")},
+			{TestSymbol{"main", 0, 1, 2, {}}});
+		assertSuccess(linkObject(workspace, object));
+		const auto image = workspace.read(L"linked.exe");
+		const auto optional = optionalHeader(image);
+		Assert::AreEqual<std::uint32_t>(0x200, get32(image, optional + 32), L"directive sets section alignment");
+		Assert::AreEqual<std::uint32_t>(0x200, get32(image, optional + 36), L"small section alignment also sets file alignment");
+		Assert::AreEqual<std::uint32_t>(0x200, get32(image, sectionHeader(image, ".text") + 12), L"first section RVA obeys alignment");
+
+		Workspace commandLineWorkspace;
+		const auto overridden = makeObject({TestSection{".text", {0xc3}}, makeDirectiveSection("-ALIGN:0x200")},
+			{TestSymbol{"main", 0, 1, 2, {}}});
+		commandLineWorkspace.write(L"input.obj", overridden);
+		auto args = outputArgs(commandLineWorkspace);
+		args.insert(args.begin() + 1, L"/ALIGN:0x1000");
+		args.push_back(commandLineWorkspace.file(L"input.obj").wstring());
+		assertSuccess(runLinker(commandLineWorkspace, args));
+		const auto overriddenImage = commandLineWorkspace.read(L"linked.exe");
+		Assert::AreEqual<std::uint32_t>(0x1000, get32(overriddenImage, optionalHeader(overriddenImage) + 32), L"command-line alignment overrides the object directive");
+	}
+
+	TEST_METHOD(CoffAlignCommDirectiveAlignsCommonSymbol) {
+		Workspace workspace;
+		const auto object = makeObject({TestSection{".text", {0xc3}}, makeDirectiveSection("-aligncomm:alignedCommon,32")},
+			{TestSymbol{"main", 0, 1, 2, {}}, TestSymbol{"alignedCommon", 4, 0, 2, {}}});
+		workspace.write(L"input.obj", object);
+		auto args = outputArgs(workspace);
+		args.insert(args.begin() + 1, L"/MAP");
+		args.push_back(workspace.file(L"input.obj").wstring());
+		assertSuccess(runLinker(workspace, args));
+		std::ifstream map(workspace.file(L"linked.map"));
+		const std::string contents((std::istreambuf_iterator<char>(map)), std::istreambuf_iterator<char>());
+		const auto symbolPosition = contents.find(" alignedCommon\n");
+		Assert::IsTrue(symbolPosition != std::string::npos, L"aligned common symbol is present in the map");
+		const auto lineStart = contents.rfind('\n', symbolPosition);
+		const auto addressStart = lineStart == std::string::npos ? 0 : lineStart + 1;
+		const auto addressEnd = contents.find(' ', addressStart);
+		const auto address = std::stoull(contents.substr(addressStart, addressEnd - addressStart), nullptr, 16);
+		Assert::AreEqual<std::uint64_t>(0, address % 32, L"ALIGNCOMM address respects the requested alignment");
+	}
+
+	TEST_METHOD(CoffExportDirectiveBuildsExportDirectoryAndAlias) {
+		Workspace workspace;
+		const auto object = makeObject({TestSection{".text", {0xc3, 0xc3}}, makeDirectiveSection("-export:api=implementation,@7")},
+			{TestSymbol{"main", 0, 1, 2, {}}, TestSymbol{"implementation", 1, 1, 2, {}}});
+		assertSuccess(linkObject(workspace, object));
+		const auto image = workspace.read(L"linked.exe");
+		const auto optional = optionalHeader(image);
+		const auto exportRva = get32(image, optional + 112);
+		Assert::IsTrue(exportRva != 0 && get32(image, optional + 116) >= 40, L"export data directory is present");
+		const auto directory = rvaOffset(image, exportRva);
+		Assert::AreEqual<std::uint32_t>(7, get32(image, directory + 16), L"export ordinal base");
+		Assert::AreEqual<std::uint32_t>(1, get32(image, directory + 20), L"number of exported functions");
+		Assert::AreEqual<std::uint32_t>(1, get32(image, directory + 24), L"number of named exports");
+		const auto functions = rvaOffset(image, get32(image, directory + 28));
+		const auto names = rvaOffset(image, get32(image, directory + 32));
+		const auto ordinals = rvaOffset(image, get32(image, directory + 36));
+		const auto text = sectionHeader(image, ".text");
+		Assert::AreEqual<std::uint32_t>(get32(image, text + 12) + 1, get32(image, functions), L"alias resolves to the internal symbol RVA");
+		Assert::IsTrue(cStringAtRva(image, get32(image, names)) == "api", L"public export name");
+		Assert::AreEqual<std::uint16_t>(0, get16(image, ordinals), L"export name maps to ordinal index zero");
 	}
 
 	TEST_METHOD(CommonSymbolAllocatesBssAndAppearsInMap) {
@@ -946,11 +1083,36 @@ public:
 		assertFailureContains(runLinker(importWorkspace, importArgs), "import library member is not AMD64");
 	}
 
+	TEST_METHOD(MalformedAndUnsupportedCoffDirectivesAreReported) {
+		Workspace workspace;
+		const auto unknown = makeObject({TestSection{".text", {0xc3}}, makeDirectiveSection("-not-a-linker-option:value")},
+			{TestSymbol{"main", 0, 1, 2, {}}});
+		const auto unknownResult = linkObject(workspace, unknown);
+		assertFailureContains(unknownResult, "unsupported .drectve option");
+		assertNoOutput(workspace);
+
+		Workspace alignmentWorkspace;
+		const auto invalidAlignment = makeObject({TestSection{".text", {0xc3}}, makeDirectiveSection("-align:300")},
+			{TestSymbol{"main", 0, 1, 2, {}}});
+		assertFailureContains(linkObject(alignmentWorkspace, invalidAlignment), ".drectve /ALIGN must be a power of two");
+
+		Workspace quoteWorkspace;
+		const auto malformedQuote = makeObject({TestSection{".text", {0xc3}}, makeDirectiveSection("-defaultlib:\"unterminated")},
+			{TestSymbol{"main", 0, 1, 2, {}}});
+		assertFailureContains(linkObject(quoteWorkspace, malformedQuote), "unterminated quote in .drectve");
+
+		Workspace exportWorkspace;
+		const auto malformedExport = makeObject({TestSection{".text", {0xc3}}, makeDirectiveSection("-export:api,@1,@2")},
+			{TestSymbol{"main", 0, 1, 2, {}}, TestSymbol{"api", 0, 1, 2, {}}});
+		assertFailureContains(linkObject(exportWorkspace, malformedExport), "specifies more than one ordinal");
+	}
+
 	TEST_METHOD(CommandLineAndResponseFileErrorsAreReported) {
 		Workspace workspace;
 		workspace.write(L"input.obj", makeEntryObject());
 		assertFailureContains(runLinker(workspace, {L"/UNKNOWN", workspace.file(L"input.obj").wstring()}), "unsupported option");
 		assertFailureContains(runLinker(workspace, {L"/BASE:0x12345", workspace.file(L"input.obj").wstring()}), "64-KiB-aligned");
+		assertFailureContains(runLinker(workspace, {L"/ALIGN:300", workspace.file(L"input.obj").wstring()}), "/ALIGN must be a power of two");
 		assertFailureContains(runLinker(workspace, {L"/SUBSYSTEM:EFI", workspace.file(L"input.obj").wstring()}), "unsupported subsystem");
 		assertFailureContains(runLinker(workspace, {L"/MACHINE:X86", workspace.file(L"input.obj").wstring()}), "only supports /MACHINE:X64");
 		assertFailureContains(runLinker(workspace, {L"/INCREMENTAL", workspace.file(L"input.obj").wstring()}), "INCREMENTAL:NO");

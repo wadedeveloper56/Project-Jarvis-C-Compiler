@@ -124,6 +124,7 @@ void printUsage() {
 				 "  /SUBSYSTEM:CONSOLE|WINDOWS  Select PE subsystem\n"
 				 "  /LIBPATH:<directory>        Search directory for libraries\n"
 				 "  /DEFAULTLIB:<library>       Add a library to the link\n"
+				 "  /ALIGN:<bytes>              Set PE section alignment\n"
 				 "  /BASE:<address>             Set preferred image base\n"
 				 "  /DYNAMICBASE | /FIXED       Enable ASLR relocations or fixed image\n"
 				 "  /MAP[:<file>]               Write a symbol map\n"
@@ -184,6 +185,7 @@ LinkOptions parseArguments(int argc, char** argv) {
 			options.output = requireValue("/OUT");
 		} else if (optionName == "e" || optionName == "entry") {
 			options.entry = requireValue("/ENTRY");
+			options.entrySpecified = true;
 		} else if (optionName == "subsystem") {
 			auto subsystem = lowerAscii(requireValue("/SUBSYSTEM"));
 			const auto comma = subsystem.find(',');
@@ -232,6 +234,14 @@ LinkOptions parseArguments(int argc, char** argv) {
 				fail("/DEFAULTLIB requires a library name");
 			}
 			options.defaultLibraries.push_back(library);
+		} else if (optionName == "align") {
+			const auto alignment = parseUnsignedOption(requireValue("/ALIGN"), "/ALIGN");
+			if (alignment < 0x200 || alignment > std::numeric_limits<std::uint32_t>::max() || (alignment & (alignment - 1)) != 0) {
+				fail("/ALIGN must be a power of two between 512 and 0x80000000");
+			}
+			options.sectionAlignment = static_cast<std::uint32_t>(alignment);
+			options.fileAlignment = alignment < 0x1000 ? static_cast<std::uint32_t>(alignment) : 0x200;
+			options.sectionAlignmentSpecified = true;
 		} else if (optionName == "base") {
 			options.imageBase = parseUnsignedOption(requireValue("/BASE"), "/BASE");
 			if (options.imageBase == 0 || (options.imageBase & 0xffff) != 0) {
@@ -253,7 +263,8 @@ LinkOptions parseArguments(int argc, char** argv) {
 				if (fs::path(excluded).extension().empty()) {
 					excluded += ".lib";
 				}
-				excludedLibraries.push_back(std::move(excluded));
+				excludedLibraries.push_back(excluded);
+				options.excludedDefaultLibraries.push_back(std::move(excluded));
 			} else {
 				options.noDefaultLibraries = true;
 			}

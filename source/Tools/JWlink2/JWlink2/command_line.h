@@ -4,10 +4,18 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace jwlink2 {
 namespace fs = std::filesystem;
+
+struct ExportDirective {
+	std::string name;
+	std::string internalName;
+	std::optional<std::uint16_t> ordinal;
+	bool noname = false;
+};
 
 struct LinkOptions {
 	fs::path output = "a.exe";
@@ -23,6 +31,15 @@ struct LinkOptions {
 	bool noLogo = false;
 	bool noDefaultLibraries = false;
 	std::vector<std::string> defaultLibraries;
+	std::vector<std::string> excludedDefaultLibraries;
+	std::vector<std::string> includeSymbols;
+	std::vector<std::pair<std::string, std::uint32_t>> commonAlignments;
+	std::vector<ExportDirective> exports;
+	std::uint32_t sectionAlignment = 0x1000;
+	std::uint32_t fileAlignment = 0x200;
+	std::uint32_t commonAlignment = 8;
+	bool entrySpecified = false;
+	bool sectionAlignmentSpecified = false;
 	std::vector<fs::path> inputs;
 };
 

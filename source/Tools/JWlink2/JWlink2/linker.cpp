@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <iterator>
 #include <limits>
 #include <map>
 #include <optional>
@@ -32,9 +33,6 @@ constexpr std::uint32_t SectionCntUninitializedData = 0x00000080;
 constexpr std::uint32_t SectionMemExecute = 0x20000000;
 constexpr std::uint32_t SectionMemRead = 0x40000000;
 constexpr std::uint32_t SectionMemWrite = 0x80000000;
-constexpr std::uint64_t ImageBase = 0x140000000ULL;
-constexpr std::uint32_t SectionAlignment = 0x1000;
-constexpr std::uint32_t FileAlignment = 0x200;
 
 [[noreturn]] void fail(const std::string& message) {
 	throw std::runtime_error(message);
@@ -132,6 +130,7 @@ struct InputSection {
 	std::size_t leaderObject = std::numeric_limits<std::size_t>::max();
 	std::size_t leaderSection = std::numeric_limits<std::size_t>::max();
 	bool discarded = false;
+	bool linkerDirective = false;
 	Bytes data;
 	std::vector<Relocation> relocations;
 };
@@ -150,6 +149,7 @@ struct ObjectFile {
 	std::string name;
 	std::vector<InputSection> sections;
 	std::vector<CoffSymbol> symbols;
+	std::vector<std::string> directives;
 };
 
 struct ImportedSymbol {
@@ -241,6 +241,91 @@ std::uint32_t coffNameOffset(const Bytes& bytes, std::size_t offset) {
 	return 0;
 }
 
+std::string lowerAscii(std::string value) {
+	std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+	return value;
+}
+
+std::uint64_t parseDirectiveNumber(std::string_view text, const std::string& objectName, std::string_view option) {
+	int base = 10;
+	if (text.size() > 2 && text[0] == '0' && (text[1] == 'x' || text[1] == 'X')) {
+		text.remove_prefix(2);
+		base = 16;
+	}
+	std::uint64_t value = 0;
+	const auto parsed = std::from_chars(text.data(), text.data() + text.size(), value, base);
+	if (text.empty() || parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size()) {
+		fail(objectName + ": invalid value for .drectve " + std::string(option));
+	}
+	return value;
+}
+
+ExportDirective parseExportDirective(std::string_view value, const std::string& objectName) {
+	ExportDirective directive;
+	const auto firstComma = value.find(',');
+	const auto symbol = value.substr(0, firstComma);
+	const auto equals = symbol.find('=');
+	directive.name = std::string(symbol.substr(0, equals));
+	directive.internalName = equals == std::string_view::npos ? directive.name : std::string(symbol.substr(equals + 1));
+	if (directive.name.empty() || directive.internalName.empty()) {
+		fail(objectName + ": .drectve /EXPORT requires a public and internal symbol name");
+	}
+	bool ordinalSpecified = false;
+	std::size_t cursor = firstComma;
+	while (cursor != std::string_view::npos) {
+		const auto next = value.find(',', cursor + 1);
+		const auto attribute = value.substr(cursor + 1, next == std::string_view::npos ? std::string_view::npos : next - cursor - 1);
+		const auto normalized = lowerAscii(std::string(attribute));
+		if (normalized == "noname") {
+			directive.noname = true;
+		} else if (normalized == "data" || normalized == "private") {
+		} else if (!attribute.empty() && attribute.front() == '@') {
+			if (ordinalSpecified) {
+				fail(objectName + ": .drectve /EXPORT specifies more than one ordinal");
+			}
+			ordinalSpecified = true;
+			const auto ordinal = parseDirectiveNumber(attribute.substr(1), objectName, "/EXPORT ordinal");
+			if (ordinal == 0 || ordinal > std::numeric_limits<std::uint16_t>::max()) {
+				fail(objectName + ": .drectve /EXPORT ordinal must be between 1 and 65535");
+			}
+			directive.ordinal = static_cast<std::uint16_t>(ordinal);
+		} else {
+			fail(objectName + ": unsupported .drectve /EXPORT attribute '" + std::string(attribute) + "'");
+		}
+		cursor = next;
+	}
+	if (directive.noname && !directive.ordinal) {
+		fail(objectName + ": .drectve /EXPORT NONAME requires an ordinal");
+	}
+	return directive;
+}
+
+std::vector<std::string> tokenizeDirectives(const Bytes& bytes, const std::string& objectName) {
+	std::vector<std::string> tokens;
+	std::string token;
+	bool quoted = false;
+	for (std::size_t i = 0; i < bytes.size(); ++i) {
+		const auto ch = bytes[i] == 0 ? ' ' : static_cast<char>(bytes[i]);
+		if (ch == '"') {
+			quoted = !quoted;
+		} else if (std::isspace(static_cast<unsigned char>(ch)) && !quoted) {
+			if (!token.empty()) {
+				tokens.push_back(std::move(token));
+				token.clear();
+			}
+		} else {
+			token.push_back(ch);
+		}
+	}
+	if (quoted) {
+		fail(objectName + ": unterminated quote in .drectve section");
+	}
+	if (!token.empty()) {
+		tokens.push_back(std::move(token));
+	}
+	return tokens;
+}
+
 ObjectFile parseObject(const Bytes& bytes, std::string name) {
 	requireRange(bytes, 0, 20, name);
 	const auto machine = readLe<std::uint16_t>(bytes, 0, name);
@@ -291,6 +376,7 @@ ObjectFile parseObject(const Bytes& bytes, std::string name) {
 		}
 		InputSection section;
 		section.name = std::move(sectionName);
+		section.linkerDirective = section.name == ".drectve";
 		section.virtualSize = readLe<std::uint32_t>(bytes, header + 8, object.name);
 		const auto rawSize = readLe<std::uint32_t>(bytes, header + 16, object.name);
 		const auto rawOffset = readLe<std::uint32_t>(bytes, header + 20, object.name);
@@ -323,6 +409,10 @@ ObjectFile parseObject(const Bytes& bytes, std::string name) {
 		}
 		if (section.virtualSize < rawSize) {
 			section.virtualSize = rawSize;
+		}
+		if (section.linkerDirective) {
+			auto directives = tokenizeDirectives(section.data, object.name);
+			object.directives.insert(object.directives.end(), std::make_move_iterator(directives.begin()), std::make_move_iterator(directives.end()));
 		}
 		object.sections.push_back(std::move(section));
 	}
@@ -541,6 +631,16 @@ struct ImportModule {
 	std::size_t nameOffset = 0;
 };
 
+struct ExportOutput {
+	std::string name;
+	std::string internalName;
+	std::uint16_t ordinal = 0;
+	bool noname = false;
+	std::size_t addressOffset = 0;
+	std::size_t nameOffset = 0;
+	std::size_t ordinalOffset = 0;
+};
+
 struct BaseRelocation {
 	std::uint32_t rva = 0;
 	std::uint16_t type = 10;
@@ -558,6 +658,7 @@ public:
 		buildSections();
 		prepareImports();
 		resolveGlobals();
+		prepareExports();
 		prepareBaseRelocations();
 		layoutImage();
 		applyRelocations();
@@ -574,12 +675,27 @@ private:
 	std::unordered_map<std::string, GlobalSymbol> globals_;
 	std::vector<ImportRecord> imports_;
 	std::vector<ImportModule> importModules_;
+	std::vector<ExportOutput> exportRecords_;
 	std::vector<BaseRelocation> baseRelocations_;
+	std::vector<std::string> pendingDefaultLibraries_;
+	std::set<std::string> loadedDefaultLibraryPaths_;
+	std::size_t nextDefaultLibrary_ = 0;
+	std::size_t nextDirectiveObject_ = 0;
+	bool directiveAlignmentSpecified_ = false;
+	std::size_t edataSection_ = std::numeric_limits<std::size_t>::max();
 	std::size_t idataSection_ = std::numeric_limits<std::size_t>::max();
 	std::size_t relocSection_ = std::numeric_limits<std::size_t>::max();
 	std::size_t importDescriptorOffset_ = 0;
 	std::uint32_t importDirectoryRva_ = 0;
 	std::uint32_t importDirectorySize_ = 0;
+	std::uint32_t exportDirectoryRva_ = 0;
+	std::uint32_t exportDirectorySize_ = 0;
+	std::size_t exportFunctionsOffset_ = 0;
+	std::size_t exportNamesOffset_ = 0;
+	std::size_t exportOrdinalsOffset_ = 0;
+	std::size_t exportModuleNameOffset_ = 0;
+	std::uint32_t exportBaseOrdinal_ = 0;
+	std::uint32_t exportFunctionCount_ = 0;
 	std::uint32_t relocationDirectoryRva_ = 0;
 	std::uint32_t relocationDirectorySize_ = 0;
 
@@ -634,6 +750,16 @@ private:
 				}
 			}
 		}
+		for (const auto& name : options_.includeSymbols) {
+			if (!defined.contains(name)) {
+				unresolved.insert(name);
+			}
+		}
+		for (const auto& exportDirective : options_.exports) {
+			if (!defined.contains(exportDirective.internalName)) {
+				unresolved.insert(exportDirective.internalName);
+			}
+		}
 		for (const auto& imported : imports_) {
 			defined.insert("__imp_" + imported.symbol.publicName);
 			if (imported.hasPublicSymbol && (imported.hasFunction || imported.hasData)) {
@@ -686,29 +812,154 @@ private:
 		return path;
 	}
 
-	void loadInputs() {
-		for (const auto& library : options_.defaultLibraries) {
+	void loadInput(const fs::path& inputPath) {
+		const auto path = resolveInputPath(inputPath);
+		const auto bytes = readFile(path);
+		if (bytes.size() >= 8 && std::string_view(reinterpret_cast<const char*>(bytes.data()), 8) == "!<arch>\n") {
+			auto archive = parseArchive(bytes, path.string());
+			archives_.push_back(std::move(archive));
+		} else {
+			objects_.push_back(parseObject(bytes, path.string()));
+		}
+	}
+
+	void queueDefaultLibrary(const std::string& library) {
+		if (options_.noDefaultLibraries || library.empty()) {
+			return;
+		}
+		auto normalized = lowerAscii(fs::path(library).filename().string());
+		if (fs::path(normalized).extension().empty()) {
+			normalized += ".lib";
+		}
+		if (std::find(options_.excludedDefaultLibraries.begin(), options_.excludedDefaultLibraries.end(), normalized) == options_.excludedDefaultLibraries.end()) {
+			pendingDefaultLibraries_.push_back(library);
+		}
+	}
+
+	void processDirective(const std::string& directive, const std::string& objectName) {
+		if (directive.empty() || (directive.front() != '/' && directive.front() != '-')) {
+			fail(objectName + ": malformed .drectve option '" + directive + "'");
+		}
+		const auto delimiter = directive.find_first_of(":=", 1);
+		const auto name = lowerAscii(directive.substr(1, delimiter == std::string::npos ? std::string::npos : delimiter - 1));
+		const auto value = delimiter == std::string::npos ? std::string{} : directive.substr(delimiter + 1);
+		if (name == "defaultlib") {
+			if (value.empty()) {
+				fail(objectName + ": .drectve /DEFAULTLIB requires a library name");
+			}
+			queueDefaultLibrary(value);
+		} else if (name == "nodefaultlib") {
+			if (value.empty()) {
+				options_.noDefaultLibraries = true;
+			} else {
+				auto excluded = lowerAscii(fs::path(value).filename().string());
+				if (fs::path(excluded).extension().empty()) {
+					excluded += ".lib";
+				}
+				options_.excludedDefaultLibraries.push_back(std::move(excluded));
+			}
+		} else if (name == "include") {
+			if (value.empty()) {
+				fail(objectName + ": .drectve /INCLUDE requires a symbol name");
+			}
+			if (std::find(options_.includeSymbols.begin(), options_.includeSymbols.end(), value) == options_.includeSymbols.end()) {
+				options_.includeSymbols.push_back(value);
+			}
+		} else if (name == "entry") {
+			if (value.empty()) {
+				fail(objectName + ": .drectve /ENTRY requires a symbol name");
+			}
+			if (!options_.entrySpecified) {
+				if (options_.entry && *options_.entry != value) {
+					fail("conflicting .drectve /ENTRY values '" + *options_.entry + "' and '" + value + "'");
+				}
+				options_.entry = value;
+			}
+		} else if (name == "align") {
+			const auto alignment = parseDirectiveNumber(value, objectName, "/ALIGN");
+			if (alignment < 0x200 || alignment > std::numeric_limits<std::uint32_t>::max() || (alignment & (alignment - 1)) != 0) {
+				fail(objectName + ": .drectve /ALIGN must be a power of two between 512 and 0x80000000");
+			}
+			if (!options_.sectionAlignmentSpecified) {
+				const auto parsed = static_cast<std::uint32_t>(alignment);
+				if (directiveAlignmentSpecified_ && options_.sectionAlignment != parsed) {
+					fail("conflicting .drectve /ALIGN values");
+				}
+				options_.sectionAlignment = parsed;
+				options_.fileAlignment = parsed < 0x1000 ? parsed : 0x200;
+				directiveAlignmentSpecified_ = true;
+			}
+		} else if (name == "export") {
+			options_.exports.push_back(parseExportDirective(value, objectName));
+		} else if (name == "aligncomm") {
+			const auto comma = value.find(',');
+			if (comma == std::string::npos || comma == 0 || comma + 1 == value.size()) {
+				fail(objectName + ": .drectve /ALIGNCOMM requires symbol,alignment");
+			}
+			const auto symbol = value.substr(0, comma);
+			const auto alignment = parseDirectiveNumber(std::string_view(value).substr(comma + 1), objectName, "/ALIGNCOMM");
+			if (alignment == 0 || alignment > 8192 || (alignment & (alignment - 1)) != 0) {
+				fail(objectName + ": .drectve /ALIGNCOMM alignment must be a power of two from 1 through 8192");
+			}
+			auto found = std::find_if(options_.commonAlignments.begin(), options_.commonAlignments.end(), [&](const auto& item) { return item.first == symbol; });
+			if (found == options_.commonAlignments.end()) {
+				options_.commonAlignments.emplace_back(symbol, static_cast<std::uint32_t>(alignment));
+			} else {
+				found->second = std::max(found->second, static_cast<std::uint32_t>(alignment));
+			}
+		} else {
+			fail(objectName + ": unsupported .drectve option '" + directive + "'");
+		}
+	}
+
+	void processDirectivesAndLibraries() {
+		for (;;) {
+			while (nextDirectiveObject_ < objects_.size()) {
+				const auto& object = objects_[nextDirectiveObject_++];
+				for (const auto& directive : object.directives) {
+					processDirective(directive, object.name);
+				}
+			}
+			if (nextDefaultLibrary_ == pendingDefaultLibraries_.size()) {
+				return;
+			}
+			const auto library = pendingDefaultLibraries_[nextDefaultLibrary_++];
+			if (options_.noDefaultLibraries) {
+				continue;
+			}
+			auto normalizedLibrary = lowerAscii(fs::path(library).filename().string());
+			if (fs::path(normalizedLibrary).extension().empty()) {
+				normalizedLibrary += ".lib";
+			}
+			if (std::find(options_.excludedDefaultLibraries.begin(), options_.excludedDefaultLibraries.end(), normalizedLibrary) != options_.excludedDefaultLibraries.end()) {
+				continue;
+			}
 			fs::path libraryPath(library);
 			if (libraryPath.extension().empty()) {
 				libraryPath += ".lib";
 			}
-			options_.inputs.push_back(resolveInputPath(libraryPath));
-		}
-		for (const auto& inputPath : options_.inputs) {
-			const auto path = resolveInputPath(inputPath);
-			const auto bytes = readFile(path);
-			if (bytes.size() >= 8 && std::string_view(reinterpret_cast<const char*>(bytes.data()), 8) == "!<arch>\n") {
-				auto archive = parseArchive(bytes, path.string());
-				archives_.push_back(std::move(archive));
-			} else {
-				objects_.push_back(parseObject(bytes, path.string()));
+			const auto resolvedPath = resolveInputPath(libraryPath);
+			const auto identity = lowerAscii(fs::absolute(resolvedPath).lexically_normal().string());
+			if (loadedDefaultLibraryPaths_.insert(identity).second) {
+				loadInput(resolvedPath);
 			}
 		}
 	}
 
+	void loadInputs() {
+		for (const auto& inputPath : options_.inputs) {
+			loadInput(inputPath);
+		}
+		for (const auto& library : options_.defaultLibraries) {
+			queueDefaultLibrary(library);
+		}
+		processDirectivesAndLibraries();
+	}
+
 	void resolveLibraries() {
 		for (;;) {
-				auto unresolved = unresolvedNames();
+			processDirectivesAndLibraries();
+			auto unresolved = unresolvedNames();
 			if (unresolved.empty()) {
 				return;
 			}
@@ -1018,6 +1269,118 @@ private:
 		importDirectorySize_ = toU32(descriptorsSize, "import directory size");
 	}
 
+	void prepareExports() {
+		if (options_.exports.empty()) {
+			return;
+		}
+		std::set<std::uint16_t> assignedOrdinals;
+		std::set<std::string> exportNames;
+		for (const auto& directive : options_.exports) {
+			if (!exportNames.insert(directive.name).second) {
+				fail("duplicate export name '" + directive.name + "'");
+			}
+			const auto found = globals_.find(directive.internalName);
+			if (found == globals_.end()) {
+				fail("exported symbol '" + directive.internalName + "' was not found");
+			}
+			const auto& definition = found->second;
+			if (definition.imported || definition.common || definition.weakUndefined || definition.objectIndex >= objects_.size() || definition.symbolIndex >= objects_[definition.objectIndex].symbols.size()) {
+				fail("exported symbol '" + directive.internalName + "' must be defined in an input section");
+			}
+			const auto& symbol = objects_[definition.objectIndex].symbols[definition.symbolIndex];
+			if (symbol.sectionNumber <= 0 || static_cast<std::size_t>(symbol.sectionNumber) > objects_[definition.objectIndex].sections.size()) {
+				fail("exported symbol '" + directive.internalName + "' must be defined in an input section");
+			}
+			if (directive.ordinal && !assignedOrdinals.insert(*directive.ordinal).second) {
+				fail("duplicate export ordinal " + std::to_string(*directive.ordinal));
+			}
+		}
+		std::uint32_t nextOrdinal = 1;
+		for (const auto& directive : options_.exports) {
+			std::uint16_t ordinal = directive.ordinal.value_or(0);
+			if (ordinal == 0) {
+				while (nextOrdinal <= std::numeric_limits<std::uint16_t>::max() && assignedOrdinals.contains(static_cast<std::uint16_t>(nextOrdinal))) {
+					++nextOrdinal;
+				}
+				if (nextOrdinal > std::numeric_limits<std::uint16_t>::max()) {
+					fail("too many exported symbols");
+				}
+				ordinal = static_cast<std::uint16_t>(nextOrdinal++);
+				assignedOrdinals.insert(ordinal);
+			}
+			ExportOutput output;
+			output.name = directive.name;
+			output.internalName = directive.internalName;
+			output.ordinal = ordinal;
+			output.noname = directive.noname;
+			exportRecords_.push_back(std::move(output));
+		}
+		std::sort(exportRecords_.begin(), exportRecords_.end(), [](const ExportOutput& left, const ExportOutput& right) { return left.name < right.name; });
+		exportBaseOrdinal_ = std::numeric_limits<std::uint16_t>::max();
+		std::uint32_t maximumOrdinal = 0;
+		std::size_t namedCount = 0;
+		for (const auto& record : exportRecords_) {
+			exportBaseOrdinal_ = std::min(exportBaseOrdinal_, static_cast<std::uint32_t>(record.ordinal));
+			maximumOrdinal = std::max(maximumOrdinal, static_cast<std::uint32_t>(record.ordinal));
+			namedCount += record.noname ? 0 : 1;
+		}
+		exportFunctionCount_ = maximumOrdinal - exportBaseOrdinal_ + 1;
+		if (exportFunctionCount_ > std::numeric_limits<std::uint16_t>::max() || namedCount > std::numeric_limits<std::uint16_t>::max()) {
+			fail("export table exceeds the PE32+ limits");
+		}
+		InputSection section;
+		section.name = ".edata";
+		section.alignment = 4;
+		section.characteristics = 0x00000040 | SectionMemRead;
+		exportFunctionsOffset_ = 40;
+		exportNamesOffset_ = exportFunctionsOffset_ + static_cast<std::size_t>(exportFunctionCount_) * 4;
+		exportOrdinalsOffset_ = exportNamesOffset_ + namedCount * 4;
+		exportModuleNameOffset_ = exportOrdinalsOffset_ + namedCount * 2;
+		section.data.resize(exportModuleNameOffset_, 0);
+		const auto moduleName = options_.output.filename().string();
+		section.data.insert(section.data.end(), moduleName.begin(), moduleName.end());
+		section.data.push_back(0);
+		for (auto& record : exportRecords_) {
+			if (record.noname) {
+				continue;
+			}
+			record.nameOffset = section.data.size();
+			section.data.insert(section.data.end(), record.name.begin(), record.name.end());
+			section.data.push_back(0);
+		}
+		std::size_t nameIndex = 0;
+		for (auto& record : exportRecords_) {
+			record.addressOffset = exportFunctionsOffset_ + static_cast<std::size_t>(record.ordinal - exportBaseOrdinal_) * 4;
+			if (!record.noname) {
+				record.ordinalOffset = exportOrdinalsOffset_ + nameIndex * 2;
+				++nameIndex;
+			}
+		}
+		section.virtualSize = section.data.size();
+		edataSection_ = getOutputSection(section);
+		auto& output = outputSections_[edataSection_];
+		if (!output.data.empty() || output.virtualSize != 0) {
+			fail("input .edata section conflicts with linker-generated exports");
+		}
+		const auto offset = alignUp(output.virtualSize, 4);
+		if (output.data.size() < offset) {
+			output.data.resize(offset, 0);
+		}
+		for (auto& record : exportRecords_) {
+			record.addressOffset += offset;
+			if (record.ordinalOffset != 0) {
+				record.ordinalOffset += offset;
+				record.nameOffset += offset;
+			}
+		}
+		exportFunctionsOffset_ += offset;
+		exportNamesOffset_ += offset;
+		exportOrdinalsOffset_ += offset;
+		exportModuleNameOffset_ += offset;
+		output.data.insert(output.data.end(), section.data.begin(), section.data.end());
+		output.virtualSize = offset + section.virtualSize;
+	}
+
 	void prepareBaseRelocations() {
 		if (!options_.dynamicBase) {
 			return;
@@ -1025,7 +1388,7 @@ private:
 		std::size_t count = 0;
 		for (const auto& object : objects_) {
 			for (const auto& section : object.sections) {
-				if (!section.discarded) {
+				if (!section.discarded && !section.linkerDirective) {
 					count += static_cast<std::size_t>(std::count_if(section.relocations.begin(), section.relocations.end(), [](const Relocation& reloc) { return reloc.type == 1 || reloc.type == 2; }));
 				}
 			}
@@ -1077,7 +1440,7 @@ private:
 			maps.resize(object.sections.size());
 			for (std::size_t sectionIndex = 0; sectionIndex < object.sections.size(); ++sectionIndex) {
 				const auto& input = object.sections[sectionIndex];
-				if (input.discarded) {
+				if (input.discarded || input.linkerDirective) {
 					continue;
 				}
 				const auto outputIndex = getOutputSection(input);
@@ -1108,6 +1471,11 @@ private:
 				sectionMaps_[objectIndex][sectionIndex] = sectionMaps_[input.leaderObject][input.leaderSection];
 			}
 		}
+	}
+
+	std::size_t commonAlignmentFor(const std::string& symbolName) const {
+		const auto found = std::find_if(options_.commonAlignments.begin(), options_.commonAlignments.end(), [&](const auto& alignment) { return alignment.first == symbolName; });
+		return found == options_.commonAlignments.end() ? options_.commonAlignment : found->second;
 	}
 
 	void resolveGlobals() {
@@ -1158,10 +1526,11 @@ private:
 					InputSection commonSection;
 					commonSection.name = ".bss";
 					commonSection.characteristics = SectionCntUninitializedData | SectionMemRead | SectionMemWrite;
-					commonSection.alignment = 8;
+					const auto alignment = commonAlignmentFor(symbol.name);
+					commonSection.alignment = alignment;
 					const auto outputIndex = getOutputSection(commonSection);
 					auto& output = outputSections_[outputIndex];
-					const auto offset = alignUp(output.virtualSize, 8);
+					const auto offset = alignUp(output.virtualSize, alignment);
 					if (symbol.value > std::numeric_limits<std::size_t>::max() - offset) {
 						fail(object.name + ": common symbol size overflow");
 					}
@@ -1335,21 +1704,21 @@ private:
 			fail("PE image exceeds the Windows section-count limit");
 		}
 		const auto headersUnaligned = 0x80u + 4u + 20u + 240u + outputSections_.size() * 40u;
-		const auto headersSize = alignUp(headersUnaligned, FileAlignment);
-		std::size_t nextRva = SectionAlignment;
+		const auto headersSize = alignUp(headersUnaligned, options_.fileAlignment);
+		std::size_t nextRva = options_.sectionAlignment;
 		std::size_t nextRaw = headersSize;
 		for (auto& section : outputSections_) {
-			nextRva = alignUp(nextRva, SectionAlignment);
+			nextRva = alignUp(nextRva, options_.sectionAlignment);
 			section.rva = toU32(nextRva, "section RVA");
 			const auto virtualSize = std::max(section.virtualSize, section.data.size());
 			if (virtualSize > std::numeric_limits<std::size_t>::max() - nextRva) {
 				fail("PE image size overflow");
 			}
-			nextRva += alignUp(virtualSize, SectionAlignment);
+			nextRva += alignUp(virtualSize, options_.sectionAlignment);
 			if (!section.data.empty()) {
-				nextRaw = alignUp(nextRaw, FileAlignment);
+				nextRaw = alignUp(nextRaw, options_.fileAlignment);
 				section.rawOffset = toU32(nextRaw, "section raw offset");
-				section.rawSize = toU32(alignUp(section.data.size(), FileAlignment), "section raw size");
+				section.rawSize = toU32(alignUp(section.data.size(), options_.fileAlignment), "section raw size");
 				nextRaw += section.rawSize;
 			}
 		}
@@ -1362,6 +1731,35 @@ private:
 	}
 
 	void finalizeGeneratedData() {
+		if (edataSection_ != std::numeric_limits<std::size_t>::max()) {
+			auto& edata = outputSections_[edataSection_];
+			exportDirectoryRva_ = edata.rva;
+			exportDirectorySize_ = toU32(edata.virtualSize, "export directory size");
+			writeLe(edata.data, 12, toU32(static_cast<std::size_t>(edata.rva) + exportModuleNameOffset_, "export module name RVA"));
+			writeLe(edata.data, 16, exportBaseOrdinal_);
+			writeLe(edata.data, 20, exportFunctionCount_);
+			const auto namedCount = static_cast<std::uint32_t>(std::count_if(exportRecords_.begin(), exportRecords_.end(), [](const ExportOutput& record) { return !record.noname; }));
+			writeLe(edata.data, 24, namedCount);
+			writeLe(edata.data, 28, toU32(static_cast<std::size_t>(edata.rva) + exportFunctionsOffset_, "export address table RVA"));
+			writeLe(edata.data, 32, toU32(static_cast<std::size_t>(edata.rva) + exportNamesOffset_, "export name table RVA"));
+			writeLe(edata.data, 36, toU32(static_cast<std::size_t>(edata.rva) + exportOrdinalsOffset_, "export ordinal table RVA"));
+			for (const auto& record : exportRecords_) {
+				const auto found = globals_.find(record.internalName);
+				if (found == globals_.end()) {
+					fail("exported symbol '" + record.internalName + "' was not found");
+				}
+				const auto& definition = found->second;
+				const auto& symbol = objects_[definition.objectIndex].symbols[definition.symbolIndex];
+				const auto& mapping = sectionMaps_[definition.objectIndex][static_cast<std::size_t>(symbol.sectionNumber - 1)];
+				const auto address = static_cast<std::uint64_t>(outputSections_[mapping.outputIndex].rva) + mapping.offset + symbol.value;
+				writeLe(edata.data, record.addressOffset, toU32(static_cast<std::size_t>(address), "exported symbol RVA"));
+				if (!record.noname) {
+					const auto nameIndex = (record.ordinalOffset - exportOrdinalsOffset_) / 2;
+					writeLe(edata.data, exportNamesOffset_ + nameIndex * 4, toU32(static_cast<std::size_t>(edata.rva) + record.nameOffset, "export name RVA"));
+					writeLe(edata.data, record.ordinalOffset, static_cast<std::uint16_t>(record.ordinal - exportBaseOrdinal_));
+				}
+			}
+		}
 		if (idataSection_ != std::numeric_limits<std::size_t>::max()) {
 			auto& idata = outputSections_[idataSection_];
 			importDirectoryRva_ = toU32(static_cast<std::size_t>(idata.rva) + importDescriptorOffset_, "import directory RVA");
@@ -1428,7 +1826,7 @@ private:
 			const auto& object = objects_[objectIndex];
 			for (std::size_t inputIndex = 0; inputIndex < object.sections.size(); ++inputIndex) {
 				const auto& input = object.sections[inputIndex];
-				if (input.discarded) {
+				if (input.discarded || input.linkerDirective) {
 					continue;
 				}
 				const auto& mapping = sectionMaps_[objectIndex][inputIndex];
@@ -1492,15 +1890,15 @@ private:
 	}
 
 	void writeImage() {
-		const auto headersSize = alignUp(0x80u + 4u + 20u + 240u + outputSections_.size() * 40u, FileAlignment);
+		const auto headersSize = alignUp(0x80u + 4u + 20u + 240u + outputSections_.size() * 40u, options_.fileAlignment);
 		std::size_t fileSize = headersSize;
-		std::size_t imageSize = SectionAlignment;
+		std::size_t imageSize = options_.sectionAlignment;
 		std::uint32_t codeSize = 0;
 		std::uint32_t initializedSize = 0;
 		std::uint32_t uninitializedSize = 0;
 		std::uint32_t baseOfCode = 0;
 		for (const auto& section : outputSections_) {
-			imageSize = std::max(imageSize, static_cast<std::size_t>(section.rva) + alignUp(std::max(section.virtualSize, section.data.size()), SectionAlignment));
+			imageSize = std::max(imageSize, static_cast<std::size_t>(section.rva) + alignUp(std::max(section.virtualSize, section.data.size()), options_.sectionAlignment));
 			if (section.rawSize != 0) {
 				fileSize = std::max(fileSize, static_cast<std::size_t>(section.rawOffset) + section.rawSize);
 			}
@@ -1537,8 +1935,8 @@ private:
 		writeLe(image, optional + 16, entryRva());
 		writeLe(image, optional + 20, baseOfCode);
 		writeLe(image, optional + 24, options_.imageBase);
-		writeLe(image, optional + 32, SectionAlignment);
-		writeLe(image, optional + 36, FileAlignment);
+		writeLe(image, optional + 32, options_.sectionAlignment);
+		writeLe(image, optional + 36, options_.fileAlignment);
 		writeLe(image, optional + 40, std::uint16_t{6});
 		writeLe(image, optional + 48, options_.subsystemVersionMajor);
 		writeLe(image, optional + 50, options_.subsystemVersionMinor);
@@ -1552,6 +1950,8 @@ private:
 		writeLe(image, optional + 88, std::uint64_t{0x100000});
 		writeLe(image, optional + 96, std::uint64_t{0x1000});
 		writeLe(image, optional + 108, std::uint32_t{16});
+		writeLe(image, optional + 112, exportDirectoryRva_);
+		writeLe(image, optional + 116, exportDirectorySize_);
 		writeLe(image, optional + 120, importDirectoryRva_);
 		writeLe(image, optional + 124, importDirectorySize_);
 		writeLe(image, optional + 152, relocationDirectoryRva_);

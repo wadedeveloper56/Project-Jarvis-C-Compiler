@@ -15,7 +15,7 @@ JWlink2 @link.rsp
 
 The default entry point is `mainCRTStartup`, falling back to `main`. The selected symbol is called directly by the Windows loader; JWlink2 does not initialize or link the C runtime, so the `main` fallback is for freestanding entry routines. The default subsystem is console; use `/SUBSYSTEM:WINDOWS` for a GUI image.
 
-Supported options include `/OUT`, `/ENTRY`, `/SUBSYSTEM` (including a major.minor version), `/MACHINE:X64`, `/LIBPATH`, `/DEFAULTLIB`, `/NODEFAULTLIB`, `/BASE`, `/FIXED`, `/DYNAMICBASE`, `/NXCOMPAT`, `/MAP`, `/INCREMENTAL:NO`, and `@response-file`. GNU-style `-o`, `-L`, and `-l` forms are also accepted. Options with unsupported behavior fail explicitly.
+Supported options include `/OUT`, `/ENTRY`, `/SUBSYSTEM` (including a major.minor version), `/MACHINE:X64`, `/LIBPATH`, `/DEFAULTLIB`, `/NODEFAULTLIB`, `/ALIGN`, `/BASE`, `/FIXED`, `/DYNAMICBASE`, `/NXCOMPAT`, `/MAP`, `/INCREMENTAL:NO`, and `@response-file`. GNU-style `-o`, `-L`, and `-l` forms are also accepted. COFF `.drectve` sections recognize `/DEFAULTLIB`, `/NODEFAULTLIB`, `/ALIGN`, `/ALIGNCOMM`, `/ENTRY`, `/EXPORT`, and `/INCLUDE`; exports produce a PE export directory, and forced includes participate in archive extraction. Malformed or unsupported directives fail explicitly. Other options with unsupported behavior also fail explicitly.
 
 ## Current scope
 

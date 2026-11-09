@@ -41,7 +41,7 @@ This is an inventory of checked-in repository usage, not a claim that no develop
 
 ## Input objects and libraries
 
-- [ ] Process COFF `.drectve` directives, including default-library, default-alignment, export, and include directives used by supported compilers.
+- [x] Process COFF `.drectve` directives, including `/DEFAULTLIB`, `/NODEFAULTLIB`, `/ALIGN`, `/ALIGNCOMM`, `/ENTRY`, `/EXPORT`, and `/INCLUDE`; verify entry-point behavior against JWlink and test archive selection, PE export data, alignment, and malformed directives.
 - [ ] Support additional compiler-produced COFF variants and section/symbol conventions required by the baseline, including BigObj where encountered.
 - [ ] Define handling for LTCG/LLVM bitcode inputs: support them through an appropriate compiler integration or report them as an explicit unsupported case.
 - [ ] Broaden import-library and archive compatibility beyond currently supported AMD64 regular objects and short import objects; test real toolchain-generated archives and symbol indexes.
@@ -59,7 +59,7 @@ This is an inventory of checked-in repository usage, not a claim that no develop
 ## Command-line compatibility
 
 - [ ] Inventory JWlink options used by real builds and implement their semantics; maintain a tested accepted/unsupported option matrix.
-- [ ] Add commonly used missing controls as required by that inventory, such as `/INCLUDE`, `/WHOLEARCHIVE`, `/DLL`, `/DEF`, `/EXPORT`, `/IMPLIB`, `/DEBUG`, `/PDB`, `/MANIFEST`, `/DELAYLOAD`, `/ALIGN`, `/SECTION`, `/MERGE`, `/STACK`, `/HEAP`, and `/VERBOSE`.
+- [ ] Add commonly used missing controls as required by that inventory, such as `/INCLUDE`, `/WHOLEARCHIVE`, `/DLL`, `/DEF`, `/EXPORT`, `/IMPLIB`, `/DEBUG`, `/PDB`, `/MANIFEST`, `/DELAYLOAD`, `/SECTION`, `/MERGE`, `/STACK`, `/HEAP`, and `/VERBOSE`.
 - [ ] Match option precedence, quoting, path resolution, response-file nesting/encoding, environment-variable expansion, and library search order where JWlink relies on them.
 - [ ] Match relevant defaults and diagnostics: output naming, entry point, subsystem, default libraries, duplicate/unresolved symbol reporting, and exit codes.
 
@@ -71,6 +71,6 @@ This is an inventory of checked-in repository usage, not a claim that no develop
 
 ## Progress notes
 
-- Current documented support: AMD64 COFF objects, Microsoft archives containing regular AMD64 objects and short import objects, static archive extraction, PE32+ executables, import/IAT generation, selected AMD64 relocations, base relocations, COMDATs, weak externals, map files, response files, and a limited set of linker options. See [README.md](README.md) for details.
+- Current documented support: AMD64 COFF objects and `.drectve` handling for default libraries, default alignment, entry points, exports, and forced includes; Microsoft archives containing regular AMD64 objects and short import objects; static archive extraction; PE32+ executables; import/IAT and export-directory generation; selected AMD64 relocations; base relocations; COMDATs; weak externals; map files; response files; and a limited set of linker options. `.drectve` behavior is covered by `JWlink2Test`, including a JWlink comparison for entry-point selection. See [README.md](README.md) for details.
 - BigObj/LTCG, debug data, full C/C++ runtime startup, DLL output, and many advanced linker options are not currently documented as supported.
 - Update this checklist alongside feature work and tests; move an item out of the open list only after its acceptance criteria are met.
