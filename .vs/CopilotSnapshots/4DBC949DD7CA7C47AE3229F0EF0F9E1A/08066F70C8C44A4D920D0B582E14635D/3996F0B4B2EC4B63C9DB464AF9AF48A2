@@ -1,0 +1,14 @@
+﻿#include <exception>
+#include <iostream>
+
+#include "command_line.h"
+
+int main(int argc, char** argv) {
+	try {
+		jwlink2::runLinker(jwlink2::parseArguments(argc, argv));
+		return 0;
+	} catch (const std::exception& error) {
+		std::cerr << "JWlink2: error: " << error.what() << '\n';
+		return 1;
+	}
+}
