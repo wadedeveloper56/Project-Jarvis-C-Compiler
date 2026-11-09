@@ -28,6 +28,7 @@ using Bytes = std::vector<std::uint8_t>;
 
 namespace {
 constexpr std::uint16_t MachineAmd64 = 0x8664;
+constexpr std::array<std::uint8_t, 16> BigObjClassId{0xc7, 0xa1, 0xba, 0xd1, 0xee, 0xba, 0xa9, 0x4b, 0xaf, 0x20, 0xfa, 0xf6, 0x6a, 0xa4, 0xdc, 0xb8};
 constexpr std::uint32_t SectionCntCode = 0x00000020;
 constexpr std::uint32_t SectionCntUninitializedData = 0x00000080;
 constexpr std::uint32_t SectionMemExecute = 0x20000000;
@@ -125,7 +126,7 @@ struct InputSection {
 	std::uint32_t characteristics = 0;
 	std::uint32_t alignment = 1;
 	std::uint8_t comdatSelection = 0;
-	std::uint16_t associatedSection = 0;
+	std::uint32_t associatedSection = 0;
 	std::string comdatKey;
 	std::size_t leaderObject = std::numeric_limits<std::size_t>::max();
 	std::size_t leaderSection = std::numeric_limits<std::size_t>::max();
@@ -138,7 +139,7 @@ struct InputSection {
 struct CoffSymbol {
 	std::string name;
 	std::uint32_t value = 0;
-	std::int16_t sectionNumber = 0;
+	std::int32_t sectionNumber = 0;
 	std::uint8_t storageClass = 0;
 	std::uint32_t weakTagIndex = 0;
 	std::uint32_t weakCharacteristics = 0;
@@ -326,19 +327,47 @@ std::vector<std::string> tokenizeDirectives(const Bytes& bytes, const std::strin
 	return tokens;
 }
 
+bool isBigObjCandidate(const Bytes& bytes) {
+	return bytes.size() >= 8 && readLe<std::uint16_t>(bytes, 0, "BigObj signature") == 0 &&
+		readLe<std::uint16_t>(bytes, 2, "BigObj signature") == 0xffff &&
+		readLe<std::uint16_t>(bytes, 4, "BigObj version") >= 2;
+}
+
 ObjectFile parseObject(const Bytes& bytes, std::string name) {
 	requireRange(bytes, 0, 20, name);
-	const auto machine = readLe<std::uint16_t>(bytes, 0, name);
+	const bool bigObj = isBigObjCandidate(bytes);
+	std::uint32_t sectionCount = 0;
+	std::uint32_t symbolOffset = 0;
+	std::uint32_t symbolCount = 0;
+	std::size_t symbolSize = 18;
+	std::size_t sectionTable = 20;
+	std::uint16_t machine = 0;
+	if (bigObj) {
+		requireRange(bytes, 0, 56, name + " BigObj header");
+		if (readLe<std::uint16_t>(bytes, 4, name) != 2 || !std::equal(BigObjClassId.begin(), BigObjClassId.end(), bytes.begin() + 12)) {
+			fail(name + ": unsupported anonymous COFF object signature");
+		}
+		machine = readLe<std::uint16_t>(bytes, 6, name);
+		sectionCount = readLe<std::uint32_t>(bytes, 44, name);
+		symbolOffset = readLe<std::uint32_t>(bytes, 48, name);
+		symbolCount = readLe<std::uint32_t>(bytes, 52, name);
+		symbolSize = 20;
+		sectionTable = 56;
+	} else {
+		machine = readLe<std::uint16_t>(bytes, 0, name);
+		sectionCount = readLe<std::uint16_t>(bytes, 2, name);
+		symbolOffset = readLe<std::uint32_t>(bytes, 8, name);
+		symbolCount = readLe<std::uint32_t>(bytes, 12, name);
+		sectionTable += readLe<std::uint16_t>(bytes, 16, name);
+	}
 	if (machine != MachineAmd64) {
 		std::ostringstream message;
 		message << name << ": expected AMD64 COFF object (machine 0x8664), got 0x" << std::hex << machine;
 		fail(message.str());
 	}
-	const auto sectionCount = readLe<std::uint16_t>(bytes, 2, name);
-	const auto symbolOffset = readLe<std::uint32_t>(bytes, 8, name);
-	const auto symbolCount = readLe<std::uint32_t>(bytes, 12, name);
-	const auto optionalSize = readLe<std::uint16_t>(bytes, 16, name);
-	const std::size_t sectionTable = 20u + optionalSize;
+	if (sectionCount > (std::numeric_limits<std::size_t>::max() - sectionTable) / 40) {
+		fail(name + ": section table is too large");
+	}
 	requireRange(bytes, sectionTable, static_cast<std::size_t>(sectionCount) * 40, name + " section table");
 
 	std::size_t stringTableOffset = 0;
@@ -347,7 +376,10 @@ ObjectFile parseObject(const Bytes& bytes, std::string name) {
 		if (symbolOffset == 0) {
 			fail(name + ": missing COFF symbol table");
 		}
-		const auto symbolsBytes = static_cast<std::size_t>(symbolCount) * 18;
+		if (symbolCount > std::numeric_limits<std::size_t>::max() / symbolSize) {
+			fail(name + ": symbol table is too large");
+		}
+		const auto symbolsBytes = static_cast<std::size_t>(symbolCount) * symbolSize;
 		requireRange(bytes, symbolOffset, symbolsBytes, name + " symbol table");
 		stringTableOffset = static_cast<std::size_t>(symbolOffset) + symbolsBytes;
 		requireRange(bytes, stringTableOffset, 4, name + " string table");
@@ -361,7 +393,7 @@ ObjectFile parseObject(const Bytes& bytes, std::string name) {
 	ObjectFile object;
 	object.name = std::move(name);
 	object.sections.reserve(sectionCount);
-	for (std::uint16_t i = 0; i < sectionCount; ++i) {
+	for (std::uint32_t i = 0; i < sectionCount; ++i) {
 		const auto header = sectionTable + static_cast<std::size_t>(i) * 40;
 		const auto nameOffset = coffNameOffset(bytes, header);
 		std::string sectionName = fixedString(bytes, header, 8);
@@ -419,7 +451,7 @@ ObjectFile parseObject(const Bytes& bytes, std::string name) {
 
 	object.symbols.resize(symbolCount);
 	for (std::uint32_t i = 0; i < symbolCount;) {
-		const auto entry = static_cast<std::size_t>(symbolOffset) + static_cast<std::size_t>(i) * 18;
+		const auto entry = static_cast<std::size_t>(symbolOffset) + static_cast<std::size_t>(i) * symbolSize;
 		const auto nameZeroes = readLe<std::uint32_t>(bytes, entry, object.name);
 		const auto nameOffset = readLe<std::uint32_t>(bytes, entry + 4, object.name);
 		auto& symbol = object.symbols[i];
@@ -432,22 +464,35 @@ ObjectFile parseObject(const Bytes& bytes, std::string name) {
 			symbol.name = fixedString(bytes, entry, 8);
 		}
 		symbol.value = readLe<std::uint32_t>(bytes, entry + 8, object.name);
-		symbol.sectionNumber = static_cast<std::int16_t>(readLe<std::uint16_t>(bytes, entry + 12, object.name));
-		symbol.storageClass = bytes[entry + 16];
-		const auto auxiliaryCount = bytes[entry + 17];
+		symbol.sectionNumber = bigObj
+			? static_cast<std::int32_t>(readLe<std::uint32_t>(bytes, entry + 12, object.name))
+			: static_cast<std::int16_t>(readLe<std::uint16_t>(bytes, entry + 12, object.name));
+		const auto storageClassOffset = bigObj ? 18u : 16u;
+		const auto auxiliaryCountOffset = bigObj ? 19u : 17u;
+		symbol.storageClass = bytes[entry + storageClassOffset];
+		const auto auxiliaryCount = bytes[entry + auxiliaryCountOffset];
 		if (auxiliaryCount > symbolCount - i - 1) {
 			fail(object.name + ": invalid COFF auxiliary symbol count");
 		}
 		if (auxiliaryCount != 0) {
-			const auto auxiliary = entry + 18;
+			const auto auxiliary = entry + symbolSize;
 			if (symbol.storageClass == 105 && symbol.sectionNumber == 0) {
 				symbol.weakTagIndex = readLe<std::uint32_t>(bytes, auxiliary, object.name);
 				symbol.weakCharacteristics = readLe<std::uint32_t>(bytes, auxiliary + 4, object.name);
 			} else if (symbol.storageClass == 3 && symbol.sectionNumber > 0) {
+				if (static_cast<std::size_t>(symbol.sectionNumber) > object.sections.size()) {
+					fail(object.name + ": section symbol refers to an invalid section");
+				}
 				auto& section = object.sections.at(static_cast<std::size_t>(symbol.sectionNumber - 1));
 				if ((section.characteristics & 0x00001000) != 0) {
-					section.comdatSelection = bytes[auxiliary + 14];
-					section.associatedSection = readLe<std::uint16_t>(bytes, auxiliary + 12, object.name);
+					if (bigObj) {
+						section.comdatSelection = bytes[auxiliary + 16];
+						section.associatedSection = readLe<std::uint16_t>(bytes, auxiliary + 12, object.name) |
+							(static_cast<std::uint32_t>(readLe<std::uint16_t>(bytes, auxiliary + 18, object.name)) << 16);
+					} else {
+						section.comdatSelection = bytes[auxiliary + 14];
+						section.associatedSection = readLe<std::uint16_t>(bytes, auxiliary + 12, object.name);
+					}
 				}
 			}
 		}
@@ -544,7 +589,11 @@ std::vector<ArchiveMember> parseArchive(const Bytes& bytes, const std::string& p
 			if (memberSize >= 20) {
 				const auto machine = readLe<std::uint16_t>(bytes, dataOffset, path);
 				const auto signature = readLe<std::uint16_t>(bytes, dataOffset + 2, path);
-				if (machine == 0 && signature == 0xffff) {
+				const auto anonymousVersion = memberSize >= 6 ? readLe<std::uint16_t>(bytes, dataOffset + 4, path) : 0;
+				if (signature == 0xffff && anonymousVersion >= 2) {
+					Bytes objectBytes(bytes.begin() + dataOffset, bytes.begin() + dataOffset + memberSize);
+					member.object = parseObject(objectBytes, path + "(" + memberName + ")");
+				} else if (machine == 0 && signature == 0xffff) {
 					Bytes importBytes(bytes.begin() + dataOffset, bytes.begin() + dataOffset + memberSize);
 					member.imported = parseImportObject(importBytes, path + "(" + memberName + ")");
 				} else if (machine == MachineAmd64) {

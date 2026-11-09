@@ -9,6 +9,7 @@
 #include <filesystem>
 #include <fstream>
 #include <limits>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -35,9 +36,10 @@ struct TestSection {
 struct TestSymbol {
 	std::string name;
 	std::uint32_t value = 0;
-	std::int16_t section = 0;
+	std::int32_t section = 0;
 	std::uint8_t storageClass = 2;
 	std::vector<std::array<std::uint8_t, 18>> auxiliary;
+	std::vector<std::array<std::uint8_t, 20>> bigObjAuxiliary;
 };
 
 void put16(Bytes& bytes, std::size_t offset, std::uint16_t value) {
@@ -165,6 +167,16 @@ std::array<std::uint8_t, 18> sectionAux(std::uint32_t dataLength, std::uint16_t 
 	return auxiliary;
 }
 
+std::array<std::uint8_t, 20> bigObjSectionAux(std::uint32_t associated, std::uint8_t selection) {
+	std::array<std::uint8_t, 20> auxiliary{};
+	auxiliary[12] = static_cast<std::uint8_t>(associated);
+	auxiliary[13] = static_cast<std::uint8_t>(associated >> 8);
+	auxiliary[18] = static_cast<std::uint8_t>(associated >> 16);
+	auxiliary[19] = static_cast<std::uint8_t>(associated >> 24);
+	auxiliary[16] = selection;
+	return auxiliary;
+}
+
 std::array<std::uint8_t, 18> weakAux(std::uint32_t tagIndex, std::uint32_t characteristics) {
 	std::array<std::uint8_t, 18> auxiliary{};
 	for (std::size_t i = 0; i < 4; ++i) auxiliary[i] = static_cast<std::uint8_t>(tagIndex >> (i * 8));
@@ -178,6 +190,88 @@ Bytes makeEntryObject(const std::string& entry = "main") {
 
 TestSection makeDirectiveSection(const std::string& directives) {
 	return TestSection{".drectve", Bytes(directives.begin(), directives.end()), 0x00100a00};
+}
+
+Bytes makeBigObjObject(const std::vector<TestSection>& sections, const std::vector<TestSymbol>& symbols) {
+	Bytes bytes(56 + sections.size() * 40, 0);
+	put16(bytes, 0, 0);
+	put16(bytes, 2, 0xffff);
+	put16(bytes, 4, 2);
+	put16(bytes, 6, 0x8664);
+	const std::array<std::uint8_t, 16> classId{0xc7, 0xa1, 0xba, 0xd1, 0xee, 0xba, 0xa9, 0x4b, 0xaf, 0x20, 0xfa, 0xf6, 0x6a, 0xa4, 0xdc, 0xb8};
+	std::copy(classId.begin(), classId.end(), bytes.begin() + 12);
+	put32(bytes, 44, static_cast<std::uint32_t>(sections.size()));
+
+	Bytes strings(4, 0);
+	std::vector<std::size_t> sectionNameOffsets(sections.size(), 0);
+	for (std::size_t i = 0; i < sections.size(); ++i) {
+		if (sections[i].name.size() > 8) sectionNameOffsets[i] = addString(strings, sections[i].name);
+	}
+	std::vector<std::uint32_t> rawOffsets(sections.size(), 0);
+	std::vector<std::uint32_t> relocationOffsets(sections.size(), 0);
+	for (std::size_t i = 0; i < sections.size(); ++i) {
+		if (!sections[i].data.empty()) {
+			rawOffsets[i] = static_cast<std::uint32_t>(bytes.size());
+			bytes.insert(bytes.end(), sections[i].data.begin(), sections[i].data.end());
+		}
+	}
+	for (std::size_t i = 0; i < sections.size(); ++i) {
+		if (!sections[i].relocations.empty()) {
+			relocationOffsets[i] = static_cast<std::uint32_t>(bytes.size());
+			for (const auto& relocation : sections[i].relocations) {
+				const auto entry = bytes.size();
+				bytes.resize(entry + 10, 0);
+				put32(bytes, entry, relocation.offset);
+				put32(bytes, entry + 4, relocation.symbolIndex);
+				put16(bytes, entry + 8, relocation.type);
+			}
+		}
+	}
+	const auto symbolOffset = static_cast<std::uint32_t>(bytes.size());
+	std::uint32_t symbolCount = 0;
+	for (const auto& symbol : symbols) symbolCount += static_cast<std::uint32_t>(1 + symbol.bigObjAuxiliary.size());
+	put32(bytes, 48, symbolOffset);
+	put32(bytes, 52, symbolCount);
+	for (const auto& symbol : symbols) {
+		const auto entry = bytes.size();
+		bytes.resize(entry + 20, 0);
+		if (symbol.name.size() <= 8) {
+			std::copy(symbol.name.begin(), symbol.name.end(), bytes.begin() + entry);
+		} else {
+			put32(bytes, entry, 0);
+			put32(bytes, entry + 4, addString(strings, symbol.name));
+		}
+		put32(bytes, entry + 8, symbol.value);
+		put32(bytes, entry + 12, static_cast<std::uint32_t>(symbol.section));
+		put16(bytes, entry + 16, 0);
+		bytes[entry + 18] = symbol.storageClass;
+		bytes[entry + 19] = static_cast<std::uint8_t>(symbol.bigObjAuxiliary.size());
+		for (const auto& auxiliary : symbol.bigObjAuxiliary) bytes.insert(bytes.end(), auxiliary.begin(), auxiliary.end());
+	}
+	put32(bytes, bytes.size(), static_cast<std::uint32_t>(strings.size()));
+	bytes.insert(bytes.end(), strings.begin() + 4, strings.end());
+	for (std::size_t i = 0; i < sections.size(); ++i) {
+		const auto header = 56 + i * 40;
+		if (sectionNameOffsets[i] == 0) {
+			std::copy(sections[i].name.begin(), sections[i].name.end(), bytes.begin() + header);
+		} else {
+			const auto longName = "/" + std::to_string(sectionNameOffsets[i]);
+			std::copy(longName.begin(), longName.end(), bytes.begin() + header);
+		}
+		put32(bytes, header + 8, static_cast<std::uint32_t>(sections[i].data.size()));
+		put32(bytes, header + 16, static_cast<std::uint32_t>(sections[i].data.size()));
+		put32(bytes, header + 20, rawOffsets[i]);
+		put32(bytes, header + 24, relocationOffsets[i]);
+		put16(bytes, header + 32, static_cast<std::uint16_t>(sections[i].relocations.size()));
+		put32(bytes, header + 36, sections[i].characteristics);
+	}
+	return bytes;
+}
+
+Bytes makeBigObjComdatObject(const std::string& key, const Bytes& content) {
+	TestSymbol sectionSymbol{".text$comdat", 0, 1, 3, {}};
+	sectionSymbol.bigObjAuxiliary.push_back(bigObjSectionAux(0, 2));
+	return makeBigObjObject({TestSection{".text$comdat", content, 0x60001020}}, {sectionSymbol, TestSymbol{key, 0, 1, 2, {}}});
 }
 
 Bytes makeComdatObject(const std::string& key, const Bytes& content, std::uint8_t selection) {
@@ -503,6 +597,60 @@ void assertNoOutput(const Workspace& workspace, const std::wstring& outputName =
 
 TEST_CLASS(JWlink2LinkerTests) {
 public:
+	TEST_METHOD(BigObjSupportsWideSectionNumbersSymbolsAndRelocations) {
+		Workspace workspace;
+		std::vector<TestSection> sections(32768, TestSection{".data", {0x5a}, 0xc0000040});
+		TestSection text{".text", Bytes(4, 0)};
+		text.relocations = {{0, 1, 4}};
+		sections.push_back(std::move(text));
+		const auto object = makeBigObjObject(std::move(sections), {
+			TestSymbol{"main", 0, 32769, 2, {}}, TestSymbol{"targetFunction", 2, 32769, 2, {}}
+		});
+		assertSuccess(linkObject(workspace, object));
+		const auto image = workspace.read(L"linked.exe");
+		const auto textHeader = sectionHeader(image, ".text");
+		Assert::AreEqual<std::uint32_t>(get32(image, textHeader + 12), get32(image, optionalHeader(image) + 16), L"32-bit section index resolves the entry point");
+		Assert::AreEqual<std::uint32_t>(static_cast<std::uint32_t>(-2), get32(image, get32(image, textHeader + 20)), L"20-byte BigObj symbol records resolve AMD64 relocations");
+		Assert::AreEqual<std::uint32_t>(32768, get32(image, sectionHeader(image, ".data") + 8), L"all BigObj sections are parsed and merged");
+	}
+
+	TEST_METHOD(BigObjSectionAuxiliaryRecordSelectsComdatWinner) {
+		Workspace workspace;
+		workspace.write(L"entry.obj", makeEntryObject());
+		workspace.write(L"first.obj", makeBigObjComdatObject("bigObjComdat", {0x41}));
+		workspace.write(L"second.obj", makeBigObjComdatObject("bigObjComdat", {0x42}));
+		auto args = outputArgs(workspace);
+		for (const auto& file : {L"entry.obj", L"first.obj", L"second.obj"}) args.push_back(workspace.file(file).wstring());
+		assertSuccess(runLinker(workspace, args));
+		const auto image = workspace.read(L"linked.exe");
+		const auto text = sectionHeader(image, ".text");
+		const auto raw = get32(image, text + 20);
+		Assert::IsTrue(std::find(image.begin() + raw, image.begin() + raw + get32(image, text + 16), 0x41) != image.begin() + raw + get32(image, text + 16), L"first BigObj COMDAT candidate is selected");
+		Assert::IsTrue(std::find(image.begin() + raw, image.begin() + raw + get32(image, text + 16), 0x42) == image.begin() + raw + get32(image, text + 16), L"losing BigObj COMDAT candidate is discarded");
+	}
+
+	TEST_METHOD(BigObjArchiveMemberCanSatisfyExternalSymbol) {
+		Workspace workspace;
+		TestSection text{".text", Bytes(4, 0)};
+		text.relocations = {{0, 1, 4}};
+		workspace.write(L"input.obj", makeObject({text}, {TestSymbol{"main", 0, 1, 2, {}}, TestSymbol{"bigObjHelper", 0, 0, 2, {}}}));
+		workspace.write(L"bigobj.lib", makeArchive({{"bighelper.obj", makeBigObjObject({TestSection{".text", {0xc3}}}, {TestSymbol{"bigObjHelper", 0, 1, 2, {}}})}}));
+		auto args = outputArgs(workspace);
+		args.push_back(workspace.file(L"input.obj").wstring());
+		args.push_back(workspace.file(L"bigobj.lib").wstring());
+		assertSuccess(runLinker(workspace, args));
+		Assert::IsTrue(sectionHeader(workspace.read(L"linked.exe"), ".text") != 0, L"BigObj archive member is selected and linked");
+	}
+
+	TEST_METHOD(InvalidBigObjClassIdentifierIsRejected) {
+		Workspace workspace;
+		auto object = makeBigObjObject({TestSection{".text", {0xc3}}}, {TestSymbol{"main", 0, 1, 2, {}}});
+		object[12] ^= 0x01;
+		const auto result = linkObject(workspace, object);
+		assertFailureContains(result, "unsupported anonymous COFF object signature");
+		assertNoOutput(workspace);
+	}
+
 	TEST_METHOD(ValidAmd64ObjectProducesPe32PlusWithDefaultBaseAndEntry) {
 		Workspace workspace;
 		assertSuccess(linkObject(workspace, makeEntryObject()));

@@ -16,7 +16,7 @@ An item is complete only when implemented, covered by a regression test, and che
 
 JWlink2's target is a native Windows **AMD64 (x64) PE32+ executable**. It accepts AMD64 COFF object files and the documented Microsoft library-member formats and emits an executable image using the console or Windows subsystem. This is the output target regardless of whether the JWlink2 tool itself was built for Win32 or x64. `/DLL` is not supported. An AMD64 machine field, PE32+ optional header, non-DLL executable characteristic, and default console subsystem are asserted by `ValidAmd64ObjectProducesPe32PlusWithDefaultBaseAndEntry`; unsupported DLL output and non-AMD64 input/machine requests are checked by `DllOutputIsOutsideSupportedBoundary`, `NonAmd64ObjectIsRejected`, and `CommandLineAndResponseFileErrorsAreReported` in `JWlink2Test`.
 
-Intentionally out of scope as JWlink output targets are 16-bit DOS COM/MZ and Windows NE, OS/2 NE/LE/LX, Windows VxD, Phar Lap, Novell NLM, DOS/16M, QNX, ELF, raw BIN/HEX, and non-AMD64 Windows images. Windows PE DLLs and drivers are also outside this boundary. These are JWlink's broader formats, not compatibility promises for JWlink2. BigObj/LTCG inputs and full runtime startup are separate input/runtime limitations, even when the desired output is an AMD64 PE executable.
+Intentionally out of scope as JWlink output targets are 16-bit DOS COM/MZ and Windows NE, OS/2 NE/LE/LX, Windows VxD, Phar Lap, Novell NLM, DOS/16M, QNX, ELF, raw BIN/HEX, and non-AMD64 Windows images. Windows PE DLLs and drivers are also outside this boundary. These are JWlink's broader formats, not compatibility promises for JWlink2. LTCG inputs and full runtime startup remain separate input/runtime limitations, even when the desired output is an AMD64 PE executable.
 
 ### Repository inventory (2026-11-09)
 
@@ -42,7 +42,7 @@ This is an inventory of checked-in repository usage, not a claim that no develop
 ## Input objects and libraries
 
 - [x] Process COFF `.drectve` directives, including `/DEFAULTLIB`, `/NODEFAULTLIB`, `/ALIGN`, `/ALIGNCOMM`, `/ENTRY`, `/EXPORT`, and `/INCLUDE`; verify entry-point behavior against JWlink and test archive selection, PE export data, alignment, and malformed directives.
-- [ ] Support additional compiler-produced COFF variants and section/symbol conventions required by the baseline, including BigObj where encountered.
+- [x] Support Microsoft AMD64 BigObj inputs, including 32-bit section counts/indices, 20-byte symbol and auxiliary records, and BigObj members in static archives; validate wide section indices, relocations, COMDAT selection, and malformed signatures in `JWlink2Test`.
 - [ ] Define handling for LTCG/LLVM bitcode inputs: support them through an appropriate compiler integration or report them as an explicit unsupported case.
 - [ ] Broaden import-library and archive compatibility beyond currently supported AMD64 regular objects and short import objects; test real toolchain-generated archives and symbol indexes.
 - [ ] Audit weak externals, common symbols, COMDAT selection, associative sections, duplicate resolution, and archive extraction against JWlink using compiler-generated fixtures.
@@ -71,6 +71,6 @@ This is an inventory of checked-in repository usage, not a claim that no develop
 
 ## Progress notes
 
-- Current documented support: AMD64 COFF objects and `.drectve` handling for default libraries, default alignment, entry points, exports, and forced includes; Microsoft archives containing regular AMD64 objects and short import objects; static archive extraction; PE32+ executables; import/IAT and export-directory generation; selected AMD64 relocations; base relocations; COMDATs; weak externals; map files; response files; and a limited set of linker options. `.drectve` behavior is covered by `JWlink2Test`, including a JWlink comparison for entry-point selection. See [README.md](README.md) for details.
+- Current documented support: AMD64 standard COFF and BigObj files (including BigObj archive members and wide section indices), `.drectve` handling for default libraries, default alignment, entry points, exports, and forced includes; Microsoft archives containing regular AMD64 objects and short import objects; static archive extraction; PE32+ executables; import/IAT and export-directory generation; selected AMD64 relocations; base relocations; COMDATs; weak externals; map files; response files; and a limited set of linker options. BigObj and `.drectve` behavior is covered by `JWlink2Test`, including a JWlink comparison for entry-point selection. See [README.md](README.md) for details.
 - BigObj/LTCG, debug data, full C/C++ runtime startup, DLL output, and many advanced linker options are not currently documented as supported.
 - Update this checklist alongside feature work and tests; move an item out of the open list only after its acceptance criteria are met.
