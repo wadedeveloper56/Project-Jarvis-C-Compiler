@@ -605,6 +605,30 @@ private:
 	std::set<std::string> unresolvedNames() const {
 		std::set<std::string> defined;
 		std::set<std::string> unresolved;
+		std::set<std::string> weakFallbacks;
+		std::set<std::string> referencedWeakFallbacks;
+		for (const auto& object : objects_) {
+			for (const auto& symbol : object.symbols) {
+				if (!symbol.auxiliary && symbol.storageClass == 105 && symbol.weakTagIndex < object.symbols.size()) {
+					const auto& fallback = object.symbols[symbol.weakTagIndex];
+					if (!fallback.auxiliary && !fallback.name.empty()) {
+						weakFallbacks.insert(fallback.name);
+					}
+				}
+			}
+		}
+		for (const auto& object : objects_) {
+			for (const auto& section : object.sections) {
+				for (const auto& relocation : section.relocations) {
+					if (relocation.symbolIndex < object.symbols.size()) {
+						const auto& symbol = object.symbols[relocation.symbolIndex];
+						if (weakFallbacks.contains(symbol.name)) {
+							referencedWeakFallbacks.insert(symbol.name);
+						}
+					}
+				}
+			}
+		}
 		for (const auto& object : objects_) {
 			for (const auto& symbol : object.symbols) {
 				if (symbol.auxiliary || symbol.name.empty()) {
@@ -613,7 +637,8 @@ private:
 				if (symbol.storageClass == 2) {
 					if (isDefined(symbol)) {
 						defined.insert(symbol.name);
-					} else if (symbol.sectionNumber == 0 && symbol.value == 0) {
+					} else if (symbol.sectionNumber == 0 && symbol.value == 0 &&
+						(!weakFallbacks.contains(symbol.name) || referencedWeakFallbacks.contains(symbol.name))) {
 						unresolved.insert(symbol.name);
 					}
 				} else if (symbol.storageClass == 105 && symbol.weakCharacteristics >= 2 && symbol.weakCharacteristics <= 3 && symbol.weakTagIndex < object.symbols.size()) {
@@ -848,6 +873,19 @@ private:
 					section.leaderObject = existing->second.objectIndex;
 					section.leaderSection = existing->second.sectionIndex;
 				}
+			}
+		}
+		for (auto& object : objects_) {
+			for (auto& section : object.sections) {
+				if (!section.discarded || section.comdatSelection == 5 || section.comdatKey.empty()) {
+					continue;
+				}
+				const auto leader = selected.find(section.comdatKey);
+				if (leader == selected.end()) {
+					fail(object.name + ": selected COMDAT leader is missing");
+				}
+				section.leaderObject = leader->second.objectIndex;
+				section.leaderSection = leader->second.sectionIndex;
 			}
 		}
 		for (std::size_t objectIndex = 0; objectIndex < objects_.size(); ++objectIndex) {
