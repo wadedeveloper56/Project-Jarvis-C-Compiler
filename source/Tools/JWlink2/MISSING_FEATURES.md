@@ -6,9 +6,30 @@ An item is complete only when implemented, covered by a regression test, and che
 
 ## Compatibility baseline
 
-- [ ] Inventory actual JWlink command lines, response files, object producers, libraries, and output types used by this repository.
+- [x] Inventory actual JWlink command lines, response files, object producers, libraries, and output types used by this repository; findings are recorded below.
 - [ ] Define and test the supported compatibility boundary (initially native Windows AMD64 PE executables); document any JWlink targets intentionally out of scope.
 - [ ] Add end-to-end comparisons that link representative inputs with JWlink and JWlink2 and verify observable output behavior, not byte-for-byte identity.
+
+### Repository inventory (2026-11-09)
+
+The only executable JWlink build invocation found in the repository is in `test\run.bat`. It links the 64-bit Windows test as follows:
+
+```text
+JWlink format win pe option map=<test1.map> file <test1.obj>, <c064.obj> lib <shell32.lib> <kernel32.lib> <msvcrt.lib> name <test1.exe>
+```
+
+The batch file supplies absolute toolchain paths through `%DIRECTORY%`, `%LIB64%`, `%KLIB64%`, and `%LLIB64%`. The SDK libraries are under Windows Kits `10.0.28000.0\um\x64`; the C runtime library is under MSVC `14.53.36911\lib\x64`. `test\link64.lnk` contains the equivalent JWlink directive-file form (including `format win pe`, the map, both objects, the same libraries, and the executable name), but `test\run.bat` does not pass that file to JWlink. The active harness uses inline directives; it does not invoke an `@response-file`. `test\info.txt` documents JWlink's `@` directive, while `test\info2.txt` describes it for a linker-emulator command line.
+
+The inputs are produced by this path in `test\run.bat`:
+
+1. `JWcc -b 64` compiles `test\test1.c` to `test1.asm`.
+2. `JWasm -win64` assembles that output to `test1.obj`.
+3. `JWasm -win64` separately assembles the hand-written AMD64 startup source `test\c064.asm` to `c064.obj`.
+4. The checked-in PEDump logs for both objects identify them as 64-bit AMD64 COFF. `c064.obj` also contains a `.drectve` section specifying `-entry:mainCRTStartup`, so honoring compiler/assembler directives is part of this real link case.
+
+The libraries passed, in order, are Windows SDK `shell32.lib`, Windows SDK `kernel32.lib`, and MSVC `msvcrt.lib`. The requested outputs are a Windows PE executable `test1.exe` and its JWlink map `test1.map`; the batch then asks PEDump to inspect the two objects and executable. `format win pe` is the only output format used by this checked-in workflow; no DLL, 32-bit, DOS, OS/2, ELF, raw, or other JWlink output invocation was found. Although the batch creates 16/32-bit output directories and declares 32-bit library variables, its compiler, assembler, linker, and inspection commands in this workflow target only `windows\64bit`.
+
+This is an inventory of checked-in repository usage, not a claim that no developer-local or external build scripts use other JWlink features. The discovered `.drectve` entry point is already tracked by the COFF-directive item below; the inventory does not imply JWlink2 currently supports it.
 
 ## Input objects and libraries
 
