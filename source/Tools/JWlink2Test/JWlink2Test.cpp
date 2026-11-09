@@ -494,6 +494,19 @@ ProcessResult runLinker(const Workspace& workspace, const std::vector<std::wstri
 	return runExecutable(workspace, jwlink2Path(), arguments);
 }
 
+ProcessResult runJwlink(const Workspace& workspace, const std::vector<std::wstring>& inputs, const std::wstring& outputName) {
+	std::vector<std::wstring> arguments{L"format", L"win", L"pe", L"option", L"quiet,start=main", L"file"};
+	std::wstring inputList;
+	for (const auto& input : inputs) {
+		if (!inputList.empty()) inputList += L',';
+		inputList += input;
+	}
+	arguments.push_back(std::move(inputList));
+	arguments.push_back(L"name");
+	arguments.push_back(workspace.file(outputName).wstring());
+	return runExecutable(workspace, jwlinkPath(), arguments);
+}
+
 std::vector<std::wstring> outputArgs(const Workspace& workspace, const std::wstring& outputName = L"linked.exe") {
 	return {L"/OUT:" + workspace.file(outputName).wstring(), L"/ENTRY:main"};
 }
@@ -1070,6 +1083,48 @@ public:
 		Assert::IsTrue(contents.find("commonValue") != std::string::npos, L"map includes common symbol");
 	}
 
+	TEST_METHOD(CommonSymbolsUseLargestSizeAndStrongDefinitionsWin) {
+		Workspace commonWorkspace;
+		TestSection references{".data", Bytes(16, 0), 0xc0000040};
+		references.relocations = {{0, 1, 1}, {8, 2, 1}};
+		commonWorkspace.write(L"entry.obj", makeObject({references, TestSection{".text", {0xc3}}}, {
+			TestSymbol{"main", 0, 2, 2, {}}, TestSymbol{"firstCommon", 4, 0, 2, {}}, TestSymbol{"secondCommon", 8, 0, 2, {}},
+			TestSymbol{"firstCommon", 16, 0, 2, {}}
+		}));
+		auto commonArgs = outputArgs(commonWorkspace);
+		commonArgs.push_back(commonWorkspace.file(L"entry.obj").wstring());
+		assertSuccess(runLinker(commonWorkspace, commonArgs));
+		auto verifyCommonRanges = [&](const Bytes& image) {
+			const auto data = get32(image, sectionHeader(image, ".data") + 20);
+			const auto first = get64(image, data);
+			const auto second = get64(image, data + 8);
+			Assert::IsTrue(first + 16 <= second || second + 8 <= first, L"merged common symbols occupy disjoint storage using the largest common size");
+		};
+		verifyCommonRanges(commonWorkspace.read(L"linked.exe"));
+
+		Workspace strongWorkspace;
+		TestSection strongReference{".data", Bytes(8, 0), 0xc0000040};
+		strongReference.relocations = {{0, 1, 1}};
+		strongWorkspace.write(L"entry.obj", makeObject({strongReference, TestSection{".text", {0xc3}}}, {
+			TestSymbol{"main", 0, 2, 2, {}}, TestSymbol{"sharedValue", 32, 0, 2, {}}
+		}));
+		strongWorkspace.write(L"strong.obj", makeObject({TestSection{".data", {0x5a}, 0xc0000040}}, {TestSymbol{"sharedValue", 0, 1, 2, {}}}));
+		auto strongArgs = outputArgs(strongWorkspace);
+		strongArgs.push_back(strongWorkspace.file(L"entry.obj").wstring());
+		strongArgs.push_back(strongWorkspace.file(L"strong.obj").wstring());
+		assertSuccess(runLinker(strongWorkspace, strongArgs));
+		auto verifyStrongOverride = [&](const Bytes& image) {
+			const auto optional = optionalHeader(image);
+			const auto base = get64(image, optional + 24);
+			const auto strongData = sectionHeader(image, ".data");
+			const auto raw = get32(image, strongData + 20);
+			const auto strongAddress = get64(image, raw);
+			Assert::AreEqual<std::uint64_t>(base + get32(image, strongData + 12) + 8, strongAddress, L"a strong definition overrides a common symbol regardless of object order");
+			Assert::AreEqual<std::uint8_t>(0x5a, image[raw + 8], L"strong definition bytes are linked");
+		};
+		verifyStrongOverride(strongWorkspace.read(L"linked.exe"));
+	}
+
 	TEST_METHOD(ComdatAnyKeepsOneDuplicateDefinition) {
 		Workspace workspace;
 		workspace.write(L"entry.obj", makeEntryObject());
@@ -1079,6 +1134,16 @@ public:
 		args.insert(args.begin() + 1, L"/MAP");
 		for (const auto& file : {L"entry.obj", L"first.obj", L"second.obj"}) args.push_back(workspace.file(file).wstring());
 		assertSuccess(runLinker(workspace, args));
+		assertSuccess(runJwlink(workspace, {workspace.file(L"entry.obj").wstring(), workspace.file(L"first.obj").wstring(), workspace.file(L"second.obj").wstring()}, L"jwlink.exe"));
+		auto verifyWinner = [&](const Bytes& image) {
+			const auto text = sectionHeader(image, ".text");
+			const auto raw = get32(image, text + 20);
+			const auto end = raw + get32(image, text + 16);
+			Assert::IsTrue(std::find(image.begin() + raw, image.begin() + end, 0x11) != image.begin() + end, L"first ANY COMDAT candidate is selected");
+			Assert::IsTrue(std::find(image.begin() + raw, image.begin() + end, 0x22) == image.begin() + end, L"losing ANY COMDAT candidate is discarded");
+		};
+		verifyWinner(workspace.read(L"linked.exe"));
+		verifyWinner(workspace.read(L"jwlink.exe"));
 		std::ifstream map(workspace.file(L"linked.map"));
 		const std::string contents((std::istreambuf_iterator<char>(map)), std::istreambuf_iterator<char>());
 		const auto first = contents.find(" shared\n");
@@ -1126,7 +1191,11 @@ public:
 		for (const auto& file : {L"entry.obj", L"parent1.obj", L"parent2.obj"}) args.push_back(workspace.file(file).wstring());
 		assertSuccess(runLinker(workspace, args));
 		const auto image = workspace.read(L"linked.exe");
-		Assert::IsTrue(sectionHeader(image, ".xdata") != 0, L"selected parent's associative section is retained");
+		const auto xdata = sectionHeader(image, ".xdata");
+		const auto raw = get32(image, xdata + 20);
+		Assert::AreEqual<std::uint8_t>(0x41, image[raw], L"associative section follows the selected first parent");
+		Assert::AreEqual<std::uint8_t>(0x42, image[raw + 1], L"associative section data is retained");
+		Assert::IsTrue(std::find(image.begin() + raw, image.begin() + raw + get32(image, xdata + 16), 0x51) == image.begin() + raw + get32(image, xdata + 16), L"losing parent's associative section is discarded");
 	}
 
 	TEST_METHOD(WeakExternalResolvesFallbackFromLibrary) {
@@ -1142,7 +1211,11 @@ public:
 		args.push_back(workspace.file(L"fallback.lib").wstring());
 		assertSuccess(runLinker(workspace, args));
 		const auto image = workspace.read(L"linked.exe");
-		Assert::AreEqual<std::uint64_t>(0x140002000, get64(image, get32(image, sectionHeader(image, ".text") + 20)), L"weak alias relocates to selected fallback");
+		const auto target = get64(image, get32(image, sectionHeader(image, ".text") + 20));
+		const auto data = sectionHeader(image, ".data");
+		const auto expected = get64(image, optionalHeader(image) + 24) + get32(image, data + 12);
+		Assert::AreEqual<std::uint64_t>(expected, target, L"weak alias relocates to the selected library fallback");
+		Assert::AreEqual<std::uint8_t>(0x77, image[get32(image, data + 20)], L"fallback member data is included");
 	}
 
 	TEST_METHOD(WeakSearchNoneResolvesToZero) {
@@ -1151,7 +1224,8 @@ public:
 		text.relocations = {{0, 1, 1}};
 		TestSymbol weak{"optional", 0, 0, 105, {weakAux(3, 1)}};
 		TestSymbol fallback{"missingFallback", 0, 0, 2, {}};
-		assertSuccess(linkObject(workspace, makeObject({text}, {TestSymbol{"main", 0, 1, 2, {}}, weak, fallback})));
+		const auto object = makeObject({text}, {TestSymbol{"main", 0, 1, 2, {}}, weak, fallback});
+		assertSuccess(linkObject(workspace, object));
 		const auto image = workspace.read(L"linked.exe");
 		Assert::AreEqual<std::uint64_t>(0, get64(image, get32(image, sectionHeader(image, ".text") + 20)), L"unresolved weak external defaults to zero");
 	}

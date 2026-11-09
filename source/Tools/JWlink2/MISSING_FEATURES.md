@@ -45,7 +45,9 @@ This is an inventory of checked-in repository usage, not a claim that no develop
 - [x] Support Microsoft AMD64 BigObj inputs, including 32-bit section counts/indices, 20-byte symbol and auxiliary records, and BigObj members in static archives; validate wide section indices, relocations, COMDAT selection, and malformed signatures in `JWlink2Test`.
 - [x] Define handling for LTCG/LLVM bitcode inputs: JWlink2 does not invoke an LTO backend and explicitly rejects raw/wrapped LLVM bitcode, recognized embedded LLVM bitcode/LTO COFF sections, and detectable bitcode archive members with a rebuild-without-LTO diagnostic; cover each form in `JWlink2Test`. Proprietary MSVC `/GL` objects are outside the accepted format and may receive the generic COFF validation error because no guaranteed public marker is available.
 - [x] Parse Microsoft archive linker-member symbol indexes for indexed extraction, while retaining fallback scanning for archives without indexes; validate real MSVC-generated AMD64 `.lib` archives and malformed index diagnostics in `JWlink2Test`.
-- [ ] Audit weak externals, common symbols, COMDAT selection, associative sections, duplicate resolution, and archive extraction against JWlink using compiler-generated fixtures.
+- [?] Audit weak externals, common symbols, COMDAT selection, associative sections, duplicate resolution, and archive extraction against JWlink using compiler-generated fixtures.
+
+  Partial progress: `JWlink2Test` now covers weak fallbacks, common allocation/precedence, COMDAT selection, associative sections, duplicate strong definitions, and archive extraction. Differential checks currently cover representative PE output and COMDAT ANY selection. The MSVC-indexed archive fixture is accepted by JWlink2 but crashes the legacy JWlink, so it remains a JWlink2-only test. This item remains open: the repository's JWcc and the available MSVC compiler have not yielded minimal object inputs that both linkers can consume reliably, and some handcrafted weak/archive fixtures crash or are rejected by JWlink. Do not treat the synthetic JWlink2-only cases as compiler-generated compatibility evidence.
 
 ## Windows image generation
 

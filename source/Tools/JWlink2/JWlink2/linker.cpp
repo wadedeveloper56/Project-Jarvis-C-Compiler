@@ -1745,58 +1745,60 @@ private:
 					if (object.sections[static_cast<std::size_t>(symbol.sectionNumber - 1)].discarded) {
 						continue;
 					}
-					GlobalSymbol definition{objectIndex, symbolIndex};
-					const auto [it, inserted] = globals_.emplace(symbol.name, definition);
-					if (!inserted) {
-						if (!it->second.common) {
-							fail("duplicate definition of symbol '" + symbol.name + "'");
-						}
-						it->second = definition;
-					}
-				} else if (symbol.sectionNumber == -1) {
-					GlobalSymbol definition{objectIndex, symbolIndex};
-					const auto [it, inserted] = globals_.emplace(symbol.name, definition);
-					if (!inserted) {
-						if (!it->second.common) {
-							fail("duplicate definition of symbol '" + symbol.name + "'");
-						}
-						it->second = definition;
-					}
-				} else if (symbol.sectionNumber == 0 && symbol.value != 0) {
-					const auto existing = globals_.find(symbol.name);
-					if (existing != globals_.end()) {
-						if (existing->second.common && symbol.value > existing->second.commonSize) {
-							auto& output = outputSections_[existing->second.outputIndex];
-							if (symbol.value > std::numeric_limits<std::size_t>::max() - existing->second.outputOffset) {
-								fail(object.name + ": common symbol size overflow");
-							}
-							output.virtualSize = std::max(output.virtualSize, existing->second.outputOffset + symbol.value);
-							existing->second.commonSize = symbol.value;
-						}
-						continue;
-					}
-					InputSection commonSection;
-					commonSection.name = ".bss";
-					commonSection.characteristics = SectionCntUninitializedData | SectionMemRead | SectionMemWrite;
-					const auto alignment = commonAlignmentFor(symbol.name);
-					commonSection.alignment = alignment;
-					const auto outputIndex = getOutputSection(commonSection);
-					auto& output = outputSections_[outputIndex];
-					const auto offset = alignUp(output.virtualSize, alignment);
-					if (symbol.value > std::numeric_limits<std::size_t>::max() - offset) {
-						fail(object.name + ": common symbol size overflow");
-					}
-					output.virtualSize = offset + symbol.value;
-					GlobalSymbol definition;
-					definition.objectIndex = objectIndex;
-					definition.symbolIndex = symbolIndex;
-					definition.common = true;
-					definition.commonSize = symbol.value;
-					definition.outputIndex = outputIndex;
-					definition.outputOffset = offset;
-					globals_.emplace(symbol.name, definition);
+				} else if (symbol.sectionNumber != -1) {
+					continue;
+				}
+				const GlobalSymbol definition{objectIndex, symbolIndex};
+				if (!globals_.emplace(symbol.name, definition).second) {
+					fail("duplicate definition of symbol '" + symbol.name + "'");
 				}
 			}
+		}
+		struct CommonCandidate {
+			std::size_t objectIndex;
+			std::size_t symbolIndex;
+			std::uint32_t size;
+		};
+		std::vector<CommonCandidate> commonCandidates;
+		std::unordered_map<std::string, std::size_t> commonByName;
+		for (std::size_t objectIndex = 0; objectIndex < objects_.size(); ++objectIndex) {
+			const auto& object = objects_[objectIndex];
+			for (std::size_t symbolIndex = 0; symbolIndex < object.symbols.size(); ++symbolIndex) {
+				const auto& symbol = object.symbols[symbolIndex];
+				if (symbol.auxiliary || symbol.storageClass != 2 || symbol.name.empty() || symbol.sectionNumber != 0 || symbol.value == 0 || globals_.contains(symbol.name)) {
+					continue;
+				}
+				const auto [candidate, inserted] = commonByName.emplace(symbol.name, commonCandidates.size());
+				if (inserted) {
+					commonCandidates.push_back({objectIndex, symbolIndex, symbol.value});
+				} else {
+					commonCandidates[candidate->second].size = std::max(commonCandidates[candidate->second].size, symbol.value);
+				}
+			}
+		}
+		for (const auto& candidate : commonCandidates) {
+			const auto& object = objects_[candidate.objectIndex];
+			const auto& symbol = object.symbols[candidate.symbolIndex];
+			InputSection commonSection;
+			commonSection.name = ".bss";
+			commonSection.characteristics = SectionCntUninitializedData | SectionMemRead | SectionMemWrite;
+			const auto alignment = commonAlignmentFor(symbol.name);
+			commonSection.alignment = alignment;
+			const auto outputIndex = getOutputSection(commonSection);
+			auto& output = outputSections_[outputIndex];
+			const auto offset = alignUp(output.virtualSize, alignment);
+			if (candidate.size > std::numeric_limits<std::size_t>::max() - offset) {
+				fail(object.name + ": common symbol size overflow");
+			}
+			output.virtualSize = offset + candidate.size;
+			GlobalSymbol definition;
+			definition.objectIndex = candidate.objectIndex;
+			definition.symbolIndex = candidate.symbolIndex;
+			definition.common = true;
+			definition.commonSize = candidate.size;
+			definition.outputIndex = outputIndex;
+			definition.outputOffset = offset;
+			globals_.emplace(symbol.name, definition);
 		}
 		for (const auto& record : imports_) {
 			const auto importIndex = static_cast<std::size_t>(&record - imports_.data());
