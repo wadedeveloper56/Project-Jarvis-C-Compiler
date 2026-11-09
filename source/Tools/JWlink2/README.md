@@ -19,6 +19,8 @@ Supported options include `/OUT`, `/ENTRY`, `/SUBSYSTEM` (including a major.mino
 
 ## Current scope
 
+JWlink2 targets native Windows AMD64 PE32+ **executables only**, using the console or Windows subsystem. The target architecture is x64 even when the linker tool is built for Win32. It is not a DLL or driver linker and does not produce 32-bit, DOS, OS/2, Win16, VxD, Phar Lap, Novell, QNX, ELF, or raw images. See [MISSING_FEATURES.md](MISSING_FEATURES.md) for the tested boundary and repository compatibility checklist.
+
 JWlink2 supports AMD64 COFF objects, regular AMD64 object members in Microsoft archives, and short import-object members. It extracts archive members to satisfy unresolved references, generates PE import descriptors, lookup tables, IAT entries, and function thunks, and supports COMDAT selection (including associative sections) and weak externals. Supported AMD64 relocations are `ADDR64`, `ADDR32`, `ADDR32NB`, and `REL32` through `REL32_5`. `/DYNAMICBASE` emits base relocations for supported absolute addresses; `/FIXED` disables them. Map files report linked symbol addresses, including import thunks and IAT entries.
 
 Bigobj/LTCG objects, debug data, full C/C++ runtime startup, and many advanced `link.exe` options are not implemented. Unsupported architectures, malformed input, unresolved symbols, and unsupported options or relocations are errors. JWlink2 is an independently growing implementation, not yet a replacement for JWlink or MSVC `link.exe` for general C/C++ programs. See [MISSING_FEATURES.md](MISSING_FEATURES.md) for the compatibility checklist and progress criteria.

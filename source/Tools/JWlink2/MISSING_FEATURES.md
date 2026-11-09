@@ -7,8 +7,14 @@ An item is complete only when implemented, covered by a regression test, and che
 ## Compatibility baseline
 
 - [x] Inventory actual JWlink command lines, response files, object producers, libraries, and output types used by this repository; findings are recorded below.
-- [ ] Define and test the supported compatibility boundary (initially native Windows AMD64 PE executables); document any JWlink targets intentionally out of scope.
+- [x] Define and test the supported compatibility boundary; document intentionally unsupported JWlink targets below.
 - [ ] Add end-to-end comparisons that link representative inputs with JWlink and JWlink2 and verify observable output behavior, not byte-for-byte identity.
+
+### Supported compatibility boundary
+
+JWlink2's target is a native Windows **AMD64 (x64) PE32+ executable**. It accepts AMD64 COFF object files and the documented Microsoft library-member formats and emits an executable image using the console or Windows subsystem. This is the output target regardless of whether the JWlink2 tool itself was built for Win32 or x64. `/DLL` is not supported. An AMD64 machine field, PE32+ optional header, non-DLL executable characteristic, and default console subsystem are asserted by `ValidAmd64ObjectProducesPe32PlusWithDefaultBaseAndEntry`; unsupported DLL output and non-AMD64 input/machine requests are checked by `DllOutputIsOutsideSupportedBoundary`, `NonAmd64ObjectIsRejected`, and `CommandLineAndResponseFileErrorsAreReported` in `JWlink2Test`.
+
+Intentionally out of scope as JWlink output targets are 16-bit DOS COM/MZ and Windows NE, OS/2 NE/LE/LX, Windows VxD, Phar Lap, Novell NLM, DOS/16M, QNX, ELF, raw BIN/HEX, and non-AMD64 Windows images. Windows PE DLLs and drivers are also outside this boundary. These are JWlink's broader formats, not compatibility promises for JWlink2. BigObj/LTCG inputs and full runtime startup are separate input/runtime limitations, even when the desired output is an AMD64 PE executable.
 
 ### Repository inventory (2026-11-09)
 

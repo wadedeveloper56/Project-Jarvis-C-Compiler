@@ -467,6 +467,17 @@ public:
 		Assert::AreEqual<std::uint64_t>(0x140000000, get64(image, optional + 24), L"default image base");
 		Assert::AreEqual<std::uint32_t>(0x1000, get32(image, optional + 16), L"default entry point RVA");
 		Assert::AreEqual<std::uint16_t>(3, get16(image, optional + 68), L"default console subsystem");
+		Assert::IsTrue((get16(image, 0x96) & 0x2000) == 0, L"supported output is a PE executable, not a DLL");
+	}
+
+	TEST_METHOD(DllOutputIsOutsideSupportedBoundary) {
+		Workspace workspace;
+		workspace.write(L"input.obj", makeEntryObject());
+		auto args = outputArgs(workspace);
+		args.insert(args.begin(), L"/DLL");
+		args.push_back(workspace.file(L"input.obj").wstring());
+		assertFailureContains(runLinker(workspace, args), "unsupported option '/DLL'");
+		assertNoOutput(workspace);
 	}
 
 	TEST_METHOD(Rel32ThroughRel32FiveAreAppliedWithCorrectPlaceBias) {
