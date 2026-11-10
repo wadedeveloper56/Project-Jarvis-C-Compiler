@@ -18,12 +18,14 @@ namespace jwlink2::codeview
 		constexpr uint32_t SectionContributionVersion = 0xF12EBA2D;
 		constexpr uint32_t NoStream = 0xFFFF;
 
-		[[noreturn]] void fail(const string& message) {
+		[[noreturn]] void fail(const string& message)
+		{
 			throw runtime_error("CodeView/PDB: " + message);
 		}
 
 		template <typename T>
-		void appendLe(Bytes& out, T value) {
+		void appendLe(Bytes& out, T value)
+		{
 			static_assert(is_unsigned_v<T>);
 			for (size_t i = 0; i < sizeof(T); ++i)
 			{
@@ -32,7 +34,8 @@ namespace jwlink2::codeview
 		}
 
 		template <typename T>
-		void putLe(Bytes& out, size_t offset, T value) {
+		void putLe(Bytes& out, size_t offset, T value)
+		{
 			static_assert(is_unsigned_v<T>);
 			if (offset > out.size() || sizeof(T) > out.size() - offset)
 			{
@@ -45,7 +48,8 @@ namespace jwlink2::codeview
 		}
 
 		template <typename T>
-		T readLe(const Bytes& data, size_t offset, string_view what) {
+		T readLe(const Bytes& data, size_t offset, string_view what)
+		{
 			static_assert(is_unsigned_v<T>);
 			if (offset > data.size() || sizeof(T) > data.size() - offset)
 			{
@@ -59,7 +63,8 @@ namespace jwlink2::codeview
 			return result;
 		}
 
-		uint32_t toU32(size_t value, string_view what) {
+		uint32_t toU32(size_t value, string_view what)
+		{
 			if (value > numeric_limits<uint32_t>::max())
 			{
 				fail(string(what) + " exceeds the PDB 32-bit size limit");
@@ -67,7 +72,8 @@ namespace jwlink2::codeview
 			return static_cast<uint32_t>(value);
 		}
 
-		uint32_t checkedAdd(uint32_t a, uint32_t b, string_view what) {
+		uint32_t checkedAdd(uint32_t a, uint32_t b, string_view what)
+		{
 			if (b > numeric_limits<uint32_t>::max() - a)
 			{
 				fail(string(what) + " overflows");
@@ -75,7 +81,8 @@ namespace jwlink2::codeview
 			return a + b;
 		}
 
-		size_t align4(size_t value) {
+		size_t align4(size_t value)
+		{
 			if (value > numeric_limits<size_t>::max() - 3)
 			{
 				fail("input size overflow");
@@ -83,7 +90,8 @@ namespace jwlink2::codeview
 			return (value + 3) & ~size_t(3);
 		}
 
-		void appendString(Bytes& out, const string& value) {
+		void appendString(Bytes& out, const string& value)
+		{
 			if (value.find('\0') != string::npos)
 			{
 				fail("names cannot contain embedded NUL bytes");
@@ -92,7 +100,8 @@ namespace jwlink2::codeview
 			out.push_back(0);
 		}
 
-		void validateRecord(const Bytes& record, string_view what) {
+		void validateRecord(const Bytes& record, string_view what)
+		{
 			if (record.size() < 4 || record.size() > numeric_limits<uint16_t>::max() + size_t(2))
 			{
 				fail(string(what) + " has an invalid record size");
@@ -103,7 +112,8 @@ namespace jwlink2::codeview
 			}
 		}
 
-		void padCodeViewRecord(Bytes& record, string_view what) {
+		void padCodeViewRecord(Bytes& record, string_view what)
+		{
 			const auto padding = align4(record.size()) - record.size();
 			if (padding == 0)
 			{
@@ -129,7 +139,8 @@ namespace jwlink2::codeview
 
 		struct TypeKeyHash
 		{
-			size_t operator()(const TypeKey& key) const {
+			size_t operator()(const TypeKey& key) const
+			{
 				const auto a = hash<string>{}(key.objectId);
 				const auto b = hash<uint32_t>{}(key.index);
 				return a ^ (b + 0x9E3779B9U + (a << 6) + (a >> 2));
@@ -150,7 +161,8 @@ namespace jwlink2::codeview
 
 		Bytes normalizeType(const CodeViewTypeRecord& type,
 			const string& objectId,
-			const unordered_map<TypeKey, uint32_t, TypeKeyHash>& typeMap) {
+			const unordered_map<TypeKey, uint32_t, TypeKeyHash>& typeMap)
+		{
 			Bytes record = type.record;
 			validateRecord(record, "type record");
 			for (const auto& patch : type.references)
@@ -175,7 +187,8 @@ namespace jwlink2::codeview
 			return record;
 		}
 
-		const ObjectSectionContribution& mapContribution(const CodeViewObject& object, uint16_t section, uint32_t offset) {
+		const ObjectSectionContribution& mapContribution(const CodeViewObject& object, uint16_t section, uint32_t offset)
+		{
 			const ObjectSectionContribution* match = nullptr;
 			for (const auto& contribution : object.contributions)
 			{
@@ -200,7 +213,8 @@ namespace jwlink2::codeview
 			return *match;
 		}
 
-		uint32_t remapOffset(const CodeViewObject& object, uint16_t section, uint32_t offset) {
+		uint32_t remapOffset(const CodeViewObject& object, uint16_t section, uint32_t offset)
+		{
 			const auto& contribution = mapContribution(object, section, offset);
 			const auto delta = offset - contribution.sourceOffset;
 			if (delta > contribution.size)
@@ -212,7 +226,8 @@ namespace jwlink2::codeview
 
 		Bytes normalizeSymbol(const CodeViewObject& object,
 			const CodeViewSymbolRecord& input,
-			const unordered_map<TypeKey, uint32_t, TypeKeyHash>& typeMap) {
+			const unordered_map<TypeKey, uint32_t, TypeKeyHash>& typeMap)
+		{
 			Bytes record = input.record;
 			validateRecord(record, "symbol record");
 			for (const auto& patch : input.typeReferences)
@@ -249,7 +264,8 @@ namespace jwlink2::codeview
 			return record;
 		}
 
-		void remapLines(const CodeViewObject& object, Bytes& data) {
+		void remapLines(const CodeViewObject& object, Bytes& data)
+		{
 			if (data.size() < 12)
 			{
 				fail("truncated DEBUG_S_LINES subsection");
@@ -295,7 +311,8 @@ namespace jwlink2::codeview
 			}
 		}
 
-		Bytes makeC13(const CodeViewObject& object) {
+		Bytes makeC13(const CodeViewObject& object)
+		{
 			Bytes result;
 			for (const auto& subsection : object.subsections)
 			{
@@ -312,7 +329,8 @@ namespace jwlink2::codeview
 			return result;
 		}
 
-		Bytes makePublicSymbol(const LinkedSymbol& symbol) {
+		Bytes makePublicSymbol(const LinkedSymbol& symbol)
+		{
 			if (symbol.name.empty())
 			{
 				fail("linked symbol name is empty");
@@ -333,7 +351,8 @@ namespace jwlink2::codeview
 			return record;
 		}
 
-		Bytes makeModuleStream(const ModuleOutput& module) {
+		Bytes makeModuleStream(const ModuleOutput& module)
+		{
 			Bytes stream;
 			appendLe(stream, CvSignatureC13);
 			stream.insert(stream.end(), module.symbolRecords.begin(), module.symbolRecords.end());
@@ -342,7 +361,8 @@ namespace jwlink2::codeview
 			return stream;
 		}
 
-		Bytes makeModuleInfo(const vector<ModuleOutput>& modules) {
+		Bytes makeModuleInfo(const vector<ModuleOutput>& modules)
+		{
 			Bytes result;
 			for (size_t i = 0; i < modules.size(); ++i)
 			{
@@ -374,7 +394,8 @@ namespace jwlink2::codeview
 			return result;
 		}
 
-		Bytes makeSectionContributions(const vector<ModuleOutput>& modules) {
+		Bytes makeSectionContributions(const vector<ModuleOutput>& modules)
+		{
 			Bytes result;
 			appendLe(result, SectionContributionVersion);
 			for (const auto& module : modules)
@@ -387,7 +408,8 @@ namespace jwlink2::codeview
 			return result;
 		}
 
-		Bytes makeSectionMap(const vector<LinkedSection>& sections) {
+		Bytes makeSectionMap(const vector<LinkedSection>& sections)
+		{
 			Bytes result;
 			appendLe(result, static_cast<uint16_t>(sections.size()));
 			appendLe(result, static_cast<uint16_t>(sections.size()));
@@ -405,7 +427,8 @@ namespace jwlink2::codeview
 			return result;
 		}
 
-		Bytes makeFileInfo(const vector<ModuleOutput>& modules) {
+		Bytes makeFileInfo(const vector<ModuleOutput>& modules)
+		{
 			Bytes result;
 			appendLe(result, static_cast<uint16_t>(modules.size()));
 			appendLe(result, static_cast<uint16_t>(0)); // Total source files.
@@ -422,7 +445,8 @@ namespace jwlink2::codeview
 
 		Bytes makeDbi(const PdbIdentity& identity,
 			const vector<ModuleOutput>& modules,
-			const vector<LinkedSection>& sections) {
+			const vector<LinkedSection>& sections)
+		{
 			const auto modInfo = makeModuleInfo(modules);
 			const auto sectionContributions = makeSectionContributions(modules);
 			const auto sectionMap = makeSectionMap(sections);
@@ -455,7 +479,8 @@ namespace jwlink2::codeview
 			return result;
 		}
 
-		Bytes makeInfo(const PdbIdentity& identity) {
+		Bytes makeInfo(const PdbIdentity& identity)
+		{
 			Bytes result;
 			appendLe(result, PdbVersion);
 			appendLe(result, identity.signature);
@@ -470,7 +495,8 @@ namespace jwlink2::codeview
 			return result;
 		}
 
-		Bytes makeTpi(const vector<Bytes>& records) {
+		Bytes makeTpi(const vector<Bytes>& records)
+		{
 			Bytes recordBytes;
 			for (const auto& record : records)
 			{
@@ -502,7 +528,8 @@ namespace jwlink2::codeview
 			vector<uint32_t> blocks;
 		};
 
-		Bytes makeMsf(vector<Bytes> streams) {
+		Bytes makeMsf(vector<Bytes> streams)
+		{
 			vector<MsfStream> allocated;
 			allocated.reserve(streams.size());
 			uint64_t nextBlock = 3;
@@ -595,14 +622,16 @@ namespace jwlink2::codeview
 
 	} // namespace
 
-	PdbBuilder::PdbBuilder(PdbIdentity identity) : identity_(identity) {
+	PdbBuilder::PdbBuilder(PdbIdentity identity) : identity_(identity)
+	{
 		if (identity_.age == 0)
 		{
 			fail("PDB age must be nonzero");
 		}
 	}
 
-	void PdbBuilder::addLinkedSection(LinkedSection section) {
+	void PdbBuilder::addLinkedSection(LinkedSection section)
+	{
 		if (section.index == 0 || section.name.empty())
 		{
 			fail("linked sections require a nonzero PE index and name");
@@ -614,7 +643,8 @@ namespace jwlink2::codeview
 		sections_.push_back(move(section));
 	}
 
-	void PdbBuilder::addLinkedSymbol(LinkedSymbol symbol) {
+	void PdbBuilder::addLinkedSymbol(LinkedSymbol symbol)
+	{
 		if (symbol.name.empty() || symbol.section == 0)
 		{
 			fail("linked symbols require a name and a nonzero PE section");
@@ -622,7 +652,8 @@ namespace jwlink2::codeview
 		symbols_.push_back(move(symbol));
 	}
 
-	void PdbBuilder::addCodeViewObject(CodeViewObject object) {
+	void PdbBuilder::addCodeViewObject(CodeViewObject object)
+	{
 		if (object.objectId.empty())
 		{
 			fail("CodeView object identifier cannot be empty");
@@ -634,7 +665,8 @@ namespace jwlink2::codeview
 		objects_.push_back(move(object));
 	}
 
-	void PdbBuilder::write(const filesystem::path& path) const {
+	void PdbBuilder::write(const filesystem::path& path) const
+	{
 		vector<LinkedSection> sections = sections_;
 		sort(sections.begin(), sections.end(), [](const auto& a, const auto& b) { return a.index < b.index; });
 		if (sections.size() > numeric_limits<uint16_t>::max())

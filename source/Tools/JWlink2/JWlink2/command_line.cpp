@@ -7,16 +7,19 @@ namespace jwlink2
 {
 	namespace
 	{
-		[[noreturn]] void fail(const string& message) {
+		[[noreturn]] void fail(const string& message)
+		{
 			throw runtime_error(message);
 		}
 
-		string lowerAscii(string value) {
+		string lowerAscii(string value)
+		{
 			transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) { return static_cast<char>(tolower(ch)); });
 			return value;
 		}
 
-		vector<string> tokenizeResponse(string_view text, const fs::path& path) {
+		vector<string> tokenizeResponse(string_view text, const fs::path& path)
+		{
 			vector<string> result;
 			string token;
 			bool quoted = false;
@@ -85,7 +88,8 @@ namespace jwlink2
 			return result;
 		}
 
-		void expandResponseFiles(const vector<string>& arguments, vector<string>& expanded, set<fs::path>& active, unsigned depth) {
+		void expandResponseFiles(const vector<string>& arguments, vector<string>& expanded, set<fs::path>& active, unsigned depth)
+		{
 			if (depth > 32)
 			{
 				fail("response-file nesting exceeds 32 levels");
@@ -119,7 +123,8 @@ namespace jwlink2
 			}
 		}
 
-		uint64_t parseUnsignedOption(string_view text, string_view optionName) {
+		uint64_t parseUnsignedOption(string_view text, string_view optionName)
+		{
 			int base = 10;
 			if (text.size() > 2 && text[0] == '0' && (text[1] == 'x' || text[1] == 'X'))
 			{
@@ -135,7 +140,8 @@ namespace jwlink2
 			return value;
 		}
 
-		void printUsage() {
+		void printUsage()
+		{
 			cout << "JWlink2 - AMD64 COFF to Windows PE32+ linker\n"
 				"Usage: JWlink2 [options] input.obj [input.lib ...]\n"
 				"  /OUT:<file>, -o <file>      Output image (default: a.exe or a.dll)\n"
@@ -161,7 +167,8 @@ namespace jwlink2
 
 	} // namespace
 
-	ExportDirective parseExportDirective(string_view value, const string& context) {
+	ExportDirective parseExportDirective(string_view value, const string& context)
+	{
 		ExportDirective directive;
 		const auto firstComma = value.find(',');
 		const auto symbol = value.substr(0, firstComma);
@@ -218,7 +225,8 @@ namespace jwlink2
 		return directive;
 	}
 
-	LinkOptions parseArguments(int argc, char** argv) {
+	LinkOptions parseArguments(int argc, char** argv)
+	{
 		LinkOptions options;
 		vector<string> supplied;
 		for (int i = 1; i < argc; ++i)

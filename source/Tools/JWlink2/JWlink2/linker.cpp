@@ -18,11 +18,13 @@ namespace jwlink2
 		constexpr uint32_t SectionMemRead = 0x40000000;
 		constexpr uint32_t SectionMemWrite = 0x80000000;
 
-		[[noreturn]] void fail(const string& message) {
+		[[noreturn]] void fail(const string& message)
+		{
 			throw runtime_error(message);
 		}
 
-		void requireRange(const Bytes& bytes, size_t offset, size_t size, string_view what) {
+		void requireRange(const Bytes& bytes, size_t offset, size_t size, string_view what)
+		{
 			if (offset > bytes.size() || size > bytes.size() - offset)
 			{
 				fail("truncated " + string(what));
@@ -30,7 +32,8 @@ namespace jwlink2
 		}
 
 		template <typename T>
-		T readLe(const Bytes& bytes, size_t offset, string_view what) {
+		T readLe(const Bytes& bytes, size_t offset, string_view what)
+		{
 			static_assert(is_unsigned_v<T>);
 			requireRange(bytes, offset, sizeof(T), what);
 			uint64_t value = 0;
@@ -42,7 +45,8 @@ namespace jwlink2
 		}
 
 		template <typename T>
-		void writeLe(Bytes& bytes, size_t offset, T value) {
+		void writeLe(Bytes& bytes, size_t offset, T value)
+		{
 			static_assert(is_unsigned_v<T>);
 			if (offset > bytes.size() || sizeof(T) > bytes.size() - offset)
 			{
@@ -54,7 +58,8 @@ namespace jwlink2
 			}
 		}
 
-		size_t alignUp(size_t value, size_t alignment) {
+		size_t alignUp(size_t value, size_t alignment)
+		{
 			if (alignment == 0 || (alignment & (alignment - 1)) != 0)
 			{
 				fail("invalid alignment in input object");
@@ -72,7 +77,8 @@ namespace jwlink2
 			return value + padding;
 		}
 
-		uint32_t toU32(size_t value, string_view what) {
+		uint32_t toU32(size_t value, string_view what)
+		{
 			if (value > numeric_limits<uint32_t>::max())
 			{
 				fail(string(what) + " exceeds the PE32+ size limit");
@@ -80,7 +86,8 @@ namespace jwlink2
 			return static_cast<uint32_t>(value);
 		}
 
-		string fixedString(const Bytes& bytes, size_t offset, size_t length) {
+		string fixedString(const Bytes& bytes, size_t offset, size_t length)
+		{
 			requireRange(bytes, offset, length, "string field");
 			size_t end = offset;
 			while (end < offset + length && bytes[end] != 0)
@@ -90,7 +97,8 @@ namespace jwlink2
 			return string(reinterpret_cast<const char*>(bytes.data() + offset), end - offset);
 		}
 
-		string stringAt(const Bytes& bytes, size_t tableOffset, uint32_t tableSize, uint32_t stringOffset, string_view what) {
+		string stringAt(const Bytes& bytes, size_t tableOffset, uint32_t tableSize, uint32_t stringOffset, string_view what)
+		{
 			if (stringOffset < 4 || stringOffset >= tableSize)
 			{
 				fail("invalid " + string(what) + " string-table offset");
@@ -167,7 +175,8 @@ namespace jwlink2
 			bool byOrdinal = false;
 		};
 
-		ImportedSymbol parseImportObject(const Bytes& bytes, const string& path) {
+		ImportedSymbol parseImportObject(const Bytes& bytes, const string& path)
+		{
 			requireRange(bytes, 0, 20, path + " import object");
 			if (readLe<uint16_t>(bytes, 0, path) != 0 || readLe<uint16_t>(bytes, 2, path) != 0xffff)
 			{
@@ -252,7 +261,8 @@ namespace jwlink2
 			return result;
 		}
 
-		bool hasBitcodeMagic(const Bytes& bytes, size_t offset, size_t size) {
+		bool hasBitcodeMagic(const Bytes& bytes, size_t offset, size_t size)
+		{
 			if (size < 4 || offset > bytes.size() || size > bytes.size() - offset)
 			{
 				return false;
@@ -263,14 +273,16 @@ namespace jwlink2
 			return rawBitcode || wrappedBitcode;
 		}
 
-		void rejectBitcode(const Bytes& bytes, size_t offset, size_t size, const string& inputName) {
+		void rejectBitcode(const Bytes& bytes, size_t offset, size_t size, const string& inputName)
+		{
 			if (hasBitcodeMagic(bytes, offset, size))
 			{
 				fail(inputName + ": LLVM bitcode/LTCG input is not supported; compile without LTO or provide native AMD64 COFF objects");
 			}
 		}
 
-		uint32_t coffNameOffset(const Bytes& bytes, size_t offset) {
+		uint32_t coffNameOffset(const Bytes& bytes, size_t offset)
+		{
 			if (bytes[offset] == '/' && bytes[offset + 1] != 0)
 			{
 				string text = fixedString(bytes, offset + 1, 7);
@@ -285,12 +297,14 @@ namespace jwlink2
 			return 0;
 		}
 
-		string lowerAscii(string value) {
+		string lowerAscii(string value)
+		{
 			transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) { return static_cast<char>(tolower(ch)); });
 			return value;
 		}
 
-		uint64_t parseDirectiveNumber(string_view text, const string& objectName, string_view option) {
+		uint64_t parseDirectiveNumber(string_view text, const string& objectName, string_view option)
+		{
 			int base = 10;
 			if (text.size() > 2 && text[0] == '0' && (text[1] == 'x' || text[1] == 'X'))
 			{
@@ -306,7 +320,8 @@ namespace jwlink2
 			return value;
 		}
 
-		vector<string> tokenizeDirectives(const Bytes& bytes, const string& objectName) {
+		vector<string> tokenizeDirectives(const Bytes& bytes, const string& objectName)
+		{
 			vector<string> tokens;
 			string token;
 			bool quoted = false;
@@ -341,13 +356,15 @@ namespace jwlink2
 			return tokens;
 		}
 
-		bool isBigObjCandidate(const Bytes& bytes) {
+		bool isBigObjCandidate(const Bytes& bytes)
+		{
 			return bytes.size() >= 8 && readLe<uint16_t>(bytes, 0, "BigObj signature") == 0 &&
 				readLe<uint16_t>(bytes, 2, "BigObj signature") == 0xffff &&
 				readLe<uint16_t>(bytes, 4, "BigObj version") >= 2;
 		}
 
-		ObjectFile parseObject(const Bytes& bytes, string name) {
+		ObjectFile parseObject(const Bytes& bytes, string name)
+		{
 			requireRange(bytes, 0, 20, name);
 			const bool bigObj = isBigObjCandidate(bytes);
 			uint32_t sectionCount = 0;
@@ -615,7 +632,8 @@ namespace jwlink2
 			uint64_t memberOffset = 0;
 		};
 
-		size_t parseDecimal(const Bytes& bytes, size_t offset, size_t length, string_view what) {
+		size_t parseDecimal(const Bytes& bytes, size_t offset, size_t length, string_view what)
+		{
 			const auto text = fixedString(bytes, offset, length);
 			const auto first = text.find_first_not_of(' ');
 			if (first == string::npos)
@@ -632,7 +650,8 @@ namespace jwlink2
 			return value;
 		}
 
-		uint32_t readBigEndian32(const Bytes& bytes, size_t offset, string_view what) {
+		uint32_t readBigEndian32(const Bytes& bytes, size_t offset, string_view what)
+		{
 			requireRange(bytes, offset, 4, what);
 			return (static_cast<uint32_t>(bytes[offset]) << 24) |
 				(static_cast<uint32_t>(bytes[offset + 1]) << 16) |
@@ -640,7 +659,8 @@ namespace jwlink2
 				static_cast<uint32_t>(bytes[offset + 3]);
 		}
 
-		uint64_t readBigEndian64(const Bytes& bytes, size_t offset, string_view what) {
+		uint64_t readBigEndian64(const Bytes& bytes, size_t offset, string_view what)
+		{
 			requireRange(bytes, offset, 8, what);
 			uint64_t value = 0;
 			for (size_t i = 0; i < 8; ++i)
@@ -650,7 +670,8 @@ namespace jwlink2
 			return value;
 		}
 
-		vector<PendingArchiveSymbol> parseFirstLinkerMember(const Bytes& bytes, size_t offset, size_t size, const string& path) {
+		vector<PendingArchiveSymbol> parseFirstLinkerMember(const Bytes& bytes, size_t offset, size_t size, const string& path)
+		{
 			requireRange(bytes, offset, size, path + " first linker member");
 			if (size < 4)
 			{
@@ -690,7 +711,8 @@ namespace jwlink2
 			return symbols;
 		}
 
-		vector<PendingArchiveSymbol> parseSecondLinkerMember(const Bytes& bytes, size_t offset, size_t size, const string& path) {
+		vector<PendingArchiveSymbol> parseSecondLinkerMember(const Bytes& bytes, size_t offset, size_t size, const string& path)
+		{
 			requireRange(bytes, offset, size, path + " second linker member");
 			if (size < 4)
 			{
@@ -739,7 +761,8 @@ namespace jwlink2
 			return symbols;
 		}
 
-		vector<PendingArchiveSymbol> parseSym64LinkerMember(const Bytes& bytes, size_t offset, size_t size, const string& path) {
+		vector<PendingArchiveSymbol> parseSym64LinkerMember(const Bytes& bytes, size_t offset, size_t size, const string& path)
+		{
 			requireRange(bytes, offset, size, path + " 64-bit linker member");
 			if (size < 8)
 			{
@@ -779,7 +802,8 @@ namespace jwlink2
 			return symbols;
 		}
 
-		Archive parseArchive(const Bytes& bytes, const string& path) {
+		Archive parseArchive(const Bytes& bytes, const string& path)
+		{
 			constexpr string_view magic = "!<arch>\n";
 			if (bytes.size() < magic.size() || !equal(magic.begin(), magic.end(), bytes.begin()))
 			{
@@ -905,7 +929,8 @@ namespace jwlink2
 			return archive;
 		}
 
-		Bytes readFile(const fs::path& path) {
+		Bytes readFile(const fs::path& path)
+		{
 			ifstream input(path, ios::binary);
 			if (!input)
 			{
@@ -1032,12 +1057,14 @@ namespace jwlink2
 		constexpr uint32_t DebugSStringTable = 0xF3;
 		constexpr uint32_t DebugSFileChecksums = 0xF4;
 
-		void addTypeReference(codeview::CodeViewTypeRecord& type, size_t offset) {
+		void addTypeReference(codeview::CodeViewTypeRecord& type, size_t offset)
+		{
 			if (offset > type.record.size() || 4 > type.record.size() - offset) fail("truncated CodeView type reference");
 			type.references.push_back({ offset });
 		}
 
-		void parseTypeReferenceLayout(codeview::CodeViewTypeRecord& type, string_view objectName) {
+		void parseTypeReferenceLayout(codeview::CodeViewTypeRecord& type, string_view objectName)
+		{
 			const auto leaf = readLe<uint16_t>(type.record, 2, objectName);
 			switch (leaf)
 			{
@@ -1100,7 +1127,8 @@ namespace jwlink2
 			}
 		}
 
-		void parseCodeViewTypeStream(const Bytes& data, codeview::CodeViewObject& object) {
+		void parseCodeViewTypeStream(const Bytes& data, codeview::CodeViewObject& object)
+		{
 			if (data.size() < 4 || readLe<uint32_t>(data, 0, object.objectId) != CvSignatureC13) fail(object.objectId + ": unsupported .debug$T signature");
 			size_t cursor = 4;
 			uint32_t index = 0x1000;
@@ -1119,7 +1147,8 @@ namespace jwlink2
 			}
 		}
 
-		void parseCodeViewSymbolStream(const Bytes& data, codeview::CodeViewObject& object) {
+		void parseCodeViewSymbolStream(const Bytes& data, codeview::CodeViewObject& object)
+		{
 			if (data.size() < 4 || readLe<uint32_t>(data, 0, object.objectId) != CvSignatureC13) fail(object.objectId + ": unsupported .debug$S signature");
 			size_t cursor = 4;
 			while (cursor < data.size())
@@ -1223,7 +1252,8 @@ namespace jwlink2
 		public:
 			explicit Linker(LinkOptions options) : options_(move(options)) {}
 
-			void run() {
+			void run()
+			{
 				if (options_.importLibrary && lowerAscii(fs::absolute(*options_.importLibrary).lexically_normal().string()) == lowerAscii(fs::absolute(options_.output).lexically_normal().string()))
 				{
 					fail("import-library output path must differ from the image output path");
@@ -1304,11 +1334,13 @@ namespace jwlink2
 			size_t rsdsRecordOffset_ = 0;
 			uint32_t debugDirectorySize_ = 0;
 
-			bool isDefined(const CoffSymbol& symbol) const {
+			bool isDefined(const CoffSymbol& symbol) const
+			{
 				return symbol.storageClass == 2 && (symbol.sectionNumber > 0 || symbol.sectionNumber == -1 || (symbol.sectionNumber == 0 && symbol.value != 0));
 			}
 
-			set<string> unresolvedNames() const {
+			set<string> unresolvedNames() const
+			{
 				set<string> defined;
 				set<string> unresolved;
 				set<string> weakFallbacks;
@@ -1421,7 +1453,8 @@ namespace jwlink2
 				return unresolved;
 			}
 
-			void validateUnresolvedSymbols() const {
+			void validateUnresolvedSymbols() const
+			{
 				auto unresolved = unresolvedNames();
 				if (options_.dll && !options_.entry && !options_.noEntry)
 				{
@@ -1450,7 +1483,8 @@ namespace jwlink2
 				fail(message.str());
 			}
 
-			fs::path resolveInputPath(const fs::path& path) const {
+			fs::path resolveInputPath(const fs::path& path) const
+			{
 				if (fs::exists(path) || path.has_parent_path())
 				{
 					return path;
@@ -1466,7 +1500,8 @@ namespace jwlink2
 				return path;
 			}
 
-			void loadInput(const fs::path& inputPath) {
+			void loadInput(const fs::path& inputPath)
+			{
 				const auto path = resolveInputPath(inputPath);
 				const auto bytes = readFile(path);
 				rejectBitcode(bytes, 0, bytes.size(), path.string());
@@ -1481,7 +1516,8 @@ namespace jwlink2
 				}
 			}
 
-			void queueDefaultLibrary(const string& library) {
+			void queueDefaultLibrary(const string& library)
+			{
 				if (options_.noDefaultLibraries || library.empty())
 				{
 					return;
@@ -1497,7 +1533,8 @@ namespace jwlink2
 				}
 			}
 
-			void processDirective(const string& directive, const string& objectName) {
+			void processDirective(const string& directive, const string& objectName)
+			{
 				if (directive.empty() || (directive.front() != '/' && directive.front() != '-'))
 				{
 					fail(objectName + ": malformed .drectve option '" + directive + "'");
@@ -1623,7 +1660,8 @@ namespace jwlink2
 				}
 			}
 
-			void processDirectivesAndLibraries() {
+			void processDirectivesAndLibraries()
+			{
 				for (;;)
 				{
 					while (nextDirectiveObject_ < objects_.size())
@@ -1666,7 +1704,8 @@ namespace jwlink2
 				}
 			}
 
-			void loadDefinitionFile() {
+			void loadDefinitionFile()
+			{
 				if (!options_.definitionFile)
 				{
 					return;
@@ -1730,7 +1769,8 @@ namespace jwlink2
 				}
 			}
 
-			void loadInputs() {
+			void loadInputs()
+			{
 				for (const auto& inputPath : options_.inputs)
 				{
 					loadInput(inputPath);
@@ -1742,7 +1782,8 @@ namespace jwlink2
 				processDirectivesAndLibraries();
 			}
 
-			void collectCodeViewObjects() {
+			void collectCodeViewObjects()
+			{
 				if (!options_.debug) return;
 				for (size_t objectIndex = 0; objectIndex < objects_.size(); ++objectIndex)
 				{
@@ -1802,7 +1843,8 @@ namespace jwlink2
 				}
 			}
 
-			void resolveLibraries() {
+			void resolveLibraries()
+			{
 				for (;;)
 				{
 					processDirectivesAndLibraries();
@@ -1918,7 +1960,8 @@ namespace jwlink2
 				}
 			}
 
-			void selectComdats() {
+			void selectComdats()
+			{
 				struct Candidate
 				{
 					size_t objectIndex;
@@ -2094,7 +2137,8 @@ namespace jwlink2
 				}
 			}
 
-			void prepareDelayLoadImports() {
+			void prepareDelayLoadImports()
+			{
 				if (options_.delayLoadLibraries.empty())
 				{
 					return;
@@ -2163,7 +2207,8 @@ namespace jwlink2
 				raiseExceptionImport_ = ensureHelperImport("RaiseException");
 			}
 
-			void prepareImports() {
+			void prepareImports()
+			{
 				if (imports_.empty())
 				{
 					return;
@@ -2395,7 +2440,8 @@ namespace jwlink2
 				importDirectorySize_ = toU32(descriptorsSize, "import directory size");
 			}
 
-			void appendDelayResolver(OutputSection& text, size_t textIndex, const ImportRecord& record) {
+			void appendDelayResolver(OutputSection& text, size_t textIndex, const ImportRecord& record)
+			{
 				Bytes code;
 				vector<pair<size_t, size_t>> localBranches;
 				auto emit = [&](initializer_list<uint8_t> bytes) { code.insert(code.end(), bytes.begin(), bytes.end()); };
@@ -2484,7 +2530,8 @@ namespace jwlink2
 				text.data.insert(text.data.end(), code.begin(), code.end());
 			}
 
-			void appendDelayUnwindInfo(ImportRecord& record) {
+			void appendDelayUnwindInfo(ImportRecord& record)
+			{
 				InputSection unwind;
 				unwind.name = ".xdata";
 				unwind.alignment = 4;
@@ -2509,7 +2556,8 @@ namespace jwlink2
 				runtimeOutput.virtualSize = runtimeOutput.data.size();
 			}
 
-			void prepareExports() {
+			void prepareExports()
+			{
 				if (options_.exports.empty())
 				{
 					return;
@@ -2644,7 +2692,8 @@ namespace jwlink2
 				output.virtualSize = offset + section.virtualSize;
 			}
 
-			void prepareBaseRelocations() {
+			void prepareBaseRelocations()
+			{
 				if (!options_.dynamicBase)
 				{
 					return;
@@ -2685,7 +2734,8 @@ namespace jwlink2
 				output.virtualSize = output.data.size();
 			}
 
-			size_t getOutputSection(const InputSection& input) {
+			size_t getOutputSection(const InputSection& input)
+			{
 				const auto subsection = input.name.find('$');
 				const auto outputName = input.name.substr(0, subsection);
 				for (size_t i = 0; i < outputSections_.size(); ++i)
@@ -2705,7 +2755,8 @@ namespace jwlink2
 				return outputSections_.size() - 1;
 			}
 
-			void buildSections() {
+			void buildSections()
+			{
 				sectionMaps_.resize(objects_.size());
 				for (size_t objectIndex = 0; objectIndex < objects_.size(); ++objectIndex)
 				{
@@ -2756,12 +2807,14 @@ namespace jwlink2
 				}
 			}
 
-			size_t commonAlignmentFor(const string& symbolName) const {
+			size_t commonAlignmentFor(const string& symbolName) const
+			{
 				const auto found = find_if(options_.commonAlignments.begin(), options_.commonAlignments.end(), [&](const auto& alignment) { return alignment.first == symbolName; });
 				return found == options_.commonAlignments.end() ? options_.commonAlignment : found->second;
 			}
 
-			void resolveGlobals() {
+			void resolveGlobals()
+			{
 				for (size_t objectIndex = 0; objectIndex < objects_.size(); ++objectIndex)
 				{
 					const auto& object = objects_[objectIndex];
@@ -2935,7 +2988,8 @@ namespace jwlink2
 				}
 			}
 
-			bool symbolAddressIsImageRelative(size_t objectIndex, size_t symbolIndex) const {
+			bool symbolAddressIsImageRelative(size_t objectIndex, size_t symbolIndex) const
+			{
 				const auto& symbol = objects_.at(objectIndex).symbols.at(symbolIndex);
 				if (symbol.sectionNumber > 0)
 				{
@@ -2954,7 +3008,8 @@ namespace jwlink2
 				return !definition.weakUndefined && definition.objectIndex < objects_.size() && definition.symbolIndex < objects_[definition.objectIndex].symbols.size() && objects_[definition.objectIndex].symbols[definition.symbolIndex].sectionNumber > 0;
 			}
 
-			uint64_t symbolAddress(size_t objectIndex, size_t symbolIndex) const {
+			uint64_t symbolAddress(size_t objectIndex, size_t symbolIndex) const
+			{
 				const auto& object = objects_.at(objectIndex);
 				const auto& symbol = object.symbols.at(symbolIndex);
 				if (symbol.sectionNumber == -1)
@@ -3002,7 +3057,8 @@ namespace jwlink2
 				return options_.imageBase + outputSections_.at(mapping.outputIndex).rva + mapping.offset + definingSymbol.value;
 			}
 
-			string dllModuleName() const {
+			string dllModuleName() const
+			{
 				if (!options_.moduleName.empty())
 				{
 					auto name = fs::path(options_.moduleName).filename().string();
@@ -3012,14 +3068,16 @@ namespace jwlink2
 				return options_.output.filename().string();
 			}
 
-			optional<pair<uint32_t, uint32_t>> sectionDirectory(const string& name) const {
+			optional<pair<uint32_t, uint32_t>> sectionDirectory(const string& name) const
+			{
 				const auto found = find_if(outputSections_.begin(), outputSections_.end(), [&](const OutputSection& section) { return section.name == name; });
 				if (found == outputSections_.end() || found->virtualSize == 0) return nullopt;
 				if (found->data.empty() || found->virtualSize > found->data.size()) fail(name + " runtime directory has no complete initialized data");
 				return pair{ found->rva, toU32(found->virtualSize, name + " directory size") };
 			}
 
-			optional<pair<uint32_t, uint32_t>> symbolDirectory(const vector<string>& names, size_t minimumSize, const string& description) const {
+			optional<pair<uint32_t, uint32_t>> symbolDirectory(const vector<string>& names, size_t minimumSize, const string& description) const
+			{
 				for (const auto& name : names)
 				{
 					const auto found = globals_.find(name);
@@ -3046,7 +3104,8 @@ namespace jwlink2
 				return nullopt;
 			}
 
-			optional<pair<uint32_t, uint32_t>> loadConfigurationDirectory() const {
+			optional<pair<uint32_t, uint32_t>> loadConfigurationDirectory() const
+			{
 				const auto symbol = symbolDirectory({ "__load_config_used", "_load_config_used" }, 4, "load-configuration");
 				if (symbol)
 				{
@@ -3065,7 +3124,8 @@ namespace jwlink2
 				return pair{ section->first, size };
 			}
 
-			uint32_t entryRva() const {
+			uint32_t entryRva() const
+			{
 				if (options_.dll && options_.noEntry)
 				{
 					return 0;
@@ -3112,7 +3172,8 @@ namespace jwlink2
 				return toU32(static_cast<size_t>(rva), "entry point RVA");
 			}
 
-			void layoutImage() {
+			void layoutImage()
+			{
 				if (outputSections_.empty())
 				{
 					fail("input objects contain no sections");
@@ -3152,7 +3213,8 @@ namespace jwlink2
 				(void)entryRva();
 			}
 
-			void finalizeGeneratedData() {
+			void finalizeGeneratedData()
+			{
 				if (edataSection_ != numeric_limits<size_t>::max())
 				{
 					auto& edata = outputSections_[edataSection_];
@@ -3303,7 +3365,8 @@ namespace jwlink2
 				}
 			}
 
-			void applyRelocations() {
+			void applyRelocations()
+			{
 				for (size_t objectIndex = 0; objectIndex < objects_.size(); ++objectIndex)
 				{
 					const auto& object = objects_[objectIndex];
@@ -3393,7 +3456,8 @@ namespace jwlink2
 				}
 			}
 
-			void writeImportLibrary() {
+			void writeImportLibrary()
+			{
 				if (!options_.dll || exportRecords_.empty())
 				{
 					if (options_.importLibrarySpecified && exportRecords_.empty())
@@ -3541,7 +3605,8 @@ namespace jwlink2
 				if (!output) fail("failed writing import library '" + options_.importLibrary->string() + "'");
 			}
 
-			void prepareDebugSection() {
+			void prepareDebugSection()
+			{
 				if (!options_.debug) return;
 				random_device random;
 				for (auto& byte : pdbIdentity_.guid) byte = static_cast<uint8_t>(random());
@@ -3571,7 +3636,8 @@ namespace jwlink2
 				debugDirectorySize_ = 28;
 			}
 
-			void finalizeDebugSection() {
+			void finalizeDebugSection()
+			{
 				if (!options_.debug) return;
 				auto& section = outputSections_.at(debugSectionIndex_);
 				writeLe(section.data, debugDirectoryOffset_ + 12, uint32_t{ 2 });
@@ -3580,7 +3646,8 @@ namespace jwlink2
 				writeLe(section.data, debugDirectoryOffset_ + 24, toU32(static_cast<size_t>(section.rawOffset) + rsdsRecordOffset_, "CodeView debug record file offset"));
 			}
 
-			void writePdb() {
+			void writePdb()
+			{
 				if (!options_.debug) return;
 				codeview::PdbBuilder builder(pdbIdentity_);
 				for (size_t i = 0; i < outputSections_.size(); ++i)
@@ -3616,7 +3683,8 @@ namespace jwlink2
 				builder.write(*options_.pdbFile);
 			}
 
-			void writeImage() {
+			void writeImage()
+			{
 				const auto headersSize = alignUp(0x80u + 4u + 20u + 240u + outputSections_.size() * 40u, options_.fileAlignment);
 				size_t fileSize = headersSize;
 				size_t imageSize = options_.sectionAlignment;
@@ -3847,7 +3915,8 @@ namespace jwlink2
 
 	} // namespace
 
-	void runLinker(LinkOptions options) {
+	void runLinker(LinkOptions options)
+	{
 		Linker(move(options)).run();
 	}
 } // namespace jwlink2
