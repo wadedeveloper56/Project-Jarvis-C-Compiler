@@ -1,0 +1,30 @@
+#pragma once
+
+#include <algorithm>
+#include <array>
+#include <cctype>
+#include <charconv>
+#include <chrono>
+#include <cstdint>
+#include <cstdlib>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <initializer_list>
+#include <iterator>
+#include <limits>
+#include <map>
+#include <optional>
+#include <random>
+#include <set>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <type_traits>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+#include <exception>
+#include <cstring>
+

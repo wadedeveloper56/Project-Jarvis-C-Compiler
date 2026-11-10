@@ -1,14 +1,19 @@
-#include <exception>
-#include <iostream>
-
+#include "pch.h"
 #include "command_line.h"
 
-int main(int argc, char** argv) {
-	try {
-		jwlink2::runLinker(jwlink2::parseArguments(argc, argv));
+using namespace jwlink2;
+using namespace std;
+
+int main(int argc, char** argv) 
+{
+	try
+	{
+		runLinker(parseArguments(argc, argv));
 		return 0;
-	} catch (const std::exception& error) {
-		std::cerr << "JWlink2: error: " << error.what() << '\n';
+	}
+	catch (const exception& error)
+	{
+		cerr << "JWlink2: error: " << error.what() << '\n';
 		return 1;
 	}
 }
