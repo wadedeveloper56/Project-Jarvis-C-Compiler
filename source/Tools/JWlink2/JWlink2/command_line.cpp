@@ -1,29 +1,31 @@
 #include "pch.h"
 #include "command_line.h"
 
+using namespace std;
+
 namespace jwlink2
 {
 	namespace
 	{
-		[[noreturn]] void fail(const std::string& message) {
-			throw std::runtime_error(message);
+		[[noreturn]] void fail(const string& message) {
+			throw runtime_error(message);
 		}
 
-		std::string lowerAscii(std::string value) {
-			std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+		string lowerAscii(string value) {
+			transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) { return static_cast<char>(tolower(ch)); });
 			return value;
 		}
 
-		std::vector<std::string> tokenizeResponse(std::string_view text, const fs::path& path) {
-			std::vector<std::string> result;
-			std::string token;
+		vector<string> tokenizeResponse(string_view text, const fs::path& path) {
+			vector<string> result;
+			string token;
 			bool quoted = false;
 			bool started = false;
-			for (std::size_t i = 0; i < text.size();)
+			for (size_t i = 0; i < text.size();)
 			{
 				if (text[i] == '\\')
 				{
-					std::size_t end = i;
+					size_t end = i;
 					while (end < text.size() && text[end] == '\\')
 					{
 						++end;
@@ -56,11 +58,11 @@ namespace jwlink2
 					started = true;
 					++i;
 				}
-				else if (std::isspace(static_cast<unsigned char>(text[i])) && !quoted)
+				else if (isspace(static_cast<unsigned char>(text[i])) && !quoted)
 				{
 					if (started)
 					{
-						result.push_back(std::move(token));
+						result.push_back(move(token));
 						token.clear();
 						started = false;
 					}
@@ -78,12 +80,12 @@ namespace jwlink2
 			}
 			if (started)
 			{
-				result.push_back(std::move(token));
+				result.push_back(move(token));
 			}
 			return result;
 		}
 
-		void expandResponseFiles(const std::vector<std::string>& arguments, std::vector<std::string>& expanded, std::set<fs::path>& active, unsigned depth) {
+		void expandResponseFiles(const vector<string>& arguments, vector<string>& expanded, set<fs::path>& active, unsigned depth) {
 			if (depth > 32)
 			{
 				fail("response-file nesting exceeds 32 levels");
@@ -100,12 +102,12 @@ namespace jwlink2
 				{
 					fail("response-file cycle involving '" + path.string() + "'");
 				}
-				std::ifstream input(path);
+				ifstream input(path);
 				if (!input)
 				{
 					fail("cannot open response file '" + path.string() + "'");
 				}
-				std::ostringstream content;
+				ostringstream content;
 				content << input.rdbuf();
 				if (!input.eof() && input.fail())
 				{
@@ -117,24 +119,24 @@ namespace jwlink2
 			}
 		}
 
-		std::uint64_t parseUnsignedOption(std::string_view text, std::string_view optionName) {
+		uint64_t parseUnsignedOption(string_view text, string_view optionName) {
 			int base = 10;
 			if (text.size() > 2 && text[0] == '0' && (text[1] == 'x' || text[1] == 'X'))
 			{
 				base = 16;
 				text.remove_prefix(2);
 			}
-			std::uint64_t value = 0;
-			const auto parsed = std::from_chars(text.data(), text.data() + text.size(), value, base);
-			if (text.empty() || parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size())
+			uint64_t value = 0;
+			const auto parsed = from_chars(text.data(), text.data() + text.size(), value, base);
+			if (text.empty() || parsed.ec != errc{} || parsed.ptr != text.data() + text.size())
 			{
-				fail("invalid value for " + std::string(optionName));
+				fail("invalid value for " + string(optionName));
 			}
 			return value;
 		}
 
 		void printUsage() {
-			std::cout << "JWlink2 - AMD64 COFF to Windows PE32+ linker\n"
+			cout << "JWlink2 - AMD64 COFF to Windows PE32+ linker\n"
 				"Usage: JWlink2 [options] input.obj [input.lib ...]\n"
 				"  /OUT:<file>, -o <file>      Output image (default: a.exe or a.dll)\n"
 				"  /DLL                        Create a DLL\n"
@@ -159,24 +161,24 @@ namespace jwlink2
 
 	} // namespace
 
-	ExportDirective parseExportDirective(std::string_view value, const std::string& context) {
+	ExportDirective parseExportDirective(string_view value, const string& context) {
 		ExportDirective directive;
 		const auto firstComma = value.find(',');
 		const auto symbol = value.substr(0, firstComma);
 		const auto equals = symbol.find('=');
-		directive.name = std::string(symbol.substr(0, equals));
-		directive.internalName = equals == std::string_view::npos ? directive.name : std::string(symbol.substr(equals + 1));
+		directive.name = string(symbol.substr(0, equals));
+		directive.internalName = equals == string_view::npos ? directive.name : string(symbol.substr(equals + 1));
 		if (directive.name.empty() || directive.internalName.empty())
 		{
 			fail(context + ": /EXPORT requires a public and internal symbol name");
 		}
 		bool ordinalSpecified = false;
-		std::size_t cursor = firstComma;
-		while (cursor != std::string_view::npos)
+		size_t cursor = firstComma;
+		while (cursor != string_view::npos)
 		{
 			const auto next = value.find(',', cursor + 1);
-			const auto attribute = value.substr(cursor + 1, next == std::string_view::npos ? std::string_view::npos : next - cursor - 1);
-			const auto normalized = lowerAscii(std::string(attribute));
+			const auto attribute = value.substr(cursor + 1, next == string_view::npos ? string_view::npos : next - cursor - 1);
+			const auto normalized = lowerAscii(string(attribute));
 			if (normalized == "noname")
 			{
 				directive.noname = true;
@@ -197,15 +199,15 @@ namespace jwlink2
 				}
 				ordinalSpecified = true;
 				const auto ordinal = parseUnsignedOption(attribute.substr(1), "/EXPORT ordinal");
-				if (ordinal == 0 || ordinal > std::numeric_limits<std::uint16_t>::max())
+				if (ordinal == 0 || ordinal > numeric_limits<uint16_t>::max())
 				{
 					fail(context + ": /EXPORT ordinal must be between 1 and 65535");
 				}
-				directive.ordinal = static_cast<std::uint16_t>(ordinal);
+				directive.ordinal = static_cast<uint16_t>(ordinal);
 			}
 			else
 			{
-				fail(context + ": unsupported /EXPORT attribute '" + std::string(attribute) + "'");
+				fail(context + ": unsupported /EXPORT attribute '" + string(attribute) + "'");
 			}
 			cursor = next;
 		}
@@ -218,26 +220,26 @@ namespace jwlink2
 
 	LinkOptions parseArguments(int argc, char** argv) {
 		LinkOptions options;
-		std::vector<std::string> supplied;
+		vector<string> supplied;
 		for (int i = 1; i < argc; ++i)
 		{
 			supplied.emplace_back(argv[i]);
 		}
-		std::vector<std::string> arguments;
-		std::set<fs::path> activeResponses;
+		vector<string> arguments;
+		set<fs::path> activeResponses;
 		expandResponseFiles(supplied, arguments, activeResponses, 0);
-		std::vector<std::string> excludedLibraries;
+		vector<string> excludedLibraries;
 		bool mapUsesDefaultName = false;
 		bool parseOptions = true;
-		auto nextValue = [&](std::size_t& index, std::string_view option) -> std::string
+		auto nextValue = [&](size_t& index, string_view option) -> string
 			{
 				if (++index >= arguments.size())
 				{
-					fail(std::string(option) + " requires a value");
+					fail(string(option) + " requires a value");
 				}
 				return arguments[index];
 			};
-		for (std::size_t i = 0; i < arguments.size(); ++i)
+		for (size_t i = 0; i < arguments.size(); ++i)
 		{
 			const auto& argument = arguments[i];
 			if (parseOptions && argument == "--")
@@ -250,30 +252,30 @@ namespace jwlink2
 				options.inputs.emplace_back(argument);
 				continue;
 			}
-			std::size_t prefixLength = argument[0] == '/' ? 1 : (argument.size() > 1 && argument[1] == '-' ? 2 : 1);
-			const bool attachedOutputOption = argument.size() > 2 && argument[0] == '-' && prefixLength == 1 && (argument[1] == 'o' || argument[1] == 'O') && argument[2] != ':' && argument[2] != '=' && std::tolower(static_cast<unsigned char>(argument[2])) != 'u';
-			const bool attachedEntryOption = argument.size() > 2 && argument[0] == '-' && prefixLength == 1 && (argument[1] == 'e' || argument[1] == 'E') && argument[2] != ':' && argument[2] != '=' && std::tolower(static_cast<unsigned char>(argument[2])) != 'n';
+			size_t prefixLength = argument[0] == '/' ? 1 : (argument.size() > 1 && argument[1] == '-' ? 2 : 1);
+			const bool attachedOutputOption = argument.size() > 2 && argument[0] == '-' && prefixLength == 1 && (argument[1] == 'o' || argument[1] == 'O') && argument[2] != ':' && argument[2] != '=' && tolower(static_cast<unsigned char>(argument[2])) != 'u';
+			const bool attachedEntryOption = argument.size() > 2 && argument[0] == '-' && prefixLength == 1 && (argument[1] == 'e' || argument[1] == 'E') && argument[2] != ':' && argument[2] != '=' && tolower(static_cast<unsigned char>(argument[2])) != 'n';
 			const bool attachedPathOption = argument.size() > 2 && argument[0] == '-' && argument[1] == 'L' && prefixLength == 1 && argument[2] != ':' && argument[2] != '=';
 			const bool shortPathOption = argument.size() > 1 && argument[0] == '-' && argument[1] == 'L' && prefixLength == 1;
 			const auto delimiter = argument.find_first_of(":=", prefixLength);
-			const std::string optionName = attachedOutputOption ? "o" : attachedEntryOption ? "e" : attachedPathOption ? "libpath" : lowerAscii(argument.substr(prefixLength, delimiter == std::string::npos ? std::string::npos : delimiter - prefixLength));
-			std::optional<std::string> value;
+			const string optionName = attachedOutputOption ? "o" : attachedEntryOption ? "e" : attachedPathOption ? "libpath" : lowerAscii(argument.substr(prefixLength, delimiter == string::npos ? string::npos : delimiter - prefixLength));
+			optional<string> value;
 			if (attachedOutputOption || attachedEntryOption || attachedPathOption)
 			{
 				value = argument.substr(prefixLength + 1);
 			}
-			else if (delimiter != std::string::npos)
+			else if (delimiter != string::npos)
 			{
 				value = argument.substr(delimiter + 1);
 			}
-			auto requireValue = [&](std::string_view spelling)
+			auto requireValue = [&](string_view spelling)
 				{
 					return value ? *value : nextValue(i, spelling);
 				};
 			if (optionName == "h" || optionName == "help" || optionName == "?")
 			{
 				printUsage();
-				std::exit(0);
+				exit(0);
 			}
 			else if (optionName == "o" || optionName == "out")
 			{
@@ -312,26 +314,26 @@ namespace jwlink2
 			{
 				auto subsystem = lowerAscii(requireValue("/SUBSYSTEM"));
 				const auto comma = subsystem.find(',');
-				if (comma != std::string::npos)
+				if (comma != string::npos)
 				{
 					const auto version = subsystem.substr(comma + 1);
 					const auto dot = version.find('.');
-					if (dot == std::string::npos || dot == 0 || dot + 1 == version.size())
+					if (dot == string::npos || dot == 0 || dot + 1 == version.size())
 					{
 						fail("invalid /SUBSYSTEM version; expected major.minor");
 					}
-					auto parseVersionPart = [&](std::string_view part)
+					auto parseVersionPart = [&](string_view part)
 						{
 							unsigned int parsedValue = 0;
-							const auto parsed = std::from_chars(part.data(), part.data() + part.size(), parsedValue);
-							if (parsed.ec != std::errc{} || parsed.ptr != part.data() + part.size() || parsedValue > std::numeric_limits<std::uint16_t>::max())
+							const auto parsed = from_chars(part.data(), part.data() + part.size(), parsedValue);
+							if (parsed.ec != errc{} || parsed.ptr != part.data() + part.size() || parsedValue > numeric_limits<uint16_t>::max())
 							{
 								fail("invalid /SUBSYSTEM version; expected major.minor");
 							}
-							return static_cast<std::uint16_t>(parsedValue);
+							return static_cast<uint16_t>(parsedValue);
 						};
-					options.subsystemVersionMajor = parseVersionPart(std::string_view(version).substr(0, dot));
-					options.subsystemVersionMinor = parseVersionPart(std::string_view(version).substr(dot + 1));
+					options.subsystemVersionMajor = parseVersionPart(string_view(version).substr(0, dot));
+					options.subsystemVersionMinor = parseVersionPart(string_view(version).substr(dot + 1));
 					subsystem.resize(comma);
 				}
 				if (subsystem == "console" || subsystem == "3")
@@ -350,16 +352,16 @@ namespace jwlink2
 			else if (optionName == "libpath" || shortPathOption)
 			{
 				const auto paths = requireValue("/LIBPATH");
-				std::size_t start = 0;
+				size_t start = 0;
 				while (start <= paths.size())
 				{
 					const auto end = paths.find(';', start);
-					const auto part = paths.substr(start, end == std::string::npos ? std::string::npos : end - start);
+					const auto part = paths.substr(start, end == string::npos ? string::npos : end - start);
 					if (!part.empty())
 					{
 						options.libraryPaths.emplace_back(part);
 					}
-					if (end == std::string::npos)
+					if (end == string::npos)
 					{
 						break;
 					}
@@ -397,12 +399,12 @@ namespace jwlink2
 			else if (optionName == "align")
 			{
 				const auto alignment = parseUnsignedOption(requireValue("/ALIGN"), "/ALIGN");
-				if (alignment < 0x200 || alignment > std::numeric_limits<std::uint32_t>::max() || (alignment & (alignment - 1)) != 0)
+				if (alignment < 0x200 || alignment > numeric_limits<uint32_t>::max() || (alignment & (alignment - 1)) != 0)
 				{
 					fail("/ALIGN must be a power of two between 512 and 0x80000000");
 				}
-				options.sectionAlignment = static_cast<std::uint32_t>(alignment);
-				options.fileAlignment = alignment < 0x1000 ? static_cast<std::uint32_t>(alignment) : 0x200;
+				options.sectionAlignment = static_cast<uint32_t>(alignment);
+				options.fileAlignment = alignment < 0x1000 ? static_cast<uint32_t>(alignment) : 0x200;
 				options.sectionAlignmentSpecified = true;
 			}
 			else if (optionName == "base")
@@ -439,7 +441,7 @@ namespace jwlink2
 						excluded += ".lib";
 					}
 					excludedLibraries.push_back(excluded);
-					options.excludedDefaultLibraries.push_back(std::move(excluded));
+					options.excludedDefaultLibraries.push_back(move(excluded));
 				}
 				else
 				{
@@ -505,13 +507,13 @@ namespace jwlink2
 		{
 			auto pdbPath = options.output;
 			pdbPath.replace_extension(".pdb");
-			options.pdbFile = std::move(pdbPath);
+			options.pdbFile = move(pdbPath);
 		}
 		if (options.dll && !options.importLibrary)
 		{
 			auto libraryPath = options.output;
 			libraryPath.replace_extension(".lib");
-			options.importLibrary = std::move(libraryPath);
+			options.importLibrary = move(libraryPath);
 		}
 		if (options.noDefaultLibraries)
 		{
@@ -519,21 +521,21 @@ namespace jwlink2
 		}
 		else if (!excludedLibraries.empty())
 		{
-			std::erase_if(options.defaultLibraries, [&](const std::string& library)
+			erase_if(options.defaultLibraries, [&](const string& library)
 				{
 					auto normalized = lowerAscii(fs::path(library).filename().string());
 					if (fs::path(normalized).extension().empty())
 					{
 						normalized += ".lib";
 					}
-					return std::find(excludedLibraries.begin(), excludedLibraries.end(), normalized) != excludedLibraries.end();
+					return find(excludedLibraries.begin(), excludedLibraries.end(), normalized) != excludedLibraries.end();
 				});
 		}
 		if (mapUsesDefaultName && !options.mapFile)
 		{
 			auto mapPath = options.output;
 			mapPath.replace_extension(".map");
-			options.mapFile = std::move(mapPath);
+			options.mapFile = move(mapPath);
 		}
 		if (options.inputs.empty() && options.defaultLibraries.empty())
 		{

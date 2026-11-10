@@ -8,56 +8,61 @@
 #include <utility>
 #include <vector>
 
-namespace jwlink2 {
-namespace fs = std::filesystem;
+using namespace std;
 
-struct ExportDirective {
-	std::string name;
-	std::string internalName;
-	std::optional<std::uint16_t> ordinal;
-	bool noname = false;
-	bool data = false;
-	bool privateExport = false;
-};
+namespace jwlink2
+{
+	namespace fs = filesystem;
 
-ExportDirective parseExportDirective(std::string_view value, const std::string& context);
+	struct ExportDirective
+	{
+		string name;
+		string internalName;
+		optional<uint16_t> ordinal;
+		bool noname = false;
+		bool data = false;
+		bool privateExport = false;
+	};
 
-struct LinkOptions {
-	fs::path output = "a.exe";
-	std::optional<std::string> entry;
-	std::optional<fs::path> mapFile;
-	std::optional<fs::path> pdbFile;
-	std::optional<fs::path> definitionFile;
-	std::optional<fs::path> importLibrary;
-	std::string moduleName;
-	std::vector<fs::path> libraryPaths;
-	std::uint64_t imageBase = 0x140000000ULL;
-	std::uint16_t subsystem = 3;
-	std::uint16_t subsystemVersionMajor = 6;
-	std::uint16_t subsystemVersionMinor = 0;
-	bool dynamicBase = true;
-	bool nxCompat = true;
-	bool noLogo = false;
-	bool debug = false;
-	bool noDefaultLibraries = false;
-	std::vector<std::string> defaultLibraries;
-	std::vector<std::string> excludedDefaultLibraries;
-	std::vector<std::string> delayLoadLibraries;
-	std::vector<std::string> includeSymbols;
-	std::vector<std::pair<std::string, std::uint32_t>> commonAlignments;
-	std::vector<ExportDirective> exports;
-	std::uint32_t sectionAlignment = 0x1000;
-	std::uint32_t fileAlignment = 0x200;
-	std::uint32_t commonAlignment = 8;
-	bool entrySpecified = false;
-	bool sectionAlignmentSpecified = false;
-	bool outputSpecified = false;
-	bool dll = false;
-	bool noEntry = false;
-	bool importLibrarySpecified = false;
-	std::vector<fs::path> inputs;
-};
+	ExportDirective parseExportDirective(string_view value, const string& context);
 
-LinkOptions parseArguments(int argc, char** argv);
-void runLinker(LinkOptions options);
+	struct LinkOptions
+	{
+		fs::path output = "a.exe";
+		optional<string> entry;
+		optional<fs::path> mapFile;
+		optional<fs::path> pdbFile;
+		optional<fs::path> definitionFile;
+		optional<fs::path> importLibrary;
+		string moduleName;
+		vector<fs::path> libraryPaths;
+		uint64_t imageBase = 0x140000000ULL;
+		uint16_t subsystem = 3;
+		uint16_t subsystemVersionMajor = 6;
+		uint16_t subsystemVersionMinor = 0;
+		bool dynamicBase = true;
+		bool nxCompat = true;
+		bool noLogo = false;
+		bool debug = false;
+		bool noDefaultLibraries = false;
+		vector<string> defaultLibraries;
+		vector<string> excludedDefaultLibraries;
+		vector<string> delayLoadLibraries;
+		vector<string> includeSymbols;
+		vector<pair<string, uint32_t>> commonAlignments;
+		vector<ExportDirective> exports;
+		uint32_t sectionAlignment = 0x1000;
+		uint32_t fileAlignment = 0x200;
+		uint32_t commonAlignment = 8;
+		bool entrySpecified = false;
+		bool sectionAlignmentSpecified = false;
+		bool outputSpecified = false;
+		bool dll = false;
+		bool noEntry = false;
+		bool importLibrarySpecified = false;
+		vector<fs::path> inputs;
+	};
+
+	LinkOptions parseArguments(int argc, char** argv);
+	void runLinker(LinkOptions options);
 }

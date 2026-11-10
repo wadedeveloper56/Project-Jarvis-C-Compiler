@@ -7,74 +7,76 @@
 #include <string>
 #include <vector>
 
+using namespace std;
+
 namespace jwlink2::codeview {
 
 struct PdbIdentity {
 	// The 16 bytes are written verbatim in the GUID field of the PDB info stream.
-	std::array<std::uint8_t, 16> guid{};
-	std::uint32_t age = 1;
-	std::uint32_t signature = 0;
+	array<uint8_t, 16> guid{};
+	uint32_t age = 1;
+	uint32_t signature = 0;
 };
 
 struct LinkedSection {
-	std::uint16_t index = 0; // Final PE section number, one-based and contiguous.
-	std::string name;
-	std::uint32_t rva = 0; // Final image RVA.
-	std::uint32_t size = 0;
-	std::uint32_t characteristics = 0;
+	uint16_t index = 0; // Final PE section number, one-based and contiguous.
+	string name;
+	uint32_t rva = 0; // Final image RVA.
+	uint32_t size = 0;
+	uint32_t characteristics = 0;
 };
 
 struct LinkedSymbol {
-	std::string name;
-	std::uint16_t section = 0;
-	std::uint32_t offset = 0;
-	std::uint32_t flags = 0;
+	string name;
+	uint16_t section = 0;
+	uint32_t offset = 0;
+	uint32_t flags = 0;
 };
 
 struct ObjectSectionContribution {
-	std::uint16_t sourceSection = 0;
-	std::uint32_t sourceOffset = 0; // Half-open source range [sourceOffset, sourceOffset + size).
-	std::uint32_t size = 0;
-	std::uint16_t linkedSection = 0;
-	std::uint32_t linkedOffset = 0; // Destination for sourceOffset after COMDAT/layout decisions.
+	uint16_t sourceSection = 0;
+	uint32_t sourceOffset = 0; // Half-open source range [sourceOffset, sourceOffset + size).
+	uint32_t size = 0;
+	uint16_t linkedSection = 0;
+	uint32_t linkedOffset = 0; // Destination for sourceOffset after COMDAT/layout decisions.
 };
 
 struct TypeIndexPatch {
 	// Byte offset from the beginning of a complete CodeView record to a u32 index.
-	std::size_t offset = 0;
+	size_t offset = 0;
 };
 
 struct CodeViewTypeRecord {
-	std::uint32_t originalIndex = 0;
-	std::vector<std::uint8_t> record; // Includes CodeView's u16 length and u16 leaf kind.
-	std::vector<TypeIndexPatch> references;
+	uint32_t originalIndex = 0;
+	vector<uint8_t> record; // Includes CodeView's u16 length and u16 leaf kind.
+	vector<TypeIndexPatch> references;
 };
 
 struct CodeViewAddressPatch {
-	std::size_t offsetField = 0;  // u32 section-relative offset in the record.
-	std::size_t sectionField = 0; // u16 PE section number in the record.
+	size_t offsetField = 0;  // u32 section-relative offset in the record.
+	size_t sectionField = 0; // u16 PE section number in the record.
 };
 
 struct CodeViewSymbolRecord {
-	std::uint16_t sourceSection = 0;
-	std::vector<std::uint8_t> record; // Includes CodeView's u16 length and u16 symbol kind.
-	std::vector<TypeIndexPatch> typeReferences;
-	std::vector<CodeViewAddressPatch> addresses;
+	uint16_t sourceSection = 0;
+	vector<uint8_t> record; // Includes CodeView's u16 length and u16 symbol kind.
+	vector<TypeIndexPatch> typeReferences;
+	vector<CodeViewAddressPatch> addresses;
 };
 
 struct CodeViewSubsection {
-	std::uint32_t kind = 0; // C13 DEBUG_S_* subsection kind.
-	std::vector<std::uint8_t> data; // Payload only; kind/length/alignment are written by the builder.
+	uint32_t kind = 0; // C13 DEBUG_S_* subsection kind.
+	vector<uint8_t> data; // Payload only; kind/length/alignment are written by the builder.
 };
 
 struct CodeViewObject {
-	std::string objectId; // Must uniquely identify this object in the builder.
-	std::string moduleName;
-	std::string objectFileName;
-	std::vector<ObjectSectionContribution> contributions;
-	std::vector<CodeViewTypeRecord> types;
-	std::vector<CodeViewSymbolRecord> symbols;
-	std::vector<CodeViewSubsection> subsections;
+	string objectId; // Must uniquely identify this object in the builder.
+	string moduleName;
+	string objectFileName;
+	vector<ObjectSectionContribution> contributions;
+	vector<CodeViewTypeRecord> types;
+	vector<CodeViewSymbolRecord> symbols;
+	vector<CodeViewSubsection> subsections;
 };
 
 class PdbBuilder {
@@ -87,14 +89,14 @@ public:
 
 	// Emits an MSF 7.0 container containing PDB info, TPI, DBI, module symbol
 	// streams and CodeView C13 subsections. Invalid or unsupported input throws
-	// std::runtime_error; no placeholder or non-PDB output is written.
-	void write(const std::filesystem::path& path) const;
+	// runtime_error; no placeholder or non-PDB output is written.
+	void write(const filesystem::path& path) const;
 
 private:
 	PdbIdentity identity_;
-	std::vector<LinkedSection> sections_;
-	std::vector<LinkedSymbol> symbols_;
-	std::vector<CodeViewObject> objects_;
+	vector<LinkedSection> sections_;
+	vector<LinkedSymbol> symbols_;
+	vector<CodeViewObject> objects_;
 };
 
 } // namespace jwlink2::codeview
