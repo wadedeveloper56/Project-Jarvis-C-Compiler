@@ -696,6 +696,78 @@ public:
 		assertNoOutput(workspace);
 	}
 
+	TEST_METHOD(RuntimeMetadataDirectoriesArePreserved) {
+		Workspace workspace;
+		TestSection text{".text", {0xc3, 0xc3}};
+		TestSection pdata{".pdata", Bytes(12, 0), 0x40000040};
+		pdata.relocations = {{0, 0, 3}, {4, 1, 3}, {8, 2, 3}};
+		TestSection xdata{".xdata", {1, 0, 0, 0}, 0x40000040};
+		TestSection tlsDirectory{".rdata$T", Bytes(40, 0), 0x40000040};
+		tlsDirectory.relocations = {{0, 4, 1}, {8, 5, 1}, {16, 6, 1}};
+		TestSection tlsTemplate{".tls$", {0x31, 0x32, 0, 0}, 0xc0000040};
+		TestSection tlsIndex{".data$t", Bytes(4, 0), 0xc0000040};
+		TestSection loadConfig{".rdata$L", Bytes(0x70, 0), 0x40000040};
+		put32(loadConfig.data, 0, 0x70);
+		TestSection resources{".rsrc$01", Bytes(16, 0), 0x40000040};
+		const auto object = makeObject({text, pdata, xdata, tlsDirectory, tlsTemplate, tlsIndex, loadConfig, resources}, {
+			TestSymbol{"main", 0, 1, 2, {}}, TestSymbol{"functionEnd", 1, 1, 2, {}}, TestSymbol{"unwindInfo", 0, 3, 2, {}},
+			TestSymbol{"__tls_used", 0, 4, 2, {}}, TestSymbol{"tlsStart", 0, 5, 2, {}}, TestSymbol{"tlsEnd", 4, 5, 2, {}},
+			TestSymbol{"tlsIndex", 0, 6, 2, {}}, TestSymbol{"__load_config_used", 0, 7, 2, {}}
+		});
+		assertSuccess(linkObject(workspace, object));
+		const auto image = workspace.read(L"linked.exe");
+		const auto optional = optionalHeader(image);
+		auto verifyDirectory = [&](std::size_t directoryOffset, const std::string& sectionName, std::uint32_t expectedSize) {
+			const auto rva = get32(image, optional + directoryOffset);
+			Assert::IsTrue(rva != 0, L"runtime data-directory RVA is present");
+			Assert::AreEqual<std::uint32_t>(expectedSize, get32(image, optional + directoryOffset + 4), L"runtime data-directory size");
+			Assert::IsTrue(rva >= get32(image, sectionHeader(image, sectionName) + 12), L"runtime directory points into the expected output section");
+		};
+		verifyDirectory(128, ".rsrc", 16);
+		verifyDirectory(136, ".pdata", 12);
+		verifyDirectory(184, ".rdata", 40);
+		verifyDirectory(192, ".rdata", 0x70);
+		const auto pdataHeader = sectionHeader(image, ".pdata");
+		const auto pdataRaw = get32(image, pdataHeader + 20);
+		Assert::AreEqual<std::uint32_t>(get32(image, sectionHeader(image, ".text") + 12), get32(image, pdataRaw), L"RUNTIME_FUNCTION begins at the linked code RVA");
+		Assert::AreEqual<std::uint32_t>(get32(image, pdataRaw + 8), get32(image, sectionHeader(image, ".xdata") + 12), L"RUNTIME_FUNCTION retains its unwind-info RVA");
+		const auto tlsRva = get32(image, optional + 184);
+		const auto tlsRaw = rvaOffset(image, tlsRva);
+		const auto tlsBase = get64(image, optional + 24);
+		Assert::AreEqual<std::uint64_t>(tlsBase + get32(image, sectionHeader(image, ".tls") + 12), get64(image, tlsRaw), L"TLS template start VA is relocated");
+		Assert::AreEqual<std::uint64_t>(tlsBase + get32(image, sectionHeader(image, ".tls") + 12) + 4, get64(image, tlsRaw + 8), L"TLS template end VA is relocated");
+		assertHasBaseReloc(image, tlsRva, 10);
+	}
+
+	TEST_METHOD(MalformedExceptionDirectorySizeIsRejected) {
+		Workspace workspace;
+		const auto object = makeObject({TestSection{".text", {0xc3}}, TestSection{".pdata", Bytes(13, 0), 0x40000040}}, {TestSymbol{"main", 0, 1, 2, {}}});
+		const auto result = linkObject(workspace, object);
+		assertFailureContains(result, "exception directory size is not a multiple of RUNTIME_FUNCTION");
+		assertNoOutput(workspace);
+	}
+
+	TEST_METHOD(UnsortedExceptionDirectoryIsRejected) {
+		Workspace workspace;
+		TestSection pdata{".pdata", Bytes(24, 0), 0x40000040};
+		pdata.relocations = {{0, 1, 3}, {4, 3, 3}, {8, 4, 3}, {12, 0, 3}, {16, 2, 3}, {20, 4, 3}};
+		const auto object = makeObject({TestSection{".text", {0xc3, 0xc3, 0xc3}}, pdata, TestSection{".xdata", {1, 0, 0, 0}, 0x40000040}}, {
+			TestSymbol{"main", 0, 1, 2, {}}, TestSymbol{"second", 2, 1, 2, {}}, TestSymbol{"firstEnd", 1, 1, 2, {}},
+			TestSymbol{"secondEnd", 3, 1, 2, {}}, TestSymbol{"unwindInfo", 0, 3, 2, {}}
+		});
+		const auto result = linkObject(workspace, object);
+		assertFailureContains(result, "unsorted RUNTIME_FUNCTION entry");
+		assertNoOutput(workspace);
+	}
+
+	TEST_METHOD(ShortResourceDirectoryIsRejected) {
+		Workspace workspace;
+		const auto object = makeObject({TestSection{".text", {0xc3}}, TestSection{".rsrc", Bytes(15, 0), 0x40000040}}, {TestSymbol{"main", 0, 1, 2, {}}});
+		const auto result = linkObject(workspace, object);
+		assertFailureContains(result, "resource directory is shorter than IMAGE_RESOURCE_DIRECTORY");
+		assertNoOutput(workspace);
+	}
+
 	TEST_METHOD(ValidAmd64ObjectProducesPe32PlusWithDefaultBaseAndEntry) {
 		Workspace workspace;
 		assertSuccess(linkObject(workspace, makeEntryObject()));

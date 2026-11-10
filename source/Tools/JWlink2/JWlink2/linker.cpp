@@ -1964,6 +1964,54 @@ private:
 		return options_.output.filename().string();
 	}
 
+	std::optional<std::pair<std::uint32_t, std::uint32_t>> sectionDirectory(const std::string& name) const {
+		const auto found = std::find_if(outputSections_.begin(), outputSections_.end(), [&](const OutputSection& section) { return section.name == name; });
+		if (found == outputSections_.end() || found->virtualSize == 0) return std::nullopt;
+		if (found->data.empty() || found->virtualSize > found->data.size()) fail(name + " runtime directory has no complete initialized data");
+		return std::pair{found->rva, toU32(found->virtualSize, name + " directory size")};
+	}
+
+	std::optional<std::pair<std::uint32_t, std::uint32_t>> symbolDirectory(const std::vector<std::string>& names, std::size_t minimumSize, const std::string& description) const {
+		for (const auto& name : names) {
+			const auto found = globals_.find(name);
+			if (found == globals_.end()) continue;
+			const auto& definition = found->second;
+			if (definition.imported || definition.common || definition.weakUndefined || definition.objectIndex >= objects_.size() || definition.symbolIndex >= objects_[definition.objectIndex].symbols.size()) {
+				fail(description + " directory symbol '" + name + "' is not defined in initialized input data");
+			}
+			const auto& symbol = objects_[definition.objectIndex].symbols[definition.symbolIndex];
+			if (symbol.sectionNumber <= 0 || static_cast<std::size_t>(symbol.sectionNumber) > sectionMaps_[definition.objectIndex].size()) {
+				fail(description + " directory symbol '" + name + "' is not defined in an input section");
+			}
+			const auto& mapping = sectionMaps_[definition.objectIndex][static_cast<std::size_t>(symbol.sectionNumber - 1)];
+			const auto offset = mapping.offset + symbol.value;
+			const auto& output = outputSections_[mapping.outputIndex];
+			if (offset > output.data.size() || minimumSize > output.data.size() - offset || offset > output.virtualSize || minimumSize > output.virtualSize - offset) {
+				fail(description + " directory structure is truncated");
+			}
+			return std::pair{toU32(static_cast<std::size_t>(output.rva) + offset, description + " directory RVA"), toU32(minimumSize, description + " directory size")};
+		}
+		return std::nullopt;
+	}
+
+	std::optional<std::pair<std::uint32_t, std::uint32_t>> loadConfigurationDirectory() const {
+		const auto symbol = symbolDirectory({"__load_config_used", "_load_config_used"}, 4, "load-configuration");
+		if (symbol) {
+			const auto rva = symbol->first;
+			const auto section = std::find_if(outputSections_.begin(), outputSections_.end(), [&](const OutputSection& output) { return rva >= output.rva && static_cast<std::uint64_t>(rva) < static_cast<std::uint64_t>(output.rva) + output.data.size(); });
+			const auto offset = static_cast<std::size_t>(rva - section->rva);
+			const auto size = readLe<std::uint32_t>(section->data, offset, "load-configuration directory");
+			if (size < 4 || size > section->data.size() - offset || offset > section->virtualSize || size > section->virtualSize - offset) fail("load-configuration directory has an invalid structure size");
+			return std::pair{rva, size};
+		}
+		const auto section = sectionDirectory(".loadcfg");
+		if (!section) return std::nullopt;
+		const auto output = std::find_if(outputSections_.begin(), outputSections_.end(), [&](const OutputSection& candidate) { return candidate.rva == section->first; });
+		const auto size = readLe<std::uint32_t>(output->data, 0, "load-configuration directory");
+		if (size < 4 || size > output->data.size() || size > output->virtualSize) fail("load-configuration directory has an invalid structure size");
+		return std::pair{section->first, size};
+	}
+
 	std::uint32_t entryRva() const {
 		if (options_.dll && options_.noEntry) {
 			return 0;
@@ -2386,6 +2434,44 @@ private:
 		writeLe(image, optional + 116, exportDirectorySize_);
 		writeLe(image, optional + 120, importDirectoryRva_);
 		writeLe(image, optional + 124, importDirectorySize_);
+		const auto resourceDirectory = sectionDirectory(".rsrc");
+		const auto exceptionDirectory = sectionDirectory(".pdata");
+		const auto tlsDirectory = symbolDirectory({"__tls_used", "_tls_used"}, 40, "TLS");
+		const auto loadConfigDirectory = loadConfigurationDirectory();
+		if (resourceDirectory && resourceDirectory->second < 16) {
+			fail("PE resource directory is shorter than IMAGE_RESOURCE_DIRECTORY");
+		}
+		if (exceptionDirectory) {
+			if (exceptionDirectory->second % 12 != 0) {
+				fail("AMD64 exception directory size is not a multiple of RUNTIME_FUNCTION");
+			}
+			const auto pdata = std::find_if(outputSections_.begin(), outputSections_.end(), [&](const OutputSection& section) { return section.rva == exceptionDirectory->first; });
+			std::uint32_t previousBegin = 0;
+			for (std::size_t offset = 0; offset < exceptionDirectory->second; offset += 12) {
+				const auto begin = readLe<std::uint32_t>(pdata->data, offset, "AMD64 exception directory");
+				const auto end = readLe<std::uint32_t>(pdata->data, offset + 4, "AMD64 exception directory");
+				if (begin >= end || (offset != 0 && begin < previousBegin)) {
+					fail("AMD64 exception directory contains an invalid or unsorted RUNTIME_FUNCTION entry");
+				}
+				previousBegin = begin;
+			}
+		}
+		if (resourceDirectory) {
+			writeLe(image, optional + 128, resourceDirectory->first);
+			writeLe(image, optional + 132, resourceDirectory->second);
+		}
+		if (exceptionDirectory) {
+			writeLe(image, optional + 136, exceptionDirectory->first);
+			writeLe(image, optional + 140, exceptionDirectory->second);
+		}
+		if (tlsDirectory) {
+			writeLe(image, optional + 184, tlsDirectory->first);
+			writeLe(image, optional + 188, tlsDirectory->second);
+		}
+		if (loadConfigDirectory) {
+			writeLe(image, optional + 192, loadConfigDirectory->first);
+			writeLe(image, optional + 196, loadConfigDirectory->second);
+		}
 		writeLe(image, optional + 152, relocationDirectoryRva_);
 		writeLe(image, optional + 156, relocationDirectorySize_);
 		if (idataSection_ != std::numeric_limits<std::size_t>::max()) {
