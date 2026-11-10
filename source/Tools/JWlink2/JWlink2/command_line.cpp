@@ -129,6 +129,9 @@ void printUsage() {
 				 "  /SUBSYSTEM:CONSOLE|WINDOWS  Select PE subsystem\n"
 				 "  /LIBPATH:<directory>        Search directory for libraries\n"
 				 "  /DEFAULTLIB:<library>       Add a library to the link\n"
+				 "  /DELAYLOAD:<dll>            Delay-load imports from a DLL\n"
+				 "  /DEBUG                      Generate a PDB and PE CodeView record\n"
+				 "  /PDB:<file>                 Set PDB output path (implies /DEBUG)\n"
 				 "  /ALIGN:<bytes>              Set PE section alignment\n"
 				 "  /BASE:<address>             Set preferred image base\n"
 				 "  /DYNAMICBASE | /FIXED       Enable ASLR relocations or fixed image\n"
@@ -296,6 +299,18 @@ LinkOptions parseArguments(int argc, char** argv) {
 				fail("/DEFAULTLIB requires a library name");
 			}
 			options.defaultLibraries.push_back(library);
+		} else if (optionName == "delayload") {
+			if (!value || value->empty()) {
+				fail("/DELAYLOAD requires an attached DLL name, for example /DELAYLOAD:plugin.dll");
+			}
+			options.delayLoadLibraries.push_back(*value);
+		} else if (optionName == "debug") {
+			if (value) fail("/DEBUG does not accept a value");
+			options.debug = true;
+		} else if (optionName == "pdb") {
+			options.pdbFile = fs::path(requireValue("/PDB"));
+			if (options.pdbFile->empty()) fail("/PDB requires an output path");
+			options.debug = true;
 		} else if (optionName == "align") {
 			const auto alignment = parseUnsignedOption(requireValue("/ALIGN"), "/ALIGN");
 			if (alignment < 0x200 || alignment > std::numeric_limits<std::uint32_t>::max() || (alignment & (alignment - 1)) != 0) {
@@ -364,6 +379,11 @@ LinkOptions parseArguments(int argc, char** argv) {
 	}
 	if (options.dll && !options.outputSpecified) {
 		options.output.replace_extension(".dll");
+	}
+	if (options.debug && !options.pdbFile) {
+		auto pdbPath = options.output;
+		pdbPath.replace_extension(".pdb");
+		options.pdbFile = std::move(pdbPath);
 	}
 	if (options.dll && !options.importLibrary) {
 		auto libraryPath = options.output;

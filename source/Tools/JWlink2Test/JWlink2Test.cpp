@@ -768,6 +768,73 @@ public:
 		assertNoOutput(workspace);
 	}
 
+	TEST_METHOD(DebugOptionWritesMatchingPdbAndRemapsCodeViewLines) {
+		Workspace workspace;
+		TestSection text{".text", {0xc3}, 0x60000020};
+		Bytes types(4, 0);
+		put32(types, 0, 4);
+		Bytes modifier{8, 0, 1, 0x10, 0x74, 0, 0, 0, 0, 0};
+		types.insert(types.end(), modifier.begin(), modifier.end());
+		TestSection debugTypes{".debug$T", types, 0x42000040};
+		Bytes debugSymbols(4, 0);
+		put32(debugSymbols, 0, 4);
+		Bytes publicSymbol(4, 0);
+		put16(publicSymbol, 2, 0x110e);
+		put32(publicSymbol, 4, 0);
+		put32(publicSymbol, 8, 0);
+		put16(publicSymbol, 12, 1);
+		appendString(publicSymbol, "main");
+		put16(publicSymbol, 0, static_cast<std::uint16_t>(publicSymbol.size() - 2));
+		put32(debugSymbols, debugSymbols.size(), 0xF1);
+		put32(debugSymbols, debugSymbols.size(), static_cast<std::uint32_t>(publicSymbol.size()));
+		const auto symbolPayload = debugSymbols.size();
+		debugSymbols.insert(debugSymbols.end(), publicSymbol.begin(), publicSymbol.end());
+		debugSymbols.resize((debugSymbols.size() + 3) & ~std::size_t(3), 0);
+		Bytes stringTable{0};
+		appendString(stringTable, "debug.cpp");
+		put32(debugSymbols, debugSymbols.size(), 0xF3);
+		put32(debugSymbols, debugSymbols.size(), static_cast<std::uint32_t>(stringTable.size()));
+		debugSymbols.insert(debugSymbols.end(), stringTable.begin(), stringTable.end());
+		debugSymbols.resize((debugSymbols.size() + 3) & ~std::size_t(3), 0);
+		Bytes checksums(8, 0);
+		put32(checksums, 0, 1);
+		put32(debugSymbols, debugSymbols.size(), 0xF4);
+		put32(debugSymbols, debugSymbols.size(), static_cast<std::uint32_t>(checksums.size()));
+		debugSymbols.insert(debugSymbols.end(), checksums.begin(), checksums.end());
+		Bytes lines(32, 0);
+		put32(lines, 8, 1);
+		put32(lines, 16, 1);
+		put32(lines, 20, 20);
+		put32(lines, 28, 1);
+		put32(debugSymbols, debugSymbols.size(), 0xF2);
+		put32(debugSymbols, debugSymbols.size(), static_cast<std::uint32_t>(lines.size()));
+		const auto linePayload = debugSymbols.size();
+		debugSymbols.insert(debugSymbols.end(), lines.begin(), lines.end());
+		TestSection debugSymbolsSection{".debug$S", debugSymbols, 0x42000040};
+		debugSymbolsSection.relocations = {{static_cast<std::uint32_t>(symbolPayload + 8), 0, 0x000b}, {static_cast<std::uint32_t>(symbolPayload + 12), 0, 0x000a}, {static_cast<std::uint32_t>(linePayload), 0, 0x000b}, {static_cast<std::uint32_t>(linePayload + 4), 0, 0x000a}};
+		const auto object = makeObject({text, debugTypes, debugSymbolsSection}, {TestSymbol{"main", 0, 1, 2, {}}});
+		auto args = outputArgs(workspace);
+		args.insert(args.begin() + 1, L"/DEBUG");
+		args.push_back(workspace.file(L"debug.obj").wstring());
+		workspace.write(L"debug.obj", object);
+		assertSuccess(runLinker(workspace, args));
+		const auto image = workspace.read(L"linked.exe");
+		const auto optional = optionalHeader(image);
+		const auto debugRva = get32(image, optional + 160);
+		Assert::IsTrue(debugRva != 0, L"PE debug data directory is present");
+		Assert::AreEqual<std::uint32_t>(28, get32(image, optional + 164), L"PE debug directory contains one RSDS entry");
+		const auto directory = rvaOffset(image, debugRva);
+		Assert::AreEqual<std::uint32_t>(2, get32(image, directory + 12), L"debug entry identifies CodeView data");
+		const auto recordOffset = get32(image, directory + 24);
+		Assert::AreEqual<std::uint32_t>(0x53445352, get32(image, recordOffset), L"CodeView record has the RSDS signature");
+		const auto pdb = workspace.read(L"linked.pdb");
+		constexpr std::array<std::uint8_t, 24> msfMagic{'M','i','c','r','o','s','o','f','t',' ','C','/','C','+','+',' ','M','S','F',' ','7','.','0','0'};
+		Assert::IsTrue(pdb.size() > 3 * 4096 && std::equal(msfMagic.begin(), msfMagic.end(), pdb.begin()), L"/DEBUG writes an MSF 7.0 PDB file");
+		const auto pdbInfoStream = 3 * 4096;
+		Assert::IsTrue(std::equal(pdb.begin() + pdbInfoStream + 12, pdb.begin() + pdbInfoStream + 28, image.begin() + recordOffset + 4), L"PDB GUID matches the PE RSDS record");
+		Assert::AreEqual<std::uint32_t>(get32(pdb, pdbInfoStream + 8), get32(image, recordOffset + 20), L"PDB age matches the PE RSDS record");
+	}
+
 	TEST_METHOD(ValidAmd64ObjectProducesPe32PlusWithDefaultBaseAndEntry) {
 		Workspace workspace;
 		assertSuccess(linkObject(workspace, makeEntryObject()));
@@ -991,6 +1058,120 @@ public:
 		Assert::AreEqual<std::uint32_t>(0, get32(image, optionalHeader(image) + 152), L"fixed image relocation RVA");
 		Assert::AreEqual<std::uint32_t>(0, get32(image, optionalHeader(image) + 156), L"fixed image relocation size");
 		Assert::IsTrue((get16(image, optionalHeader(image) + 70) & 0x40) == 0, L"fixed image must not advertise ASLR");
+	}
+
+	TEST_METHOD(OrdinaryImportsRemainCallableAtRuntime) {
+		Workspace workspace;
+		TestSection text{".text", {0xb9, 42, 0, 0, 0, 0xe8, 0, 0, 0, 0, 0xcc}};
+		text.relocations = {{6, 1, 4}};
+		workspace.write(L"input.obj", makeObject({text}, {TestSymbol{"main", 0, 1, 2, {}}, TestSymbol{"ExitProcess", 0, 0, 2, {}}}));
+		workspace.write(L"kernel.lib", makeArchive({{"exit.obj", makeImportObject("ExitProcess", "KERNEL32.dll", "ExitProcess", 0, 4)}}));
+		auto args = outputArgs(workspace);
+		args.push_back(workspace.file(L"input.obj").wstring());
+		args.push_back(workspace.file(L"kernel.lib").wstring());
+		assertSuccess(runLinker(workspace, args));
+		const auto runtime = runExecutable(workspace, workspace.file(L"linked.exe"), {});
+		Assert::AreEqual<DWORD>(42, runtime.exitCode, L"ordinary imports continue to call through their IAT thunks");
+	}
+
+	TEST_METHOD(DelayLoadEmitsMetadataAndResolvesFunctionsAtRuntime) {
+		Workspace workspace;
+		TestSection text{".text", {0xb9, 42, 0, 0, 0, 0xe8, 0, 0, 0, 0, 0xcc}};
+		text.relocations = {{6, 1, 4}};
+		workspace.write(L"input.obj", makeObject({text, makeDirectiveSection("-delayload:KERNEL32.dll")}, {TestSymbol{"main", 0, 1, 2, {}}, TestSymbol{"ExitProcess", 0, 0, 2, {}}}));
+		workspace.write(L"kernel.lib", makeArchive({{"exit.obj", makeImportObject("ExitProcess", "KERNEL32.dll", "ExitProcess", 0, 4)}}));
+		auto args = outputArgs(workspace);
+		args.push_back(L"/DELAYLOAD:KERNEL32.dll");
+		args.push_back(workspace.file(L"input.obj").wstring());
+		args.push_back(workspace.file(L"kernel.lib").wstring());
+		const auto linkResult = runLinker(workspace, args);
+		if (linkResult.exitCode != 0) {
+			std::wstring message = L"linker exit code: " + std::to_wstring(linkResult.exitCode) + L"; output: ";
+			message.append(linkResult.output.begin(), linkResult.output.end());
+			Assert::Fail(message.c_str());
+		}
+		const auto image = workspace.read(L"linked.exe");
+		const auto optional = optionalHeader(image);
+		const auto directoryRva = get32(image, optional + 216);
+		Assert::IsTrue(directoryRva != 0, L"delay-import data directory is present");
+		Assert::AreEqual<std::uint32_t>(64, get32(image, optional + 220), L"one delay descriptor plus terminator");
+		const auto descriptor = rvaOffset(image, directoryRva);
+		Assert::AreEqual<std::uint32_t>(1, get32(image, descriptor), L"delay descriptor uses RVA-based fields");
+		Assert::IsTrue(cStringAtRva(image, get32(image, descriptor + 4)) == "KERNEL32.dll", L"delay descriptor DLL name");
+		Assert::AreEqual<std::uint32_t>(0, get32(image, descriptor + 8), L"the custom resolver does not use a module-handle slot");
+		Assert::AreEqual<std::uint32_t>(0, get32(image, descriptor + 20), L"bound delay IAT is omitted");
+		Assert::AreEqual<std::uint32_t>(0, get32(image, descriptor + 24), L"unload delay IAT is omitted");
+		const auto delayIatRva = get32(image, descriptor + 12);
+		const auto delayIntRva = get32(image, descriptor + 16);
+		const auto delayIat = rvaOffset(image, delayIatRva);
+		const auto delayInt = rvaOffset(image, delayIntRva);
+		const auto imageBase = get64(image, optional + 24);
+		const auto resolverRva = get64(image, delayIat) - imageBase;
+		const auto textHeader = sectionHeader(image, ".text");
+		Assert::IsTrue(resolverRva >= get32(image, textHeader + 12) && resolverRva < get32(image, textHeader + 12) + get32(image, textHeader + 8), L"initial delay IAT points at generated resolver code");
+		Assert::IsTrue(get64(image, delayInt) != 0, L"delay lookup table contains the imported function");
+		Assert::AreEqual<std::uint64_t>(0, get64(image, delayIat + 8), L"delay IAT is null terminated");
+		Assert::AreEqual<std::uint64_t>(0, get64(image, delayInt + 8), L"delay lookup table is null terminated");
+		const auto normalImportRva = get32(image, optional + 120);
+		Assert::IsTrue(normalImportRva != 0, L"resolver APIs remain ordinary eager imports");
+		const auto normalDescriptor = rvaOffset(image, normalImportRva);
+		const auto normalLookup = rvaOffset(image, get32(image, normalDescriptor));
+		const auto helperNameRva = static_cast<std::uint32_t>(get64(image, normalLookup));
+		Assert::IsTrue(cStringAtRva(image, helperNameRva + 2) == "LoadLibraryA", L"resolver imports LoadLibraryA normally");
+		const auto exceptionDirectoryRva = get32(image, optional + 136);
+		Assert::IsTrue(exceptionDirectoryRva != 0 && get32(image, optional + 140) == 12, L"resolver has a RUNTIME_FUNCTION unwind record");
+		const auto runtimeFunction = rvaOffset(image, exceptionDirectoryRva);
+		Assert::AreEqual<std::uint32_t>(static_cast<std::uint32_t>(resolverRva), get32(image, runtimeFunction), L"unwind range begins at the resolver");
+		Assert::IsTrue(get32(image, runtimeFunction + 4) > get32(image, runtimeFunction), L"unwind range covers resolver code");
+		const auto unwindInfo = rvaOffset(image, get32(image, runtimeFunction + 8));
+		Assert::AreEqual<std::uint8_t>(1, image[unwindInfo], L"resolver unwind data uses version 1");
+		Assert::AreEqual<std::uint8_t>(7, image[unwindInfo + 1], L"resolver unwind data describes its stack-allocation prolog");
+		const auto runtime = runExecutable(workspace, workspace.file(L"linked.exe"), {});
+		Assert::AreEqual<DWORD>(42, runtime.exitCode, L"delay-loaded function resolves on first use");
+	}
+
+	TEST_METHOD(DelayLoadRejectsMalformedRequestsAndDataImports) {
+		Workspace missingWorkspace;
+		missingWorkspace.write(L"input.obj", makeEntryObject());
+		auto missingArgs = outputArgs(missingWorkspace);
+		missingArgs.push_back(L"/DELAYLOAD:missing.dll");
+		missingArgs.push_back(missingWorkspace.file(L"input.obj").wstring());
+		assertFailureContains(runLinker(missingWorkspace, missingArgs), "no imports from that DLL were selected");
+
+		Workspace optionWorkspace;
+		optionWorkspace.write(L"input.obj", makeEntryObject());
+		auto optionArgs = outputArgs(optionWorkspace);
+		optionArgs.push_back(L"/DELAYLOAD");
+		optionArgs.push_back(optionWorkspace.file(L"input.obj").wstring());
+		assertFailureContains(runLinker(optionWorkspace, optionArgs), "/DELAYLOAD requires an attached DLL name");
+
+		Workspace directiveWorkspace;
+		const auto directiveObject = makeObject({makeDirectiveSection("-delayload:"), TestSection{".text", {0xc3}}}, {TestSymbol{"main", 0, 2, 2, {}}});
+		assertFailureContains(linkObject(directiveWorkspace, directiveObject), ".drectve /DELAYLOAD requires a DLL name");
+
+		Workspace dataWorkspace;
+		TestSection data{".data", Bytes(8, 0), 0xc0000040};
+		data.relocations = {{0, 1, 1}};
+		dataWorkspace.write(L"input.obj", makeObject({data, TestSection{".text", {0xc3}}}, {TestSymbol{"main", 0, 2, 2, {}}, TestSymbol{"__imp_importedData", 0, 0, 2, {}}}));
+		dataWorkspace.write(L"data.lib", makeArchive({{"data.obj", makeImportObject("importedData", "DATA.dll", "importedData", 17, 1)}}));
+		auto dataArgs = outputArgs(dataWorkspace);
+		dataArgs.push_back(L"/DELAYLOAD:DATA.dll");
+		dataArgs.push_back(dataWorkspace.file(L"input.obj").wstring());
+		dataArgs.push_back(dataWorkspace.file(L"data.lib").wstring());
+		assertFailureContains(runLinker(dataWorkspace, dataArgs), "cannot be used with data imports");
+
+		Workspace multipleWorkspace;
+		TestSection multipleText{".text", {0xe8, 0, 0, 0, 0, 0xe8, 0, 0, 0, 0, 0xc3}};
+		multipleText.relocations = {{1, 1, 4}, {6, 2, 4}};
+		multipleWorkspace.write(L"input.obj", makeObject({multipleText}, {TestSymbol{"main", 0, 1, 2, {}}, TestSymbol{"GetCurrentProcessId", 0, 0, 2, {}}, TestSymbol{"ExitProcess", 0, 0, 2, {}}}));
+		multipleWorkspace.write(L"kernel.lib", makeArchive({
+			{"pid.obj", makeImportObject("GetCurrentProcessId", "KERNEL32.dll", "GetCurrentProcessId", 0, 4)},
+			{"exit.obj", makeImportObject("ExitProcess", "KERNEL32.dll", "ExitProcess", 0, 4)}}));
+		auto multipleArgs = outputArgs(multipleWorkspace);
+		multipleArgs.push_back(L"/DELAYLOAD:KERNEL32.dll");
+		multipleArgs.push_back(multipleWorkspace.file(L"input.obj").wstring());
+		multipleArgs.push_back(multipleWorkspace.file(L"kernel.lib").wstring());
+		assertFailureContains(runLinker(multipleWorkspace, multipleArgs), "currently supports one delay-loaded function import per link");
 	}
 
 	TEST_METHOD(ImportLibraryGeneratesDescriptorIatAndFunctionThunk) {

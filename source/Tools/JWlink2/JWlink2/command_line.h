@@ -26,6 +26,7 @@ struct LinkOptions {
 	fs::path output = "a.exe";
 	std::optional<std::string> entry;
 	std::optional<fs::path> mapFile;
+	std::optional<fs::path> pdbFile;
 	std::optional<fs::path> definitionFile;
 	std::optional<fs::path> importLibrary;
 	std::string moduleName;
@@ -37,9 +38,11 @@ struct LinkOptions {
 	bool dynamicBase = true;
 	bool nxCompat = true;
 	bool noLogo = false;
+	bool debug = false;
 	bool noDefaultLibraries = false;
 	std::vector<std::string> defaultLibraries;
 	std::vector<std::string> excludedDefaultLibraries;
+	std::vector<std::string> delayLoadLibraries;
 	std::vector<std::string> includeSymbols;
 	std::vector<std::pair<std::string, std::uint32_t>> commonAlignments;
 	std::vector<ExportDirective> exports;

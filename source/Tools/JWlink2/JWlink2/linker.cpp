@@ -2,15 +2,18 @@
 #include <array>
 #include <cctype>
 #include <charconv>
+#include <chrono>
 #include <cstdint>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <initializer_list>
 #include <iterator>
 #include <limits>
 #include <map>
 #include <optional>
+#include <random>
 #include <set>
 #include <sstream>
 #include <stdexcept>
@@ -22,6 +25,7 @@
 #include <vector>
 
 #include "command_line.h"
+#include "codeview_pdb.h"
 
 namespace jwlink2 {
 using Bytes = std::vector<std::uint8_t>;
@@ -132,6 +136,8 @@ struct InputSection {
 	std::size_t leaderSection = std::numeric_limits<std::size_t>::max();
 	bool discarded = false;
 	bool linkerDirective = false;
+	bool codeViewTypes = false;
+	bool codeViewSymbols = false;
 	Bytes data;
 	std::vector<Relocation> relocations;
 };
@@ -151,6 +157,8 @@ struct ObjectFile {
 	std::vector<InputSection> sections;
 	std::vector<CoffSymbol> symbols;
 	std::vector<std::string> directives;
+	codeview::CodeViewObject codeView;
+	bool hasCodeView = false;
 };
 
 struct ImportedSymbol {
@@ -387,6 +395,8 @@ ObjectFile parseObject(const Bytes& bytes, std::string name) {
 			fail(object.name + ": LLVM bitcode/LTCG section '" + sectionName + "' is not supported; compile without LTO or provide native AMD64 COFF objects");
 		}
 		InputSection section;
+		section.codeViewTypes = normalizedSectionName == ".debug$t";
+		section.codeViewSymbols = normalizedSectionName == ".debug$s";
 		section.name = std::move(sectionName);
 		section.linkerDirective = section.name == ".drectve";
 		section.virtualSize = readLe<std::uint32_t>(bytes, header + 8, object.name);
@@ -814,9 +824,17 @@ struct ImportRecord {
 	bool hasFunction = false;
 	bool hasData = false;
 	bool hasPublicSymbol = false;
+	bool delayed = false;
 	std::size_t iatOffset = 0;
 	std::size_t hintNameOffset = 0;
+	std::size_t delayIatOffset = 0;
+	std::size_t delayHintNameOffset = 0;
+	std::size_t delayModuleNameOffset = 0;
 	std::size_t thunkOffset = 0;
+	std::size_t resolverOffset = 0;
+	std::size_t resolverEndOffset = 0;
+	std::size_t runtimeFunctionOffset = 0;
+	std::size_t unwindInfoOffset = 0;
 	std::size_t thunkSection = std::numeric_limits<std::size_t>::max();
 };
 
@@ -826,6 +844,24 @@ struct ImportModule {
 	std::size_t lookupOffset = 0;
 	std::size_t iatOffset = 0;
 	std::size_t nameOffset = 0;
+};
+
+struct DelayImportModule {
+	std::string name;
+	std::vector<std::size_t> imports;
+	std::size_t lookupOffset = 0;
+	std::size_t iatOffset = 0;
+	std::size_t nameOffset = 0;
+};
+
+enum class RipTargetKind { NormalIat, DelayData };
+
+struct RipRelativeFixup {
+	std::size_t section = 0;
+	std::size_t displacementOffset = 0;
+	std::size_t instructionEnd = 0;
+	RipTargetKind targetKind = RipTargetKind::DelayData;
+	std::size_t targetOffset = 0;
 };
 
 struct ExportOutput {
@@ -845,6 +881,185 @@ struct BaseRelocation {
 	std::uint16_t type = 10;
 };
 
+constexpr std::uint32_t CvSignatureC13 = 4;
+constexpr std::uint32_t DebugSSymbols = 0xF1;
+constexpr std::uint32_t DebugSLines = 0xF2;
+constexpr std::uint32_t DebugSStringTable = 0xF3;
+constexpr std::uint32_t DebugSFileChecksums = 0xF4;
+
+void addTypeReference(codeview::CodeViewTypeRecord& type, std::size_t offset) {
+	if (offset > type.record.size() || 4 > type.record.size() - offset) fail("truncated CodeView type reference");
+	type.references.push_back({offset});
+}
+
+void parseTypeReferenceLayout(codeview::CodeViewTypeRecord& type, std::string_view objectName) {
+	const auto leaf = readLe<std::uint16_t>(type.record, 2, objectName);
+	switch (leaf) {
+	case 0x1001: // LF_MODIFIER
+	case 0x1002: // LF_POINTER
+	case 0x1205: // LF_BITFIELD
+	case 0x150A: // LF_ALIAS
+	case 0x1605: // LF_STRING_ID
+		addTypeReference(type, 4);
+		break;
+	case 0x1008: // LF_PROCEDURE
+		addTypeReference(type, 4);
+		addTypeReference(type, 12);
+		break;
+	case 0x1009: // LF_MFUNCTION
+		addTypeReference(type, 4);
+		addTypeReference(type, 8);
+		addTypeReference(type, 12);
+		addTypeReference(type, 20);
+		break;
+	case 0x1201: { // LF_ARGLIST
+		const auto count = readLe<std::uint32_t>(type.record, 4, objectName);
+		if (count > (type.record.size() - 8) / 4) fail(std::string(objectName) + ": truncated LF_ARGLIST");
+		for (std::uint32_t i = 0; i < count; ++i) addTypeReference(type, 8 + static_cast<std::size_t>(i) * 4);
+		break;
+	}
+	case 0x1503: // LF_ARRAY
+		addTypeReference(type, 4);
+		addTypeReference(type, 8);
+		break;
+	case 0x1504: // LF_CLASS
+	case 0x1505: // LF_STRUCTURE
+		addTypeReference(type, 8);
+		addTypeReference(type, 12);
+		addTypeReference(type, 16);
+		break;
+	case 0x1506: // LF_UNION
+		addTypeReference(type, 8);
+		break;
+	case 0x1507: // LF_ENUM
+		addTypeReference(type, 8);
+		addTypeReference(type, 12);
+		break;
+	case 0x1601: // LF_FUNC_ID
+	case 0x1602: // LF_MFUNC_ID
+		addTypeReference(type, 4);
+		addTypeReference(type, 8);
+		break;
+	case 0x1606: // LF_UDT_SRC_LINE
+		addTypeReference(type, 4);
+		addTypeReference(type, 8);
+		break;
+	case 0x000A: // LF_VTSHAPE
+	case 0x000D: // LF_LABEL
+	case 0x1200: // LF_EASY (no type references)
+		break;
+	default:
+		fail(std::string(objectName) + ": unsupported CodeView type leaf 0x" + [&] { std::ostringstream s; s << std::hex << leaf; return s.str(); }());
+	}
+}
+
+void parseCodeViewTypeStream(const Bytes& data, codeview::CodeViewObject& object) {
+	if (data.size() < 4 || readLe<std::uint32_t>(data, 0, object.objectId) != CvSignatureC13) fail(object.objectId + ": unsupported .debug$T signature");
+	std::size_t cursor = 4;
+	std::uint32_t index = 0x1000;
+	while (cursor < data.size()) {
+		if (data.size() - cursor < 2) fail(object.objectId + ": truncated .debug$T type record length");
+		const auto recordLength = readLe<std::uint16_t>(data, cursor, object.objectId);
+		const auto total = static_cast<std::size_t>(recordLength) + 2;
+		if (recordLength < 2 || total > data.size() - cursor) fail(object.objectId + ": invalid .debug$T type record length");
+		codeview::CodeViewTypeRecord type;
+		type.originalIndex = index++;
+		type.record.assign(data.begin() + static_cast<std::ptrdiff_t>(cursor), data.begin() + static_cast<std::ptrdiff_t>(cursor + total));
+		parseTypeReferenceLayout(type, object.objectId);
+		object.types.push_back(std::move(type));
+		cursor += total;
+	}
+}
+
+void parseCodeViewSymbolStream(const Bytes& data, codeview::CodeViewObject& object) {
+	if (data.size() < 4 || readLe<std::uint32_t>(data, 0, object.objectId) != CvSignatureC13) fail(object.objectId + ": unsupported .debug$S signature");
+	std::size_t cursor = 4;
+	while (cursor < data.size()) {
+		if (data.size() - cursor < 8) fail(object.objectId + ": truncated C13 subsection header");
+		const auto kind = readLe<std::uint32_t>(data, cursor, object.objectId);
+		const auto size = readLe<std::uint32_t>(data, cursor + 4, object.objectId);
+		if (size > data.size() - cursor - 8) fail(object.objectId + ": C13 subsection exceeds .debug$S data");
+		Bytes payload(data.begin() + static_cast<std::ptrdiff_t>(cursor + 8), data.begin() + static_cast<std::ptrdiff_t>(cursor + 8 + size));
+		if (kind == DebugSSymbols) {
+			std::size_t recordOffset = 0;
+			while (recordOffset < payload.size()) {
+				if (payload.size() - recordOffset < 4) fail(object.objectId + ": truncated C13 symbol record");
+				const auto length = readLe<std::uint16_t>(payload, recordOffset, object.objectId);
+				const auto total = static_cast<std::size_t>(length) + 2;
+				if (length < 2 || total > payload.size() - recordOffset) fail(object.objectId + ": invalid C13 symbol record length");
+				codeview::CodeViewSymbolRecord symbol;
+				symbol.record.assign(payload.begin() + static_cast<std::ptrdiff_t>(recordOffset), payload.begin() + static_cast<std::ptrdiff_t>(recordOffset + total));
+				const auto kindId = readLe<std::uint16_t>(symbol.record, 2, object.objectId);
+				auto address = [&](std::size_t offsetField, std::size_t sectionField) {
+					if (sectionField + 2 > symbol.record.size()) fail(object.objectId + ": truncated C13 symbol address");
+					symbol.sourceSection = readLe<std::uint16_t>(symbol.record, sectionField, object.objectId);
+					symbol.addresses.push_back({offsetField, sectionField});
+				};
+				auto typeReference = [&](std::size_t field) {
+					if (field > symbol.record.size() || 4 > symbol.record.size() - field) fail(object.objectId + ": truncated C13 symbol type index");
+					symbol.typeReferences.push_back({field});
+				};
+				switch (kindId) {
+				case 0x110E: // S_PUB32
+					address(8, 12);
+					break;
+				case 0x110C: // S_LDATA32
+				case 0x110D: // S_GDATA32
+					if (symbol.record.size() < 14) fail(object.objectId + ": truncated C13 data symbol");
+					typeReference(4);
+					address(8, 12);
+					break;
+				case 0x110F: // S_LPROC32
+				case 0x1110: // S_GPROC32
+				case 0x1146: // S_LPROC32_ID
+				case 0x1147: // S_GPROC32_ID
+					if (symbol.record.size() < 39) fail(object.objectId + ": truncated C13 procedure symbol");
+					typeReference(28);
+					address(32, 36);
+					break;
+				case 0x1105: // S_LABEL32
+					if (symbol.record.size() < 11) fail(object.objectId + ": truncated C13 label symbol");
+					address(4, 8);
+					break;
+				case 0x1103: // S_BLOCK32
+					if (symbol.record.size() < 22) fail(object.objectId + ": truncated C13 block symbol");
+					address(16, 20);
+					break;
+				case 0x113E: // S_LOCAL
+				case 0x1107: // S_CONSTANT
+					typeReference(4);
+					break;
+				case 0x110B: // S_BPREL32
+				case 0x1111: // S_REGREL32
+					typeReference(8);
+					break;
+				case 0x114C: // S_BUILDINFO
+					typeReference(4);
+					break;
+				case 0x0006: // S_END
+				case 0x1101: // S_OBJNAME
+				case 0x1012: // S_FRAMEPROC
+				case 0x113C: // S_COMPILE3
+				case 0x113D: // S_ENVBLOCK
+				case 0x114E: // S_INLINESITE_END
+				case 0x114F: // S_PROC_ID_END
+					break;
+				default:
+					fail(object.objectId + ": unsupported C13 symbol kind 0x" + [&] { std::ostringstream s; s << std::hex << kindId; return s.str(); }());
+				}
+				object.symbols.push_back(std::move(symbol));
+				recordOffset += total;
+			}
+		} else if (kind == DebugSLines || kind == DebugSStringTable || kind == DebugSFileChecksums) {
+			object.subsections.push_back({kind, std::move(payload)});
+		} else {
+			fail(object.objectId + ": unsupported C13 subsection kind 0x" + [&] { std::ostringstream s; s << std::hex << kind; return s.str(); }());
+		}
+		cursor = alignUp(cursor + 8 + size, 4);
+		if (cursor > data.size()) fail(object.objectId + ": truncated C13 subsection padding");
+	}
+}
+
 class Linker {
 public:
 	explicit Linker(LinkOptions options) : options_(std::move(options)) {}
@@ -853,9 +1068,14 @@ public:
 		if (options_.importLibrary && lowerAscii(fs::absolute(*options_.importLibrary).lexically_normal().string()) == lowerAscii(fs::absolute(options_.output).lexically_normal().string())) {
 			fail("import-library output path must differ from the image output path");
 		}
+		if (options_.debug && lowerAscii(fs::absolute(*options_.pdbFile).lexically_normal().string()) == lowerAscii(fs::absolute(options_.output).lexically_normal().string())) {
+			fail("PDB output path must differ from the image output path");
+		}
 		loadDefinitionFile();
 		loadInputs();
 		resolveLibraries();
+		collectCodeViewObjects();
+		prepareDelayLoadImports();
 		validateUnresolvedSymbols();
 		selectComdats();
 		buildSections();
@@ -866,10 +1086,13 @@ public:
 			fail("/IMPLIB requested but the DLL has no importable exports");
 		}
 		prepareBaseRelocations();
+		prepareDebugSection();
 		layoutImage();
 		applyRelocations();
 		finalizeGeneratedData();
+		finalizeDebugSection();
 		writeImage();
+		writePdb();
 	}
 
 private:
@@ -881,6 +1104,8 @@ private:
 	std::unordered_map<std::string, GlobalSymbol> globals_;
 	std::vector<ImportRecord> imports_;
 	std::vector<ImportModule> importModules_;
+	std::vector<DelayImportModule> delayImportModules_;
+	std::vector<RipRelativeFixup> delayFixups_;
 	std::vector<ExportOutput> exportRecords_;
 	std::vector<BaseRelocation> baseRelocations_;
 	std::vector<std::string> pendingDefaultLibraries_;
@@ -890,10 +1115,17 @@ private:
 	bool directiveAlignmentSpecified_ = false;
 	std::size_t edataSection_ = std::numeric_limits<std::size_t>::max();
 	std::size_t idataSection_ = std::numeric_limits<std::size_t>::max();
+	std::size_t delayImportSection_ = std::numeric_limits<std::size_t>::max();
 	std::size_t relocSection_ = std::numeric_limits<std::size_t>::max();
+	std::size_t delayLoadLibraryImport_ = std::numeric_limits<std::size_t>::max();
+	std::size_t getProcAddressImport_ = std::numeric_limits<std::size_t>::max();
+	std::size_t raiseExceptionImport_ = std::numeric_limits<std::size_t>::max();
 	std::size_t importDescriptorOffset_ = 0;
+	std::size_t delayImportDescriptorOffset_ = 0;
 	std::uint32_t importDirectoryRva_ = 0;
 	std::uint32_t importDirectorySize_ = 0;
+	std::uint32_t delayImportDirectoryRva_ = 0;
+	std::uint32_t delayImportDirectorySize_ = 0;
 	std::uint32_t exportDirectoryRva_ = 0;
 	std::uint32_t exportDirectorySize_ = 0;
 	std::size_t exportFunctionsOffset_ = 0;
@@ -904,6 +1136,11 @@ private:
 	std::uint32_t exportFunctionCount_ = 0;
 	std::uint32_t relocationDirectoryRva_ = 0;
 	std::uint32_t relocationDirectorySize_ = 0;
+	codeview::PdbIdentity pdbIdentity_{};
+	std::size_t debugSectionIndex_ = std::numeric_limits<std::size_t>::max();
+	std::size_t debugDirectoryOffset_ = 0;
+	std::size_t rsdsRecordOffset_ = 0;
+	std::uint32_t debugDirectorySize_ = 0;
 
 	bool isDefined(const CoffSymbol& symbol) const {
 		return symbol.storageClass == 2 && (symbol.sectionNumber > 0 || symbol.sectionNumber == -1 || (symbol.sectionNumber == 0 && symbol.value != 0));
@@ -1108,6 +1345,14 @@ private:
 			}
 		} else if (name == "export") {
 			options_.exports.push_back(parseExportDirective(value, objectName));
+		} else if (name == "delayload") {
+			if (value.empty()) {
+				fail(objectName + ": .drectve /DELAYLOAD requires a DLL name");
+			}
+			auto sameDll = [&](const std::string& existing) { return lowerAscii(existing) == lowerAscii(value); };
+			if (std::none_of(options_.delayLoadLibraries.begin(), options_.delayLoadLibraries.end(), sameDll)) {
+				options_.delayLoadLibraries.push_back(value);
+			}
 		} else if (name == "aligncomm") {
 			const auto comma = value.find(',');
 			if (comma == std::string::npos || comma == 0 || comma + 1 == value.size()) {
@@ -1223,6 +1468,53 @@ private:
 			queueDefaultLibrary(library);
 		}
 		processDirectivesAndLibraries();
+	}
+
+	void collectCodeViewObjects() {
+		if (!options_.debug) return;
+		for (std::size_t objectIndex = 0; objectIndex < objects_.size(); ++objectIndex) {
+			auto& object = objects_[objectIndex];
+			object.codeView.objectId = std::to_string(objectIndex) + ":" + object.name;
+			object.codeView.moduleName = fs::path(object.name).filename().string();
+			object.codeView.objectFileName = object.codeView.moduleName;
+			const InputSection* types = nullptr;
+			const InputSection* symbols = nullptr;
+			for (const auto& section : object.sections) {
+				if (section.codeViewTypes) {
+					if (types) fail(object.name + ": duplicate .debug$T sections are unsupported");
+					types = &section;
+				} else if (section.codeViewSymbols) {
+					if (symbols) fail(object.name + ": duplicate .debug$S sections are unsupported");
+					symbols = &section;
+				}
+			}
+			if (!types && !symbols) continue;
+			object.hasCodeView = true;
+			if (types) {
+				if (!types->relocations.empty()) fail(object.name + ": .debug$T relocations are not supported");
+				parseCodeViewTypeStream(types->data, object.codeView);
+			}
+			if (symbols) {
+				Bytes data = symbols->data;
+				for (const auto& relocation : symbols->relocations) {
+					if (relocation.symbolIndex >= object.symbols.size()) fail(object.name + ": .debug$S relocation refers to an invalid COFF symbol");
+					const auto& target = object.symbols[relocation.symbolIndex];
+					if (target.sectionNumber <= 0 || static_cast<std::size_t>(target.sectionNumber) > object.sections.size()) fail(object.name + ": .debug$S relocation target must be a defined section symbol");
+					if (relocation.type == 0x000A) {
+						if (relocation.offset > data.size() || 2 > data.size() - relocation.offset) fail(object.name + ": truncated .debug$S SECTION relocation");
+						writeLe(data, relocation.offset, static_cast<std::uint16_t>(target.sectionNumber));
+					} else if (relocation.type == 0x000B) {
+						if (relocation.offset > data.size() || 4 > data.size() - relocation.offset) fail(object.name + ": truncated .debug$S SECREL relocation");
+						const auto addend = readLe<std::uint32_t>(data, relocation.offset, object.name);
+						if (target.value > std::numeric_limits<std::uint32_t>::max() - addend) fail(object.name + ": .debug$S SECREL relocation overflows");
+						writeLe(data, relocation.offset, target.value + addend);
+					} else {
+						fail(object.name + ": unsupported .debug$S relocation type 0x" + [&] { std::ostringstream s; s << std::hex << relocation.type; return s.str(); }());
+					}
+				}
+				parseCodeViewSymbolStream(data, object.codeView);
+			}
+		}
 	}
 
 	void resolveLibraries() {
@@ -1456,12 +1748,71 @@ private:
 		}
 	}
 
+	void prepareDelayLoadImports() {
+		if (options_.delayLoadLibraries.empty()) {
+			return;
+		}
+		for (const auto& requested : options_.delayLoadLibraries) {
+			if (requested.empty()) {
+				fail("/DELAYLOAD requires a DLL name");
+			}
+			bool matched = false;
+			for (auto& imported : imports_) {
+				if (lowerAscii(imported.symbol.dllName) != lowerAscii(requested)) {
+					continue;
+				}
+				matched = true;
+				if (imported.hasData) {
+					fail("/DELAYLOAD cannot be used with data imports from '" + imported.symbol.dllName + "'");
+				}
+				if (!imported.hasFunction) {
+					fail("/DELAYLOAD has no callable imports from '" + imported.symbol.dllName + "'");
+				}
+				imported.delayed = true;
+			}
+			if (!matched) {
+				fail("/DELAYLOAD requested '" + requested + "' but no imports from that DLL were selected");
+			}
+		}
+		const auto delayedFunctionCount = static_cast<std::size_t>(std::count_if(imports_.begin(), imports_.end(), [](const ImportRecord& imported) { return imported.delayed; }));
+		if (delayedFunctionCount > 1) {
+			fail("JWlink2 currently supports one delay-loaded function import per link; additional delayed imports are unsupported");
+		}
+		auto ensureHelperImport = [&](const std::string& functionName) {
+			for (std::size_t i = 0; i < imports_.size(); ++i) {
+				auto& imported = imports_[i];
+				if (lowerAscii(imported.symbol.dllName) == "kernel32.dll" && imported.symbol.importName == functionName && !imported.symbol.byOrdinal) {
+					if (imported.hasData) {
+						fail("delay-load runtime helper conflicts with a data import for '" + functionName + "'");
+					}
+					imported.hasFunction = true;
+					return i;
+				}
+			}
+			ImportRecord imported;
+			imported.symbol.publicName = "__jwlink2_delay_" + functionName;
+			imported.symbol.dllName = "KERNEL32.dll";
+			imported.symbol.importName = functionName;
+			imported.symbol.type = 0;
+			imported.symbol.nameType = 1;
+			imported.hasFunction = true;
+			imports_.push_back(std::move(imported));
+			return imports_.size() - 1;
+		};
+		delayLoadLibraryImport_ = ensureHelperImport("LoadLibraryA");
+		getProcAddressImport_ = ensureHelperImport("GetProcAddress");
+		raiseExceptionImport_ = ensureHelperImport("RaiseException");
+	}
+
 	void prepareImports() {
 		if (imports_.empty()) {
 			return;
 		}
 		std::map<std::string, std::size_t> moduleLookup;
 		for (std::size_t i = 0; i < imports_.size(); ++i) {
+			if (imports_[i].delayed) {
+				continue;
+			}
 			std::string key = imports_[i].symbol.dllName;
 			std::transform(key.begin(), key.end(), key.begin(), [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
 			auto [found, inserted] = moduleLookup.emplace(key, importModules_.size());
@@ -1471,6 +1822,20 @@ private:
 				importModules_.push_back(std::move(module));
 			}
 			importModules_[found->second].imports.push_back(i);
+		}
+		std::map<std::string, std::size_t> delayModuleLookup;
+		for (std::size_t i = 0; i < imports_.size(); ++i) {
+			if (!imports_[i].delayed) {
+				continue;
+			}
+			const auto key = lowerAscii(imports_[i].symbol.dllName);
+			auto [found, inserted] = delayModuleLookup.emplace(key, delayImportModules_.size());
+			if (inserted) {
+				DelayImportModule module;
+				module.name = imports_[i].symbol.dllName;
+				delayImportModules_.push_back(std::move(module));
+			}
+			delayImportModules_[found->second].imports.push_back(i);
 		}
 		InputSection idata;
 		idata.name = ".idata";
@@ -1527,7 +1892,67 @@ private:
 				record.hintNameOffset += idataOffset;
 			}
 		}
-		for (const auto& module : importModules_) {
+		if (!delayImportModules_.empty()) {
+			InputSection delayData;
+			delayData.name = ".didat";
+			delayData.alignment = 8;
+			delayData.characteristics = 0x00000040 | SectionMemRead | SectionMemWrite;
+			const auto descriptorsSize = (delayImportModules_.size() + 1) * 32;
+			delayData.data.resize(descriptorsSize, 0);
+			for (auto& module : delayImportModules_) {
+				delayData.data.resize(alignUp(delayData.data.size(), 8), 0);
+				module.lookupOffset = delayData.data.size();
+				delayData.data.resize(delayData.data.size() + (module.imports.size() + 1) * 8, 0);
+			}
+			for (auto& module : delayImportModules_) {
+				delayData.data.resize(alignUp(delayData.data.size(), 8), 0);
+				module.iatOffset = delayData.data.size();
+				delayData.data.resize(delayData.data.size() + (module.imports.size() + 1) * 8, 0);
+				for (std::size_t i = 0; i < module.imports.size(); ++i) {
+					imports_[module.imports[i]].delayIatOffset = module.iatOffset + i * 8;
+				}
+			}
+			for (auto& module : delayImportModules_) {
+				module.nameOffset = delayData.data.size();
+				delayData.data.insert(delayData.data.end(), module.name.begin(), module.name.end());
+				delayData.data.push_back(0);
+				for (const auto importIndex : module.imports) imports_[importIndex].delayModuleNameOffset = module.nameOffset;
+			}
+			for (auto& module : delayImportModules_) {
+				for (const auto importIndex : module.imports) {
+					auto& record = imports_[importIndex];
+					if (!record.symbol.byOrdinal) {
+						delayData.data.resize(alignUp(delayData.data.size(), 2), 0);
+						record.delayHintNameOffset = delayData.data.size();
+						delayData.data.push_back(static_cast<std::uint8_t>(record.symbol.ordinalOrHint));
+						delayData.data.push_back(static_cast<std::uint8_t>(record.symbol.ordinalOrHint >> 8));
+						delayData.data.insert(delayData.data.end(), record.symbol.importName.begin(), record.symbol.importName.end());
+						delayData.data.push_back(0);
+					}
+				}
+			}
+			delayData.virtualSize = toU32(delayData.data.size(), "delay-import section size");
+			delayImportSection_ = getOutputSection(delayData);
+			auto& delayOutput = outputSections_[delayImportSection_];
+			const auto delayOffset = alignUp(delayOutput.virtualSize, 8);
+			delayImportDescriptorOffset_ = delayOffset;
+			if (delayOutput.data.size() < delayOffset) delayOutput.data.resize(delayOffset, 0);
+			delayOutput.data.insert(delayOutput.data.end(), delayData.data.begin(), delayData.data.end());
+			delayOutput.virtualSize = delayOffset + delayData.virtualSize;
+			for (auto& module : delayImportModules_) {
+				module.lookupOffset += delayOffset;
+				module.iatOffset += delayOffset;
+				module.nameOffset += delayOffset;
+				for (const auto importIndex : module.imports) {
+					auto& record = imports_[importIndex];
+					record.delayIatOffset += delayOffset;
+					record.delayModuleNameOffset += delayOffset;
+					if (!record.symbol.byOrdinal) record.delayHintNameOffset += delayOffset;
+				}
+				}
+				delayImportDirectorySize_ = toU32(descriptorsSize, "delay-import directory size");
+			}
+			for (const auto& module : importModules_) {
 			if (std::any_of(module.imports.begin(), module.imports.end(), [&](std::size_t index) { return imports_[index].hasFunction; })) {
 				InputSection text;
 				text.name = ".text";
@@ -1549,7 +1974,136 @@ private:
 				}
 			}
 		}
+		if (!delayImportModules_.empty()) {
+			InputSection text;
+			text.name = ".text";
+			text.alignment = 16;
+			text.characteristics = SectionCntCode | SectionMemRead | SectionMemExecute;
+			const auto textIndex = getOutputSection(text);
+			for (const auto& module : delayImportModules_) {
+				for (const auto importIndex : module.imports) {
+					auto& textOutput = outputSections_[textIndex];
+					auto& record = imports_[importIndex];
+					textOutput.data.resize(alignUp(textOutput.data.size(), 16), 0x90);
+					record.thunkOffset = textOutput.data.size();
+					record.thunkSection = textIndex;
+					const std::array<std::uint8_t, 6> thunk{0xff, 0x25, 0, 0, 0, 0};
+					textOutput.data.insert(textOutput.data.end(), thunk.begin(), thunk.end());
+					delayFixups_.push_back({textIndex, record.thunkOffset + 2, record.thunkOffset + 6, RipTargetKind::DelayData, record.delayIatOffset});
+					textOutput.data.resize(alignUp(textOutput.data.size(), 16), 0x90);
+					record.resolverOffset = textOutput.data.size();
+					appendDelayResolver(textOutput, textIndex, record);
+					record.resolverEndOffset = textOutput.data.size();
+					appendDelayUnwindInfo(record);
+					auto& updatedTextOutput = outputSections_[textIndex];
+					updatedTextOutput.virtualSize = std::max(updatedTextOutput.virtualSize, updatedTextOutput.data.size());
+				}
+			}
+		}
 		importDirectorySize_ = toU32(descriptorsSize, "import directory size");
+	}
+
+	void appendDelayResolver(OutputSection& text, std::size_t textIndex, const ImportRecord& record) {
+		Bytes code;
+		std::vector<std::pair<std::size_t, std::size_t>> localBranches;
+		auto emit = [&](std::initializer_list<std::uint8_t> bytes) { code.insert(code.end(), bytes.begin(), bytes.end()); };
+		auto addFixup = [&](RipTargetKind kind, std::size_t offset) {
+			const auto displacement = code.size();
+			code.resize(code.size() + 4, 0);
+			delayFixups_.push_back({textIndex, text.data.size() + displacement, text.data.size() + displacement + 4, kind, offset});
+		};
+		auto jz = [&]() {
+			emit({0x0f, 0x84});
+			const auto displacement = code.size();
+			code.resize(code.size() + 4, 0);
+			return displacement;
+		};
+		auto jmp = [&]() {
+			emit({0xe9});
+			const auto displacement = code.size();
+			code.resize(code.size() + 4, 0);
+			return displacement;
+		};
+		auto patchBranch = [&](std::size_t displacement, std::size_t target) {
+			const auto relative = static_cast<std::int64_t>(target) - static_cast<std::int64_t>(displacement + 4);
+			if (relative < std::numeric_limits<std::int32_t>::min() || relative > std::numeric_limits<std::int32_t>::max()) fail("delay resolver branch is out of range");
+			writeLe(code, displacement, static_cast<std::uint32_t>(relative));
+		};
+		auto emitXmmStack = [&](std::uint8_t opcode, std::uint8_t xmm) {
+			const auto offset = static_cast<std::uint32_t>(0x40 + xmm * 16);
+			emit({0xf3, 0x0f, opcode});
+			if (offset <= 0x7f) {
+				emit({static_cast<std::uint8_t>(0x44 + xmm * 8), 0x24, static_cast<std::uint8_t>(offset)});
+			} else {
+				emit({static_cast<std::uint8_t>(0x84 + xmm * 8), 0x24});
+				for (std::size_t i = 0; i < 4; ++i) code.push_back(static_cast<std::uint8_t>(offset >> (i * 8)));
+			}
+		};
+		emit({0x48, 0x81, 0xec, 0xb8, 0, 0, 0});
+		emit({0x48, 0x89, 0x4c, 0x24, 0x20, 0x48, 0x89, 0x54, 0x24, 0x28});
+		emit({0x4c, 0x89, 0x44, 0x24, 0x30, 0x4c, 0x89, 0x4c, 0x24, 0x38});
+		for (std::uint8_t xmm = 0; xmm < 6; ++xmm) emitXmmStack(0x7f, xmm);
+		emit({0x48, 0x8d, 0x0d});
+		addFixup(RipTargetKind::DelayData, record.delayModuleNameOffset);
+		emit({0xff, 0x15});
+		addFixup(RipTargetKind::NormalIat, imports_[delayLoadLibraryImport_].iatOffset);
+		emit({0x48, 0x85, 0xc0});
+		const auto moduleMissing = jz();
+		emit({0x48, 0x89, 0xc1});
+		if (record.symbol.byOrdinal) {
+			emit({0xba});
+			for (std::size_t i = 0; i < 4; ++i) code.push_back(static_cast<std::uint8_t>(record.symbol.ordinalOrHint >> (i * 8)));
+		} else {
+			emit({0x48, 0x8d, 0x15});
+			addFixup(RipTargetKind::DelayData, record.delayHintNameOffset + 2);
+		}
+		emit({0xff, 0x15});
+		addFixup(RipTargetKind::NormalIat, imports_[getProcAddressImport_].iatOffset);
+		emit({0x48, 0x85, 0xc0});
+		const auto procedureMissing = jz();
+		emit({0x48, 0x89, 0x84, 0x24, 0xa0, 0, 0, 0});
+		for (std::uint8_t xmm = 0; xmm < 6; ++xmm) emitXmmStack(0x6f, xmm);
+		emit({0x48, 0x8b, 0x4c, 0x24, 0x20, 0x48, 0x8b, 0x54, 0x24, 0x28});
+		emit({0x4c, 0x8b, 0x44, 0x24, 0x30, 0x4c, 0x8b, 0x4c, 0x24, 0x38});
+		emit({0x4c, 0x8b, 0x9c, 0x24, 0xa0, 0, 0, 0, 0x48, 0x81, 0xc4, 0xb8, 0, 0, 0, 0x41, 0xff, 0xe3});
+		const auto moduleFailure = code.size();
+		emit({0xb9, 0x7e, 0x00, 0x6d, 0xc0});
+		const auto raiseFromModuleFailure = jmp();
+		const auto procedureFailure = code.size();
+		emit({0xb9, 0x7f, 0x00, 0x6d, 0xc0});
+		const auto raiseException = code.size();
+		emit({0xba, 1, 0, 0, 0, 0x45, 0x33, 0xc0, 0x45, 0x33, 0xc9, 0xff, 0x15});
+		addFixup(RipTargetKind::NormalIat, imports_[raiseExceptionImport_].iatOffset);
+		emit({0x0f, 0x0b});
+		patchBranch(moduleMissing, moduleFailure);
+		patchBranch(procedureMissing, procedureFailure);
+		patchBranch(raiseFromModuleFailure, raiseException);
+		text.data.insert(text.data.end(), code.begin(), code.end());
+	}
+
+	void appendDelayUnwindInfo(ImportRecord& record) {
+		InputSection unwind;
+		unwind.name = ".xdata";
+		unwind.alignment = 4;
+		unwind.characteristics = 0x00000040 | SectionMemRead;
+		const auto unwindIndex = getOutputSection(unwind);
+		auto& unwindOutput = outputSections_[unwindIndex];
+		record.unwindInfoOffset = alignUp(unwindOutput.virtualSize, 4);
+		if (unwindOutput.data.size() < record.unwindInfoOffset) unwindOutput.data.resize(record.unwindInfoOffset, 0);
+		const std::array<std::uint8_t, 8> unwindInfo{1, 7, 2, 0, 7, 1, 0x17, 0};
+		unwindOutput.data.insert(unwindOutput.data.end(), unwindInfo.begin(), unwindInfo.end());
+		unwindOutput.virtualSize = unwindOutput.data.size();
+
+		InputSection runtimeFunctions;
+		runtimeFunctions.name = ".pdata";
+		runtimeFunctions.alignment = 4;
+		runtimeFunctions.characteristics = 0x00000040 | SectionMemRead;
+		const auto runtimeIndex = getOutputSection(runtimeFunctions);
+		auto& runtimeOutput = outputSections_[runtimeIndex];
+		record.runtimeFunctionOffset = alignUp(runtimeOutput.virtualSize, 4);
+		if (runtimeOutput.data.size() < record.runtimeFunctionOffset) runtimeOutput.data.resize(record.runtimeFunctionOffset, 0);
+		runtimeOutput.data.resize(record.runtimeFunctionOffset + 12, 0);
+		runtimeOutput.virtualSize = runtimeOutput.data.size();
 	}
 
 	void prepareExports() {
@@ -1673,11 +2227,12 @@ private:
 		std::size_t count = 0;
 		for (const auto& object : objects_) {
 			for (const auto& section : object.sections) {
-				if (!section.discarded && !section.linkerDirective) {
+				if (!section.discarded && !section.linkerDirective && !section.codeViewTypes && !section.codeViewSymbols) {
 					count += static_cast<std::size_t>(std::count_if(section.relocations.begin(), section.relocations.end(), [](const Relocation& reloc) { return reloc.type == 1 || reloc.type == 2; }));
 				}
 			}
 		}
+		count += static_cast<std::size_t>(std::count_if(imports_.begin(), imports_.end(), [](const ImportRecord& record) { return record.delayed; }));
 		if (count == 0) {
 			return;
 		}
@@ -1725,7 +2280,7 @@ private:
 			maps.resize(object.sections.size());
 			for (std::size_t sectionIndex = 0; sectionIndex < object.sections.size(); ++sectionIndex) {
 				const auto& input = object.sections[sectionIndex];
-				if (input.discarded || input.linkerDirective) {
+				if (input.discarded || input.linkerDirective || input.codeViewTypes || input.codeViewSymbols) {
 					continue;
 				}
 				const auto outputIndex = getOutputSection(input);
@@ -1936,9 +2491,10 @@ private:
 		}
 		if (definition.imported) {
 			const auto& imported = imports_.at(definition.importIndex);
-			const auto& output = outputSections_.at(idataSection_);
+			const auto& output = outputSections_.at(imported.delayed ? delayImportSection_ : idataSection_);
+			const auto iatOffset = imported.delayed ? imported.delayIatOffset : imported.iatOffset;
 			if (definition.importAddress || !imported.hasFunction) {
-				return options_.imageBase + output.rva + imported.iatOffset;
+				return options_.imageBase + output.rva + iatOffset;
 			}
 			const auto& thunkSection = outputSections_.at(imported.thunkSection);
 			return options_.imageBase + thunkSection.rva + imported.thunkOffset;
@@ -2129,18 +2685,59 @@ private:
 				}
 			}
 		}
+		if (delayImportSection_ != std::numeric_limits<std::size_t>::max()) {
+			auto& delay = outputSections_[delayImportSection_];
+			delayImportDirectoryRva_ = toU32(static_cast<std::size_t>(delay.rva) + delayImportDescriptorOffset_, "delay-import directory RVA");
+			for (std::size_t moduleIndex = 0; moduleIndex < delayImportModules_.size(); ++moduleIndex) {
+				const auto& module = delayImportModules_[moduleIndex];
+				const auto descriptor = delayImportDescriptorOffset_ + moduleIndex * 32;
+				writeLe(delay.data, descriptor, std::uint32_t{1});
+				writeLe(delay.data, descriptor + 4, toU32(static_cast<std::size_t>(delay.rva) + module.nameOffset, "delay-import DLL name RVA"));
+				writeLe(delay.data, descriptor + 12, toU32(static_cast<std::size_t>(delay.rva) + module.iatOffset, "delay-import IAT RVA"));
+				writeLe(delay.data, descriptor + 16, toU32(static_cast<std::size_t>(delay.rva) + module.lookupOffset, "delay-import lookup table RVA"));
+				for (std::size_t entryIndex = 0; entryIndex < module.imports.size(); ++entryIndex) {
+					auto& record = imports_[module.imports[entryIndex]];
+					const auto thunk = record.symbol.byOrdinal
+						? (std::uint64_t{1} << 63) | record.symbol.ordinalOrHint
+						: static_cast<std::uint64_t>(delay.rva) + record.delayHintNameOffset;
+					writeLe(delay.data, module.lookupOffset + entryIndex * 8, thunk);
+					writeLe(delay.data, record.delayIatOffset, options_.imageBase + outputSections_[record.thunkSection].rva + record.resolverOffset);
+					if (options_.dynamicBase) baseRelocations_.push_back({toU32(static_cast<std::size_t>(delay.rva) + record.delayIatOffset, "delay-import IAT relocation RVA"), 10});
+				}
+			}
+		}
+		for (const auto& record : imports_) {
+			if (!record.delayed) continue;
+			auto& runtimeFunctions = outputSections_[std::find_if(outputSections_.begin(), outputSections_.end(), [](const OutputSection& section) { return section.name == ".pdata"; }) - outputSections_.begin()];
+			auto& unwindInfo = outputSections_[std::find_if(outputSections_.begin(), outputSections_.end(), [](const OutputSection& section) { return section.name == ".xdata"; }) - outputSections_.begin()];
+			const auto& code = outputSections_[record.thunkSection];
+			writeLe(runtimeFunctions.data, record.runtimeFunctionOffset, code.rva + static_cast<std::uint32_t>(record.resolverOffset));
+			writeLe(runtimeFunctions.data, record.runtimeFunctionOffset + 4, code.rva + static_cast<std::uint32_t>(record.resolverEndOffset));
+			writeLe(runtimeFunctions.data, record.runtimeFunctionOffset + 8, unwindInfo.rva + static_cast<std::uint32_t>(record.unwindInfoOffset));
+		}
 		for (const auto& record : imports_) {
 			if (!record.hasFunction) {
 				continue;
 			}
 			const auto& text = outputSections_.at(record.thunkSection);
-			const auto iatRva = static_cast<std::int64_t>(outputSections_.at(idataSection_).rva + record.iatOffset);
+			const auto& iat = outputSections_.at(record.delayed ? delayImportSection_ : idataSection_);
+			const auto iatOffset = record.delayed ? record.delayIatOffset : record.iatOffset;
+			const auto iatRva = static_cast<std::int64_t>(iat.rva + iatOffset);
 			const auto nextInstruction = static_cast<std::int64_t>(text.rva + record.thunkOffset + 6);
 			const auto displacement = iatRva - nextInstruction;
 			if (displacement < std::numeric_limits<std::int32_t>::min() || displacement > std::numeric_limits<std::int32_t>::max()) {
 				fail("import thunk is out of range of its IAT entry");
 			}
 			writeLe(outputSections_[record.thunkSection].data, record.thunkOffset + 2, static_cast<std::uint32_t>(displacement));
+		}
+		for (const auto& fixup : delayFixups_) {
+			const auto& text = outputSections_.at(fixup.section);
+			const auto targetSection = fixup.targetKind == RipTargetKind::NormalIat ? idataSection_ : delayImportSection_;
+			const auto targetRva = static_cast<std::int64_t>(outputSections_.at(targetSection).rva + fixup.targetOffset);
+			const auto nextInstruction = static_cast<std::int64_t>(text.rva + fixup.instructionEnd);
+			const auto displacement = targetRva - nextInstruction;
+			if (displacement < std::numeric_limits<std::int32_t>::min() || displacement > std::numeric_limits<std::int32_t>::max()) fail("delay-load thunk reference is out of range");
+			writeLe(outputSections_[fixup.section].data, fixup.displacementOffset, static_cast<std::uint32_t>(displacement));
 		}
 		if (relocSection_ != std::numeric_limits<std::size_t>::max() && !baseRelocations_.empty()) {
 			auto& reloc = outputSections_[relocSection_];
@@ -2176,7 +2773,7 @@ private:
 			const auto& object = objects_[objectIndex];
 			for (std::size_t inputIndex = 0; inputIndex < object.sections.size(); ++inputIndex) {
 				const auto& input = object.sections[inputIndex];
-				if (input.discarded || input.linkerDirective) {
+				if (input.discarded || input.linkerDirective || input.codeViewTypes || input.codeViewSymbols) {
 					continue;
 				}
 				const auto& mapping = sectionMaps_[objectIndex][inputIndex];
@@ -2369,6 +2966,77 @@ private:
 		if (!output) fail("failed writing import library '" + options_.importLibrary->string() + "'");
 	}
 
+	void prepareDebugSection() {
+		if (!options_.debug) return;
+		std::random_device random;
+		for (auto& byte : pdbIdentity_.guid) byte = static_cast<std::uint8_t>(random());
+		pdbIdentity_.guid[6] = static_cast<std::uint8_t>((pdbIdentity_.guid[6] & 0x0f) | 0x40);
+		pdbIdentity_.guid[8] = static_cast<std::uint8_t>((pdbIdentity_.guid[8] & 0x3f) | 0x80);
+		pdbIdentity_.age = 1;
+		pdbIdentity_.signature = static_cast<std::uint32_t>(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
+
+		InputSection debug;
+		debug.name = ".rdata";
+		debug.alignment = 4;
+		debug.characteristics = 0x00000040 | SectionMemRead;
+		debugSectionIndex_ = getOutputSection(debug);
+		auto& output = outputSections_[debugSectionIndex_];
+		debugDirectoryOffset_ = alignUp(output.virtualSize, 4);
+		rsdsRecordOffset_ = debugDirectoryOffset_ + 28;
+		const auto pdbName = options_.pdbFile->filename().string();
+		if (pdbName.empty() || pdbName.find('\\0') != std::string::npos) fail("invalid PDB output filename");
+		const auto requiredSize = rsdsRecordOffset_ + 24 + pdbName.size() + 1;
+		if (output.data.size() < debugDirectoryOffset_) output.data.resize(debugDirectoryOffset_, 0);
+		output.data.resize(requiredSize, 0);
+		output.virtualSize = requiredSize;
+		writeLe(output.data, rsdsRecordOffset_, std::uint32_t{0x53445352});
+		std::copy(pdbIdentity_.guid.begin(), pdbIdentity_.guid.end(), output.data.begin() + static_cast<std::ptrdiff_t>(rsdsRecordOffset_ + 4));
+		writeLe(output.data, rsdsRecordOffset_ + 20, pdbIdentity_.age);
+		std::copy(pdbName.begin(), pdbName.end(), output.data.begin() + static_cast<std::ptrdiff_t>(rsdsRecordOffset_ + 24));
+		debugDirectorySize_ = 28;
+	}
+
+	void finalizeDebugSection() {
+		if (!options_.debug) return;
+		auto& section = outputSections_.at(debugSectionIndex_);
+		writeLe(section.data, debugDirectoryOffset_ + 12, std::uint32_t{2});
+		writeLe(section.data, debugDirectoryOffset_ + 16, toU32(24 + options_.pdbFile->filename().string().size() + 1, "CodeView debug record size"));
+		writeLe(section.data, debugDirectoryOffset_ + 20, toU32(static_cast<std::size_t>(section.rva) + rsdsRecordOffset_, "CodeView debug record RVA"));
+		writeLe(section.data, debugDirectoryOffset_ + 24, toU32(static_cast<std::size_t>(section.rawOffset) + rsdsRecordOffset_, "CodeView debug record file offset"));
+	}
+
+	void writePdb() {
+		if (!options_.debug) return;
+		codeview::PdbBuilder builder(pdbIdentity_);
+		for (std::size_t i = 0; i < outputSections_.size(); ++i) {
+			const auto& section = outputSections_[i];
+			builder.addLinkedSection({static_cast<std::uint16_t>(i + 1), section.name, section.rva, toU32(std::max(section.virtualSize, section.data.size()), "PDB section size"), section.characteristics});
+		}
+		for (const auto& [name, definition] : globals_) {
+			if (definition.imported || definition.common || definition.weakUndefined || definition.objectIndex >= objects_.size() || definition.symbolIndex >= objects_[definition.objectIndex].symbols.size()) continue;
+			const auto& symbol = objects_[definition.objectIndex].symbols[definition.symbolIndex];
+			if (symbol.sectionNumber <= 0 || static_cast<std::size_t>(symbol.sectionNumber) > sectionMaps_[definition.objectIndex].size()) continue;
+			const auto& mapping = sectionMaps_[definition.objectIndex][static_cast<std::size_t>(symbol.sectionNumber - 1)];
+			if (mapping.outputIndex >= outputSections_.size()) continue;
+			builder.addLinkedSymbol({name, static_cast<std::uint16_t>(mapping.outputIndex + 1), toU32(mapping.offset + symbol.value, "PDB symbol offset"), 0});
+		}
+		for (const auto& object : objects_) {
+			if (!object.hasCodeView) continue;
+			auto codeViewObject = object.codeView;
+			for (std::size_t sectionIndex = 0; sectionIndex < object.sections.size(); ++sectionIndex) {
+				const auto& input = object.sections[sectionIndex];
+				if (input.discarded || input.linkerDirective || input.codeViewTypes || input.codeViewSymbols) continue;
+				const auto& mapping = sectionMaps_[&object - objects_.data()][sectionIndex];
+				if (mapping.outputIndex >= outputSections_.size()) continue;
+				const auto contributionSize = toU32(std::max<std::size_t>(input.virtualSize, input.data.size()), "PDB input section contribution");
+				if (contributionSize == 0) continue;
+				codeViewObject.contributions.push_back({static_cast<std::uint16_t>(sectionIndex + 1), 0, contributionSize, static_cast<std::uint16_t>(mapping.outputIndex + 1), toU32(mapping.offset, "PDB linked contribution offset")});
+			}
+			builder.addCodeViewObject(std::move(codeViewObject));
+		}
+		builder.write(*options_.pdbFile);
+	}
+
 	void writeImage() {
 		const auto headersSize = alignUp(0x80u + 4u + 20u + 240u + outputSections_.size() * 40u, options_.fileAlignment);
 		std::size_t fileSize = headersSize;
@@ -2434,6 +3102,12 @@ private:
 		writeLe(image, optional + 116, exportDirectorySize_);
 		writeLe(image, optional + 120, importDirectoryRva_);
 		writeLe(image, optional + 124, importDirectorySize_);
+		if (options_.debug) {
+			writeLe(image, optional + 160, toU32(static_cast<std::size_t>(outputSections_[debugSectionIndex_].rva) + debugDirectoryOffset_, "PE debug directory RVA"));
+			writeLe(image, optional + 164, debugDirectorySize_);
+		}
+		writeLe(image, optional + 216, delayImportDirectoryRva_);
+		writeLe(image, optional + 220, delayImportDirectorySize_);
 		const auto resourceDirectory = sectionDirectory(".rsrc");
 		const auto exceptionDirectory = sectionDirectory(".pdata");
 		const auto tlsDirectory = symbolDirectory({"__tls_used", "_tls_used"}, 40, "TLS");
@@ -2524,7 +3198,9 @@ private:
 				if (definition.imported) {
 					const auto& imported = imports_[definition.importIndex];
 					if (definition.importAddress || !imported.hasFunction) {
-						address = options_.imageBase + outputSections_[idataSection_].rva + imported.iatOffset;
+						const auto section = imported.delayed ? delayImportSection_ : idataSection_;
+						const auto offset = imported.delayed ? imported.delayIatOffset : imported.iatOffset;
+						address = options_.imageBase + outputSections_[section].rva + offset;
 					} else {
 						address = options_.imageBase + outputSections_[imported.thunkSection].rva + imported.thunkOffset;
 					}

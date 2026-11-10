@@ -10,6 +10,7 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="codeview_pdb.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">
@@ -23,5 +24,6 @@
     <ClInclude Include="command_line.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="codeview_pdb.h" />
   </ItemGroup>
 </Project>
