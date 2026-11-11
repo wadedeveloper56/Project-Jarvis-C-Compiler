@@ -28,3 +28,21 @@
 #include <exception>
 #include <cstring>
 
+#pragma warning(disable:4267)
+#pragma warning(disable:4244)
+#pragma warning(disable:4018)
+#pragma warning(disable:4311)
+#pragma warning(disable:4146)
+#pragma warning(disable:4113)
+#pragma warning(disable:4305)
+#pragma warning(disable:4309)
+#pragma warning(disable:5286)
+#pragma warning(disable:4312)
+#pragma warning(disable:4456)
+#pragma warning(disable:4477)
+#pragma warning(disable:5287)
+#pragma warning(disable:4047)
+#pragma warning(disable:4065)
+#pragma warning(disable:4005)
+#pragma warning(disable:6011)
+#pragma warning(disable:26495)
