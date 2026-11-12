@@ -4,11 +4,11 @@
 
 using namespace std;
 
-namespace jwlink2
+namespace JWlink2
 {
 	using Bytes = vector<uint8_t>;
 
-	namespace
+	namespace JWlink2::engine
 	{
 		constexpr uint16_t MachineAmd64 = 0x8664;
 		constexpr array<uint8_t, 16> BigObjClassId{ 0xc7, 0xa1, 0xba, 0xd1, 0xee, 0xba, 0xa9, 0x4b, 0xaf, 0x20, 0xfa, 0xf6, 0x6a, 0xa4, 0xdc, 0xb8 };
@@ -3917,6 +3917,6 @@ namespace jwlink2
 
 	void runLinker(LinkOptions options)
 	{
-		Linker(move(options)).run();
+		JWlink2::engine::Linker(move(options)).run();
 	}
-} // namespace jwlink2
+} // namespace JWlink2

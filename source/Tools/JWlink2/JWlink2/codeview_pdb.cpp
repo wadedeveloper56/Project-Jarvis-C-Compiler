@@ -3,7 +3,7 @@
 
 using namespace std;
 
-namespace jwlink2::codeview
+namespace JWlink2::codeview
 {
 	namespace
 	{

@@ -3,7 +3,7 @@
 
 using namespace std;
 
-namespace jwlink2
+namespace JWlink2
 {
 	namespace
 	{

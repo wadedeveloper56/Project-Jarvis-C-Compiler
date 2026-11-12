@@ -1,0 +1,2010 @@
+## WORKSPACE EXECUTIVE SUMMARY (YAML)
+# Generated: 2026-11-12T04:31:11.7753146-06:00
+# Root: C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools
+Architecture:
+  Type: General Codebase
+  Scale: 1000 relevant source files
+  Components: 0
+  Controllers: 0
+  Models: 0
+  Services: 0
+---
+- File: Tools.sln
+  Preview: " Microsoft Visual Studio Solution File, Format Version 12.00 # Visual Studio Version 18 VisualStudioVersion = 18.3.11312.210 MinimumVisualStudioVersio..."
+- File: dosbox-x\vs\dosbox-x.sln
+  Preview: " Microsoft Visual Studio Solution File, Format Version 12.00 # Visual Studio Version 18 VisualStudioVersion = 18.10.12113.136 MinimumVisualStudioVersi..."
+- File: version.h
+  Preview: "#define STRING_VERSION '1.0.0.0' #define PRODUCT_VERSION 1, 0, 0, 0 #define CLIB_VERSION 1, 0, 0, 0 #define PRODUCT_STRING_VERSION STRING_VERSION #def..."
+- File: Arguments\ArgDate.cpp
+  Preview: "#include 'pch.h' #include 'framework.h' #include 'ArgumentTable.h' const char* day[7] = { 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Fri..."
+- File: Arguments\ArgDbl.cpp
+  Preview: "#include 'pch.h' #include 'framework.h' #include 'ArgumentTable.h' void argDblResetFn(void* parent_) { 	ArgDblPtr parent = (ArgDblPtr)parent_; 	if (pa..."
+- File: Arguments\ArgDstr.cpp
+  Preview: "#include 'pch.h' #include 'framework.h' #include 'ArgumentTable.h' char* argDstrCStr(ArgDstrPtr ds) {   return ds->data; } void argDstrReset(ArgDstrPt..."
+- File: Arguments\ArgEnd.cpp
+  Preview: "#include 'pch.h' #include 'framework.h' #include 'ArgumentTable.h' void argEndResetFn(void* parent_) {   ArgEndPtr parent = (ArgEndPtr)parent_;   pare..."
+- File: Arguments\ArgFile.cpp
+  Preview: "#include 'pch.h' #include 'framework.h' #include 'ArgumentTable.h' #define FILESEPARATOR1 '/' #define FILESEPARATOR2 '/' void argFileResetFn(void* par..."
+- File: Arguments\ArgGetOpt.cpp
+  Preview: "#include 'pch.h' #include 'framework.h' #include 'ArgumentTable.h' #define GNU_COMPATIBLE		    int	opterr = 1; int	optind = 1; int	optopt = '?'; int	o..."
+- File: Arguments\ArgInt.cpp
+  Preview: "#include 'pch.h' #include 'framework.h' #include 'ArgumentTable.h' void argIntResetFn(void* parent_) { 	ArgIntPtr parent = (ArgIntPtr)parent_; 	parent..."
+- File: Arguments\ArgLit.cpp
+  Preview: "#include 'pch.h' #include 'framework.h' #include 'ArgumentTable.h' void argLitResetFn(void* parent_) { 	ArgLitPtr parent = (ArgLitPtr)parent_; 	parent..."
+- File: Arguments\ArgRex.cpp
+  Preview: "#include 'pch.h' #include 'framework.h' #include 'ArgumentTable.h' void argRexResetFn(void* parent_) { 	ArgRexPtr parent = (ArgRexPtr)parent_; 	parent..."
+- File: Arguments\ArgStr.cpp
+  Preview: "#include 'pch.h' #include 'framework.h' #include 'ArgumentTable.h' void argStrResetFn(void* parent_) { 	ArgStrPtr parent = (ArgStrPtr)parent_; 	int i;..."
+- File: Arguments\Argument.h
+  Preview: "#ifdef ARGUMENT_EXPORTS #define ARGUMENT_API __declspec(dllexport) #else #define ARGUMENT_API __declspec(dllimport) #endif class ARGUMENT_API CArgumen..."
+- File: Arguments\Arguments.cpp
+  Preview: "#include 'pch.h' #include 'framework.h' #include 'ArgumentTable.h' extern char* optarg; extern int optind, opterr, optopt; void argFreeTable(void** ar..."
+- File: Arguments\ArgumentTable.h
+  Preview: "#ifndef ARGUMENTTABLE #define ARGUMENTTABLE #define ARGUMENTS_API #define ARG_REX_ICASE 1 #define ARG_CMD_NAME_LEN 100 #define ARG_CMD_DESCRIPTION_LEN..."
+- File: Arguments\framework.h
+  Preview: "#pragma once #define WIN32_LEAN_AND_MEAN       // Exclude rarely-used stuff from Windows headers // Windows Header Files #include <windows.h> "
+- File: Arguments\pch.cpp
+  Preview: "// pch.cpp: source file corresponding to the pre-compiled header #include 'pch.h' // When you are using pre-compiled headers, this source file is nece..."
+- File: Arguments\pch.h
+  Preview: "// pch.h: This is a precompiled header file. // Files listed below are compiled only once, improving build performance for future builds. // This also..."
+- File: Arguments2\Arguments2.cpp
+  Preview: "// Arguments2.cpp : Defines the functions for the static library. // #include 'pch.h' #include 'framework.h' // TODO: This is an example of a library ..."
+- File: Arguments2\framework.h
+  Preview: "#pragma once #define WIN32_LEAN_AND_MEAN       // Exclude rarely-used stuff from Windows headers "
+- File: Arguments2\pch.cpp
+  Preview: "// pch.cpp: source file corresponding to the pre-compiled header #include 'pch.h' // When you are using pre-compiled headers, this source file is nece..."
+- File: Arguments2\pch.h
+  Preview: "// pch.h: This is a precompiled header file. // Files listed below are compiled only once, improving build performance for future builds. // This also..."
+- File: BinaryFormats\BinaryFormat.cpp
+  Preview: "#include 'pch.h' #include 'framework.h' #include 'BinaryFormat.h' using namespace std; WORD getFileMagic(char* buffer) { 	PIMAGE_DOS_HEADER dosHeader ..."
+- File: BinaryFormats\BinaryFormat.h
+  Preview: "#pragma once #define BINARYFORMATS_API #define BINARYFORMATS_TEMPLATE  #include 'MemoryMappedFile.h' #include 'NEHeader.h' #include 'PEHeader.h' using..."
+- File: BinaryFormats\CoffSymbolTable.cpp
+  Preview: "#include 'pch.h' #include 'framework.h' #include 'BinaryFormat.h' using namespace std; COFFSymbol::COFFSymbol(NTSymbolPtr pSymbolData, PSTR pStringTab..."
+- File: BinaryFormats\DosObjDump.cpp
+  Preview: "#include 'pch.h' #include 'framework.h' #include 'BinaryFormat.h' DOSOBJFilePtr loadDOSWin16ObjFile(FileType fileType, char* buffer, LONGLONG fileSize..."
+- File: BinaryFormats\EXEDump.cpp
+  Preview: "#include 'pch.h' #include 'framework.h' #include 'BinaryFormat.h' using namespace std; const char* SzDebugFormats[] = { 'UNKNOWN'        , 'COFF'     ..."
+- File: BinaryFormats\framework.h
+  Preview: "#pragma once #define WIN32_LEAN_AND_MEAN       // Exclude rarely-used stuff from Windows headers // Windows Header Files #include <windows.h> "
+- File: BinaryFormats\LIBDump.cpp
+  Preview: "#include 'pch.h' #include 'framework.h' #include 'BinaryFormat.h' using namespace std; PSTR PszLongnames = 0; DWORD ConvertBigEndian(DWORD bigEndian) ..."
+- File: BinaryFormats\MemoryMappedFile.cpp
+  Preview: "#include 'pch.h' #include 'BinaryFormat.h' using namespace BinaryFormat; MemoryMappedFile::MemoryMappedFile(char* filename) :buffer(nullptr), hFile(0)..."
+- File: BinaryFormats\MemoryMappedFile.h
+  Preview: "#pragma once #pragma warning(disable : 4267) #pragma warning(disable : 4244) #pragma warning(disable : 4018) #pragma warning(disable : 4333) #include ..."
+- File: BinaryFormats\Methods.cpp
+  Preview: "#include 'pch.h' #include 'framework.h' #include 'BinaryFormat.h' using namespace std; _NEResourceEntry::_NEResourceEntry():resource(nullptr) { } _NER..."
+- File: BinaryFormats\NEHeader.h
+  Preview: "#pragma once #define SEGFLAGS_TYPE_CODE 0 #define SEGFLAGS_TYPE_DATA 1 #define SEGFLAGS_TYPE_MASK 0x0007 #define SEGFLAGS_MOVABLE  0x0010 #define SEGF..."
+- File: BinaryFormats\Output.cpp
+  Preview: "#include 'pch.h' #include 'framework.h' #include 'BinaryFormat.h' #include 'capstone/capstone.h' using namespace std; WORD_FLAG_DESCRIPTIONS ImageFile..."
+- File: BinaryFormats\pch.cpp
+  Preview: "// pch.cpp: source file corresponding to the pre-compiled header #include 'pch.h' // When you are using pre-compiled headers, this source file is nece..."
+- File: BinaryFormats\pch.h
+  Preview: "#ifndef PCH_H #define PCH_H #include 'framework.h' #include <stdio.h> #include <stdlib.h> #include <vector> #include <iostream> #include <iomanip> #in..."
+- File: BinaryFormats\PEHeader.h
+  Preview: "#pragma once #include <Windows.h> #include 'pshpack1.h' typedef struct _DosHeader {       // DOS .EXE header 	WORD  e_magic;           // Magic number..."
+- File: Decompiler\cs_priv.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2019 */ #ifndef CS_PRIV_H #define CS_PRIV_H #ifdef CAPSTONE_DEBUG #i..."
+- File: Decompiler\cs_simple_types.h
+  Preview: "/* Capstone Disassembly Engine, https://www.capstone-engine.org */ /* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2019 */ /* By Rot127 <unisono@quyll..."
+- File: Decompiler\framework.h
+  Preview: "#pragma once #define WIN32_LEAN_AND_MEAN       // Exclude rarely-used stuff from Windows headers "
+- File: Decompiler\info.txt
+  Preview: "_CRT_SECURE_NO_WARNINGS;NDEBUG;_LIB;%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;CAPSTONE_USE_SYS_DYN_MEM;CAPSTONE_ARM_SUPPORT;CAPSTONE_AARCH64_SU..."
+- File: Decompiler\LEB128.h
+  Preview: "//===- llvm/Support/LEB128.h - [SU]LEB128 utility functions -----*- C++ -*-===// // //           The LLVM Compiler Infrastructure // // This file is d..."
+- File: Decompiler\Mapping.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2019 */ /*  Rot127 <unisono@quyllur.org>, 2022-2023 */ #ifndef CS_MA..."
+- File: Decompiler\MathExtras.h
+  Preview: "//===-- llvm/Support/MathExtras.h - Useful math functions -------*- C++ -*-===// // //           The LLVM Compiler Infrastructure // // This file is d..."
+- File: Decompiler\MCAsmInfo.h
+  Preview: "// Copyright © 2024 Rot127 <unisono@quyllur.org> // SPDX-License-Identifier: BSD-3 /// The equivalent of the MCAsmInfo class in LLVM. /// We save only..."
+- File: Decompiler\MCDisassembler.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2019 */ #ifndef CS_MCDISASSEMBLER_H #define CS_MCDISASSEMBLER_H type..."
+- File: Decompiler\MCFixedLenDisassembler.h
+  Preview: "//===-- llvm/MC/MCFixedLenDisassembler.h - Decoder driver -------*- C++ -*-===// // //           The LLVM Compiler Infrastructure // // This file is d..."
+- File: Decompiler\MCInst.h
+  Preview: "//===-- llvm/MC/MCInst.h - MCInst class -------------------------*- C++ -*-===// // //           The LLVM Compiler Infrastructure // // This file is d..."
+- File: Decompiler\MCInstPrinter.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Rot127 <unisono@quyllur.org>, 2023 */ #ifndef CS_MCINSTPRINTER_H #define CS_MCINSTPRINTER_H #include 'MCInst.h..."
+- File: Decompiler\MCInstrDesc.h
+  Preview: "//===-- llvm/MC/MCInstrDesc.h - Instruction Descriptors -*- C++ -*-===// // //           The LLVM Compiler Infrastructure // // This file is distribut..."
+- File: Decompiler\MCRegisterInfo.h
+  Preview: "//=== MC/MCRegisterInfo.h - Target Register Description ---------*- C++ -*-===// // //           The LLVM Compiler Infrastructure // // This file is d..."
+- File: Decompiler\pch.h
+  Preview: "// pch.h: This is a precompiled header file. // Files listed below are compiled only once, improving build performance for future builds. // This also..."
+- File: Decompiler\SStream.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2019 */ #ifndef CS_SSTREAM_H_ #define CS_SSTREAM_H_ #include 'includ..."
+- File: Decompiler\utils.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2019 */ #ifndef CS_UTILS_H #define CS_UTILS_H #include <stdint.h> #i..."
+- File: dosbox-x\2xscale.sh
+  Preview: "#!/bin/sh src='${1}' dst='${1}.2x.mp4' ffmpeg -i '${src}' -acodec copy -vcodec libx264 -g 15 -bf 2 -vf 'scale=iw*2:ih*2:flags=neighbor' -vb 15000000 -..."
+- File: dosbox-x\appbundledeps.py
+  Symbols: [DepInfo]
+  Preview: "#!/usr/bin/env python3 import re import os import sys import subprocess # EXEs to scan for dependencies exepaths = [ ] deps = { } # look for argv sit ..."
+- File: dosbox-x\appveyor.yml
+  Preview: "#---------------------------------# #  environment configuration  # #---------------------------------# image: Visual Studio 2022 init:  - git config ..."
+- File: dosbox-x\autogen.sh
+  Preview: "#!/bin/sh # If an error occurs, quit the script and inform the user. This ensures scripts # like ./build-macos and ./build-macos-sdl2 etc. Don't conti..."
+- File: dosbox-x\avi_zmbv_to_720p.sh
+  Preview: "#!/bin/sh file='${1}' bitrate=15000000 aspect_ratio=4:3 overscan_percent=10 final_height=720 final_width=960 # non-editable part render_width=$(((fina..."
+- File: dosbox-x\BUILD.md
+  Preview: "Building DOSBox-X ================= The page is about manually building the DOSBox-X source code. Automated development (preview) builds intended for ..."
+- File: dosbox-x\CODE_OF_CONDUCT.md
+  Preview: "# Contributor Code of Conduct This project adheres to No Code of Conduct. We are all adults. We accept anyone's contributions. Nothing else matters. F..."
+- File: dosbox-x\CONTRIBUTING.md
+  Preview: "## First steps Before contributing to DOSBox-X, please check the [issue tracker](https://github.com/joncampbell123/dosbox-x/issues) to see whether you..."
+- File: dosbox-x\CREDITS.md
+  Preview: "Credits ======= Jonathan Campbell, the maintainer of DOSBox-X does not claim to have written all of the code in this project. The purpose of this docu..."
+- File: dosbox-x\dos2unix.sh
+  Preview: "#!/bin/sh for ext in c cpp h; do 	find . -iname \*.$ext | while read -r X; do dos2unix -- '${X}' || exit 1; done done "
+- File: dosbox-x\dosbox-sdl2-diff.sh
+  Preview: "#!/bin/sh # # dosbox-x-sdl2 should be master-sdl2 branch # dosbox-x should be master branch diff -N -w -u -x '*~' -x '.git*' -x 'autom4te.cache' -x '*..."
+- File: dosbox-x\dosboxpng-to-h.sh
+  Preview: "#!/bin/sh for h in 93 163 186 224; do xxd -i dosbox224x$h.png >include/dosbox224x$h.h || break; done "
+- File: dosbox-x\env-gcc-4.8-rpi.sh
+  Preview: "#!/bin/sh # # Look for GCC-4.8 x=$(which gcc-4.8) gdir=$(dirname '${x}') CC='${gdir}/gcc-4.8' CPP='${gdir}/cpp-4.8' CXX='${gdir}/g++-4.8' export CC CP..."
+- File: dosbox-x\env-gcc-4.8.sh
+  Preview: "#!/bin/sh # # Look for GCC-4.8 x=$(which gcc-4.8 2>/dev/null) if [ -n '${x}' ]; then   gdir=$(dirname '${x}') elif [ -f '/usr/gcc-4.8/bin/gcc' ]; then..."
+- File: dosbox-x\env-gcc-8.3.sh
+  Preview: "#!/bin/sh # # Look for GCC-8.3 x=$(which gcc-8.3 2>/dev/null) if [ -n '${x}' ]; then   gdir=$(dirname '${x}') elif [ -f '/usr/gcc-8.3/bin/gcc' ]; then..."
+- File: dosbox-x\env-gcc-8.4.sh
+  Preview: "#!/bin/sh # # Look for GCC-8.4 x=$(which gcc-8.4 2>/dev/null) if [ -n '${x}' ]; then   gdir=$(dirname '${x}') elif [ -f '/usr/gcc-8.4/bin/gcc' ]; then..."
+- File: dosbox-x\env-gcc-9.2.sh
+  Preview: "#!/bin/sh # # Look for GCC-9.2 x=$(which gcc-9.2 2>/dev/null) if [ -n '${x}' ]; then   gdir=$(dirname '${x}') elif [ -f '/usr/gcc-9.2/bin/gcc' ]; then..."
+- File: dosbox-x\env-gcc-9.3.sh
+  Preview: "#!/bin/sh # # Look for GCC-9.3 x=$(which gcc-9.3 2>/dev/null) if [ -n '${x}' ]; then   gdir=$(dirname '${x}') elif [ -f '/usr/gcc-9.3/bin/gcc' ]; then..."
+- File: dosbox-x\git-pull-mainline.sh
+  Preview: "#!/bin/sh git remote add mainline svn://svn.code.sf.net/p/dosbox/code-0/dosbox/trunk git fetch mainline "
+- File: dosbox-x\git-push-to-github.sh
+  Preview: "#!/bin/sh git remote add github https://joncampbell123@github.com/joncampbell123/dosbox-x.git # might fail git remote set-url github https://joncampbe..."
+- File: dosbox-x\git-setup-sdl2-work.sh
+  Preview: "#!/bin/sh url='https://github.com/wcp16/dosbox-xe.git' branch='dosbox-sdl2-upstream' git remote add '${branch}' '${url}' || git remote set-url '${bran..."
+- File: dosbox-x\INSTALL.md
+  Preview: "DOSBox-X Installation and Released Packages =========================================== DOSBox-X is a cross-platform DOS emulator based on DOSBox, wit..."
+- File: dosbox-x\make-flatpak.sh
+  Preview: "#!/bin/sh if [ ! -x $(which flatpak-builder) ]; then 	echo 'Please install flatpak-builder' 	exit fi if [ ! $(flatpak list|grep -c org.freedesktop.Sdk..."
+- File: dosbox-x\merge-dev-to-master.sh
+  Preview: "#!/bin/sh curbranch=$(git branch --show-current) if [ '${curbranch}' = 'master' ] || [ '${curbranch}' = 'develop' ]; then   rm -f include/build_timest..."
+- File: dosbox-x\MICROPHONE_IMPLEMENTATION_NOTES.md
+  Preview: "# DOSBox-X SoundBlaster Microphone Implementation Notes ## Build Environment ### Visual Studio 2022 Build Command ```powershell powershell.exe -NoProf..."
+- File: dosbox-x\mod2wav.sh
+  Preview: "#!/bin/sh mikmod -o 16s -f 48000 -hq -p 0 -d wav,file='${1}.wav' '${1}' "
+- File: dosbox-x\move-with-hist.ps1
+  Preview: "param (   [Parameter(Mandatory=$true)][string]$source,   [Parameter(Mandatory=$true)][string]$target ) clear Write-Host('Source is {0}' -f $source) -F..."
+- File: dosbox-x\mtavi2wav.sh
+  Preview: "#!/bin/sh # # Stupid multitrack audio hack for stupid Premiere. # Turns a DOSBox-X multitrack AVI capture into several WAV files. # Requires FFMPEG 3...."
+- File: dosbox-x\mts_to_1080p.sh
+  Preview: "#!/bin/sh file='${1}' bitrate=15000000 aspect_ratio=4:3 overscan_percent=10 final_height=1080 final_width=1440 # non-editable part render_width=$(((fi..."
+- File: dosbox-x\mts_to_2160p.sh
+  Preview: "#!/bin/sh file='${1}' bitrate=15000000 aspect_ratio=4:3 overscan_percent=10 final_height=2160 # 4K UHD final_width=2880 # non-editable part render_wid..."
+- File: dosbox-x\mts_to_720p.sh
+  Preview: "#!/bin/sh file='${1}' bitrate=15000000 aspect_ratio=4:3 overscan_percent=10 final_height=720 final_width=960 # non-editable part render_width=$(((fina..."
+- File: dosbox-x\README.md
+  Preview: " **Welcome to the DOSBox-X project homepage located on GitHub.** ## Useful links - [DOSBox-X's website](https://dosbox-x.com) ([https://dosbox-x.com](..."
+- File: dosbox-x\README.video-debug-overlay.md
+  Preview: " **The video debug overlay: How to guide** ## What is the Video Debug Overlay? The video debug overlay is an extension to the video output of DOSBox-X..."
+- File: dosbox-x\scaleup-4x3-mp4-to-1080p.sh
+  Preview: "#!/bin/sh src='${1}' dst='${1}.1080p.mp4' fwidth=1440 fheight=1080 # 95% title safe area swidth=$(((fwidth*90)/100)) sheight=$(((fheight*90)/100)) ffm..."
+- File: dosbox-x\scaleup-4x3-mts-to-1080p.sh
+  Preview: "#!/bin/sh src='${1}' dst='${1}.1080p.mp4' fwidth=1440 fheight=1080 # 95% title safe area swidth=$(((fwidth*90)/100)) sheight=$(((fheight*90)/100)) ffm..."
+- File: dosbox-x\SECURITY.md
+  Preview: "# Security Policy ## Supported Versions The [`main` branch](https://github.com/joncampbell123/dosbox-x/tree/master) and [latest release](https://githu..."
+- File: File\File.h
+  Preview: "#pragma once #ifdef __cplusplus extern 'C' { #endif typedef unsigned f_handle; #define NIL_HANDLE -1 enum perms {// names for permissions 	none = 0, 	..."
+- File: File\File2.h
+  Preview: "#pragma once #ifdef __cplusplus extern 'C' { #endif #include <stdio.h> typedef FILE *FileHandle; #define NIL_HANDLE -1 errno_t OpenFile3(FileHandle* p..."
+- File: File\framework.h
+  Preview: "#pragma once #define WIN32_LEAN_AND_MEAN       // Exclude rarely-used stuff from Windows headers "
+- File: File\pch.h
+  Preview: "#ifndef PCH_H #define PCH_H #include <stdio.h> #include <stdlib.h> #include <stddef.h> #include <stdarg.h> #include <malloc.h> #include <ctype.h> #inc..."
+- File: Jarvis\Files.cpp
+  Preview: "////////////////////////////////////////////// // Files.cpp - Definitions for CViewFiles, CContainFiles //       and DockFiles classes #include 'pch.h..."
+- File: Jarvis\Files.h
+  Preview: "///////////////////////////////////////////////// // Files.h - Declaration of the CViewFiles, CContainFiles //      and CDockFiles classes #ifndef FIL..."
+- File: Jarvis\framework.h
+  Preview: "// header.h : include file for standard system include files, // or project specific include files // #pragma once #include 'targetver.h' #define WIN3..."
+- File: Jarvis\Jarvis.h
+  Preview: "#pragma once #include 'Resource.h' "
+- File: Jarvis\main.cpp
+  Preview: "///////////////////////////// // main.cpp // #include 'pch.h' #include 'MDIFrameApp.h' #if defined (_MSC_VER) && (_MSC_VER >= 1920)   // VS2019 or hig..."
+- File: Jarvis\MainMDIfrm.cpp
+  Preview: "///////////////////////////// // MainMDIfrm.cpp // #include 'pch.h' #include 'MainMDIfrm.h' #include 'MDIChildText.h' #include 'Files.h' #include 'res..."
+- File: Jarvis\MainMDIfrm.h
+  Preview: "///////////////////////////// // MainMDIfrm.h // #ifndef MAINMDIFRM_H #define MAINMDIFRM_H  //////////////////////////////////////////////////////////..."
+- File: Jarvis\MDIChildText.cpp
+  Preview: "////////////////////////////////////////////// // SimpleMDIChild.cpp // Definitions for the CSimpleView and CSimpleMDIChild classes #include 'pch.h' #..."
+- File: Jarvis\MDIChildText.h
+  Preview: "////////////////////////////////////////////////////// // SimpleMDIChild.h // Declaration of the CSimpleView and CSimpleMDIChild class  #ifndef MDICHI..."
+- File: Jarvis\MDIFrameApp.cpp
+  Preview: "///////////////////////////// // MDIFrameApp.cpp // #include 'pch.h' #include 'MDIFrameApp.h' //////////////////////////////////// // CMDIFrameApp fun..."
+- File: Jarvis\MDIFrameApp.h
+  Preview: "///////////////////////////// // MDIFrameApp.h // #ifndef MDIFRAMEAPP_H #define MDIFRAMEAPP_H #include 'MainMDIfrm.h'  ///////////////////////////////..."
+- File: Jarvis\pch.cpp
+  Preview: "#include 'pch.h' "
+- File: Jarvis\pch.h
+  Preview: "///////////////////////////// // StdAfx.h // // This file is used for precompiled headers. // Rarely modified header files should be included. // Base..."
+- File: Jarvis\Resource.h
+  Preview: "//{{NO_DEPENDENCIES}} // Microsoft Visual C++ generated include file. // Used by Resource.rc // // include the Resource IDs defined by Win32++ #includ..."
+- File: Jarvis\StdAfx.cpp
+  Preview: "////////////////////////////////////////////// // StdAfx.cpp // This file is used for precompiled hearders. Precompiled headers allow // programs to b..."
+- File: Jarvis\targetver.h
+  Preview: "#pragma once // // Including SDKDDKVer.h defines the highest available Windows platform. // If you wish to build your application for a previous Windo..."
+- File: JWasm\apiemu.cpp
+  Preview: "/**************************************************************************** * * This code is Public Domain. * * ====================================..."
+- File: JWasm\assemble.cpp
+  Preview: "/**************************************************************************** * * This code is Public Domain. * * ====================================..."
+- File: JWasm\assume.cpp
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\atofloat.cpp
+  Preview: "/**************************************************************************** * * This code is Public Domain. * * ====================================..."
+- File: JWasm\backptch.cpp
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\bin.cpp
+  Preview: "/**************************************************************************** * * This code is Public Domain. * * ====================================..."
+- File: JWasm\branch.cpp
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\cmdline.cpp
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\codegen.cpp
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\coff.cpp
+  Preview: "/**************************************************************************** * * This code is Public Domain. * * ====================================..."
+- File: JWasm\condasm.cpp
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\context.cpp
+  Preview: "/**************************************************************************** * * This code is Public Domain. * * ====================================..."
+- File: JWasm\cpumodel.cpp
+  Preview: "/**************************************************************************** * * This code is Public Domain. * * ====================================..."
+- File: JWasm\data.cpp
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\dbgcv.cpp
+  Preview: "/*************************************************************************** * * This code is Public Domain. * * =====================================..."
+- File: JWasm\directiv.cpp
+  Preview: "/**************************************************************************** * * This code is Public Domain. * * ====================================..."
+- File: JWasm\elf.cpp
+  Preview: "/**************************************************************************** * * This code is Public Domain. * * ====================================..."
+- File: JWasm\end.cpp
+  Preview: "/**************************************************************************** * * This code is Public Domain. * * ====================================..."
+- File: JWasm\equate.cpp
+  Preview: "/**************************************************************************** * * This code is Public Domain. * * ====================================..."
+- File: JWasm\errmsg.cpp
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\expans.cpp
+  Preview: "/**************************************************************************** * * This code is Public Domain. * * ====================================..."
+- File: JWasm\expreval.cpp
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\extern.cpp
+  Preview: "/**************************************************************************** * * This code is Public Domain. * * ====================================..."
+- File: JWasm\fastpass.cpp
+  Preview: "/**************************************************************************** * * This code is Public Domain. * * ====================================..."
+- File: JWasm\fixup.cpp
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\fpfixup.cpp
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\hll.cpp
+  Preview: "/**************************************************************************** * * This code is Public Domain. * * ====================================..."
+- File: JWasm\input.cpp
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\invoke.cpp
+  Preview: "/**************************************************************************** * * This code is Public Domain. * * ====================================..."
+- File: JWasm\label.cpp
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\linnum.cpp
+  Preview: "/**************************************************************************** * * This code is Public Domain. * * ====================================..."
+- File: JWasm\listing.cpp
+  Preview: "/**************************************************************************** * * This code is Public Domain. * * ====================================..."
+- File: JWasm\loop.cpp
+  Preview: "/**************************************************************************** * * This code is Public Domain. * * ====================================..."
+- File: JWasm\lqueue.cpp
+  Preview: "/**************************************************************************** * * This code is Public Domain. * * ====================================..."
+- File: JWasm\macro.cpp
+  Preview: "/**************************************************************************** * * This code is Public Domain. * * ====================================..."
+- File: JWasm\main.cpp
+  Preview: "#include 'pch.h' #include 'globals.h' #include 'msgtext.h' #include 'cmdline.h' #include 'input.h'   #if defined(__UNIX__) || defined(__CYGWIN__) || d..."
+- File: JWasm\mangle.cpp
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\memalloc.cpp
+  Preview: "/**************************************************************************** * * This code is Public Domain. * * ====================================..."
+- File: JWasm\msgtext.cpp
+  Preview: "/**************************************************************************** * * This code is Public Domain. * * ====================================..."
+- File: JWasm\omf.cpp
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\omffixup.cpp
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\omfint.cpp
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\option.cpp
+  Preview: "/**************************************************************************** * * This code is Public Domain. * * ====================================..."
+- File: JWasm\parser.cpp
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\posndir.cpp
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\preproc.cpp
+  Preview: "/**************************************************************************** * * This code is Public Domain. * * ====================================..."
+- File: JWasm\proc.cpp
+  Preview: "/**************************************************************************** * * This code is Public Domain. * * ====================================..."
+- File: JWasm\queue.cpp
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\resource.h
+  Preview: "#define _APS_NEXT_RESOURCE_VALUE    101 #define _APS_NEXT_COMMAND_VALUE     40001 #define _APS_NEXT_CONTROL_VALUE     1000 #define _APS_NEXT_SYMED_VAL..."
+- File: JWasm\reswords.cpp
+  Preview: "/**************************************************************************** * * This code is Public Domain. * * ====================================..."
+- File: JWasm\safeseh.cpp
+  Preview: "/**************************************************************************** * * This code is Public Domain. * * ====================================..."
+- File: JWasm\segment.cpp
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\simsegm.cpp
+  Preview: "/**************************************************************************** * * This code is Public Domain. * * ====================================..."
+- File: JWasm\string.cpp
+  Preview: "/**************************************************************************** * * This code is Public Domain. * * ====================================..."
+- File: JWasm\symbols.cpp
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\tbyte.cpp
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\tokenize.cpp
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\trmem.cpp
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\types.cpp
+  Preview: "/**************************************************************************** * * This code is Public Domain. * * ====================================..."
+- File: JWasmLib\pch.cpp
+  Preview: "#include 'pch.h'"
+- File: JWasmLib\pch.h
+  Preview: "#pragma once #include <ctype.h> #include <time.h> #include <float.h> #include <math.h> #include <stddef.h> #include <limits.h> #include <stdarg.h> #in..."
+- File: JWcc\pch.cpp
+  Preview: "#include 'pch.h' "
+- File: JWcc\pch.h
+  Preview: "#pragma once "
+- File: JWccLib\AbstractDeclarator.cpp
+  Preview: "#include 'pch.h' #include 'AbstractDeclarator.h' using namespace WadeSpace; AbstractDeclarator::AbstractDeclarator(shared_ptr<Pointer> pointer, shared..."
+- File: JWccLib\AbstractDeclarator.h
+  Preview: "#pragma once #include 'Pointer.h' #include 'DirectAbstractDeclarator.h' namespace WadeSpace { 	class AbstractDeclarator 	{ 		shared_ptr<Pointer> point..."
+- File: JWccLib\BaseCodeGenerator.cpp
+  Preview: "#include 'pch.h' #include 'BaseCodeGenerator.h' using namespace WadeSpace; BaseCodeGenerator::BaseCodeGenerator(shared_ptr<vector<shared_ptr<VariableD..."
+- File: JWccLib\BaseCodeGenerator.h
+  Preview: "#pragma once #include 'BaseStatement.h' #include 'GlobalVars.h' #include 'Initializer.h' #include 'TokenType.h' #include 'StructOrUnionSpecifier.h' #i..."
+- File: JWccLib\BaseStatement.cpp
+  Preview: "#include 'pch.h' #include 'BaseStatement.h' #include 'ExpressionTree.h' using namespace WadeSpace; using namespace std; BaseStatement::BaseStatement(o..."
+- File: JWccLib\BaseStatement.h
+  Preview: "#pragma once #include <memory> #include <vector> #include <optional> #include 'TokenType.h' #include 'Declaration.h' #include 'Token.h' #include 'Expr..."
+- File: JWccLib\Compiler.cpp
+  Preview: "#include 'pch.h' #include <Windows.h> #include 'Compiler.h' #include 'scanner.h' #include 'parser.hpp' #include 'interpreter.h' #include 'ArgumentTabl..."
+- File: JWccLib\Compiler.h
+  Preview: "#pragma once #include <string> #include <map> #include <vector> #include 'ProgramData.h' #include 'ExternalDeclaration.h' #include 'StructOrUnionSpeci..."
+- File: JWccLib\CompoundStatement.cpp
+  Preview: "#include 'pch.h' #include 'CompoundStatement.h' using namespace WadeSpace; using namespace std; CompoundStatement::CompoundStatement(shared_ptr<vector..."
+- File: JWccLib\CompoundStatement.h
+  Preview: "#pragma once #include <string> #include <vector> #include <optional> #include 'TokenType.h' #include 'BaseStatement.h' using namespace std; namespace ..."
+- File: JWccLib\Constant.cpp
+  Preview: "#include 'pch.h' #include 'Constant.h' using namespace WadeSpace; using namespace std; Constant::Constant(const shared_ptr<CToken> iConst, const share..."
+- File: JWccLib\Constant.h
+  Preview: "#pragma once #include <optional> #include 'Token.h' #include 'TokenType.h' using namespace std; namespace WadeSpace { 	class Constant 	{ 		shared_ptr<..."
+- File: JWccLib\debug.cpp
+  Preview: "#include 'pch.h' #include 'debug.h' #include 'ExpressionTree.h' #include 'ProgramData.h' #include 'GlobalVars.h' #include 'StructOrUnionSpecifier.h' #..."
+- File: JWccLib\debug.h
+  Preview: "#pragma once #include 'BaseStatement.h' #include 'Declaration.h' #include 'Constant.h' #include 'Token.h' #include 'ExpressionTree.h' #include 'Pointe..."
+- File: JWccLib\Declaration.cpp
+  Preview: "#include 'pch.h' #include 'Declaration.h' #include 'ExternalDeclaration.h' using namespace WadeSpace; using namespace std; Declaration::Declaration(sh..."
+- File: JWccLib\Declaration.h
+  Preview: "#pragma once #include <string> #include <vector> #include <optional> #include 'DeclarationSpecifiers.h' #include 'InitDeclarator.h' using namespace st..."
+- File: JWccLib\DeclarationSpecifiers.cpp
+  Preview: "#include 'pch.h' #include 'DeclarationSpecifiers.h' using namespace WadeSpace; using namespace std; DeclarationSpecifiersNode::DeclarationSpecifiersNo..."
+- File: JWccLib\DeclarationSpecifiers.h
+  Preview: "#pragma once #include 'StorageClassSpecifier.h' #include 'TypeSpecifier.h' #include 'TypeQualifier.h' namespace WadeSpace { 	class DeclarationSpecifie..."
+- File: JWccLib\Declarator.cpp
+  Preview: "#include 'pch.h' #include 'Declarator.h' #include 'GlobalVars.h' using namespace WadeSpace; using namespace std; Declarator::Declarator(shared_ptr<Poi..."
+- File: JWccLib\Declarator.h
+  Preview: "#pragma once #include <string> #include <vector> #include <optional> #include 'Pointer.h' #include 'DirectDeclarator.h' using namespace std; namespace..."
+- File: JWccLib\Diagnostic.cpp
+  Preview: "#include 'pch.h' #include 'Diagnostic.h' using namespace WadeSpace; using namespace std; string Diagnostic::toString() const { 	string sev = (severity..."
+- File: JWccLib\Diagnostic.h
+  Preview: "#pragma once #include <string> namespace WadeSpace { 	struct Diagnostic 	{ 		enum class Severity { Info, Warning, Error }; 		std::string file; 		int l..."
+- File: JWccLib\DirectAbstractDeclarator.cpp
+  Preview: "#include 'pch.h' #include 'DirectAbstractDeclarator.h' #include 'AbstractDeclarator.h' #include 'ParameterTypeList.h' #include 'ExpressionTree.h' usin..."
+- File: JWccLib\DirectAbstractDeclarator.h
+  Preview: "#pragma once #include <string> #include <vector> #include <optional> #include 'TokenType.h' using namespace std; namespace WadeSpace { 	class DirectAb..."
+- File: JWccLib\DirectDeclarator.cpp
+  Preview: "#include 'pch.h' #include 'DirectDeclarator.h' #include 'ParameterTypeList.h' #include 'Declarator.h' #include 'ExpressionTree.h' using namespace Wade..."
+- File: JWccLib\DirectDeclarator.h
+  Preview: "#pragma once #include 'Token.h' #include 'TokenType.h' using namespace std; namespace WadeSpace { 	class ConstantExpression; 	class ParameterTypeList;..."
+- File: JWccLib\Enumerator.cpp
+  Preview: "#include 'pch.h' #include 'Enumerator.h' #include 'ExpressionTree.h' using namespace WadeSpace; Enumerator::Enumerator(shared_ptr<CToken> identifier, ..."
+- File: JWccLib\Enumerator.h
+  Preview: "#pragma once #include <string> #include <vector> #include <optional> #include 'Token.h' using namespace std; namespace WadeSpace { 	class ExpressionTr..."
+- File: JWccLib\EnumSpecifier.cpp
+  Preview: "#include 'pch.h' #include 'EnumSpecifier.h' #include 'Token.h' using namespace WadeSpace; EnumSpecifier::EnumSpecifier(shared_ptr<CToken> nameStr, sha..."
+- File: JWccLib\EnumSpecifier.h
+  Preview: "#pragma once #include <vector> #include 'Enumerator.h' #include 'Token.h' using namespace std; namespace WadeSpace { 	class EnumSpecifier 	{ 		shared_..."
+- File: JWccLib\ExpressionStatement.cpp
+  Preview: "#include 'pch.h' #include 'ExpressionStatement.h' #include 'ExpressionTree.h' using namespace WadeSpace; using namespace std; "
+- File: JWccLib\ExpressionStatement.h
+  Preview: "#pragma once #include <string> #include <vector> #include <optional> #include 'TokenType.h' #include 'BaseStatement.h' using namespace std; namespace ..."
+- File: JWccLib\ExpressionTree.cpp
+  Preview: "#include 'pch.h' #include 'ExpressionTree.h' #include 'TypeName.h' using namespace WadeSpace; shared_ptr<TreeNode> ExpressionTree::evaluate(ostream& o..."
+- File: JWccLib\ExpressionTree.h
+  Preview: "#pragma once #include <vector> #include <stack> #include 'Token.h' #include 'Constant.h' #include 'NodeType.h' using namespace std; namespace WadeSpac..."
+- File: JWccLib\ExternalDeclaration.cpp
+  Preview: "#include 'pch.h' #include 'ExternalDeclaration.h' #include 'GlobalVars.h' #include 'Compiler.h' using namespace WadeSpace; using namespace std;  Exter..."
+- File: JWccLib\ExternalDeclaration.h
+  Preview: "#pragma once #include 'TokenType.h' #include 'FunctionDefinition.h' #include 'Declaration.h' using namespace std; namespace WadeSpace { 	class Externa..."
+- File: JWccLib\framework.h
+  Preview: "#pragma once #define WIN32_LEAN_AND_MEAN       // Exclude rarely-used stuff from Windows headers "
+- File: JWccLib\FunctionDefinition.cpp
+  Preview: "#include 'pch.h' #include 'FunctionDefinition.h' #include 'BaseStatement.h' using namespace WadeSpace; using namespace std; FunctionDefinition::Functi..."
+- File: JWccLib\FunctionDefinition.h
+  Preview: "#pragma once #include <string> #include <vector> #include <optional> #include 'TokenType.h' #include 'DeclarationSpecifiers.h' #include 'Declarator.h'..."
+- File: JWccLib\GlobalVars.cpp
+  Preview: "#include 'pch.h' #include 'Compiler.h' #include 'Messages.h' #include 'GlobalVars.h' using namespace std; namespace WadeSpace { 	shared_ptr<Compiler> ..."
+- File: JWccLib\GlobalVars.h
+  Preview: "#pragma once #include 'Messages.h' using namespace std; namespace WadeSpace { 	class ProgramData; 	class ExternalDeclaration; 	class StructOrUnionSpec..."
+- File: JWccLib\InitDeclarator.cpp
+  Preview: "#include 'pch.h' #include 'InitDeclarator.h' using namespace WadeSpace; InitDeclarator::InitDeclarator(shared_ptr<Declarator> declarator) : declarator..."
+- File: JWccLib\InitDeclarator.h
+  Preview: "#pragma once #include <string> #include 'Declarator.h' #include 'Initializer.h' namespace WadeSpace { 	class InitDeclarator 	{ 		shared_ptr<Declarator..."
+- File: JWccLib\Initializer.cpp
+  Preview: "#include 'pch.h' #include 'Initializer.h' #include 'ExpressionTree.h' using namespace WadeSpace; Initializer::Initializer(shared_ptr<ExpressionTree> a..."
+- File: JWccLib\Initializer.h
+  Preview: "#pragma once using namespace std; namespace WadeSpace { 	class ExpressionTree; 	class Initializer 	{ 		shared_ptr<ExpressionTree> assignmentExpression..."
+- File: JWccLib\interpreter.cpp
+  Preview: "#include 'pch.h' #include 'interpreter.h' #include <sstream> using namespace WadeSpace; Interpreter::Interpreter() : 	m_scanner(*this), 	m_parser(m_sc..."
+- File: JWccLib\interpreter.h
+  Preview: "#ifndef INTERPRETER_H #define INTERPRETER_H #include <vector> #include 'scanner.h' #include 'parser.hpp' namespace WadeSpace { 	class Interpreter 	{ 	..."
+- File: JWccLib\IterationStatement.cpp
+  Preview: "#include 'pch.h' #include 'IterationStatement.h' #include 'ExpressionTree.h' using namespace WadeSpace; using namespace std; IterationStatement::Itera..."
+- File: JWccLib\IterationStatement.h
+  Preview: "#pragma once #include <string> #include <vector> #include <optional> #include 'TokenType.h' #include 'BaseStatement.h' using namespace std; namespace ..."
+- File: JWccLib\JumpStatement.cpp
+  Preview: "#include 'pch.h' #include 'JumpStatement.h' #include 'ExpressionTree.h' using namespace WadeSpace; using namespace std; JumpStatement::JumpStatement(T..."
+- File: JWccLib\JumpStatement.h
+  Preview: "#pragma once #include 'TokenType.h' #include 'BaseStatement.h' using namespace std; namespace WadeSpace { 	class ExpressionTree; 	class JumpStatement ..."
+- File: JWccLib\JWccLib.cpp
+  Preview: "// JWccLib.cpp : Defines the functions for the static library. // #include 'pch.h' #include 'framework.h' // TODO: This is an example of a library fun..."
+- File: JWccLib\LabeledStatement.cpp
+  Preview: "#include 'pch.h' #include 'LabeledStatement.h' using namespace WadeSpace; using namespace std; LabeledStatement::LabeledStatement(shared_ptr<CToken> i..."
+- File: JWccLib\LabeledStatement.h
+  Preview: "#pragma once #include 'TokenType.h' #include 'BaseStatement.h' using namespace std; namespace WadeSpace { 	class LabeledStatement : public BaseStateme..."
+- File: JWccLib\main.cpp
+  Preview: "#include 'pch.h' #include <fstream> #include <sstream> #include 'scanner.h' #include 'parser.hpp' #include 'interpreter.h' #include 'ArgumentTable.h' ..."
+- File: JWccLib\MasmCodeGenerator.cpp
+  Preview: "#include 'pch.h' #include <iostream> #include <string> #include <vector> #include <optional> #include 'MasmCodeGenerator.h' #include 'GlobalVars.h' #i..."
+- File: JWccLib\MasmCodeGenerator.h
+  Preview: "#pragma once #include <fstream> #include <string> #include <vector> #include <optional> #include 'ProgramData.h' #include 'BaseCodeGenerator.h' using ..."
+- File: JWccLib\Messages.cpp
+  Preview: "#include 'pch.h' #include 'Messages.h' "
+- File: JWccLib\Messages.h
+  Preview: "#pragma once #include <string> #include <vector> #include <memory> using namespace std; namespace WadeSpace { 	typedef enum 	{ 		FATAL_ERROR_MSG, 		ER..."
+- File: JWccLib\NodeType.h
+  Preview: "#pragma once namespace WadeSpace { 	enum NodeType 	{ 		NT_NONE, 		NT_ARRAY, 		NT_FUNCTION_CALL, 		NT_VAR_ACCESS, 		NT_INC, 		NT_DEC, 		NT_TYPECAST, 		..."
+- File: JWccLib\output.cpp
+  Preview: "#include 'pch.h' #include 'debug.h' #include 'ExpressionTree.h' #include 'ProgramData.h' #include 'GlobalVars.h' #include 'StructOrUnionSpecifier.h' u..."
+- File: JWccLib\output.h
+  Preview: "#pragma once #ifndef _DEBUG #define debug_printf (void) #endif #ifdef _DEBUG int debug_printf(char* msg); #endif"
+- File: JWccLib\ParameterDeclaration.cpp
+  Preview: "#include 'pch.h' #include 'ParameterDeclaration.h' using namespace WadeSpace; ParameterDeclaration::ParameterDeclaration(shared_ptr<DeclarationSpecifi..."
+- File: JWccLib\ParameterDeclaration.h
+  Preview: "#pragma once #include <string> #include <vector> #include <optional> #include 'DeclarationSpecifiers.h' #include 'Declarator.h' #include 'AbstractDecl..."
+- File: JWccLib\ParameterTypeList.cpp
+  Preview: "#include 'pch.h' #include 'ParameterTypeList.h' using namespace WadeSpace; ParameterTypeList::ParameterTypeList(shared_ptr<vector<shared_ptr<Parameter..."
+- File: JWccLib\ParameterTypeList.h
+  Preview: "#pragma once #include <string> #include <vector> #include <optional> #include 'ParameterDeclaration.h' using namespace std; namespace WadeSpace { 	cla..."
+- File: JWccLib\parser.cpp
+  Preview: "// A Bison parser, made by GNU Bison 3.8.2. // Skeleton implementation for Bison LALR(1) parsers in C++ // Copyright (C) 2002-2015, 2018-2021 Free Sof..."
+- File: JWccLib\parser.hpp
+  Preview: "// A Bison parser, made by GNU Bison 3.8.2. // Skeleton interface for Bison LALR(1) parsers in C++ // Copyright (C) 2002-2015, 2018-2021 Free Software..."
+- File: JWccLib\pch.cpp
+  Preview: "// pch.cpp: source file corresponding to the pre-compiled header #include 'pch.h' // When you are using pre-compiled headers, this source file is nece..."
+- File: JWccLib\pch.h
+  Preview: "// pch.h: This is a precompiled header file. // Files listed below are compiled only once, improving build performance for future builds. // This also..."
+- File: JWccLib\Pointer.cpp
+  Preview: "#include 'pch.h' #include 'Pointer.h' using namespace WadeSpace; Pointer::Pointer(const shared_ptr<CToken> name, shared_ptr<vector<shared_ptr<TypeQual..."
+- File: JWccLib\Pointer.h
+  Preview: "#pragma once #include <string> #include <vector> #include <optional> #include 'Token.h' #include 'TypeQualifier.h' using namespace std; namespace Wade..."
+- File: JWccLib\ProgramData.cpp
+  Preview: "#include 'pch.h' #include 'ProgramData.h' #include 'CompoundStatement.h' #include 'ExpressionTree.h' #include 'ExternalDeclaration.h' #include 'Global..."
+- File: JWccLib\ProgramData.h
+  Preview: "#pragma once #include <fstream> #include <string> #include <vector> #include <optional> #include 'TokenType.h' #include 'ExternalDeclaration.h' #inclu..."
+- File: JWccLib\scanner.cpp
+  Preview: "#line 1 'scanner.cpp' #line 3 'scanner.cpp' #define YY_INT_ALIGNED short int /* A lexical scanner generated by flex */ #define FLEX_SCANNER #define YY..."
+- File: JWccLib\scanner.h
+  Preview: "/* * The MIT License (MIT) *  * Copyright (c) 2014 Krzysztof Narkiewicz <krzysztof.narkiewicz@WadeSpace.com> *  * Permission is hereby granted, free o..."
+- File: JWccLib\SelectionStatement.cpp
+  Preview: "#include 'pch.h' #include 'SelectionStatement.h' using namespace WadeSpace; using namespace std; SelectionStatement::SelectionStatement(TokenType op, ..."
+- File: JWccLib\SelectionStatement.h
+  Preview: "#pragma once #include <string> #include <vector> #include 'TokenType.h' #include 'BaseStatement.h' using namespace std; namespace WadeSpace { 	class S..."
+- File: JWccLib\SemanticAnalyzer.cpp
+  Preview: "#include 'pch.h' #include 'SemanticAnalyzer.h' #include 'ProgramData.h' #include 'ExternalDeclaration.h' #include 'InitDeclarator.h' #include 'Functio..."
+- File: JWccLib\SemanticAnalyzer.h
+  Preview: "#pragma once #include <string> #include <vector> #include <memory> namespace WadeSpace { 	class ProgramData; 	struct Diagnostic; 	class SemanticAnalyz..."
+- File: JWccLib\SpecifierQualifierList.cpp
+  Preview: "#include 'pch.h' #include 'SpecifierQualifierList.h' using namespace WadeSpace; SpecifierQualifierList::SpecifierQualifierList(shared_ptr<SpecifierQua..."
+- File: JWccLib\SpecifierQualifierList.h
+  Preview: "#pragma once #include <string> #include <vector> #include <optional> #include 'TypeSpecifier.h' #include 'TypeQualifier.h' namespace WadeSpace { 	clas..."
+- File: JWccLib\Statement.cpp
+  Preview: "#include 'pch.h' #include 'Statement.h' using namespace WadeSpace; using namespace std; Statement::Statement(TokenType op, shared_ptr<BaseStatement> s..."
+- File: JWccLib\Statement.h
+  Preview: "#pragma once #include <string> #include <vector> #include <optional> #include 'TokenType.h' #include 'BaseStatement.h' using namespace std; namespace ..."
+- File: JWccLib\StorageClassSpecifier.cpp
+  Preview: "#include 'pch.h' #include 'StorageClassSpecifier.h' using namespace WadeSpace; StorageClassSpecifier::StorageClassSpecifier(shared_ptr<CToken> type) :..."
+- File: JWccLib\StorageClassSpecifier.h
+  Preview: "#pragma once #include <string> #include <vector> #include <optional> #include 'Token.h' #include 'TokenType.h' using namespace std; namespace WadeSpac..."
+- File: JWccLib\StructDeclaration.cpp
+  Preview: "#include 'pch.h' #include 'StructDeclaration.h' using namespace WadeSpace; StructDeclaration::StructDeclaration(shared_ptr<SpecifierQualifierList> spe..."
+- File: JWccLib\StructDeclaration.h
+  Preview: "#pragma once #include <string> #include <vector> #include <optional> #include 'SpecifierQualifierList.h' #include 'StructDeclarator.h' using namespace..."
+- File: JWccLib\StructDeclarator.cpp
+  Preview: "#include 'pch.h' #include 'StructDeclarator.h' #include 'ExpressionTree.h' using namespace WadeSpace; StructDeclarator::StructDeclarator(shared_ptr<De..."
+- File: JWccLib\StructDeclarator.h
+  Preview: "#pragma once #include 'Declarator.h' namespace WadeSpace { 	class ExpressionTree; 	class StructDeclarator 	{ 		shared_ptr<Declarator> declarator; 		sh..."
+- File: JWccLib\StructOrUnion.cpp
+  Preview: "#include 'pch.h' #include 'StructOrUnion.h' #include <optional> using namespace WadeSpace; using namespace std; StructOrUnion::StructOrUnion(optional<..."
+- File: JWccLib\StructOrUnion.h
+  Preview: "#pragma once #include <string> #include <vector> #include <optional> #include 'TokenType.h' using namespace std; namespace WadeSpace { 	class StructOr..."
+- File: JWccLib\StructOrUnionSpecifier.cpp
+  Preview: "#include 'pch.h' #include 'StructOrUnionSpecifier.h' using namespace WadeSpace; StructOrUnionSpecifier::StructOrUnionSpecifier(shared_ptr<CToken> stru..."
+- File: JWccLib\StructOrUnionSpecifier.h
+  Preview: "#pragma once #include <vector> #include 'StructDeclaration.h' using namespace std; namespace WadeSpace { 	class StructOrUnionSpecifier 	{ 		shared_ptr..."
+- File: JWccLib\structures.cpp
+  Preview: "#include 'pch.h' #include 'Token.h' shared_ptr<CToken> createToken(shared_ptr<CTokData> data) { 	auto tok = make_shared<CToken>(); 	tok->data = data; ..."
+- File: JWccLib\SymbolTable.cpp
+  Preview: "#include 'pch.h' #include 'SymbolTable.h' #include 'TypeInfo.h' using namespace WadeSpace; SymbolTable::SymbolTable() { 	// start with global scope 	p..."
+- File: JWccLib\SymbolTable.h
+  Preview: "#pragma once #include <string> #include <vector> #include <map> #include <memory> #include <optional> namespace WadeSpace { 	class TypeSpecifier; 	str..."
+- File: JWccLib\Token.cpp
+  Preview: "#include 'pch.h' #include 'Token.h' using namespace std; void zapTokData(shared_ptr<CTokData> elem) { 	if (elem == nullptr) 	{ 		return; 	} 	if (elem-..."
+- File: JWccLib\Token.h
+  Preview: "#pragma once using namespace std; enum TokenCode { 	YC_NONE, 	YC_KEYWORD, 	YC_SYMBOL, 	YC_NUMERIC, 	YC_STRING }; enum RadixType { 	RADT_NONE, 	RADT_DE..."
+- File: JWccLib\TokenType.h
+  Preview: "#pragma once namespace WadeSpace { 	typedef enum 	{ 		NONE, 		ARRAY, 		FUNCTION, 		INTEGER_CONSTANT, 		FLOAT_CONSTANT, 		STRING_CONSTANT, 		END, 		IDE..."
+- File: JWccLib\TypeInfo.cpp
+  Preview: "#include 'pch.h' #include 'TypeInfo.h' using namespace WadeSpace; TypeInfoPtr TypeInfo::makePrimitive(TokenType t) { 	auto p = std::make_shared<TypeIn..."
+- File: JWccLib\TypeInfo.h
+  Preview: "#pragma once #include <memory> #include <vector> #include <string> #include 'TokenType.h' namespace WadeSpace { 	struct TypeInfo; 	using TypeInfoPtr =..."
+- File: JWccLib\TypeName.cpp
+  Preview: "#include 'pch.h' #include 'TypeName.h' using namespace WadeSpace; TypeName::TypeName(shared_ptr<SpecifierQualifierList> specifierQualifierList) : spec..."
+- File: JWccLib\TypeName.h
+  Preview: "#pragma once #include 'SpecifierQualifierList.h' #include 'AbstractDeclarator.h' namespace WadeSpace { 	class TypeName 	{ 		shared_ptr<SpecifierQualif..."
+- File: JWccLib\TypeQualifier.cpp
+  Preview: "#include 'pch.h' #include 'TypeQualifier.h' #include 'Token.h' using namespace WadeSpace; using namespace std; TypeQualifier::TypeQualifier(shared_ptr..."
+- File: JWccLib\TypeQualifier.h
+  Preview: "#pragma once #include 'Token.h' #include 'TokenType.h' using namespace std; namespace WadeSpace { 	class TypeQualifier 	{ 		shared_ptr<CToken> type; 	..."
+- File: JWccLib\TypeSpecifier.cpp
+  Preview: "#include 'pch.h' #include 'TypeSpecifier.h' #include 'GlobalVars.h' #include 'StructOrUnionSpecifier.h' #include 'ExternalDeclaration.h' #include 'Com..."
+- File: JWccLib\TypeSpecifier.h
+  Preview: "#pragma once #include <string> #include <vector> #include <optional> #include 'TokenType.h' #include 'EnumSpecifier.h' namespace WadeSpace { 	class Ex..."
+- File: JWccTest\JWccTest.cpp
+  Preview: "#include 'pch.h' #include 'CppUnitTest.h' #include '..\JWccLib\BaseCodeGenerator.h' #include <string> // test helpers #include '..\JWccLib\Declaration..."
+- File: JWccTest\pch.cpp
+  Preview: "// pch.cpp: source file corresponding to the pre-compiled header #include 'pch.h' // When you are using pre-compiled headers, this source file is nece..."
+- File: JWccTest\pch.h
+  Preview: "// pch.h: This is a precompiled header file. // Files listed below are compiled only once, improving build performance for future builds. // This also..."
+- File: JWcpp\Errors.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\Errors.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\Floating.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\Floating.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\forwarddecls.h
+  Preview: "#pragma once #include <unordered_map> #include <string> enum class kw; class ppDefine; class ppInclude; class ppExpr; class ppMacro; template <typenam..."
+- File: JWcpp\InputFile.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\InputFile.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\MakeStubs.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\MakeStubs.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\pch.cpp
+  Preview: "#include 'pch.h' "
+- File: JWcpp\PipeArbitrator.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\PipeArbitrator.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\ppCommon.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\ppCond.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\ppCond.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\ppCtx.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\ppCtx.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\ppDefine.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\ppDefine.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\ppEmbed.cpp
+  Preview: "#include 'pch.h' #define _SILENCE_CXX17_STRSTREAM_DEPRECATION_WARNING 1 #include 'forwarddecls.h' #include 'ppEmbed.h' #include 'Utils.h' #include 'Te..."
+- File: JWcpp\ppEmbed.h
+  Preview: "#pragma once #include <functional> #include <memory> #include <string> #include <vector> #include 'ppInclude.h' #include 'Token.h' #include <limits.h>..."
+- File: JWcpp\ppError.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\ppError.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\ppExpr.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\ppExpr.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\ppFile.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\ppFile.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\ppInclude.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\ppInclude.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\ppkw.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\ppMacro.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\ppMacro.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\ppMacroStates.h
+  Preview: "#pragma once enum MacroStates {   MACRO_REPLACE_SIZE = 65536,   REPLACED_TOKENIZING = 1,   /* left or right-hand size of a ## when an arg has been rep..."
+- File: JWcpp\ppMain.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\ppMain.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\ppPragma.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\ppPragma.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\PreProcessor.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\PreProcessor.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\SymbolTable.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\SymbolTable.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\TemplatedToken.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2024 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\Token.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\Token.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcpp\TokenSettings.cpp
+  Preview: "#include 'pch.h' #include 'TokenSettings.h' #include <memory> #include 'UTF8.h' std::shared_ptr<TokenizerSettings> TokenizerSettings::instance; "
+- File: JWcpp\TokenSettings.h
+  Preview: "#pragma once #include 'ppCommon.h' #include <functional> #include <memory> #include 'UTF8.h' // This class creates a separation of concern from the te..."
+- File: JWcppLib\Errors.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\Errors.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\Floating.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\Floating.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\forwarddecls.h
+  Preview: "#pragma once #include <unordered_map> #include <string> enum class kw; class ppDefine; class ppInclude; class ppExpr; class ppMacro; template <typenam..."
+- File: JWcppLib\framework.h
+  Preview: "#pragma once #define WIN32_LEAN_AND_MEAN       // Exclude rarely-used stuff from Windows headers "
+- File: JWcppLib\InputFile.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\InputFile.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\JWcpp.cpp
+  Preview: "// JWcpp.cpp : Defines the functions for the static library. // #include 'pch.h' #include 'framework.h' // TODO: This is an example of a library funct..."
+- File: JWcppLib\MakeStubs.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\MakeStubs.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\pch.cpp
+  Preview: "// pch.cpp: source file corresponding to the pre-compiled header #include 'pch.h' // When you are using pre-compiled headers, this source file is nece..."
+- File: JWcppLib\pch.h
+  Preview: "// pch.h: This is a precompiled header file. // Files listed below are compiled only once, improving build performance for future builds. // This also..."
+- File: JWcppLib\PipeArbitrator.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\PipeArbitrator.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\ppCommon.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\ppCond.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\ppCond.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\ppCtx.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\ppCtx.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\ppDefine.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\ppDefine.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\ppEmbed.cpp
+  Preview: "#include 'pch.h' #define _SILENCE_CXX17_STRSTREAM_DEPRECATION_WARNING 1 #include 'forwarddecls.h' #include 'ppEmbed.h' #include 'Utils.h' #include 'Te..."
+- File: JWcppLib\ppEmbed.h
+  Preview: "#pragma once #include <functional> #include <memory> #include <string> #include <vector> #include 'ppInclude.h' #include 'Token.h' #include <limits.h>..."
+- File: JWcppLib\ppError.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\ppError.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\ppExpr.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\ppExpr.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\ppFile.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\ppFile.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\ppInclude.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\ppInclude.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\ppkw.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\ppMacro.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\ppMacro.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\ppMacroStates.h
+  Preview: "#pragma once enum MacroStates {   MACRO_REPLACE_SIZE = 65536,   REPLACED_TOKENIZING = 1,   /* left or right-hand size of a ## when an arg has been rep..."
+- File: JWcppLib\ppMain.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\ppMain.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\ppPragma.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\ppPragma.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\PreProcessor.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\PreProcessor.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\SymbolTable.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\SymbolTable.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\TemplatedToken.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2024 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\Token.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\Token.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWcppLib\TokenSettings.cpp
+  Preview: "#include 'pch.h' #include 'TokenSettings.h' #include <memory> #include 'UTF8.h' std::shared_ptr<TokenizerSettings> TokenizerSettings::instance; "
+- File: JWcppLib\TokenSettings.h
+  Preview: "#pragma once #include 'ppCommon.h' #include <functional> #include <memory> #include 'UTF8.h' // This class creates a separation of concern from the te..."
+- File: JWlink2\MISSING_FEATURES.md
+  Preview: "# JWlink2 Missing Features for JWlink Compatibility This is the working checklist for making JWlink2 a practical drop-in replacement for JWlink in nat..."
+- File: JWlink2\README.md
+  Preview: "# JWlink2 JWlink2 is an independent AMD64 linker that reads 64-bit COFF objects and Microsoft `.lib` archives and emits Windows PE32+ executables or D..."
+- File: JWlink2Test\JWlink2Test.cpp
+  Preview: "#include 'pch.h' #include 'CppUnitTest.h' #define NOMINMAX #include <Windows.h> #include <algorithm> #include <array> #include <atomic> #include <cstd..."
+- File: JWlink2Test\pch.cpp
+  Preview: "// pch.cpp: source file corresponding to the pre-compiled header #include 'pch.h' // When you are using pre-compiled headers, this source file is nece..."
+- File: JWlink2Test\pch.h
+  Preview: "// pch.h: This is a precompiled header file. // Files listed below are compiled only once, improving build performance for future builds. // This also..."
+- File: JWmake\Depends.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWmake\Depends.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWmake\Eval.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWmake\Eval.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWmake\IJobServer.h
+  Preview: "#pragma once namespace OMAKE { // A class that's (currently) dedicated to being a callback, theoretically should retain some parts of the current job-..."
+- File: JWmake\Include.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWmake\Include.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWmake\JobServer.cpp
+  Preview: "#include 'pch.h' #include 'JobServer.h' #include <random> #include <array> #include <algorithm> #include <string.h> #include 'BasicLogging.h' #include..."
+- File: JWmake\JobServer.h
+  Preview: "#pragma once #include 'IJobServer.h' #include <atomic> #include <stdexcept> #include <string> #include <type_traits> #include <utility> #include <memo..."
+- File: JWmake\MakeMain.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWmake\MakeMain.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWmake\Maker.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWmake\Maker.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWmake\os.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2026 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWmake\os.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWmake\Parser.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWmake\Parser.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWmake\pch.cpp
+  Preview: "#include 'pch.h' "
+- File: JWmake\pch.h
+  Preview: "#pragma once "
+- File: JWmake\Rule.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWmake\Rule.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWmake\Runner.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWmake\Runner.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWmake\semaphores.h
+  Preview: "#pragma once #ifdef TARGET_OS_WINDOWS #  define NOMINMAX 1 #  include <windows.h> #else #  include <semaphore.h> #  include <errno.h> #  include <fcnt..."
+- File: JWmake\Spawner.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWmake\Spawner.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWmake\Temp_JobserverWrapper.cpp
+  Preview: "#include 'pch.h' #ifdef _WIN32 #  include 'os_specific/windows/Win_Jobserver.cpp' #elif HAVE_UNISTD_H #  include 'os_specific/Linux/Linux_Jobserver.cp..."
+- File: JWmake\Variable.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWmake\Variable.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\Accelerators.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\Accelerators.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\Bitmap.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\Bitmap.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\Cursor.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\Cursor.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\demorc.h
+  Preview: "#ifdef RC_INVOKED #  define __NEXT_CONTROL_ID 1 #  define __NEXT_MENU_ID 10000 #  define __NEXT_RESOURCE_ID 11 #  define __NEXT_STRING_ID 1000 #endif ..."
+- File: JWrc\Dialog.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\Dialog.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\DlgInclude.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\DlgInclude.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\Expression.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\Expression.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\FileHeader.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\FileHeader.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\Font.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\Font.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\GenericResource.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\GenericResource.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\Icon.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\Icon.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\Lexer.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\Lexer.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\Menu.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\Menu.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\MessageTable.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\MessageTable.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\pch.cpp
+  Preview: "#include 'pch.h' "
+- File: JWrc\RCData.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\RCData.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\RCFile.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\RCFile.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\rckw.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\rcMain.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\rcMain.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\ResFile.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\ResFile.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\Resource.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\Resource.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\ResourceData.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\ResourceData.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\ResourceId.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\ResourceId.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\ResourceInfo.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\ResourceInfo.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\StringTable.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\StringTable.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\VersionInfo.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: JWrc\VersionInfo.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: Memory\framework.h
+  Preview: "#pragma once #define WIN32_LEAN_AND_MEAN       // Exclude rarely-used stuff from Windows headers "
+- File: Memory\Memory.cpp
+  Preview: "#include 'pch.h' #include 'framework.h' #include 'Memory.h' void* AllocateMemory(size_t size) { 	return calloc(1, size); } void FreeMemory(void* memor..."
+- File: Memory\Memory.h
+  Preview: "#pragma once #ifdef __cplusplus extern 'C' { #endif void* AllocateMemory(size_t size); void FreeMemory(void* memoryBlock); void* ReallocateMemory(void..."
+- File: Memory\pch.cpp
+  Preview: "// pch.cpp: source file corresponding to the pre-compiled header #include 'pch.h' // When you are using pre-compiled headers, this source file is nece..."
+- File: Memory\pch.h
+  Preview: "#ifndef PCH_H #define PCH_H #include <stdio.h> #include <stdlib.h> #include <stddef.h> #include <stdarg.h> #include <malloc.h> #include <ctype.h> #inc..."
+- File: PEDump\pch.cpp
+  Preview: "#include 'pch.h'"
+- File: PEDump\pch.h
+  Preview: "#pragma once #define _CRT_SECURE_NO_WARNINGS #include <windows.h> #include <stdio.h> #include <stdlib.h> #include <string.h> #include <time.h> #includ..."
+- File: PEDump\PEDump.cpp
+  Preview: "#include 'pch.h' #include 'ArgumentTable.h' #include 'BinaryFormat.h' #include 'MemoryMappedFile.h' using namespace std; using namespace BinaryFormat;..."
+- File: PEDump\symboltablesupport.h
+  Preview: " #ifndef _SYNBOLTABLESUPPORT_H_ #define _SYNBOLTABLESUPPORT_H_ class COFFSymbolTable; BOOL LookupSymbolName(DWORD index, PSTR buffer, UINT length); vo..."
+- File: Test1\dllmain.cpp
+  Preview: "// dllmain.cpp : Defines the entry point for the DLL application. #include 'pch.h' BOOL APIENTRY DllMain( HMODULE hModule,            DWORD ul_reason_..."
+- File: Test1\framework.h
+  Preview: "#pragma once #define WIN32_LEAN_AND_MEAN       // Exclude rarely-used stuff from Windows headers // Windows Header Files #include <windows.h> "
+- File: Test1\pch.cpp
+  Preview: "// pch.cpp: source file corresponding to the pre-compiled header #include 'pch.h' // When you are using pre-compiled headers, this source file is nece..."
+- File: Test1\pch.h
+  Preview: "// pch.h: This is a precompiled header file. // Files listed below are compiled only once, improving build performance for future builds. // This also..."
+- File: Test1\Test1.cpp
+  Preview: "// Test1.cpp : Defines the exported functions for the DLL. // #include 'pch.h' #include 'framework.h' #include 'Test1.h'  // This is an example of an ..."
+- File: Test1\Test1.h
+  Preview: "// The following ifdef block is the standard way of creating macros which make exporting // from a DLL simpler. All files within this DLL are compiled..."
+- File: util\BasicLogging.cpp
+  Preview: "#include 'pch.h' #include 'BasicLogging.h' namespace OrangeC { namespace Utils { int BasicLogger::verbosity = 0; std::string BasicLogger::prologue = '..."
+- File: util\BasicLogging.h
+  Preview: "#pragma once #include <string> #include <iostream> #include <utility> #include <functional> #include <type_traits> namespace OrangeC { namespace Utils..."
+- File: util\CmdFiles.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: util\CmdFiles.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: util\CmdSwitch.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: util\CmdSwitch.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: util\crc.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: util\FNV_hash.h
+  Preview: "#pragma once #include <cstdint> #include <cstring> namespace OrangeC { namespace Utils { // WARNING: unbounded strings and non-null-terminated strings..."
+- File: util\LSDateTime.h
+  Preview: "#ifndef LSDATE #define LSDATE __DATE__ #endif #ifndef LSTIME #define LSTIME __TIME__ #endif "
+- File: util\NamedPipe.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: util\newoperator.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: util\pch.cpp
+  Preview: "#include 'pch.h' "
+- File: util\pch.h
+  Preview: "#pragma once "
+- File: util\Random.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: util\SharedMemory.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: util\SharedMemory.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: util\ToolChain.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: util\ToolChain.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: util\UTF8.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: util\UTF8.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: util\UTF8Table.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: util\UTF8Upper.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: util\Utils.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * * *  ..."
+- File: util\Utils.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: util\xml.cpp
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: util\xml.h
+  Preview: "/* Software License Agreement * *   Copyright(C) 1994-2025 David Lindauer, (LADSoft) * *   This file is part of the Orange C Compiler package. * *   T..."
+- File: Arguments2\src\CMakeLists.txt
+  Preview: "# Copyright (c) 2017-2026, University of Cincinnati, developed by Henry Schreiner # under NSF AWARD 1414736 and by the respective contributors. # All ..."
+- File: Arguments2\src\Precompile.cpp
+  Preview: "// Copyright (c) 2017-2026, University of Cincinnati, developed by Henry Schreiner // under NSF AWARD 1414736 and by the respective contributors. // A..."
+- File: Decompiler\include\platform.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Axel Souchet & Nguyen Anh Quynh, 2014 */ #ifndef CAPSTONE_PLATFORM_H #define CAPSTONE_PLATFORM_H // handle C99..."
+- File: dosbox-x\.vscode\c_cpp_properties.json
+  Preview: "{   'configurations': [     {       'name': 'SDL1 Debug Win32/Win64',       'browse': {         'path': [           '${workspaceFolder}'         ],   ..."
+- File: dosbox-x\.vscode\launch.json
+  Preview: "{   // Use IntelliSense to learn about possible attributes.   // Hover to view descriptions of existing attributes.   // For more information, visit: ..."
+- File: dosbox-x\.vscode\tasks.json
+  Preview: "{   // See https://go.microsoft.com/fwlink/?LinkId=733558   // for the documentation about the tasks.json format   'version': '2.0.0',   'tasks': [   ..."
+- File: dosbox-x\BUGS\Complex - Dope.txt
+  Preview: "'Dope' demo bugs (DOSBox-X's fault) BUG: Noticeable pause of music at points where VGA BIOS is called to set video mode during demo    However, this p..."
+- File: dosbox-x\BUGS\Impact Studios - Legend.txt
+  Preview: "Impact Studio - Legends ========================================================== THESE BUGS ARE FIXED ==============================================..."
+- File: dosbox-x\BUGS\Magic 12 - Show.txt
+  Preview: "Magic 12 - Show bug report ========================================================= THESE ARE NOT BUGS IN DOSBOX, BUT NOTED =========================..."
+- File: dosbox-x\BUGS\Microsoft Windows 98 SE.txt
+  Preview: " FIXME: I'm seeing (on fresh install) Windows showing notification of invalid page faults    in RUNDLL32.DLL pointing to memory address 0x984. Is this..."
+- File: dosbox-x\BUGS\Microsoft Windows NT 3.1.txt
+  Preview: "Bugs with DOSBox-X and Windows NT 3.1 - The ET4000 SVGA driver changes the upper-left most text cell purple on  the NT boot screen - In low memory con..."
+- File: dosbox-x\BUGS\MSD Microsoft Diagnostics (MS-DOS 6.22).txt
+  Preview: "If no floppies are mounted, MSD.EXE reports two 5.25' 360KB floppy drives (wrong!). If at least one floppy drive is mounted, MSD.EXE correctly reports..."
+- File: dosbox-x\BUGS\Open Watcom 1.9 installer.txt
+  Preview: "- If the DBCS table is disabled, the Open Watcom 1.9 installer will  cause an exception in the CauseWay DOS extender when you run the  installer. - If..."
+- File: dosbox-x\BUGS\VGA emulation errors.txt
+  Preview: "VGA BUG: Color palette error, last color of the palette, usually if it's white,     instead usually comes out black.  - Surprise! productions, The Goo..."
+- File: dosbox-x\BUGS\VGA raster errors.txt
+  Preview: " "
+- File: dosbox-x\BUGS\VGA tearline bugs.txt
+  Preview: " "
+- File: dosbox-x\chk\chk.cpp
+  Preview: " #include <stdio.h> void __attribute__((noinline)) func1(int arg1) { 	int stuff1 = 3,stuff4 = 4; 	printf('%u/%u/%u\n',stuff1,stuff4,arg1); } int main(..."
+- File: dosbox-x\chk\chk.study.txt
+  Preview: " chk:   file format elf32-i386  Disassembly of section .init: 0804832c <_init>: 804832c:	53          	push  %ebx 804832d:	83 ec 08       	sub  $0x8,%e..."
+- File: dosbox-x\docs\BDA - BIOS Data Area - PC Memory Map.txt
+  Preview: "http://stanislavs.org/helppc/bios_data_area.html BDA - BIOS Data Area - PC Memory Map 	Address Size	  Description 	00:00 256dwords Interrupt vector ta..."
+- File: dosbox-x\docs\DOS GAMES THAT NEED A HIGHER MCB BASE SEGMENT.TXT
+  Preview: " DOS games/applications that will not work correctly unless given a minimum MCB segment that is higher than default:                     recommended g..."
+- File: dosbox-x\docs\PC-98 display terminology.txt
+  Preview: "This is posted here in the source tree in the event it gets lost in Github's issue tracker. From hdk1983: ... The second part of the undocumented_mem/..."
+- File: dosbox-x\docs\Runtime media swapping.txt
+  Preview: "== Floppy image swapping == If you are booting from floppy using the BOOT command (but not yet the IMGMOUNT command), you can use the SwapFloppy key c..."
+- File: dosbox-x\docs\Windows 3.0 and later EGA, VGA driver notes.txt
+  Preview: "Notes: - Starting with Windows 3.0, the stock EGA/VGA drivers require a 80186 or  higher, they do not work on an 8086. This is due to the use of instr..."
+- File: dosbox-x\docs\WINDOWS DOS VM TEST RESULTS.TXT
+  Preview: "Windows 3.11/95 DOS VM save/restore test results machine=svga_s3  N - WIN31   WIN95  0 - PASSED  PASSED 1 - PASSED  PASSED 2 - PASSED  PASSED 3 - PASS..."
+- File: dosbox-x\include\8255.h
+  Preview: " //! \brief Intel 8255 base emulation class //! //! \description Intel 8255 Programmable Peripheral Interface emulation class. //!       The base clas..."
+- File: dosbox-x\include\bios.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\bios_disk.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\bitmapinfoheader.h
+  Preview: " #ifndef __ISP_UTILS_V4_BITMAPINFOHEADER #define __ISP_UTILS_V4_BITMAPINFOHEADER #include 'guid.h' /* [doc] windows_BITMAPFILEHEADER * * Packed portab..."
+- File: dosbox-x\include\bitop.h
+  Preview: " #ifndef DOSBOX_BITOP_H #define DOSBOX_BITOP_H #include <limits.h> namespace bitop { /* Return the number of bits of the data type. * * The return val..."
+- File: dosbox-x\include\build_timestamp.h
+  Preview: "/*auto-generated*/ #define UPDATED_STR 'Aug 2, 2026 12:07:51pm' #define GIT_COMMIT_HASH 'e522642' #define COPYRIGHT_END_YEAR '2026' "
+- File: dosbox-x\include\builtin.h
+  Preview: " #include 'dos_inc.h' #include '../src/builtin/zip.h' #include '../src/builtin/eval.h' #include '../src/builtin/cdplay.h' #include '../src/builtin/dos..."
+- File: dosbox-x\include\byteorder.h
+  Preview: " /* Emscripten does not have endian.h */ # if defined(EMSCRIPTEN) # include <endian.h> /* MinGW implements some MSVC idioms, so always test for MinGW ..."
+- File: dosbox-x\include\callback.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\clockdomain.h
+  Preview: " /* DOSBox-X clock domain class. * The clock domain implementation allows DOSBox-X to accurately * track time in clocks instead of less precise floati..."
+- File: dosbox-x\include\control.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\cp1250_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp1250_to_unicode[256] = { 	0x0000,0x0001,0x0002,0x0003,0x0004,0x0005,0x0..."
+- File: dosbox-x\include\cp1251_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp1251_to_unicode[256] = { 	0x0000,0x0001,0x0002,0x0003,0x0004,0x0005,0x0..."
+- File: dosbox-x\include\cp1252_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp1252_to_unicode[256] = { 	0x0000,0x0001,0x0002,0x0003,0x0004,0x0005,0x0..."
+- File: dosbox-x\include\cp1253_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp1253_to_unicode[256] = { 	0x0000,0x0001,0x0002,0x0003,0x0004,0x0005,0x0..."
+- File: dosbox-x\include\cp1254_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp1254_to_unicode[256] = { 	0x0000,0x0001,0x0002,0x0003,0x0004,0x0005,0x0..."
+- File: dosbox-x\include\cp1255_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp1255_to_unicode[256] = { 	0x0000,0x0001,0x0002,0x0003,0x0004,0x0005,0x0..."
+- File: dosbox-x\include\cp1256_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp1256_to_unicode[256] = { 	0x0000,0x0001,0x0002,0x0003,0x0004,0x0005,0x0..."
+- File: dosbox-x\include\cp1257_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp1257_to_unicode[256] = { 	0x0000,0x0001,0x0002,0x0003,0x0004,0x0005,0x0..."
+- File: dosbox-x\include\cp1258_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp1258_to_unicode[256] = { 	0x0000,0x0001,0x0002,0x0003,0x0004,0x0005,0x0..."
+- File: dosbox-x\include\cp3021_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp3021_to_unicode[256] = { 	0x0000,0x0001,0x0002,0x0003,0x0004,0x0005,0x0..."
+- File: dosbox-x\include\cp437_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp437_to_unicode[256] = { 	0x0000,0x263a,0x263b,0x2665,0x2666,0x2663,0x26..."
+- File: dosbox-x\include\cp737_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp737_to_unicode[256] = { 	0x0000,0x0001,0x0002,0x0003,0x0004,0x0005,0x00..."
+- File: dosbox-x\include\cp775_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp775_to_unicode[256] = { 	0x0000,0x0001,0x0002,0x0003,0x0004,0x0005,0x00..."
+- File: dosbox-x\include\cp808_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp808_to_unicode[256] = { 	0x0000,0x263a,0x263b,0x2665,0x2666,0x2663,0x26..."
+- File: dosbox-x\include\cp850_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp850_to_unicode[256] = { 	0x0000,0x263a,0x263b,0x2665,0x2666,0x2663,0x26..."
+- File: dosbox-x\include\cp852_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp852_to_unicode[256] = { 	0x0000,0x263a,0x263b,0x2665,0x2666,0x2663,0x26..."
+- File: dosbox-x\include\cp853_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp853_to_unicode[256] = { 	0x0000,0x263a,0x263b,0x2665,0x2666,0x2663,0x26..."
+- File: dosbox-x\include\cp855_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp855_to_unicode[256] = { 	0x0000,0x263a,0x263b,0x2665,0x2666,0x2663,0x26..."
+- File: dosbox-x\include\cp856_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp856_to_unicode[256] = { 	0x0000,0x0001,0x0002,0x0003,0x0004,0x0005,0x00..."
+- File: dosbox-x\include\cp857_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp857_to_unicode[256] = { 	0x0000,0x263a,0x263b,0x2665,0x2666,0x2663,0x26..."
+- File: dosbox-x\include\cp858_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp858_to_unicode[256] = { 	0x0000,0x263a,0x263b,0x2665,0x2666,0x2663,0x26..."
+- File: dosbox-x\include\cp859_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp859_to_unicode[256] = { 	0x0000,0x263a,0x263b,0x2665,0x2666,0x2663,0x26..."
+- File: dosbox-x\include\cp860_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp860_to_unicode[256] = { 	0x0000,0x0001,0x0002,0x0003,0x0004,0x0005,0x00..."
+- File: dosbox-x\include\cp861_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp861_to_unicode[256] = { 	0x0000,0x0001,0x0002,0x0003,0x0004,0x0005,0x00..."
+- File: dosbox-x\include\cp862_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp862_to_unicode[256] = { 	0x0000,0x0001,0x0002,0x0003,0x0004,0x0005,0x00..."
+- File: dosbox-x\include\cp863_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp863_to_unicode[256] = { 	0x0000,0x0001,0x0002,0x0003,0x0004,0x0005,0x00..."
+- File: dosbox-x\include\cp864_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp864_to_unicode[256] = { 	0x0000,0x0001,0x0002,0x0003,0x0004,0x0005,0x00..."
+- File: dosbox-x\include\cp865_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp865_to_unicode[256] = { 	0x0000,0x0001,0x0002,0x0003,0x0004,0x0005,0x00..."
+- File: dosbox-x\include\cp866_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp866_to_unicode[256] = { 	0x0000,0x263a,0x263b,0x2665,0x2666,0x2663,0x26..."
+- File: dosbox-x\include\cp867_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp867_to_unicode[256] = { 	0x0000,0x05d0,0x05d1,0x05d2,0x05d3,0x05d4,0x05..."
+- File: dosbox-x\include\cp868_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp868_to_unicode[256] = { 	0x0000,0x263a,0x263b,0x2665,0x2666,0x2663,0x26..."
+- File: dosbox-x\include\cp869_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp869_to_unicode[256] = { 	0x0000,0x263a,0x263b,0x2665,0x2666,0x2663,0x26..."
+- File: dosbox-x\include\cp872_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp872_to_unicode[256] = { 	0x0000,0x263a,0x263b,0x2665,0x2666,0x2663,0x26..."
+- File: dosbox-x\include\cp874_uni.h
+  Preview: "/* single-byte charset to unicode. 0x0000 means no mapping */ const uint16_t cp874_to_unicode[256] = { 	0x0000,0x0001,0x0002,0x0003,0x0004,0x0005,0x00..."
+- File: dosbox-x\include\cp932_uni.h
+  Preview: "/* DBCS (double-byte) charset to unicode. 0x0000 means no mapping */ /* hi = (code >> 6) */ /* lo = code & 0x3F */ /* rawoff = cp932_to_unicode_hitbl[..."
+- File: dosbox-x\include\cp936_uni.h
+  Preview: "/* DBCS (double-byte) charset to unicode. 0x0000 means no mapping */ /* hi = (code >> 6) */ /* lo = code & 0x3F */ /* rawoff = cp936_to_unicode_hitbl[..."
+- File: dosbox-x\include\cp949_uni.h
+  Preview: "/* DBCS (double-byte) charset to unicode. 0x0000 means no mapping */ /* hi = (code >> 6) */ /* lo = code & 0x3F */ /* rawoff = cp949_to_unicode_hitbl[..."
+- File: dosbox-x\include\cp950_uni.h
+  Preview: "/* DBCS (double-byte) charset to unicode. 0x0000 means no mapping */ /* hi = (code >> 6) */ /* lo = code & 0x3F */ /* rawoff = cp950_to_unicode_hitbl[..."
+- File: dosbox-x\include\cp951_uni.h
+  Preview: "/* DBCS (double-byte) charset to unicode. 0x0000 means no mapping */ /* hi = (code >> 6) */ /* lo = code & 0x3F */ /* rawoff = cp951_to_unicode_hitbl[..."
+- File: dosbox-x\include\cpu.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\cpu_io_is_forbidden.h
+  Preview: " #undef mem_readb #define mem_readb(x) THIS_IS_ILLEGAL_HERE #undef mem_writeb #define mem_writeb(x,b) THIS_IS_ILLEGAL_HERE #undef mem_readw #define me..."
+- File: dosbox-x\include\cross.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\crypt.h
+  Preview: "/* crypt.h -- base code for crypt/uncrypt ZIPfile   Version 1.01e, February 12th, 2005   Copyright (C) 1998-2005 Gilles Vollant   This code is a modif..."
+- File: dosbox-x\include\debug.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\dma.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\dosbox.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\dosbox224x163.h
+  Preview: "unsigned char dosbox224x163_png[] = {  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,  0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x..."
+- File: dosbox-x\include\dosbox224x186.h
+  Preview: "unsigned char dosbox224x186_png[] = {  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,  0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x..."
+- File: dosbox-x\include\dosbox224x224.h
+  Preview: "unsigned char dosbox224x224_png[] = {  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,  0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x..."
+- File: dosbox-x\include\dosbox224x93.h
+  Preview: "unsigned char dosbox224x93_png[] = {  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,  0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x0..."
+- File: dosbox-x\include\DOSBoxTTF.h
+  Preview: "unsigned char DOSBoxTTFbi[48868]= { 	0x00,0x01,0x00,0x00,0x00,0x10,0x01,0x00,0x00,0x04,0x00, 	0x00,0x46,0x46,0x54,0x4D,0x70,0x79,0x49,0x3B,0x00,0x00, ..."
+- File: dosbox-x\include\dos_inc.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\dos_mcb.h
+  Preview: "#pragma once #include <algorithm> #include <array> #include <cstring> #include <cstdint> #include <string> #include 'dos_inc.h' class DOS_MCB : public..."
+- File: dosbox-x\include\dos_system.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\eltorito.h
+  Preview: " bool ElTorito_ChecksumRecord(unsigned char *entry/*32 bytes*/); bool ElTorito_ScanForBootRecord(CDROM_Interface *drv,unsigned long &boot_record,unsig..."
+- File: dosbox-x\include\enet.h
+  Preview: "/** * include/enet.h - a Single-Header auto-generated variant of enet.h library. * * Usage: * #define ENET_IMPLEMENTATION exactly in ONE source file r..."
+- File: dosbox-x\include\ethernet.h
+  Preview: "/* * Copyright (C) 2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU Gener..."
+- File: dosbox-x\include\fluidsynth.h
+  Preview: "/* FluidSynth - A Software Synthesizer * * Copyright (C) 2003 Peter Hanappe and others. * * This library is free software; you can redistribute it and..."
+- File: dosbox-x\include\fpu.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\fpu_control_x86.h
+  Preview: "/* FPU control word bits. x86-64 version.  Copyright (C) 1993,1995,1996,1997,1998,2000,2001,2002 Free Software Foundation, Inc.  This file is part of ..."
+- File: dosbox-x\include\glide.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\glidedef.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\hardware.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\iconvpp.hpp
+  Preview: " #ifndef DOSBOX_DOSBOX_H # error do not include directly #endif #if defined(__MINGW32__) || defined(_WIN32) || defined(WINDOWS) #define NOMINMAX # inc..."
+- File: dosbox-x\include\ide.h
+  Preview: "/* * IDE ATA/ATAPI emulation */ #ifndef DOSBOX_IDE_H #define DOSBOX_IDE_H #include 'setup.h' #define MAX_IDE_CONTROLLERS 	8 extern const char *ide_nam..."
+- File: dosbox-x\include\iglib.h
+  Preview: " /* this header is copied to/from the doslib.h copy */ #ifndef __DOSLIB_HW_IDE_DOSBOXIGLIB_H #define __DOSLIB_HW_IDE_DOSBOXIGLIB_H #ifdef __cplusplus ..."
+- File: dosbox-x\include\imagedisk_d88.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\imagedisk_eltorito.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\imagedisk_emptydrive.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\imagedisk_int13.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\imagedisk_msdosblockdev.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\imagedisk_nfd.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\imagedisk_teledisk.h
+  Preview: "/* * Copyright (C) 2026 The DOSBox-X Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU Gen..."
+- File: dosbox-x\include\imagedisk_vfd.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\informational.h
+  Preview: " #ifndef __ISP_UTILS_V4_MISC_INFORMATIONAL_H #define __ISP_UTILS_V4_MISC_INFORMATIONAL_H /* informational #defines that may or may not have any effect..."
+- File: dosbox-x\include\inout.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\ioapi.h
+  Preview: "/* ioapi.h -- IO base function header for compress/uncompress .zip  part of the MiniZip project - ( http://www.winimage.com/zLibDll/minizip.html )    ..."
+- File: dosbox-x\include\iowin32.h
+  Preview: "/* iowin32.h -- IO base function header for compress/uncompress .zip   Version 1.1, February 14h, 2010   part of the MiniZip project - ( http://www.wi..."
+- File: dosbox-x\include\ipx.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\ipxserver.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\jfont.h
+  Preview: " #ifndef DOSBOX_JEGA #define DOSBOX_JEGA #ifndef DOSBOX_DOSBOX_H #include 'dosbox.h' #endif #include 'setup.h' /* AX Global Area */ #define BIOSMEM_AX..."
+- File: dosbox-x\include\joystick.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\keyboard.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\keymap.h
+  Preview: "/* DOSBox-X keymap handling */ #ifndef __DOSBOX_X_KEYMAP #define __DOSBOX_X_KEYMAP /* these enumerations are meant to represent the host OS keyboard m..."
+- File: dosbox-x\include\logging.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\mapper.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\mem.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\menu.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\menudef.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\midi.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\mixer.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\mmx.h
+  Preview: "/*removed*/ "
+- File: dosbox-x\include\mouse.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\mztools.h
+  Preview: "/*  Additional tools for Minizip  Code: Xavier Roche '2004  License: Same as ZLIB (www.gzip.org) */ #ifndef _zip_tools_H #define _zip_tools_H #ifdef _..."
+- File: dosbox-x\include\ne2000.h
+  Preview: "///////////////////////////////////////////////////////////////////////// // $Id: ne2k.h,v 1.11.2.3 2003/04/06 17:29:49 bdenney Exp $ ////////////////..."
+- File: dosbox-x\include\np2glue.h
+  Preview: "/* The purpose of this header is to provide defines and macros * to help port code from Neko Project II and match the typedefs * it uses. */ #include ..."
+- File: dosbox-x\include\ntddcdrm.h
+  Preview: "/* * ntddcdrm.h * * CDROM IOCTL interface. * * This file is part of the w32api package. * * Contributors: *  Created by Casper S. Hornstrup <chorns@us..."
+- File: dosbox-x\include\ntddscsi.h
+  Preview: "/* * ntddscsi.h * * SCSI port IOCTL interface. * * This file is part of the w32api package. * * Contributors: *  Created by Casper S. Hornstrup <chorn..."
+- File: dosbox-x\include\opus.h
+  Preview: "/* Copyright (c) 2010-2011 Xiph.Org Foundation, Skype Limited  Written by Jean-Marc Valin and Koen Vos */ /*  Redistribution and use in source and bin..."
+- File: dosbox-x\include\opusfile.h
+  Preview: "/******************************************************************** *                                 * * THIS FILE IS PART OF THE libopusfile SOFTW..."
+- File: dosbox-x\include\opus_custom.h
+  Preview: "/* Copyright (c) 2007-2008 CSIRO  Copyright (c) 2007-2009 Xiph.Org Foundation  Copyright (c) 2008-2012 Gregory Maxwell  Written by Jean-Marc Valin and..."
+- File: dosbox-x\include\opus_defines.h
+  Preview: "/* Copyright (c) 2010-2011 Xiph.Org Foundation, Skype Limited  Written by Jean-Marc Valin and Koen Vos */ /*  Redistribution and use in source and bin..."
+- File: dosbox-x\include\opus_multistream.h
+  Preview: "/* Copyright (c) 2011 Xiph.Org Foundation  Written by Jean-Marc Valin */ /*  Redistribution and use in source and binary forms, with or without  modif..."
+- File: dosbox-x\include\opus_projection.h
+  Preview: "/* Copyright (c) 2017 Google Inc.  Written by Andrew Allen */ /*  Redistribution and use in source and binary forms, with or without  modification, ar..."
+- File: dosbox-x\include\opus_types.h
+  Preview: "/* (C) COPYRIGHT 1994-2002 Xiph.Org Foundation */ /* Modified by Jean-Marc Valin */ /*  Redistribution and use in source and binary forms, with or wit..."
+- File: dosbox-x\include\paging.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\parport.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\pc98_artic.h
+  Preview: " #include 'dos_inc.h' Bitu pc98_read_artic(Bitu port,Bitu iolen); "
+- File: dosbox-x\include\pc98_cg.h
+  Preview: " /* mapping function from 16-bit WORD to font RAM offset */ /* in: code = 16-bit JIS code word (unshifted) *   line = scan line within character cell ..."
+- File: dosbox-x\include\pc98_dac.h
+  Preview: " void pc98_update_palette(void); void pc98_update_digpal(unsigned char ent); void pc98_set_digpal_entry(unsigned char ent,unsigned char grb); void pc9..."
+- File: dosbox-x\include\pc98_gdc.h
+  Preview: " #include 'dos_inc.h' #define PC98_GDC_FIFO_SIZE   32   /* taken from Neko Project II, but what is it really? */ #define GDC_COMMAND_BYTE    0x100 enu..."
+- File: dosbox-x\include\pc98_gdc_const.h
+  Preview: " enum {   GDC_CMD_RESET = 0x00,            // 0  0  0  0  0  0  0  0   GDC_CMD_DISPLAY_BLANK = 0x0C,        // 0  0  0  0  1  1  0  DE   GDC_CMD_SYNC ..."
+- File: dosbox-x\include\pci_bus.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\pic.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\programs.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\ptrop.h
+  Preview: " #include <stdint.h> namespace ptrop { /* return the misalignment in bytes of 'p' in the context of a data type of size 'A', * 'A' must be a power of ..."
+- File: dosbox-x\include\qcow2_disk.h
+  Preview: "/* * Copyright (C) 2016 Michael Greger * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU Genera..."
+- File: dosbox-x\include\rawint.h
+  Preview: " #ifndef __ISP_UTILS_MISC_RAWINT_H #define __ISP_UTILS_MISC_RAWINT_H #include <stdint.h> static inline uint16_t __le_u16(const void *p) { 	return *((u..."
+- File: dosbox-x\include\regionalloctracking.h
+  Preview: " #ifndef DOSBOX_REGIONALLOCTRACKING_H #define DOSBOX_REGIONALLOCTRACKING_H /* rombios memory block */ class RegionAllocTracking { public: 	class Block..."
+- File: dosbox-x\include\regs.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\render.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\resource.h
+  Preview: "#define	dosbox_ico	102 #define	ID_OPENFILE	103 #define	ID_KEYMAP	104 #define	ID_DOSBOX_SECTION	105 #define	ID_CAPMOUSE	106 #define	ID_PAUSE	107 #defin..."
+- File: dosbox-x\include\sdk2_glide.h
+  Preview: "/* ** Copyright (c) 1995, 3Dfx Interactive, Inc. ** All Rights Reserved. ** ** This is UNPUBLISHED PROPRIETARY SOURCE CODE of 3Dfx Interactive, Inc.; ..."
+- File: dosbox-x\include\sdlmain.h
+  Preview: " #include 'menu.h' #include 'mouse.h' #include 'video.h' #include 'SDL.h' #ifdef __WIN32__ #include 'SDL_syswm.h' #endif #ifndef DOSBOX_SDLMAIN_H #def..."
+- File: dosbox-x\include\SDL_cdrom.h
+  Preview: "#if defined(C_SDL2) #include 'vs/sdl/src/cdrom/compat_SDL_cdrom.h' #else #include 'vs/sdl/include/SDL_cdrom.h' #endif"
+- File: dosbox-x\include\SDL_ttf.h
+  Preview: "/*  SDL_ttf: A companion library to SDL for working with TrueType (tm) fonts  Copyright (C) 2001-2019 Sam Lantinga <slouken@libsdl.org>  This software..."
+- File: dosbox-x\include\serialport.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\setup.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\shell.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\shiftjis.h
+  Preview: "extern bool del_flag; struct ShiftJISDecoder {             ShiftJISDecoder();   void        reset(void);   bool        take(unsigned char c);   bool  ..."
+- File: dosbox-x\include\support.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\timer.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\uint64_const.h
+  Preview: " #ifndef ISP_UTILS_MISC_UINT64_CONST_H #define ISP_UTILS_MISC_UINT64_CONST_H #ifndef INT64_C #define INT64_C(v)  (v ## LL) #endif #ifndef UINT64_C #de..."
+- File: dosbox-x\include\unzip.h
+  Preview: "/* unzip.h -- IO for uncompress .zip files using zlib  Version 1.1, February 14h, 2010  part of the MiniZip project - ( http://www.winimage.com/zLibDl..."
+- File: dosbox-x\include\util_math.h
+  Preview: " #include <math.h> /* sqrtf */ //! \brief Get value sign, i.e. less than zero: -1, zero: 0, greater than zero: 1. template <typename T> static inline ..."
+- File: dosbox-x\include\util_pointer.h
+  Preview: "/* (C) 2014 Castus all rights reserved. * Written by Jonathan Campbell * * Intended language: C (also compatible with C++) */ #ifndef __UTIL_POINTER_H..."
+- File: dosbox-x\include\util_units.h
+  Preview: " #ifndef _UTIL_UNITS_H #define _UTIL_UNITS_H /* useful unit macros for constants */ #define _KB_bytes(x)		(((Bitu)x) << (Bitu)10UL) #define _MB_bytes(..."
+- File: dosbox-x\include\version_string.h
+  Preview: "/* * Copyright (C) 2011-2023 The DOSBox-X Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GN..."
+- File: dosbox-x\include\vga.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\video.h
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\include\voodoo.h
+  Preview: " /* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU..."
+- File: dosbox-x\include\waveformatex.h
+  Preview: " #ifndef __ISP_UTILS_V4_WIN_WAVEFORMATEX_H #define __ISP_UTILS_V4_WIN_WAVEFORMATEX_H #include 'guid.h'	/* <- need windows_GUID definition below */ #if..."
+- File: dosbox-x\include\wave_mmreg.h
+  Preview: " #ifndef __ISP_UTILS_V4_WAVEMMREG_H #define __ISP_UTILS_V4_WAVEMMREG_H /* [doc] windows_WAVE_FORMAT_... constants *  * windows_WAVE_FORMAT_PCM       8..."
+- File: dosbox-x\include\whereami.h
+  Preview: "// (‑●‑●)> dual licensed under the WTFPL v2 and MIT licenses //  without any warranty. //  by Gregory Pakosz (@gpakosz) // https://github.com/gpakosz/..."
+- File: dosbox-x\include\zip.h
+  Preview: "/* zip.h -- IO on .zip files using zlib  Version 1.1, February 14h, 2010  part of the MiniZip project - ( http://www.winimage.com/zLibDll/minizip.html..."
+- File: dosbox-x\include\zipcppstdbuf.h
+  Preview: " #ifndef ZIPSTREAMBUF #define ZIPSTREAMBUF #include 'zip.h' #include 'unzip.h' #include 'ioapi.h' #include <assert.h> /* std::streambuf for writing to..."
+- File: dosbox-x\include\zipcrc.h
+  Preview: "/** * \file zipcrc.h * Functions and types for CRC checks. * * Generated on Sat Jul 29 13:31:06 2017, * by pycrc v0.9, https://pycrc.org * using the c..."
+- File: dosbox-x\include\zipfile.h
+  Preview: " #ifndef ZIPFILE_H #define ZIPFILE_H #include <stdint.h> extern 'C' { #include 'zipcrc.h' } #include <map> #pragma pack(push,1) struct ZIPLocalFileHea..."
+- File: dosbox-x\NOTES\Alpha waves (infogames).txt
+  Preview: "Alpha Waves (infogames) Bugs: - VGA/EGA flickering at the bottom of the screen - Music seems to alternate every so often between two speeds, normal, a..."
+- File: dosbox-x\NOTES\Complex - Dope.txt
+  Preview: "'Dope' demo notes - PIT 0 timer runs at a constant 72.503Hz. Hacking it to run faster (421Hz for example)  however actually makes the demo run slower!..."
+- File: dosbox-x\NOTES\Crystal Dream II.txt
+  Preview: "Crystal Dream II notes: - Flickering issues, problems with vertical retrace timing.  If playing to GUS or Sound Blaster, the demo attempt to measure  ..."
+- File: dosbox-x\NOTES\Drums & Pipes.txt
+  Preview: "Drums & Pipes (musicdisk) - DMA-based Sound Blaster support is buggy. For best results use Non-DMA Sound Blaster. "
+- File: dosbox-x\NOTES\Nooon - No!.txt
+  Preview: "No! by Nooon Requirements: - xms=true (the demo will hang on startup if xms=false) - extended memory - at least cycles count 12000 "
+- File: dosbox-x\NOTES\Optic Nerve (demo).txt
+  Preview: "Optic Nerve Requirements: - xms=false (the demo will not start if HIMEM.SYS is present) - extended memory (4MB at least) - at least cycles count 12000..."
+- File: dosbox-x\NOTES\Project Angel (demo).txt
+  Preview: "Project Angel Requirements: - xms=false (the demo will not start if HIMEM.SYS is present) - emm=false (the demo will not start if EMM386.EXE is presen..."
+- File: dosbox-x\NOTES\Scroll Land by TSI (1991).txt
+  Preview: "Here's an unusual case of legacy DOS code: This demo left me scratching my head for months on why it seemed to support Sound Blaster, but failed to pr..."
+- File: dosbox-x\NOTES\Tempest 2000.txt
+  Preview: "Tempest 2000 will generally work fine in DOSBox-X. You will need to enable expanded memory. Known issues: 1. If you have dynamic kernel allocation ena..."
+- File: dosbox-x\NOTES\Triton - Crystal Dream.txt
+  Preview: "Triton 'Crystal Dreams' (1992) DOS demo [http://www.pouet.net/prod.php?which=463] How to configure DOSBox to run this demo: --------------------------..."
+- File: dosbox-x\NOTES\Windows ME setup program.txt
+  Preview: "It is possible to install Windows ME properly without crashing. It requires some workarounds and changing parameters per boot, but it is possible. 1. ..."
+- File: dosbox-x\NOTES\Windows RT.txt
+  Preview: "- Windows RT ARM, using Visual Studio, is always ARMv7 Thumb  [https://github.com/joncampbell123/dosbox-x/pull/1419] "
+- File: dosbox-x\optimization-1\DosBox.txt
+  Preview: "* DosBox 0.74 I applied the patches that I developped for previous DosBox versions. Then I tried to get more performance and it was hard. Currently, t..."
+- File: dosbox-x\patch-integration\Skipped SVN commits.txt
+  Preview: "Commit#:	Reason for skipping: 4038		Conflict 4049		Conflict 4055		Conflict 4056		Not sure if needed 4065		Might conflict 4066		Conflict 4067		Conflict..."
+- File: dosbox-x\src\dosbox.cpp
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\src\os2res.h
+  Preview: " #define INPUTBOX_DLG 100 #define IB_INPUT 101 #define IB_LABEL 102 "
+- File: dosbox-x\src\resource.h
+  Preview: "//{{NO_DEPENDENCIES}} // Microsoft Visual C++ generated include file. // Used by winres.rc // #define ID_SEPARATOR          0 #define VS_VERSION_INFO ..."
+- File: dosbox-x\src\winres.h
+  Preview: "/* Stub for GNU binutils */ "
+- File: dosbox-x\tests\dosbox_test_fixture.h
+  Preview: "#ifndef DOSBOX_TEST_FIXTURE_H #define DOSBOX_TEST_FIXTURE_H #include <iterator> #include <string> #include <gtest/gtest.h> #define SDL_MAIN_HANDLED #i..."
+- File: dosbox-x\tests\dos_files_tests.cpp
+  Preview: "/* * SPDX-License-Identifier: GPL-2.0-or-later * * Copyright (C) 2020-2021 The DOSBox Staging Team * * This program is free software; you can redistri..."
+- File: dosbox-x\tests\drives_tests.cpp
+  Preview: "/* * SPDX-License-Identifier: GPL-2.0-or-later * * Copyright (C) 2020-2021 The DOSBox Staging Team * * This program is free software; you can redistri..."
+- File: dosbox-x\tests\readme.txt
+  Preview: "Source files in this subdirectory contain unit tests. They use gTest and gMock for running unit testing. Unit tests can be launched with 'dosbox-x -te..."
+- File: dosbox-x\tests\shell_cmds_tests.cpp
+  Preview: "/* * SPDX-License-Identifier: GPL-2.0-or-later * * Copyright (C) 2020-2021 The DOSBox Staging Team * * This program is free software; you can redistri..."
+- File: dosbox-x\tests\shell_redirection_tests.cpp
+  Preview: "/* * Copyright (C) 2002-2021 The DOSBox Team * * This program is free software; you can redistribute it and/or modify * it under the terms of the GNU ..."
+- File: dosbox-x\tests\tests.h
+  Preview: "#if C_DEBUG #if !defined(_WIN32_WINDOWS) // The following includes necessary gTest/gMock source files for unit tests. // Launch DOSBox-X with -tests o..."
+- File: dosbox-x\tests\test_invariant_bios_disk.h
+  Preview: "#include <check.h> #include <stdlib.h> #include <string.h> #include 'include/bios_disk.h' START_TEST(test_bios_disk_memcpy_bounds) {   // Invariant: m..."
+- File: dosbox-x\vs\config.h
+  Preview: "/* config.h.in. Generated from configure.ac by autoheader. */ /* Hand-edited by Jonathan Campbell for Visual Studio 2008 */ /* * Copyright (C) 2002-20..."
+- File: dosbox-x\vs\config_package.h
+  Preview: "#define PACKAGE 'dosbox-x' #define PACKAGE_BUGREPORT 'https://github.com/joncampbell123/dosbox-x/issues' #define PACKAGE_NAME 'dosbox-x' #define PACKA..."
+- File: dosbox-x\vs\d3dx9.h
+  Preview: "////////////////////////////////////////////////////////////////////////////// // // Copyright (C) Microsoft Corporation. All Rights Reserved. // // F..."
+- File: dosbox-x\vs\d3dx9anim.h
+  Preview: "////////////////////////////////////////////////////////////////////////////// // // Copyright (C) Microsoft Corporation. All Rights Reserved. // // F..."
+- File: dosbox-x\vs\d3dx9core.h
+  Preview: "/////////////////////////////////////////////////////////////////////////// // // Copyright (C) Microsoft Corporation. All Rights Reserved. // // File..."
+- File: dosbox-x\vs\d3dx9effect.h
+  Preview: " ////////////////////////////////////////////////////////////////////////////// // // Copyright (c) Microsoft Corporation. All rights reserved. // // ..."
+- File: dosbox-x\vs\d3dx9math.h
+  Preview: "////////////////////////////////////////////////////////////////////////////// // // Copyright (C) Microsoft Corporation. All Rights Reserved. // // F..."
+- File: dosbox-x\vs\d3dx9mesh.h
+  Preview: "////////////////////////////////////////////////////////////////////////////// // // Copyright (C) Microsoft Corporation. All Rights Reserved. // // F..."
+- File: dosbox-x\vs\d3dx9shader.h
+  Preview: "////////////////////////////////////////////////////////////////////////////// // // Copyright (c) Microsoft Corporation. All rights reserved. // // F..."
+- File: dosbox-x\vs\d3dx9shape.h
+  Preview: "/////////////////////////////////////////////////////////////////////////// // // Copyright (C) Microsoft Corporation. All Rights Reserved. // // File..."
+- File: dosbox-x\vs\d3dx9tex.h
+  Preview: "////////////////////////////////////////////////////////////////////////////// // // Copyright (C) Microsoft Corporation. All Rights Reserved. // // F..."
+- File: dosbox-x\vs\d3dx9xof.h
+  Preview: "/////////////////////////////////////////////////////////////////////////// // // Copyright (C) Microsoft Corporation. All Rights Reserved. // // File..."
+- File: dosbox-x\vs\unistd.h
+  Preview: "/* empty */"
+- File: Jarvis\include\changes.txt
+  Preview: "Version 10.2 ============ This version adds the CFolderDialogEx class, the CPager class, the ToolbarBuilder sample, and the IFileDialog sample. The To..."
+- File: Jarvis\include\copyright.txt
+  Preview: "Win32++  Version 10.2.0 Release Date: 20th September 2025    David Nash   email: dnash@bigpond.net.au   url: https://sourceforge.net/projects/win32-fr..."
+- File: Jarvis\include\default_resource.h
+  Preview: "// This file contains the resource ID definitions for Win32++.  // The resource ID for MENU, ICON, ToolBar Bitmap, Accelerator, // and Window Caption ..."
+- File: Jarvis\include\info.txt
+  Preview: "Generic Information about Win32++ Projects ========================================== The various directories may contain the following types of files..."
+- File: Jarvis\include\release notes.txt
+  Preview: "About Win32++ ------------- Win32++ is simple and easy to understand framework for developing Win32 applications using C++. It brings an object orient..."
+- File: Jarvis\include\wxx_appcore.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_appcore0.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_archive.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_commondlg.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_controls.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_criticalsection.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_cstring.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_ddx.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_dialog.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_dockframe.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_docking.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_exception.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_file.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_filefind.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_folderdialog.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_folderdialogex.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_frame.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_gdi.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_hglobal.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_imagelist.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_listview.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_mdi.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_menu.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_menubar.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_menumetrics.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_messagepump.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_messagepump0.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_metafile.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_mutex.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_preview.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_printdialogex.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_printdialogs.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_propertysheet.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_rebar.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_rect.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_regkey.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_ribbon.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_richedit.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_scrollview.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_setup.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_socket.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_statusbar.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_stdcontrols.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_tab.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_taskdialog.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_textconv.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_themes.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_thread.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_time.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_toolbar.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_treeview.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_webbrowser.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_wincore.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: Jarvis\include\wxx_wincore0.h
+  Preview: "// Win32++  Version 10.2.0 // Release Date: 20th September 2025 // //   David Nash //   email: dnash@bigpond.net.au //   url: https://sourceforge.net/..."
+- File: JWasm\H\assume.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\H\atofloat.h
+  Preview: " #ifndef ATOFLOAT_H #define ATOFLOAT_H extern void atofloat( void *, const char *, unsigned, bool, uint_8 ); #endif "
+- File: JWasm\H\bin.h
+  Preview: "/**************************************************************************** * * Description: header for BIN output format * ************************..."
+- File: JWasm\H\bool.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\H\cmdline.h
+  Preview: "/**************************************************************************** * * Description: prototypes of cmdline.c * *****************************..."
+- File: JWasm\H\codegen.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\H\coff.h
+  Preview: " /* prototypes of functions defined in coff.c */ #ifndef _COFF_H_INCLUDED #define _COFF_H_INCLUDED struct qditem {   uint_8 *next;   unsigned size; };..."
+- File: JWasm\H\coffspec.h
+  Preview: " /* the MS COFF declarations, as far as it's relevant for JWasm. * The full declarations can be found in MS PSDK, WinNT.h. */ /* Machine values */ #de..."
+- File: JWasm\H\condasm.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\H\context.h
+  Preview: "/**************************************************************************** * * Description: PUSHCONTEXT/POPCONTEXT interface * ********************..."
+- File: JWasm\H\cpumodel.h
+  Preview: "/**************************************************************************** * * Description: prototypes for cpumodel.c * ***************************..."
+- File: JWasm\H\data.h
+  Preview: " #ifndef DATA_H #define DATA_H extern ret_code  data_dir( int, struct asm_tok[], struct asym * ); #endif "
+- File: JWasm\H\dbgcv.h
+  Preview: "/**************************************************************************** * * This code is Public Domain. It's new for JWasm. * * ================..."
+- File: JWasm\H\dbgdw.h
+  Preview: "/* ----------------------------------------------------------------------- * * * DWARF declarations * * ----------------------------------------------..."
+- File: JWasm\H\directve.h
+  Preview: "/**************************************************************************** * * Description: table of directives * *********************************..."
+- File: JWasm\H\dirtype.h
+  Preview: "/* DRT_ values ( directive types ) */ /* items CONDDIR ... INCLUDE must be first, INCLUDE the last of them. * DATADIR must be the first non-preprocess..."
+- File: JWasm\H\elf.h
+  Preview: " /* prototypes of functions defined in elf.c */ #ifndef _ELF_H_INCLUDED_ #define _ELF_H_INCLUDED_ void   elf_init( struct module_info * ); #endif // _..."
+- File: JWasm\H\elfspec.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\H\equate.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\H\errmsg.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\H\expreval.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\H\extern.h
+  Preview: "/**************************************************************************** * * Description: prototypes of extern.c * ******************************..."
+- File: JWasm\H\fastpass.h
+  Preview: " /* this is Public Domain. fastpass.h defines structures and externals which are needed by the 'fast pass' feature. This feature speeds JWasm's assemb..."
+- File: JWasm\H\fixup.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\H\fpfixup.h
+  Preview: " #ifndef _FPFIXUP_H_INCLUDED #define _FPFIXUP_H_INCLUDED extern void AddFloatingPointEmulationFixup( struct code_info * ); #endif "
+- File: JWasm\H\globals.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\H\hll.h
+  Preview: "/**************************************************************************** * * Description: hll constructs .IF, ... * *****************************..."
+- File: JWasm\H\input.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\H\instr64.h
+  Preview: "/**************************************************************************** * * Description: instructions which are to be replaced in long-mode * **..."
+- File: JWasm\H\instravx.h
+  Preview: "/**************************************************************************** * * Description: AVX instructions with VEX prefix * ********************..."
+- File: JWasm\H\instruct.h
+  Preview: "/**************************************************************************** * * Description: table of instructions. Other reserved words see special..."
+- File: JWasm\H\inttype.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\H\label.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\H\linnum.h
+  Preview: " /* internal line number information used if -Zd or -Zi is set */ struct line_num_info {   struct line_num_info *next;   uint_32 number; /* source lin..."
+- File: JWasm\H\listing.h
+  Preview: "/**************************************************************************** * * Description: listing interface. * **********************************..."
+- File: JWasm\H\lqueue.h
+  Preview: " #ifndef _LQUEUE_H_INCLUDED #define _LQUEUE_H_INCLUDED /* v2.11: line queue functions moved from input.c to lqueue.c */ extern void   DeleteLineQueue(..."
+- File: JWasm\H\ltext.h
+  Preview: " /* text constants for listing */ ltext(BYTE,   'Byte'  ) ltext(WORD,   'Word'  ) ltext(DWORD,  'DWord' ) ltext(FWORD,  'FWord' ) ltext(QWORD,  'QWord..."
+- File: JWasm\H\macro.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\H\mangle.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\H\memalloc.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\H\msgdef.h
+  Preview: " /* message texts. * since msg numbers shouldn't change, new ids must be added at the end - * unless a free entry is reused (search for '_unused'!) * ..."
+- File: JWasm\H\msgtext.h
+  Preview: "/**************************************************************************** * * Description: msgtext.c interface * *********************************..."
+- File: JWasm\H\myassert.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\H\omf.h
+  Preview: " /* interface to OMF format output functions */ #ifndef _OMF_H_INCLUDED_ #define _OMF_H_INCLUDED_ /* max size of LEDATA data is 1024 - (1+2+1/2+2/4+1)..."
+- File: JWasm\H\omfint.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\H\omfspec.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\H\operands.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\H\opndcls.h
+  Preview: "/* operand classes. Introduced with v2.06, when the operand types were removed * from the instruction table and replaced by a class index. * As a resu..."
+- File: JWasm\H\parser.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\H\pch.cpp
+  Preview: "#include 'pch.h' "
+- File: JWasm\H\pch.h
+  Preview: "#pragma once #include <signal.h> #include <time.h> #pragma warning(disable: 4244) "
+- File: JWasm\H\pespec.h
+  Preview: " /* PE definitions * see also: coffspec.h */ #ifndef PE_H #define PE_H struct IMAGE_DOS_HEADER {   uint_16 e_magic;     // Magic number   uint_16 e_cb..."
+- File: JWasm\H\posndir.h
+  Preview: "/**************************************************************************** * * Description: interface posndir.c - handles ORG, ALIGN, EVEN directiv..."
+- File: JWasm\H\preproc.h
+  Preview: " #ifndef _PREPROC_H_INCLUDED #define _PREPROC_H_INCLUDED /* v2.11: preprocessor functions moved from input.c to preproc.c */ extern int   PreprocessLi..."
+- File: JWasm\H\proc.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\H\queue.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\H\reswords.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\H\segattr.h
+  Preview: "/* segment attributes. Included by segment.c only */ sitem( 'READONLY',   0,       INIT_ATTR    ) sitem( 'BYTE',     0,       INIT_ALIGN   ) sitem( 'W..."
+- File: JWasm\H\segment.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\H\special.h
+  Preview: "/**************************************************************************** * * Description: table of non-instruction reserved words: *        - reg..."
+- File: JWasm\H\symbols.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\H\tbyte.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\H\token.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\H\tokenize.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\H\trmem.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: JWasm\H\types.h
+  Preview: " /* prototypes of TYPES.C */ #ifndef _TYPES_H_INCLUDED #define _TYPES_H_INCLUDED /* qualified_type us used for parsing a qualified type. */ struct qua..."
+- File: JWasm\H\unaryop.h
+  Preview: "/* table of unary operators, used in expreval.c */ res( LOW,    low_op   ) res( HIGH,   high_op  ) res( LOWWORD,  lowword_op ) res( HIGHWORD, highword..."
+- File: JWasm\H\usage.h
+  Preview: "'  JWasm [options] asm-file [options] [asm-file] ... [@env_var]\n\n\0' 'options:\0' #if AMD64_SUPPORT '-<0|1|..|10>[p]\0' 'Set CPU: 0=8086 (default), ..."
+- File: JWasm\H\win32.h
+  Preview: "/* * this file contains prototypes of the Win32 functions which are * called directly by JWasm (in memalloc.c if FASTMEM=1). */ //#if defined(__WATCOM..."
+- File: JWasm\H\win64seh.h
+  Preview: " /* some structures for Win64 SEH */ /* .pdata items */ typedef struct _IMAGE_RUNTIME_FUNCTION_ENTRY {   uint_32 BeginAddress;   uint_32 EndAddress;  ..."
+- File: JWlink\dwarf\dwarfold.cpp
+  Preview: "// dwarfold.cpp : Defines the functions for the static library. // #include 'pch.h' #include 'framework.h' // TODO: This is an example of a library fu..."
+- File: JWlink\dwarf\framework.h
+  Preview: "#pragma once #define WIN32_LEAN_AND_MEAN       // Exclude rarely-used stuff from Windows headers "
+- File: JWlink\dwarf\pch.cpp
+  Preview: "// pch.cpp: source file corresponding to the pre-compiled header #include 'pch.h' // When you are using pre-compiled headers, this source file is nece..."
+- File: JWlink\dwarf\pch.h
+  Preview: "// pch.h: This is a precompiled header file. // Files listed below are compiled only once, improving build performance for future builds. // This also..."
+- File: JWlink\JWlib\pch.cpp
+  Preview: "#include 'pch.h' "
+- File: JWlink\JWlib\pch.h
+  Preview: "#pragma once "
+- File: JWlink\JWlibLib\framework.h
+  Preview: "#pragma once #define WIN32_LEAN_AND_MEAN       // Exclude rarely-used stuff from Windows headers "
+- File: JWlink\JWlibLib\pch.cpp
+  Preview: "// pch.cpp: source file corresponding to the pre-compiled header #include 'pch.h' // When you are using pre-compiled headers, this source file is nece..."
+- File: JWlink\JWlibLib\pch.h
+  Preview: "// pch.h: This is a precompiled header file. // Files listed below are compiled only once, improving build performance for future builds. // This also..."
+- File: JWlink\JWlink\pch.cpp
+  Preview: "#include 'pch.h' "
+- File: JWlink\JWlink\pch.h
+  Preview: "#pragma once "
+- File: JWlink\JWlinkLib\framework.h
+  Preview: "#pragma once #define WIN32_LEAN_AND_MEAN       // Exclude rarely-used stuff from Windows headers "
+- File: JWlink\JWlinkLib\JWlinkLibOld.cpp
+  Preview: "// JWlinkLibOld.cpp : Defines the functions for the static library. // #include 'pch.h' #include 'framework.h' // TODO: This is an example of a librar..."
+- File: JWlink\JWlinkLib\pch.cpp
+  Preview: "// pch.cpp: source file corresponding to the pre-compiled header #include 'pch.h' // When you are using pre-compiled headers, this source file is nece..."
+- File: JWlink\JWlinkLib\pch.h
+  Preview: "// pch.h: This is a precompiled header file. // Files listed below are compiled only once, improving build performance for future builds. // This also..."
+- File: JWlink\libmisc\framework.h
+  Preview: "#pragma once #define WIN32_LEAN_AND_MEAN       // Exclude rarely-used stuff from Windows headers "
+- File: JWlink\libmisc\libmiscold.cpp
+  Preview: "// libmiscold.cpp : Defines the functions for the static library. // #include 'pch.h' #include 'framework.h' // TODO: This is an example of a library ..."
+- File: JWlink\libmisc\pch.cpp
+  Preview: "// pch.cpp: source file corresponding to the pre-compiled header #include 'pch.h' // When you are using pre-compiled headers, this source file is nece..."
+- File: JWlink\libmisc\pch.h
+  Preview: "// pch.h: This is a precompiled header file. // Files listed below are compiled only once, improving build performance for future builds. // This also..."
+- File: JWlink\orl\framework.h
+  Preview: "#pragma once #define WIN32_LEAN_AND_MEAN       // Exclude rarely-used stuff from Windows headers "
+- File: JWlink\orl\orlold.cpp
+  Preview: "// orlold.cpp : Defines the functions for the static library. // #include 'pch.h' #include 'framework.h' // TODO: This is an example of a library func..."
+- File: JWlink\orl\pch.cpp
+  Preview: "// pch.cpp: source file corresponding to the pre-compiled header #include 'pch.h' // When you are using pre-compiled headers, this source file is nece..."
+- File: JWlink\orl\pch.h
+  Preview: "// pch.h: This is a precompiled header file. // Files listed below are compiled only once, improving build performance for future builds. // This also..."
+- File: JWlink\sdk\framework.h
+  Preview: "#pragma once #define WIN32_LEAN_AND_MEAN       // Exclude rarely-used stuff from Windows headers "
+- File: JWlink\sdk\pch.cpp
+  Preview: "// pch.cpp: source file corresponding to the pre-compiled header #include 'pch.h' // When you are using pre-compiled headers, this source file is nece..."
+- File: JWlink\sdk\pch.h
+  Preview: "// pch.h: This is a precompiled header file. // Files listed below are compiled only once, improving build performance for future builds. // This also..."
+- File: JWlink\sdk\sdkold.cpp
+  Preview: "// sdkold.cpp : Defines the functions for the static library. // #include 'pch.h' #include 'framework.h' // TODO: This is an example of a library func..."
+- File: JWlink2\JWlink2\codeview_pdb.cpp
+  Preview: "#include 'pch.h' #include 'codeview_pdb.h' using namespace std; namespace JWlink2::codeview { 	namespace 	{ 		using Bytes = vector<uint8_t>; 		constex..."
+- File: JWlink2\JWlink2\codeview_pdb.h
+  Preview: "#pragma once #include <array> #include <cstddef> #include <cstdint> #include <filesystem> #include <string> #include <vector> using namespace std; nam..."
+- File: JWlink2\JWlink2\command_line.cpp
+  Preview: "#include 'pch.h' #include 'command_line.h' using namespace std; namespace jwlink2 { 	namespace 	{ 		[[noreturn]] void fail(const string& message) 		{ ..."
+- File: JWlink2\JWlink2\command_line.h
+  Preview: "#pragma once #include <cstdint> #include <filesystem> #include <optional> #include <string> #include <string_view> #include <utility> #include <vector..."
+- File: JWlink2\JWlink2\linker.cpp
+  Preview: "#include 'pch.h' #include 'command_line.h' #include 'codeview_pdb.h' using namespace std; namespace JWlink2 { 	using Bytes = vector<uint8_t>; 	namespa..."
+- File: JWlink2\JWlink2\main.cpp
+  Preview: "#include 'pch.h' #include 'command_line.h' using namespace JWlink2; using namespace std; int main(int argc, char** argv) { 	try 	{ 		runLinker(parseAr..."
+- File: JWlink2\JWlink2\pch.cpp
+  Preview: "#include 'pch.h' "
+- File: JWlink2\JWlink2\pch.h
+  Preview: "#pragma once #include <algorithm> #include <array> #include <cctype> #include <charconv> #include <chrono> #include <cstdint> #include <cstdlib> #incl..."
+- File: util\unicode\unicodedata.txt
+  Preview: "0000;<control>;Cc;0;BN;;;;;N;NULL;;;; 0001;<control>;Cc;0;BN;;;;;N;START OF HEADING;;;; 0002;<control>;Cc;0;BN;;;;;N;START OF TEXT;;;; 0003;<control>;..."
+- File: watcom\h\ar.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\autodep.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\bancfg.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\clibext.h
+  Preview: "/* clibext.h:  This file contains defines and prototypes of functions that are present  in Watcom's CLIB but not in many other C libraries */ #include..."
+- File: watcom\h\coff.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\cv4.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\cv4f.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\cv4nums.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\cv4pads.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\cv4syms.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\cv4types.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\cv4w.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\dwarf.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\dwati.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\dwformi.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\dwloccl.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\dwlocop.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\dwtagi.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\elfspec.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\exe16m.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\exedos.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\exeelf.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\exeflat.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\exenov.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\exeos2.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\exepe.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\exephar.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\exeqnx.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\idedll.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\idedrv.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\lib.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\ovltab.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\patchsig.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\pcobj.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\phandle.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\poppck.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\proc386.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\pushpck1.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\pushpck2.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\tistrail.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\vxd_ddb.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\walloca.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\watcom.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\wreslang.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\wresset2.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: watcom\h\wressetr.h
+  Preview: "/**************************************************************************** * *              Open Watcom Project * *  Portions Copyright (c) 1983-20..."
+- File: Arguments2\include\CLI\App.hpp
+  Preview: "// Copyright (c) 2017-2026, University of Cincinnati, developed by Henry Schreiner // under NSF AWARD 1414736 and by the respective contributors. // A..."
+- File: Arguments2\include\CLI\Argv.hpp
+  Preview: "// Copyright (c) 2017-2026, University of Cincinnati, developed by Henry Schreiner // under NSF AWARD 1414736 and by the respective contributors. // A..."
+- File: Arguments2\include\CLI\CLI.hpp
+  Preview: "// Copyright (c) 2017-2026, University of Cincinnati, developed by Henry Schreiner // under NSF AWARD 1414736 and by the respective contributors. // A..."
+- File: Arguments2\include\CLI\Config.hpp
+  Preview: "// Copyright (c) 2017-2026, University of Cincinnati, developed by Henry Schreiner // under NSF AWARD 1414736 and by the respective contributors. // A..."
+- File: Arguments2\include\CLI\ConfigFwd.hpp
+  Preview: "// Copyright (c) 2017-2026, University of Cincinnati, developed by Henry Schreiner // under NSF AWARD 1414736 and by the respective contributors. // A..."
+- File: Arguments2\include\CLI\Encoding.hpp
+  Preview: "// Copyright (c) 2017-2026, University of Cincinnati, developed by Henry Schreiner // under NSF AWARD 1414736 and by the respective contributors. // A..."
+- File: Arguments2\include\CLI\Error.hpp
+  Preview: "// Copyright (c) 2017-2026, University of Cincinnati, developed by Henry Schreiner // under NSF AWARD 1414736 and by the respective contributors. // A..."
+- File: Arguments2\include\CLI\ExtraValidators.hpp
+  Preview: "// Copyright (c) 2017-2026, University of Cincinnati, developed by Henry Schreiner // under NSF AWARD 1414736 and by the respective contributors. // A..."
+- File: Arguments2\include\CLI\Formatter.hpp
+  Preview: "// Copyright (c) 2017-2026, University of Cincinnati, developed by Henry Schreiner // under NSF AWARD 1414736 and by the respective contributors. // A..."
+- File: Arguments2\include\CLI\FormatterFwd.hpp
+  Preview: "// Copyright (c) 2017-2026, University of Cincinnati, developed by Henry Schreiner // under NSF AWARD 1414736 and by the respective contributors. // A..."
+- File: Arguments2\include\CLI\Macros.hpp
+  Preview: "// Copyright (c) 2017-2026, University of Cincinnati, developed by Henry Schreiner // under NSF AWARD 1414736 and by the respective contributors. // A..."
+- File: Arguments2\include\CLI\Option.hpp
+  Preview: "// Copyright (c) 2017-2026, University of Cincinnati, developed by Henry Schreiner // under NSF AWARD 1414736 and by the respective contributors. // A..."
+- File: Arguments2\include\CLI\Split.hpp
+  Preview: "// Copyright (c) 2017-2026, University of Cincinnati, developed by Henry Schreiner // under NSF AWARD 1414736 and by the respective contributors. // A..."
+- File: Arguments2\include\CLI\StringTools.hpp
+  Preview: "// Copyright (c) 2017-2026, University of Cincinnati, developed by Henry Schreiner // under NSF AWARD 1414736 and by the respective contributors. // A..."
+- File: Arguments2\include\CLI\Timer.hpp
+  Preview: "// Copyright (c) 2017-2026, University of Cincinnati, developed by Henry Schreiner // under NSF AWARD 1414736 and by the respective contributors. // A..."
+- File: Arguments2\include\CLI\TypeTools.hpp
+  Preview: "// Copyright (c) 2017-2026, University of Cincinnati, developed by Henry Schreiner // under NSF AWARD 1414736 and by the respective contributors. // A..."
+- File: Arguments2\include\CLI\Validators.hpp
+  Preview: "// Copyright (c) 2017-2026, University of Cincinnati, developed by Henry Schreiner // under NSF AWARD 1414736 and by the respective contributors. // A..."
+- File: Arguments2\include\CLI\Version.hpp
+  Preview: "// Copyright (c) 2017-2026, University of Cincinnati, developed by Henry Schreiner // under NSF AWARD 1414736 and by the respective contributors. // A..."
+- File: Arguments2\src\modules\CMakeLists.txt
+  Preview: "if(CMAKE_VERSION VERSION_LESS 3.28)  message(FATAL_ERROR 'CLI11_MODULES requires CMake 3.28 or later') endif() add_library(CLI11_Module) target_source..."
+- File: Decompiler\arch\AArch64\AArch64AddressingModes.h
+  Preview: "/* Capstone Disassembly Engine, http://www.capstone-engine.org */ /* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2022, */ /*  Rot127 <unisono@quyllur..."
+- File: Decompiler\arch\AArch64\AArch64BaseInfo.h
+  Preview: "/* Capstone Disassembly Engine, http://www.capstone-engine.org */ /* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2022, */ /*  Rot127 <unisono@quyllur..."
+- File: Decompiler\arch\AArch64\AArch64DisassemblerExtension.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2019 */ /*  Rot127 <unisono@quyllur.org>, 2022-2023 */ #ifndef CS_AA..."
+- File: Decompiler\arch\AArch64\AArch64InstPrinter.h
+  Preview: "/* Capstone Disassembly Engine, http://www.capstone-engine.org */ /* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2022, */ /*  Rot127 <unisono@quyllur..."
+- File: Decompiler\arch\AArch64\AArch64Linkage.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Rot127 <unisono@quyllur.org> 2022-2023 */ #ifndef CS_AARCH64_LINKAGE_H #define CS_AARCH64_LINKAGE_H // Functio..."
+- File: Decompiler\arch\AArch64\AArch64Mapping.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2019 */ #ifndef CS_AARCH64_MAP_H #define CS_AARCH64_MAP_H #include '..."
+- File: Decompiler\arch\AArch64\AArch64Module.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Travis Finkenauer <tmfinken@gmail.com>, 2018 */ #ifndef CS_AARCH64_MODULE_H #define CS_AARCH64_MODULE_H #inclu..."
+- File: Decompiler\arch\Alpha\AlphaDisassembler.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Dmitry Sibirtsev <sibirtsevdl@gmail.com>, 2023 */ #ifndef CS_ALPHADISASSEMBLER_H #define CS_ALPHADISASSEMBLER_..."
+- File: Decompiler\arch\Alpha\AlphaLinkage.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Dmitry Sibirtsev <sibirtsevdl@gmail.com>, 2023 */ #ifndef CS_ALPHA_LINKAGE_H #define CS_ALPHA_LINKAGE_H // Fun..."
+- File: Decompiler\arch\Alpha\AlphaMapping.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Dmitry Sibirtsev <sibirtsevdl@gmail.com>, 2023 */ #ifndef CS_ALPHA_MAP_H #define CS_ALPHA_MAP_H #include '../...."
+- File: Decompiler\arch\Alpha\AlphaModule.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Dmitry Sibirtsev <sibirtsevdl@gmail.com>, 2023 */ #ifndef CAPSTONE_ALPHAMODULE_H #define CAPSTONE_ALPHAMODULE_..."
+- File: Decompiler\arch\ARC\ARCInfo.h
+  Preview: "/* Capstone Disassembly Engine, http://www.capstone-engine.org */ /* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2022, */ /*  Rot127 <unisono@quyllur..."
+- File: Decompiler\arch\ARC\ARCInstPrinter.h
+  Preview: "/* Capstone Disassembly Engine, http://www.capstone-engine.org */ /* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2022, */ /*  Rot127 <unisono@quyllur..."
+- File: Decompiler\arch\ARC\ARCLinkage.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Dmitry Sibirtsev <sibirtsevdl@gmail.com>, 2024 */ #ifndef CS_ARC_LINKAGE_H #define CS_ARC_LINKAGE_H // Functio..."
+- File: Decompiler\arch\ARC\ARCMapping.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Dmitry Sibirtsev <sibirtsevdl@gmail.com>, 2024 */ #ifndef CS_ARC_MAP_H #define CS_ARC_MAP_H #include '../../Ma..."
+- File: Decompiler\arch\ARC\ARCModule.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Dmitry Sibirtsev <sibirtsevdl@gmail.com>, 2024 */ #ifndef CS_ARC_MODULE_H #define CS_ARC_MODULE_H #include '....."
+- File: Decompiler\arch\ARM\ARMAddressingModes.h
+  Preview: "/* Capstone Disassembly Engine, http://www.capstone-engine.org */ /* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2022, */ /*  Rot127 <unisono@quyllur..."
+- File: Decompiler\arch\ARM\ARMBaseInfo.h
+  Preview: "//===-- ARMBaseInfo.h - Top level definitions for ARM ---*- C++ -*-===// // // Part of the LLVM Project, under the Apache License v2.0 with LLVM Excep..."
+- File: Decompiler\arch\ARM\ARMDisassemblerExtension.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2019 */ /*  Rot127 <unisono@quyllur.org>, 2022-2023 */ #ifndef CS_AR..."
+- File: Decompiler\arch\ARM\ARMInstPrinter.h
+  Preview: "/* Capstone Disassembly Engine, http://www.capstone-engine.org */ /* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2022, */ /*  Rot127 <unisono@quyllur..."
+- File: Decompiler\arch\ARM\ARMLinkage.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2019 */ #ifndef CS_ARM_LINKAGE_H #define CS_ARM_LINKAGE_H // Functio..."
+- File: Decompiler\arch\ARM\ARMMapping.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2019 */ #ifndef CS_ARM_MAPPING_H #define CS_ARM_MAPPING_H #include '..."
+- File: Decompiler\arch\ARM\ARMModule.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Travis Finkenauer <tmfinken@gmail.com>, 2018 */ #ifndef CS_ARM_MODULE_H #define CS_ARM_MODULE_H #include '../...."
+- File: Decompiler\arch\BPF\BPFConstants.h
+  Preview: "/* Capstone Disassembly Engine */ /* BPF Backend by david942j <david942j@gmail.com>, 2019 */ /* SPDX-FileCopyrightText: 2024 Roee Toledano <roeetoleda..."
+- File: Decompiler\arch\BPF\BPFDisassembler.h
+  Preview: "/* Capstone Disassembly Engine */ /* BPF Backend by david942j <david942j@gmail.com>, 2019 */ #ifndef CS_BPF_DISASSEMBLER_H #define CS_BPF_DISASSEMBLER..."
+- File: Decompiler\arch\BPF\BPFInstPrinter.h
+  Preview: "/* Capstone Disassembly Engine */ /* BPF Backend by david942j <david942j@gmail.com>, 2019 */ #ifndef CS_BPFINSTPRINTER_H #define CS_BPFINSTPRINTER_H #..."
+- File: Decompiler\arch\BPF\BPFMapping.h
+  Preview: "/* Capstone Disassembly Engine */ /* BPF Backend by david942j <david942j@gmail.com>, 2019 */ #ifndef CS_BPFMAPPING_H #define CS_BPFMAPPING_H #include ..."
+- File: Decompiler\arch\BPF\BPFModule.h
+  Preview: "/* Capstone Disassembly Engine */ /* BPF Backend by david942j <david942j@gmail.com>, 2019 */ #ifndef CS_BPF_MODULE_H #define CS_BPF_MODULE_H #include ..."
+- File: Decompiler\arch\EVM\EVMDisassembler.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Nguyen Anh Quynh, 2018 */ #ifndef CS_EVMDISASSEMBLER_H #define CS_EVMDISASSEMBLER_H #include '../../MCInst.h' ..."
+- File: Decompiler\arch\EVM\EVMInstPrinter.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Nguyen Anh Quynh, 2018 */ #ifndef CS_EVMINSTPRINTER_H #define CS_EVMINSTPRINTER_H #include 'capstone/capstone...."
+- File: Decompiler\arch\EVM\EVMMapping.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Nguyen Anh Quynh, 2018 */ #include <capstone/capstone.h> void EVM_get_insn_id(cs_struct *h, cs_insn *insn, uns..."
+- File: Decompiler\arch\EVM\EVMModule.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Travis Finkenauer <tmfinken@gmail.com>, 2018 */ #ifndef CS_EVM_MODULE_H #define CS_EVM_MODULE_H #include '../...."
+- File: Decompiler\arch\HPPA\HPPAConstants.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Dmitry Sibirtsev <sibirtsevdl@gmail.com>, 2023 */ /* This file defines constants and macros used for parsing a..."
+- File: Decompiler\arch\HPPA\HPPADisassembler.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Dmitry Sibirtsev <sibirtsevdl@gmail.com>, 2023 */ #ifndef CS_HPPA_DISASSEMBLER_H #define CS_HPPA_DISASSEMBLER_..."
+- File: Decompiler\arch\HPPA\HPPAInstPrinter.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Dmitry Sibirtsev <sibirtsevdl@gmail.com>, 2023 */ #ifndef CS_HPPAINSTPRINTER_H #define CS_HPPAINSTPRINTER_H #i..."
+- File: Decompiler\arch\HPPA\HPPAMapping.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Dmitry Sibirtsev <sibirtsevdl@gmail.com>, 2023 */ #ifndef CS_HPPAMAPPING_H #define CS_HPPAMAPPING_H #include <..."
+- File: Decompiler\arch\HPPA\HPPAModule.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Dmitry Sibirtsev <sibirtsevdl@gmail.com>, 2023 */ #ifndef CS_HPPA_MODULE_H #define CS_HPPA_MODULE_H #include '..."
+- File: Decompiler\arch\LoongArch\LoongArchDisassemblerExtension.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2019 */ /*  Rot127 <unisono@quyllur.org>, 2022-2023 */ /*  Jiajie Ch..."
+- File: Decompiler\arch\LoongArch\LoongArchInstPrinter.h
+  Preview: "/* Capstone Disassembly Engine, http://www.capstone-engine.org */ /* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2022, */ /*  Rot127 <unisono@quyllur..."
+- File: Decompiler\arch\LoongArch\LoongArchLinkage.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Jiajie Chen <c@jia.je>, 2024 */ /*  Yanglin Xun <1109673069@qq.com>, 2024 */ #ifndef CS_LOONGARCH_LINKAGE_H #d..."
+- File: Decompiler\arch\LoongArch\LoongArchMapping.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Jiajie Chen <c@jia.je>, 2024 */ /*  Yanglin Xun <1109673069@qq.com>, 2024 */ #ifndef CS_LOONGARCH_MAPPING_H #d..."
+- File: Decompiler\arch\LoongArch\LoongArchModule.h
+  Preview: "/* Capstone Disassembly Engine */ /* By Jiajie Chen <c@jia.je>, 2024 */ /*  Yanglin Xun <1109673069@qq.com>, 2024 */ #ifndef CS_LOONGARCH_MODULE_H #de..."
+- File: Decompiler\arch\M680X\M680XDisassembler.h
+  Preview: "/* Capstone Disassembly Engine */ /* M680X Backend by Wolfgang Schwotzer <wolfgang.schwotzer@gmx.net> 2017 */ #ifndef CS_M680XDISASSEMBLER_H #define C..."

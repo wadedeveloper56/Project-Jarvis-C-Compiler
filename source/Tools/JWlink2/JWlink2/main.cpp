@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "command_line.h"
 
-using namespace jwlink2;
+using namespace JWlink2;
 using namespace std;
 
 int main(int argc, char** argv) 

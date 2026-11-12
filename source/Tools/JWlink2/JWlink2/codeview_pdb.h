@@ -9,7 +9,7 @@
 
 using namespace std;
 
-namespace jwlink2::codeview {
+namespace JWlink2::codeview {
 
 struct PdbIdentity {
 	// The 16 bytes are written verbatim in the GUID field of the PDB info stream.
