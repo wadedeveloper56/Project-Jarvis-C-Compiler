@@ -1,5 +1,5 @@
 ## WORKSPACE EXECUTIVE SUMMARY (YAML)
-# Generated: 2026-11-12T04:49:04.0753252-06:00
+# Generated: 2026-11-12T06:35:54.6868362-06:00
 # Root: C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools
 Architecture:
   Type: General Codebase
@@ -1783,9 +1783,11 @@ Architecture:
 - File: JWlink2\JWlink2\command_line.h
   Preview: "#pragma once #include <cstdint> #include <filesystem> #include <optional> #include <string> #include <string_view> #include <utility> #include <vector..."
 - File: JWlink2\JWlink2\linker.cpp
-  Preview: "#include 'pch.h' #include 'command_line.h' #include 'codeview_pdb.h' using namespace std; namespace JWlink2 { 	using Bytes = vector<uint8_t>; 	namespa..."
+  Preview: "#include 'pch.h' #include 'command_line.h' #include 'codeview_pdb.h' #include 'linker.h' using namespace std; namespace JWlink2 { 	using Bytes = vecto..."
+- File: JWlink2\JWlink2\linker.h
+  Preview: "#pragma once #include 'codeview_pdb.h' #include 'command_line.h' using namespace JWlink2::commandline; namespace JWlink2 { 	using Bytes = vector<uint8..."
 - File: JWlink2\JWlink2\main.cpp
-  Preview: "#include 'pch.h' #include 'command_line.h' using namespace JWlink2; using namespace std; int main(int argc, char** argv) { 	try 	{ 		runLinker(parseAr..."
+  Preview: "#include 'pch.h' #include 'command_line.h' #include 'linker.h' using namespace std; int main(int argc, char** argv) { 	try 	{ 		JWlink2::runLinker(JWl..."
 - File: JWlink2\JWlink2\pch.cpp
   Preview: "#include 'pch.h' "
 - File: JWlink2\JWlink2\pch.h
@@ -2006,5 +2008,3 @@ Architecture:
   Preview: "/* Capstone Disassembly Engine */ /* By Jiajie Chen <c@jia.je>, 2024 */ /*  Yanglin Xun <1109673069@qq.com>, 2024 */ #ifndef CS_LOONGARCH_MAPPING_H #d..."
 - File: Decompiler\arch\LoongArch\LoongArchModule.h
   Preview: "/* Capstone Disassembly Engine */ /* By Jiajie Chen <c@jia.je>, 2024 */ /*  Yanglin Xun <1109673069@qq.com>, 2024 */ #ifndef CS_LOONGARCH_MODULE_H #de..."
-- File: Decompiler\arch\M680X\M680XDisassembler.h
-  Preview: "/* Capstone Disassembly Engine */ /* M680X Backend by Wolfgang Schwotzer <wolfgang.schwotzer@gmx.net> 2017 */ #ifndef CS_M680XDISASSEMBLER_H #define C..."

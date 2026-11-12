@@ -10,7 +10,7 @@
 
 using namespace std;
 
-namespace JWlink2
+namespace JWlink2::commandline
 {
 	namespace fs = filesystem;
 
@@ -23,8 +23,6 @@ namespace JWlink2
 		bool data = false;
 		bool privateExport = false;
 	};
-
-	ExportDirective parseExportDirective(string_view value, const string& context);
 
 	struct LinkOptions
 	{
@@ -63,6 +61,6 @@ namespace JWlink2
 		vector<fs::path> inputs;
 	};
 
+	ExportDirective parseExportDirective(string_view value, const string& context);
 	LinkOptions parseArguments(int argc, char** argv);
-	void runLinker(LinkOptions options);
 }

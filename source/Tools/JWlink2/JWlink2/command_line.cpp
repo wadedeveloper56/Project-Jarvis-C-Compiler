@@ -3,7 +3,7 @@
 
 using namespace std;
 
-namespace JWlink2
+namespace JWlink2::commandline
 {
 	[[noreturn]] void fail(const string& message)
 	{
