@@ -5,622 +5,618 @@ using namespace std;
 
 namespace JWlink2::codeview
 {
-	namespace
+	using Bytes = vector<uint8_t>;
+	constexpr uint32_t BlockSize = 4096;
+	constexpr uint32_t CvSignatureC13 = 4;
+	constexpr uint32_t DebugSLines = 0xF2;
+	constexpr uint16_t S_PUB32 = 0x110E;
+	constexpr uint32_t PdbVersion = 20000404;
+	constexpr uint32_t DbiVersion = 19990903;
+	constexpr uint32_t TpiVersion = 20040203;
+	constexpr uint32_t SectionContributionVersion = 0xF12EBA2D;
+	constexpr uint32_t NoStream = 0xFFFF;
+
+	[[noreturn]] void fail(const string& message)
 	{
-		using Bytes = vector<uint8_t>;
-		constexpr uint32_t BlockSize = 4096;
-		constexpr uint32_t CvSignatureC13 = 4;
-		constexpr uint32_t DebugSLines = 0xF2;
-		constexpr uint16_t S_PUB32 = 0x110E;
-		constexpr uint32_t PdbVersion = 20000404;
-		constexpr uint32_t DbiVersion = 19990903;
-		constexpr uint32_t TpiVersion = 20040203;
-		constexpr uint32_t SectionContributionVersion = 0xF12EBA2D;
-		constexpr uint32_t NoStream = 0xFFFF;
+		throw runtime_error("CodeView/PDB: " + message);
+	}
 
-		[[noreturn]] void fail(const string& message)
+	template <typename T>
+	void appendLe(Bytes& out, T value)
+	{
+		static_assert(is_unsigned_v<T>);
+		for (size_t i = 0; i < sizeof(T); ++i)
 		{
-			throw runtime_error("CodeView/PDB: " + message);
+			out.push_back(static_cast<uint8_t>(value >> (i * 8)));
 		}
+	}
 
-		template <typename T>
-		void appendLe(Bytes& out, T value)
+	template <typename T>
+	void putLe(Bytes& out, size_t offset, T value)
+	{
+		static_assert(is_unsigned_v<T>);
+		if (offset > out.size() || sizeof(T) > out.size() - offset)
 		{
-			static_assert(is_unsigned_v<T>);
-			for (size_t i = 0; i < sizeof(T); ++i)
-			{
-				out.push_back(static_cast<uint8_t>(value >> (i * 8)));
-			}
+			fail("internal serialization range error");
 		}
-
-		template <typename T>
-		void putLe(Bytes& out, size_t offset, T value)
+		for (size_t i = 0; i < sizeof(T); ++i)
 		{
-			static_assert(is_unsigned_v<T>);
-			if (offset > out.size() || sizeof(T) > out.size() - offset)
-			{
-				fail("internal serialization range error");
-			}
-			for (size_t i = 0; i < sizeof(T); ++i)
-			{
-				out[offset + i] = static_cast<uint8_t>(value >> (i * 8));
-			}
+			out[offset + i] = static_cast<uint8_t>(value >> (i * 8));
 		}
+	}
 
-		template <typename T>
-		T readLe(const Bytes& data, size_t offset, string_view what)
+	template <typename T>
+	T readLe(const Bytes& data, size_t offset, string_view what)
+	{
+		static_assert(is_unsigned_v<T>);
+		if (offset > data.size() || sizeof(T) > data.size() - offset)
 		{
-			static_assert(is_unsigned_v<T>);
-			if (offset > data.size() || sizeof(T) > data.size() - offset)
-			{
-				fail("truncated " + string(what));
-			}
-			T result = 0;
-			for (size_t i = 0; i < sizeof(T); ++i)
-			{
-				result |= static_cast<T>(data[offset + i]) << (i * 8);
-			}
-			return result;
+			fail("truncated " + string(what));
 		}
-
-		uint32_t toU32(size_t value, string_view what)
+		T result = 0;
+		for (size_t i = 0; i < sizeof(T); ++i)
 		{
-			if (value > numeric_limits<uint32_t>::max())
-			{
-				fail(string(what) + " exceeds the PDB 32-bit size limit");
-			}
-			return static_cast<uint32_t>(value);
+			result |= static_cast<T>(data[offset + i]) << (i * 8);
 		}
+		return result;
+	}
 
-		uint32_t checkedAdd(uint32_t a, uint32_t b, string_view what)
+	uint32_t toU32(size_t value, string_view what)
+	{
+		if (value > numeric_limits<uint32_t>::max())
 		{
-			if (b > numeric_limits<uint32_t>::max() - a)
-			{
-				fail(string(what) + " overflows");
-			}
-			return a + b;
+			fail(string(what) + " exceeds the PDB 32-bit size limit");
 		}
+		return static_cast<uint32_t>(value);
+	}
 
-		size_t align4(size_t value)
+	uint32_t checkedAdd(uint32_t a, uint32_t b, string_view what)
+	{
+		if (b > numeric_limits<uint32_t>::max() - a)
 		{
-			if (value > numeric_limits<size_t>::max() - 3)
-			{
-				fail("input size overflow");
-			}
-			return (value + 3) & ~size_t(3);
+			fail(string(what) + " overflows");
 		}
+		return a + b;
+	}
 
-		void appendString(Bytes& out, const string& value)
+	size_t align4(size_t value)
+	{
+		if (value > numeric_limits<size_t>::max() - 3)
 		{
-			if (value.find('\0') != string::npos)
-			{
-				fail("names cannot contain embedded NUL bytes");
-			}
-			out.insert(out.end(), value.begin(), value.end());
-			out.push_back(0);
+			fail("input size overflow");
 		}
+		return (value + 3) & ~size_t(3);
+	}
 
-		void validateRecord(const Bytes& record, string_view what)
+	void appendString(Bytes& out, const string& value)
+	{
+		if (value.find('\0') != string::npos)
 		{
-			if (record.size() < 4 || record.size() > numeric_limits<uint16_t>::max() + size_t(2))
-			{
-				fail(string(what) + " has an invalid record size");
-			}
-			if (readLe<uint16_t>(record, 0, what) != record.size() - 2)
-			{
-				fail(string(what) + " length does not match its byte array");
-			}
+			fail("names cannot contain embedded NUL bytes");
 		}
+		out.insert(out.end(), value.begin(), value.end());
+		out.push_back(0);
+	}
 
-		void padCodeViewRecord(Bytes& record, string_view what)
+	void validateRecord(const Bytes& record, string_view what)
+	{
+		if (record.size() < 4 || record.size() > numeric_limits<uint16_t>::max() + size_t(2))
 		{
-			const auto padding = align4(record.size()) - record.size();
-			if (padding == 0)
-			{
-				return;
-			}
-			if (record.size() + padding - 2 > numeric_limits<uint16_t>::max())
-			{
-				fail(string(what) + " is too large after alignment");
-			}
-			for (size_t i = padding; i != 0; --i)
-			{
-				record.push_back(static_cast<uint8_t>(0xF0 + i));
-			}
-			putLe(record, 0, static_cast<uint16_t>(record.size() - 2));
+			fail(string(what) + " has an invalid record size");
 		}
-
-		struct TypeKey
+		if (readLe<uint16_t>(record, 0, what) != record.size() - 2)
 		{
-			string objectId;
-			uint32_t index = 0;
-			bool operator==(const TypeKey& rhs) const { return objectId == rhs.objectId && index == rhs.index; }
-		};
+			fail(string(what) + " length does not match its byte array");
+		}
+	}
 
-		struct TypeKeyHash
+	void padCodeViewRecord(Bytes& record, string_view what)
+	{
+		const auto padding = align4(record.size()) - record.size();
+		if (padding == 0)
 		{
-			size_t operator()(const TypeKey& key) const
+			return;
+		}
+		if (record.size() + padding - 2 > numeric_limits<uint16_t>::max())
+		{
+			fail(string(what) + " is too large after alignment");
+		}
+		for (size_t i = padding; i != 0; --i)
+		{
+			record.push_back(static_cast<uint8_t>(0xF0 + i));
+		}
+		putLe(record, 0, static_cast<uint16_t>(record.size() - 2));
+	}
+
+	struct TypeKey
+	{
+		string objectId;
+		uint32_t index = 0;
+		bool operator==(const TypeKey& rhs) const { return objectId == rhs.objectId && index == rhs.index; }
+	};
+
+	struct TypeKeyHash
+	{
+		size_t operator()(const TypeKey& key) const
+		{
+			const auto a = hash<string>{}(key.objectId);
+			const auto b = hash<uint32_t>{}(key.index);
+			return a ^ (b + 0x9E3779B9U + (a << 6) + (a >> 2));
+		}
+	};
+
+	struct ModuleOutput
+	{
+		string moduleName;
+		string objectName;
+		Bytes symbolRecords;
+		Bytes c13;
+		vector<Bytes> contributions;
+		uint32_t symbolBytes = 0;
+		uint32_t c13Bytes = 0;
+		uint16_t streamIndex = 0;
+	};
+
+	Bytes normalizeType(const CodeViewTypeRecord& type,
+		const string& objectId,
+		const unordered_map<TypeKey, uint32_t, TypeKeyHash>& typeMap)
+	{
+		Bytes record = type.record;
+		validateRecord(record, "type record");
+		for (const auto& patch : type.references)
+		{
+			if (patch.offset > record.size() || 4 > record.size() - patch.offset)
 			{
-				const auto a = hash<string>{}(key.objectId);
-				const auto b = hash<uint32_t>{}(key.index);
-				return a ^ (b + 0x9E3779B9U + (a << 6) + (a >> 2));
+				fail("type-index patch is outside its record");
 			}
-		};
-
-		struct ModuleOutput
-		{
-			string moduleName;
-			string objectName;
-			Bytes symbolRecords;
-			Bytes c13;
-			vector<Bytes> contributions;
-			uint32_t symbolBytes = 0;
-			uint32_t c13Bytes = 0;
-			uint16_t streamIndex = 0;
-		};
-
-		Bytes normalizeType(const CodeViewTypeRecord& type,
-			const string& objectId,
-			const unordered_map<TypeKey, uint32_t, TypeKeyHash>& typeMap)
-		{
-			Bytes record = type.record;
-			validateRecord(record, "type record");
-			for (const auto& patch : type.references)
+			const auto oldIndex = readLe<uint32_t>(record, patch.offset, "type index");
+			if (oldIndex < 0x1000)
 			{
-				if (patch.offset > record.size() || 4 > record.size() - patch.offset)
+				continue;
+			}
+			const auto mapped = typeMap.find(TypeKey{ objectId, oldIndex });
+			if (mapped == typeMap.end())
+			{
+				fail("type record refers to an unmapped object type index");
+			}
+			putLe(record, patch.offset, mapped->second);
+		}
+		padCodeViewRecord(record, "type record");
+		return record;
+	}
+
+	const ObjectSectionContribution& mapContribution(const CodeViewObject& object, uint16_t section, uint32_t offset)
+	{
+		const ObjectSectionContribution* match = nullptr;
+		for (const auto& contribution : object.contributions)
+		{
+			if (contribution.sourceSection != section)
+			{
+				continue;
+			}
+			const auto end = static_cast<uint64_t>(contribution.sourceOffset) + contribution.size;
+			if (offset >= contribution.sourceOffset && offset < end)
+			{
+				if (match != nullptr)
 				{
-					fail("type-index patch is outside its record");
+					fail("ambiguous object-section contribution mapping");
 				}
-				const auto oldIndex = readLe<uint32_t>(record, patch.offset, "type index");
-				if (oldIndex < 0x1000)
-				{
-					continue;
-				}
-				const auto mapped = typeMap.find(TypeKey{ objectId, oldIndex });
-				if (mapped == typeMap.end())
-				{
-					fail("type record refers to an unmapped object type index");
-				}
-				putLe(record, patch.offset, mapped->second);
-			}
-			padCodeViewRecord(record, "type record");
-			return record;
-		}
-
-		const ObjectSectionContribution& mapContribution(const CodeViewObject& object, uint16_t section, uint32_t offset)
-		{
-			const ObjectSectionContribution* match = nullptr;
-			for (const auto& contribution : object.contributions)
-			{
-				if (contribution.sourceSection != section)
-				{
-					continue;
-				}
-				const auto end = static_cast<uint64_t>(contribution.sourceOffset) + contribution.size;
-				if (offset >= contribution.sourceOffset && offset < end)
-				{
-					if (match != nullptr)
-					{
-						fail("ambiguous object-section contribution mapping");
-					}
-					match = &contribution;
-				}
-			}
-			if (match == nullptr || match->linkedSection == 0)
-			{
-				fail("CodeView address has no retained linked-section contribution");
-			}
-			return *match;
-		}
-
-		uint32_t remapOffset(const CodeViewObject& object, uint16_t section, uint32_t offset)
-		{
-			const auto& contribution = mapContribution(object, section, offset);
-			const auto delta = offset - contribution.sourceOffset;
-			if (delta > contribution.size)
-			{
-				fail("CodeView address lies outside its contribution");
-			}
-			return checkedAdd(contribution.linkedOffset, delta, "remapped CodeView address");
-		}
-
-		Bytes normalizeSymbol(const CodeViewObject& object,
-			const CodeViewSymbolRecord& input,
-			const unordered_map<TypeKey, uint32_t, TypeKeyHash>& typeMap)
-		{
-			Bytes record = input.record;
-			validateRecord(record, "symbol record");
-			for (const auto& patch : input.typeReferences)
-			{
-				if (patch.offset > record.size() || 4 > record.size() - patch.offset)
-				{
-					fail("symbol type-index patch is outside its record");
-				}
-				const auto oldIndex = readLe<uint32_t>(record, patch.offset, "symbol type index");
-				if (oldIndex < 0x1000)
-				{
-					continue;
-				}
-				const auto mapped = typeMap.find(TypeKey{ object.objectId, oldIndex });
-				if (mapped == typeMap.end())
-				{
-					fail("symbol refers to an unmapped object type index");
-				}
-				putLe(record, patch.offset, mapped->second);
-			}
-			for (const auto& patch : input.addresses)
-			{
-				if (patch.offsetField > record.size() || 4 > record.size() - patch.offsetField ||
-					patch.sectionField > record.size() || 2 > record.size() - patch.sectionField)
-				{
-					fail("symbol address patch is outside its record");
-				}
-				const auto oldOffset = readLe<uint32_t>(record, patch.offsetField, "symbol section offset");
-				const auto& contribution = mapContribution(object, input.sourceSection, oldOffset);
-				putLe(record, patch.offsetField, remapOffset(object, input.sourceSection, oldOffset));
-				putLe(record, patch.sectionField, contribution.linkedSection);
-			}
-			padCodeViewRecord(record, "symbol record");
-			return record;
-		}
-
-		void remapLines(const CodeViewObject& object, Bytes& data)
-		{
-			if (data.size() < 12)
-			{
-				fail("truncated DEBUG_S_LINES subsection");
-			}
-			const auto originalStart = readLe<uint32_t>(data, 0, "line subsection address");
-			const auto originalSection = readLe<uint16_t>(data, 4, "line subsection section");
-			const auto flags = readLe<uint16_t>(data, 6, "line subsection flags");
-			const auto mappedStart = remapOffset(object, originalSection, originalStart);
-			const auto& contribution = mapContribution(object, originalSection, originalStart);
-			putLe(data, 0, mappedStart);
-			putLe(data, 4, contribution.linkedSection);
-			const auto end = readLe<uint32_t>(data, 8, "line subsection code size");
-			if (static_cast<uint64_t>(originalStart) + end > numeric_limits<uint32_t>::max())
-			{
-				fail("line subsection address range overflows");
-			}
-			size_t cursor = 12;
-			while (cursor < data.size())
-			{
-				if (data.size() - cursor < 12)
-				{
-					fail("truncated C13 line file block");
-				}
-				const auto lineCount = readLe<uint32_t>(data, cursor + 4, "line count");
-				const auto blockSize = readLe<uint32_t>(data, cursor + 8, "line block size");
-				if (blockSize < 12 || blockSize > data.size() - cursor)
-				{
-					fail("invalid C13 line file block size");
-				}
-				const uint64_t rowBytes = static_cast<uint64_t>(lineCount) * 8;
-				const uint64_t columnBytes = (flags & 1) != 0 ? static_cast<uint64_t>(lineCount) * 4 : 0;
-				if (12 + rowBytes + columnBytes > blockSize)
-				{
-					fail("C13 line block is shorter than its line and column records");
-				}
-				for (uint32_t i = 0; i < lineCount; ++i)
-				{
-					const auto offsetField = cursor + 12 + static_cast<size_t>(i) * 8;
-					const auto oldOffset = readLe<uint32_t>(data, offsetField, "line address");
-					putLe(data, offsetField, remapOffset(object, originalSection, oldOffset));
-				}
-				cursor += blockSize;
+				match = &contribution;
 			}
 		}
-
-		Bytes makeC13(const CodeViewObject& object)
+		if (match == nullptr || match->linkedSection == 0)
 		{
-			Bytes result;
-			for (const auto& subsection : object.subsections)
-			{
-				Bytes data = subsection.data;
-				if (subsection.kind == DebugSLines)
-				{
-					remapLines(object, data);
-				}
-				appendLe(result, subsection.kind);
-				appendLe(result, toU32(data.size(), "CodeView subsection"));
-				result.insert(result.end(), data.begin(), data.end());
-				result.resize(align4(result.size()), 0);
-			}
-			return result;
+			fail("CodeView address has no retained linked-section contribution");
 		}
+		return *match;
+	}
 
-		Bytes makePublicSymbol(const LinkedSymbol& symbol)
+	uint32_t remapOffset(const CodeViewObject& object, uint16_t section, uint32_t offset)
+	{
+		const auto& contribution = mapContribution(object, section, offset);
+		const auto delta = offset - contribution.sourceOffset;
+		if (delta > contribution.size)
 		{
-			if (symbol.name.empty())
-			{
-				fail("linked symbol name is empty");
-			}
-			Bytes record;
-			appendLe(record, static_cast<uint16_t>(0));
-			appendLe(record, S_PUB32);
-			appendLe(record, symbol.flags);
-			appendLe(record, symbol.offset);
-			appendLe(record, symbol.section);
-			appendString(record, symbol.name);
-			if (record.size() - 2 > numeric_limits<uint16_t>::max())
-			{
-				fail("linked symbol name is too long for CodeView");
-			}
-			putLe(record, 0, static_cast<uint16_t>(record.size() - 2));
-			padCodeViewRecord(record, "linked public symbol");
-			return record;
+			fail("CodeView address lies outside its contribution");
 		}
+		return checkedAdd(contribution.linkedOffset, delta, "remapped CodeView address");
+	}
 
-		Bytes makeModuleStream(const ModuleOutput& module)
+	Bytes normalizeSymbol(const CodeViewObject& object,
+		const CodeViewSymbolRecord& input,
+		const unordered_map<TypeKey, uint32_t, TypeKeyHash>& typeMap)
+	{
+		Bytes record = input.record;
+		validateRecord(record, "symbol record");
+		for (const auto& patch : input.typeReferences)
 		{
-			Bytes stream;
-			appendLe(stream, CvSignatureC13);
-			stream.insert(stream.end(), module.symbolRecords.begin(), module.symbolRecords.end());
-			stream.insert(stream.end(), module.c13.begin(), module.c13.end());
-			appendLe(stream, static_cast<uint32_t>(0)); // Global references size.
-			return stream;
-		}
-
-		Bytes makeModuleInfo(const vector<ModuleOutput>& modules)
-		{
-			Bytes result;
-			for (size_t i = 0; i < modules.size(); ++i)
+			if (patch.offset > record.size() || 4 > record.size() - patch.offset)
 			{
-				const auto& module = modules[i];
-				appendLe(result, static_cast<uint32_t>(0)); // Unused.
-				appendLe(result, static_cast<uint16_t>(0)); // Section contribution section.
-				appendLe(result, static_cast<uint16_t>(0)); // Padding.
-				appendLe(result, static_cast<uint32_t>(0)); // Contribution offset.
-				appendLe(result, static_cast<uint32_t>(0)); // Contribution size.
-				appendLe(result, static_cast<uint32_t>(0)); // Characteristics.
-				appendLe(result, static_cast<uint16_t>(0)); // Module index.
-				appendLe(result, static_cast<uint16_t>(0)); // Padding.
-				appendLe(result, static_cast<uint32_t>(0)); // Data CRC.
-				appendLe(result, static_cast<uint32_t>(0)); // Relocation CRC.
-				appendLe(result, static_cast<uint16_t>(0)); // Flags.
-				appendLe(result, module.streamIndex);
-				appendLe(result, module.symbolBytes);
-				appendLe(result, static_cast<uint32_t>(0)); // C11 bytes.
-				appendLe(result, module.c13Bytes);
-				appendLe(result, static_cast<uint16_t>(0)); // Source file count.
-				appendLe(result, static_cast<uint16_t>(0)); // Padding.
-				appendLe(result, static_cast<uint32_t>(0)); // File-name offset.
-				appendLe(result, static_cast<uint32_t>(0)); // Source file name index.
-				appendLe(result, static_cast<uint32_t>(0)); // PDB file path name index.
-				appendString(result, module.moduleName);
-				appendString(result, module.objectName);
-				result.resize(align4(result.size()), 0);
+				fail("symbol type-index patch is outside its record");
 			}
-			return result;
-		}
-
-		Bytes makeSectionContributions(const vector<ModuleOutput>& modules)
-		{
-			Bytes result;
-			appendLe(result, SectionContributionVersion);
-			for (const auto& module : modules)
+			const auto oldIndex = readLe<uint32_t>(record, patch.offset, "symbol type index");
+			if (oldIndex < 0x1000)
 			{
-				for (const auto& contribution : module.contributions)
-				{
-					result.insert(result.end(), contribution.begin(), contribution.end());
-				}
+				continue;
 			}
-			return result;
-		}
-
-		Bytes makeSectionMap(const vector<LinkedSection>& sections)
-		{
-			Bytes result;
-			appendLe(result, static_cast<uint16_t>(sections.size()));
-			appendLe(result, static_cast<uint16_t>(sections.size()));
-			for (const auto& section : sections)
+			const auto mapped = typeMap.find(TypeKey{ object.objectId, oldIndex });
+			if (mapped == typeMap.end())
 			{
-				appendLe(result, static_cast<uint16_t>(0)); // Flags.
-				appendLe(result, static_cast<uint16_t>(0)); // Overlay.
-				appendLe(result, static_cast<uint16_t>(0)); // Group.
-				appendLe(result, section.index);
-				appendLe(result, static_cast<uint16_t>(0)); // Section-name string index.
-				appendLe(result, static_cast<uint16_t>(0)); // Class-name string index.
-				appendLe(result, static_cast<uint32_t>(0));
-				appendLe(result, section.size);
+				fail("symbol refers to an unmapped object type index");
 			}
-			return result;
+			putLe(record, patch.offset, mapped->second);
 		}
-
-		Bytes makeFileInfo(const vector<ModuleOutput>& modules)
+		for (const auto& patch : input.addresses)
 		{
-			Bytes result;
-			appendLe(result, static_cast<uint16_t>(modules.size()));
-			appendLe(result, static_cast<uint16_t>(0)); // Total source files.
-			for (size_t i = 0; i < modules.size(); ++i)
+			if (patch.offsetField > record.size() || 4 > record.size() - patch.offsetField ||
+				patch.sectionField > record.size() || 2 > record.size() - patch.sectionField)
 			{
-				appendLe(result, static_cast<uint16_t>(i));
+				fail("symbol address patch is outside its record");
 			}
-			for (size_t i = 0; i < modules.size(); ++i)
-			{
-				appendLe(result, static_cast<uint16_t>(0)); // Module source-file count.
-			}
-			return result;
+			const auto oldOffset = readLe<uint32_t>(record, patch.offsetField, "symbol section offset");
+			const auto& contribution = mapContribution(object, input.sourceSection, oldOffset);
+			putLe(record, patch.offsetField, remapOffset(object, input.sourceSection, oldOffset));
+			putLe(record, patch.sectionField, contribution.linkedSection);
 		}
+		padCodeViewRecord(record, "symbol record");
+		return record;
+	}
 
-		Bytes makeDbi(const PdbIdentity& identity,
-			const vector<ModuleOutput>& modules,
-			const vector<LinkedSection>& sections)
+	void remapLines(const CodeViewObject& object, Bytes& data)
+	{
+		if (data.size() < 12)
 		{
-			const auto modInfo = makeModuleInfo(modules);
-			const auto sectionContributions = makeSectionContributions(modules);
-			const auto sectionMap = makeSectionMap(sections);
-			const auto fileInfo = makeFileInfo(modules);
-			Bytes result;
-			appendLe(result, static_cast<uint32_t>(0xFFFFFFFF));
-			appendLe(result, DbiVersion);
-			appendLe(result, identity.age);
-			appendLe(result, static_cast<uint16_t>(NoStream)); // Global symbol hash stream.
-			appendLe(result, static_cast<uint16_t>(0)); // Build number.
-			appendLe(result, static_cast<uint16_t>(NoStream)); // Public symbol stream.
-			appendLe(result, static_cast<uint16_t>(0xFFFF)); // PDB DLL version.
-			appendLe(result, static_cast<uint16_t>(NoStream)); // Symbol-record stream.
-			appendLe(result, static_cast<uint16_t>(0)); // PDB DLL rebuild.
-			appendLe(result, toU32(modInfo.size(), "DBI module info"));
-			appendLe(result, toU32(sectionContributions.size(), "DBI section contributions"));
-			appendLe(result, toU32(sectionMap.size(), "DBI section map"));
-			appendLe(result, toU32(fileInfo.size(), "DBI file info"));
-			appendLe(result, static_cast<uint32_t>(0)); // Type-server map.
-			appendLe(result, static_cast<uint32_t>(0)); // MFC type-server index.
-			appendLe(result, static_cast<uint32_t>(0)); // Optional debug header.
-			appendLe(result, static_cast<uint32_t>(0)); // EC substream.
+			fail("truncated DEBUG_S_LINES subsection");
+		}
+		const auto originalStart = readLe<uint32_t>(data, 0, "line subsection address");
+		const auto originalSection = readLe<uint16_t>(data, 4, "line subsection section");
+		const auto flags = readLe<uint16_t>(data, 6, "line subsection flags");
+		const auto mappedStart = remapOffset(object, originalSection, originalStart);
+		const auto& contribution = mapContribution(object, originalSection, originalStart);
+		putLe(data, 0, mappedStart);
+		putLe(data, 4, contribution.linkedSection);
+		const auto end = readLe<uint32_t>(data, 8, "line subsection code size");
+		if (static_cast<uint64_t>(originalStart) + end > numeric_limits<uint32_t>::max())
+		{
+			fail("line subsection address range overflows");
+		}
+		size_t cursor = 12;
+		while (cursor < data.size())
+		{
+			if (data.size() - cursor < 12)
+			{
+				fail("truncated C13 line file block");
+			}
+			const auto lineCount = readLe<uint32_t>(data, cursor + 4, "line count");
+			const auto blockSize = readLe<uint32_t>(data, cursor + 8, "line block size");
+			if (blockSize < 12 || blockSize > data.size() - cursor)
+			{
+				fail("invalid C13 line file block size");
+			}
+			const uint64_t rowBytes = static_cast<uint64_t>(lineCount) * 8;
+			const uint64_t columnBytes = (flags & 1) != 0 ? static_cast<uint64_t>(lineCount) * 4 : 0;
+			if (12 + rowBytes + columnBytes > blockSize)
+			{
+				fail("C13 line block is shorter than its line and column records");
+			}
+			for (uint32_t i = 0; i < lineCount; ++i)
+			{
+				const auto offsetField = cursor + 12 + static_cast<size_t>(i) * 8;
+				const auto oldOffset = readLe<uint32_t>(data, offsetField, "line address");
+				putLe(data, offsetField, remapOffset(object, originalSection, oldOffset));
+			}
+			cursor += blockSize;
+		}
+	}
+
+	Bytes makeC13(const CodeViewObject& object)
+	{
+		Bytes result;
+		for (const auto& subsection : object.subsections)
+		{
+			Bytes data = subsection.data;
+			if (subsection.kind == DebugSLines)
+			{
+				remapLines(object, data);
+			}
+			appendLe(result, subsection.kind);
+			appendLe(result, toU32(data.size(), "CodeView subsection"));
+			result.insert(result.end(), data.begin(), data.end());
+			result.resize(align4(result.size()), 0);
+		}
+		return result;
+	}
+
+	Bytes makePublicSymbol(const LinkedSymbol& symbol)
+	{
+		if (symbol.name.empty())
+		{
+			fail("linked symbol name is empty");
+		}
+		Bytes record;
+		appendLe(record, static_cast<uint16_t>(0));
+		appendLe(record, S_PUB32);
+		appendLe(record, symbol.flags);
+		appendLe(record, symbol.offset);
+		appendLe(record, symbol.section);
+		appendString(record, symbol.name);
+		if (record.size() - 2 > numeric_limits<uint16_t>::max())
+		{
+			fail("linked symbol name is too long for CodeView");
+		}
+		putLe(record, 0, static_cast<uint16_t>(record.size() - 2));
+		padCodeViewRecord(record, "linked public symbol");
+		return record;
+	}
+
+	Bytes makeModuleStream(const ModuleOutput& module)
+	{
+		Bytes stream;
+		appendLe(stream, CvSignatureC13);
+		stream.insert(stream.end(), module.symbolRecords.begin(), module.symbolRecords.end());
+		stream.insert(stream.end(), module.c13.begin(), module.c13.end());
+		appendLe(stream, static_cast<uint32_t>(0)); // Global references size.
+		return stream;
+	}
+
+	Bytes makeModuleInfo(const vector<ModuleOutput>& modules)
+	{
+		Bytes result;
+		for (size_t i = 0; i < modules.size(); ++i)
+		{
+			const auto& module = modules[i];
+			appendLe(result, static_cast<uint32_t>(0)); // Unused.
+			appendLe(result, static_cast<uint16_t>(0)); // Section contribution section.
+			appendLe(result, static_cast<uint16_t>(0)); // Padding.
+			appendLe(result, static_cast<uint32_t>(0)); // Contribution offset.
+			appendLe(result, static_cast<uint32_t>(0)); // Contribution size.
+			appendLe(result, static_cast<uint32_t>(0)); // Characteristics.
+			appendLe(result, static_cast<uint16_t>(0)); // Module index.
+			appendLe(result, static_cast<uint16_t>(0)); // Padding.
+			appendLe(result, static_cast<uint32_t>(0)); // Data CRC.
+			appendLe(result, static_cast<uint32_t>(0)); // Relocation CRC.
 			appendLe(result, static_cast<uint16_t>(0)); // Flags.
-			appendLe(result, static_cast<uint16_t>(0x8664)); // AMD64.
-			appendLe(result, static_cast<uint32_t>(0));
-			result.insert(result.end(), modInfo.begin(), modInfo.end());
-			result.insert(result.end(), sectionContributions.begin(), sectionContributions.end());
-			result.insert(result.end(), sectionMap.begin(), sectionMap.end());
-			result.insert(result.end(), fileInfo.begin(), fileInfo.end());
-			return result;
+			appendLe(result, module.streamIndex);
+			appendLe(result, module.symbolBytes);
+			appendLe(result, static_cast<uint32_t>(0)); // C11 bytes.
+			appendLe(result, module.c13Bytes);
+			appendLe(result, static_cast<uint16_t>(0)); // Source file count.
+			appendLe(result, static_cast<uint16_t>(0)); // Padding.
+			appendLe(result, static_cast<uint32_t>(0)); // File-name offset.
+			appendLe(result, static_cast<uint32_t>(0)); // Source file name index.
+			appendLe(result, static_cast<uint32_t>(0)); // PDB file path name index.
+			appendString(result, module.moduleName);
+			appendString(result, module.objectName);
+			result.resize(align4(result.size()), 0);
 		}
+		return result;
+	}
 
-		Bytes makeInfo(const PdbIdentity& identity)
+	Bytes makeSectionContributions(const vector<ModuleOutput>& modules)
+	{
+		Bytes result;
+		appendLe(result, SectionContributionVersion);
+		for (const auto& module : modules)
 		{
-			Bytes result;
-			appendLe(result, PdbVersion);
-			appendLe(result, identity.signature);
-			appendLe(result, identity.age);
-			result.insert(result.end(), identity.guid.begin(), identity.guid.end());
-			appendLe(result, static_cast<uint32_t>(0)); // Named-stream string-buffer size.
-			appendLe(result, static_cast<uint32_t>(0)); // Named-stream hash-table size.
-			appendLe(result, static_cast<uint32_t>(8)); // Empty hash tables still require nonzero capacity.
-			appendLe(result, static_cast<uint32_t>(0)); // Present bitmap word count.
-			appendLe(result, static_cast<uint32_t>(0)); // Deleted bitmap word count.
-			appendLe(result, static_cast<uint32_t>(0)); // NMTNI::niMac.
-			return result;
+			for (const auto& contribution : module.contributions)
+			{
+				result.insert(result.end(), contribution.begin(), contribution.end());
+			}
 		}
+		return result;
+	}
 
-		Bytes makeTpi(const vector<Bytes>& records)
+	Bytes makeSectionMap(const vector<LinkedSection>& sections)
+	{
+		Bytes result;
+		appendLe(result, static_cast<uint16_t>(sections.size()));
+		appendLe(result, static_cast<uint16_t>(sections.size()));
+		for (const auto& section : sections)
 		{
-			Bytes recordBytes;
-			for (const auto& record : records)
-			{
-				recordBytes.insert(recordBytes.end(), record.begin(), record.end());
-			}
-			Bytes result;
-			appendLe(result, TpiVersion);
-			appendLe(result, static_cast<uint32_t>(56));
-			appendLe(result, static_cast<uint32_t>(0x1000));
-			appendLe(result, checkedAdd(0x1000, toU32(records.size(), "TPI record count"), "TPI end index"));
-			appendLe(result, toU32(recordBytes.size(), "TPI records"));
-			appendLe(result, static_cast<uint16_t>(NoStream));
-			appendLe(result, static_cast<uint16_t>(NoStream));
-			appendLe(result, static_cast<uint32_t>(4));
-			appendLe(result, static_cast<uint32_t>(0x3FFFF));
+			appendLe(result, static_cast<uint16_t>(0)); // Flags.
+			appendLe(result, static_cast<uint16_t>(0)); // Overlay.
+			appendLe(result, static_cast<uint16_t>(0)); // Group.
+			appendLe(result, section.index);
+			appendLe(result, static_cast<uint16_t>(0)); // Section-name string index.
+			appendLe(result, static_cast<uint16_t>(0)); // Class-name string index.
 			appendLe(result, static_cast<uint32_t>(0));
-			appendLe(result, static_cast<uint32_t>(0));
-			appendLe(result, static_cast<uint32_t>(0));
-			appendLe(result, static_cast<uint32_t>(0));
-			appendLe(result, static_cast<uint32_t>(0));
-			appendLe(result, static_cast<uint32_t>(0));
-			result.insert(result.end(), recordBytes.begin(), recordBytes.end());
-			return result;
+			appendLe(result, section.size);
 		}
+		return result;
+	}
 
-		struct MsfStream
+	Bytes makeFileInfo(const vector<ModuleOutput>& modules)
+	{
+		Bytes result;
+		appendLe(result, static_cast<uint16_t>(modules.size()));
+		appendLe(result, static_cast<uint16_t>(0)); // Total source files.
+		for (size_t i = 0; i < modules.size(); ++i)
 		{
-			Bytes bytes;
-			vector<uint32_t> blocks;
-		};
+			appendLe(result, static_cast<uint16_t>(i));
+		}
+		for (size_t i = 0; i < modules.size(); ++i)
+		{
+			appendLe(result, static_cast<uint16_t>(0)); // Module source-file count.
+		}
+		return result;
+	}
 
-		Bytes makeMsf(vector<Bytes> streams)
+	Bytes makeDbi(const PdbIdentity& identity,
+		const vector<ModuleOutput>& modules,
+		const vector<LinkedSection>& sections)
+	{
+		const auto modInfo = makeModuleInfo(modules);
+		const auto sectionContributions = makeSectionContributions(modules);
+		const auto sectionMap = makeSectionMap(sections);
+		const auto fileInfo = makeFileInfo(modules);
+		Bytes result;
+		appendLe(result, static_cast<uint32_t>(0xFFFFFFFF));
+		appendLe(result, DbiVersion);
+		appendLe(result, identity.age);
+		appendLe(result, static_cast<uint16_t>(NoStream)); // Global symbol hash stream.
+		appendLe(result, static_cast<uint16_t>(0)); // Build number.
+		appendLe(result, static_cast<uint16_t>(NoStream)); // Public symbol stream.
+		appendLe(result, static_cast<uint16_t>(0xFFFF)); // PDB DLL version.
+		appendLe(result, static_cast<uint16_t>(NoStream)); // Symbol-record stream.
+		appendLe(result, static_cast<uint16_t>(0)); // PDB DLL rebuild.
+		appendLe(result, toU32(modInfo.size(), "DBI module info"));
+		appendLe(result, toU32(sectionContributions.size(), "DBI section contributions"));
+		appendLe(result, toU32(sectionMap.size(), "DBI section map"));
+		appendLe(result, toU32(fileInfo.size(), "DBI file info"));
+		appendLe(result, static_cast<uint32_t>(0)); // Type-server map.
+		appendLe(result, static_cast<uint32_t>(0)); // MFC type-server index.
+		appendLe(result, static_cast<uint32_t>(0)); // Optional debug header.
+		appendLe(result, static_cast<uint32_t>(0)); // EC substream.
+		appendLe(result, static_cast<uint16_t>(0)); // Flags.
+		appendLe(result, static_cast<uint16_t>(0x8664)); // AMD64.
+		appendLe(result, static_cast<uint32_t>(0));
+		result.insert(result.end(), modInfo.begin(), modInfo.end());
+		result.insert(result.end(), sectionContributions.begin(), sectionContributions.end());
+		result.insert(result.end(), sectionMap.begin(), sectionMap.end());
+		result.insert(result.end(), fileInfo.begin(), fileInfo.end());
+		return result;
+	}
+
+	Bytes makeInfo(const PdbIdentity& identity)
+	{
+		Bytes result;
+		appendLe(result, PdbVersion);
+		appendLe(result, identity.signature);
+		appendLe(result, identity.age);
+		result.insert(result.end(), identity.guid.begin(), identity.guid.end());
+		appendLe(result, static_cast<uint32_t>(0)); // Named-stream string-buffer size.
+		appendLe(result, static_cast<uint32_t>(0)); // Named-stream hash-table size.
+		appendLe(result, static_cast<uint32_t>(8)); // Empty hash tables still require nonzero capacity.
+		appendLe(result, static_cast<uint32_t>(0)); // Present bitmap word count.
+		appendLe(result, static_cast<uint32_t>(0)); // Deleted bitmap word count.
+		appendLe(result, static_cast<uint32_t>(0)); // NMTNI::niMac.
+		return result;
+	}
+
+	Bytes makeTpi(const vector<Bytes>& records)
+	{
+		Bytes recordBytes;
+		for (const auto& record : records)
 		{
-			vector<MsfStream> allocated;
-			allocated.reserve(streams.size());
-			uint64_t nextBlock = 3;
-			for (auto& bytes : streams)
-			{
-				MsfStream stream;
-				stream.bytes = move(bytes);
-				const auto count = (stream.bytes.size() + BlockSize - 1) / BlockSize;
-				if (nextBlock + count > 32768)
-				{
-					fail("MSF 7.0 output exceeds the single free-page-map range limit");
-				}
-				for (size_t i = 0; i < count; ++i)
-				{
-					stream.blocks.push_back(static_cast<uint32_t>(nextBlock++));
-				}
-				allocated.push_back(move(stream));
-			}
-			Bytes directory;
-			appendLe(directory, toU32(allocated.size(), "MSF stream count"));
-			for (const auto& stream : allocated)
-			{
-				appendLe(directory, stream.bytes.empty() ? static_cast<uint32_t>(0xFFFFFFFF) : toU32(stream.bytes.size(), "MSF stream"));
-			}
-			for (const auto& stream : allocated)
-			{
-				for (const auto block : stream.blocks)
-				{
-					appendLe(directory, block);
-				}
-			}
-			const auto directoryBlockCount = (directory.size() + BlockSize - 1) / BlockSize;
-			if (directoryBlockCount == 0 || directoryBlockCount > BlockSize / sizeof(uint32_t))
-			{
-				fail("MSF stream directory exceeds the block-map capacity");
-			}
-			vector<uint32_t> directoryBlocks;
-			for (size_t i = 0; i < directoryBlockCount; ++i)
-			{
-				directoryBlocks.push_back(static_cast<uint32_t>(nextBlock++));
-			}
-			const auto blockMapBlock = static_cast<uint32_t>(nextBlock++);
-			if (nextBlock > 32768)
+			recordBytes.insert(recordBytes.end(), record.begin(), record.end());
+		}
+		Bytes result;
+		appendLe(result, TpiVersion);
+		appendLe(result, static_cast<uint32_t>(56));
+		appendLe(result, static_cast<uint32_t>(0x1000));
+		appendLe(result, checkedAdd(0x1000, toU32(records.size(), "TPI record count"), "TPI end index"));
+		appendLe(result, toU32(recordBytes.size(), "TPI records"));
+		appendLe(result, static_cast<uint16_t>(NoStream));
+		appendLe(result, static_cast<uint16_t>(NoStream));
+		appendLe(result, static_cast<uint32_t>(4));
+		appendLe(result, static_cast<uint32_t>(0x3FFFF));
+		appendLe(result, static_cast<uint32_t>(0));
+		appendLe(result, static_cast<uint32_t>(0));
+		appendLe(result, static_cast<uint32_t>(0));
+		appendLe(result, static_cast<uint32_t>(0));
+		appendLe(result, static_cast<uint32_t>(0));
+		appendLe(result, static_cast<uint32_t>(0));
+		result.insert(result.end(), recordBytes.begin(), recordBytes.end());
+		return result;
+	}
+
+	struct MsfStream
+	{
+		Bytes bytes;
+		vector<uint32_t> blocks;
+	};
+
+	Bytes makeMsf(vector<Bytes> streams)
+	{
+		vector<MsfStream> allocated;
+		allocated.reserve(streams.size());
+		uint64_t nextBlock = 3;
+		for (auto& bytes : streams)
+		{
+			MsfStream stream;
+			stream.bytes = move(bytes);
+			const auto count = (stream.bytes.size() + BlockSize - 1) / BlockSize;
+			if (nextBlock + count > 32768)
 			{
 				fail("MSF 7.0 output exceeds the single free-page-map range limit");
 			}
-			Bytes file(static_cast<size_t>(nextBlock) * BlockSize, 0);
-			static constexpr array<uint8_t, 32> magic = {
-				'M','i','c','r','o','s','o','f','t',' ','C','/','C','+','+',' ','M','S','F',' ','7','.','0','0','\r','\n',0x1A,'D','S',0,0,0
-			};
-			copy(magic.begin(), magic.end(), file.begin());
-			Bytes super;
-			appendLe(super, BlockSize);
-			appendLe(super, static_cast<uint32_t>(1));
-			appendLe(super, static_cast<uint32_t>(nextBlock));
-			appendLe(super, toU32(directory.size(), "MSF directory"));
-			appendLe(super, static_cast<uint32_t>(0));
-			appendLe(super, blockMapBlock);
-			copy(super.begin(), super.end(), file.begin() + 32);
-
-			Bytes fpm(BlockSize, 0xFF);
-			for (uint32_t block = 0; block < nextBlock; ++block)
+			for (size_t i = 0; i < count; ++i)
 			{
-				fpm[block / 8] &= static_cast<uint8_t>(~(1U << (block % 8)));
+				stream.blocks.push_back(static_cast<uint32_t>(nextBlock++));
 			}
-			copy(fpm.begin(), fpm.end(), file.begin() + BlockSize);
-			copy(fpm.begin(), fpm.end(), file.begin() + 2 * BlockSize);
-
-			for (const auto& stream : allocated)
-			{
-				size_t offset = 0;
-				for (const auto block : stream.blocks)
-				{
-					const auto count = min<size_t>(BlockSize, stream.bytes.size() - offset);
-					copy_n(stream.bytes.begin() + static_cast<ptrdiff_t>(offset), count,
-						file.begin() + static_cast<ptrdiff_t>(block) * BlockSize);
-					offset += count;
-				}
-			}
-			for (size_t i = 0; i < directoryBlocks.size(); ++i)
-			{
-				const auto offset = i * BlockSize;
-				const auto count = min<size_t>(BlockSize, directory.size() - offset);
-				copy_n(directory.begin() + static_cast<ptrdiff_t>(offset), count,
-					file.begin() + static_cast<ptrdiff_t>(directoryBlocks[i]) * BlockSize);
-				putLe(file, static_cast<size_t>(blockMapBlock) * BlockSize + i * 4, directoryBlocks[i]);
-			}
-			return file;
+			allocated.push_back(move(stream));
 		}
+		Bytes directory;
+		appendLe(directory, toU32(allocated.size(), "MSF stream count"));
+		for (const auto& stream : allocated)
+		{
+			appendLe(directory, stream.bytes.empty() ? static_cast<uint32_t>(0xFFFFFFFF) : toU32(stream.bytes.size(), "MSF stream"));
+		}
+		for (const auto& stream : allocated)
+		{
+			for (const auto block : stream.blocks)
+			{
+				appendLe(directory, block);
+			}
+		}
+		const auto directoryBlockCount = (directory.size() + BlockSize - 1) / BlockSize;
+		if (directoryBlockCount == 0 || directoryBlockCount > BlockSize / sizeof(uint32_t))
+		{
+			fail("MSF stream directory exceeds the block-map capacity");
+		}
+		vector<uint32_t> directoryBlocks;
+		for (size_t i = 0; i < directoryBlockCount; ++i)
+		{
+			directoryBlocks.push_back(static_cast<uint32_t>(nextBlock++));
+		}
+		const auto blockMapBlock = static_cast<uint32_t>(nextBlock++);
+		if (nextBlock > 32768)
+		{
+			fail("MSF 7.0 output exceeds the single free-page-map range limit");
+		}
+		Bytes file(static_cast<size_t>(nextBlock) * BlockSize, 0);
+		static constexpr array<uint8_t, 32> magic = {
+			'M','i','c','r','o','s','o','f','t',' ','C','/','C','+','+',' ','M','S','F',' ','7','.','0','0','\r','\n',0x1A,'D','S',0,0,0
+		};
+		copy(magic.begin(), magic.end(), file.begin());
+		Bytes super;
+		appendLe(super, BlockSize);
+		appendLe(super, static_cast<uint32_t>(1));
+		appendLe(super, static_cast<uint32_t>(nextBlock));
+		appendLe(super, toU32(directory.size(), "MSF directory"));
+		appendLe(super, static_cast<uint32_t>(0));
+		appendLe(super, blockMapBlock);
+		copy(super.begin(), super.end(), file.begin() + 32);
 
-	} // namespace
+		Bytes fpm(BlockSize, 0xFF);
+		for (uint32_t block = 0; block < nextBlock; ++block)
+		{
+			fpm[block / 8] &= static_cast<uint8_t>(~(1U << (block % 8)));
+		}
+		copy(fpm.begin(), fpm.end(), file.begin() + BlockSize);
+		copy(fpm.begin(), fpm.end(), file.begin() + 2 * BlockSize);
+
+		for (const auto& stream : allocated)
+		{
+			size_t offset = 0;
+			for (const auto block : stream.blocks)
+			{
+				const auto count = min<size_t>(BlockSize, stream.bytes.size() - offset);
+				copy_n(stream.bytes.begin() + static_cast<ptrdiff_t>(offset), count,
+					file.begin() + static_cast<ptrdiff_t>(block) * BlockSize);
+				offset += count;
+			}
+		}
+		for (size_t i = 0; i < directoryBlocks.size(); ++i)
+		{
+			const auto offset = i * BlockSize;
+			const auto count = min<size_t>(BlockSize, directory.size() - offset);
+			copy_n(directory.begin() + static_cast<ptrdiff_t>(offset), count,
+				file.begin() + static_cast<ptrdiff_t>(directoryBlocks[i]) * BlockSize);
+			putLe(file, static_cast<size_t>(blockMapBlock) * BlockSize + i * 4, directoryBlocks[i]);
+		}
+		return file;
+	}
 
 	PdbBuilder::PdbBuilder(PdbIdentity identity) : identity_(identity)
 	{

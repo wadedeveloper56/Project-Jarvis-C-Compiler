@@ -1,5 +1,5 @@
 ## WORKSPACE EXECUTIVE SUMMARY (YAML)
-# Generated: 2026-11-12T04:31:11.7753146-06:00
+# Generated: 2026-11-12T04:49:04.0753252-06:00
 # Root: C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools
 Architecture:
   Type: General Codebase
@@ -1775,11 +1775,11 @@ Architecture:
 - File: JWlink\sdk\sdkold.cpp
   Preview: "// sdkold.cpp : Defines the functions for the static library. // #include 'pch.h' #include 'framework.h' // TODO: This is an example of a library func..."
 - File: JWlink2\JWlink2\codeview_pdb.cpp
-  Preview: "#include 'pch.h' #include 'codeview_pdb.h' using namespace std; namespace JWlink2::codeview { 	namespace 	{ 		using Bytes = vector<uint8_t>; 		constex..."
+  Preview: "#include 'pch.h' #include 'codeview_pdb.h' using namespace std; namespace JWlink2::codeview { 	using Bytes = vector<uint8_t>; 	constexpr uint32_t Bloc..."
 - File: JWlink2\JWlink2\codeview_pdb.h
   Preview: "#pragma once #include <array> #include <cstddef> #include <cstdint> #include <filesystem> #include <string> #include <vector> using namespace std; nam..."
 - File: JWlink2\JWlink2\command_line.cpp
-  Preview: "#include 'pch.h' #include 'command_line.h' using namespace std; namespace jwlink2 { 	namespace 	{ 		[[noreturn]] void fail(const string& message) 		{ ..."
+  Preview: "#include 'pch.h' #include 'command_line.h' using namespace std; namespace JWlink2::commandline { 	[[noreturn]] void fail(const string& message) 	{ 		t..."
 - File: JWlink2\JWlink2\command_line.h
   Preview: "#pragma once #include <cstdint> #include <filesystem> #include <optional> #include <string> #include <string_view> #include <utility> #include <vector..."
 - File: JWlink2\JWlink2\linker.cpp
