@@ -9,7 +9,7 @@ namespace JWlink2
 {
 	using Bytes = vector<uint8_t>;
 
-	namespace JWlink2::engine
+	namespace LinkerEngine
 	{
 		[[noreturn]] void fail(const string& message);
 

@@ -1,5 +1,5 @@
 ## WORKSPACE EXECUTIVE SUMMARY (YAML)
-# Generated: 2026-11-12T06:35:54.6868362-06:00
+# Generated: 2026-11-12T06:54:27.4679675-06:00
 # Root: C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools
 Architecture:
   Type: General Codebase
@@ -1786,6 +1786,8 @@ Architecture:
   Preview: "#include 'pch.h' #include 'command_line.h' #include 'codeview_pdb.h' #include 'linker.h' using namespace std; namespace JWlink2 { 	using Bytes = vecto..."
 - File: JWlink2\JWlink2\linker.h
   Preview: "#pragma once #include 'codeview_pdb.h' #include 'command_line.h' using namespace JWlink2::commandline; namespace JWlink2 { 	using Bytes = vector<uint8..."
+- File: JWlink2\JWlink2\linker2.cpp
+  Preview: "#include 'pch.h' #include 'command_line.h' #include 'codeview_pdb.h' #include 'linker.h' using namespace std; namespace JWlink2 { 	using Bytes = vecto..."
 - File: JWlink2\JWlink2\main.cpp
   Preview: "#include 'pch.h' #include 'command_line.h' #include 'linker.h' using namespace std; int main(int argc, char** argv) { 	try 	{ 		JWlink2::runLinker(JWl..."
 - File: JWlink2\JWlink2\pch.cpp
@@ -2006,5 +2008,3 @@ Architecture:
   Preview: "/* Capstone Disassembly Engine */ /* By Jiajie Chen <c@jia.je>, 2024 */ /*  Yanglin Xun <1109673069@qq.com>, 2024 */ #ifndef CS_LOONGARCH_LINKAGE_H #d..."
 - File: Decompiler\arch\LoongArch\LoongArchMapping.h
   Preview: "/* Capstone Disassembly Engine */ /* By Jiajie Chen <c@jia.je>, 2024 */ /*  Yanglin Xun <1109673069@qq.com>, 2024 */ #ifndef CS_LOONGARCH_MAPPING_H #d..."
-- File: Decompiler\arch\LoongArch\LoongArchModule.h
-  Preview: "/* Capstone Disassembly Engine */ /* By Jiajie Chen <c@jia.je>, 2024 */ /*  Yanglin Xun <1109673069@qq.com>, 2024 */ #ifndef CS_LOONGARCH_MODULE_H #de..."
