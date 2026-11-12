@@ -5,167 +5,163 @@ using namespace std;
 
 namespace JWlink2
 {
-	namespace
+	[[noreturn]] void fail(const string& message)
 	{
-		[[noreturn]] void fail(const string& message)
-		{
-			throw runtime_error(message);
-		}
+		throw runtime_error(message);
+	}
 
-		string lowerAscii(string value)
-		{
-			transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) { return static_cast<char>(tolower(ch)); });
-			return value;
-		}
+	string lowerAscii(string value)
+	{
+		transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) { return static_cast<char>(tolower(ch)); });
+		return value;
+	}
 
-		vector<string> tokenizeResponse(string_view text, const fs::path& path)
+	vector<string> tokenizeResponse(string_view text, const fs::path& path)
+	{
+		vector<string> result;
+		string token;
+		bool quoted = false;
+		bool started = false;
+		for (size_t i = 0; i < text.size();)
 		{
-			vector<string> result;
-			string token;
-			bool quoted = false;
-			bool started = false;
-			for (size_t i = 0; i < text.size();)
+			if (text[i] == '\\')
 			{
-				if (text[i] == '\\')
+				size_t end = i;
+				while (end < text.size() && text[end] == '\\')
 				{
-					size_t end = i;
-					while (end < text.size() && text[end] == '\\')
+					++end;
+				}
+				const auto slashCount = end - i;
+				if (end < text.size() && text[end] == '"')
+				{
+					token.append(slashCount / 2, '\\');
+					if ((slashCount & 1) != 0)
 					{
-						++end;
-					}
-					const auto slashCount = end - i;
-					if (end < text.size() && text[end] == '"')
-					{
-						token.append(slashCount / 2, '\\');
-						if ((slashCount & 1) != 0)
-						{
-							token.push_back('"');
-						}
-						else
-						{
-							quoted = !quoted;
-						}
-						started = true;
-						i = end + 1;
+						token.push_back('"');
 					}
 					else
 					{
-						token.append(slashCount, '\\');
-						started = true;
-						i = end;
+						quoted = !quoted;
 					}
-				}
-				else if (text[i] == '"')
-				{
-					quoted = !quoted;
 					started = true;
-					++i;
-				}
-				else if (isspace(static_cast<unsigned char>(text[i])) && !quoted)
-				{
-					if (started)
-					{
-						result.push_back(move(token));
-						token.clear();
-						started = false;
-					}
-					++i;
+					i = end + 1;
 				}
 				else
 				{
-					token.push_back(text[i++]);
+					token.append(slashCount, '\\');
 					started = true;
+					i = end;
 				}
 			}
-			if (quoted)
+			else if (text[i] == '"')
 			{
-				fail(path.string() + ": unterminated quote in response file");
+				quoted = !quoted;
+				started = true;
+				++i;
 			}
-			if (started)
+			else if (isspace(static_cast<unsigned char>(text[i])) && !quoted)
 			{
-				result.push_back(move(token));
+				if (started)
+				{
+					result.push_back(move(token));
+					token.clear();
+					started = false;
+				}
+				++i;
 			}
-			return result;
+			else
+			{
+				token.push_back(text[i++]);
+				started = true;
+			}
 		}
-
-		void expandResponseFiles(const vector<string>& arguments, vector<string>& expanded, set<fs::path>& active, unsigned depth)
+		if (quoted)
 		{
-			if (depth > 32)
-			{
-				fail("response-file nesting exceeds 32 levels");
-			}
-			for (const auto& argument : arguments)
-			{
-				if (argument.size() <= 1 || argument[0] != '@')
-				{
-					expanded.push_back(argument);
-					continue;
-				}
-				const auto path = fs::absolute(fs::path(argument.substr(1))).lexically_normal();
-				if (!active.insert(path).second)
-				{
-					fail("response-file cycle involving '" + path.string() + "'");
-				}
-				ifstream input(path);
-				if (!input)
-				{
-					fail("cannot open response file '" + path.string() + "'");
-				}
-				ostringstream content;
-				content << input.rdbuf();
-				if (!input.eof() && input.fail())
-				{
-					fail("failed reading response file '" + path.string() + "'");
-				}
-				auto nested = tokenizeResponse(content.str(), path);
-				expandResponseFiles(nested, expanded, active, depth + 1);
-				active.erase(path);
-			}
+			fail(path.string() + ": unterminated quote in response file");
 		}
-
-		uint64_t parseUnsignedOption(string_view text, string_view optionName)
+		if (started)
 		{
-			int base = 10;
-			if (text.size() > 2 && text[0] == '0' && (text[1] == 'x' || text[1] == 'X'))
-			{
-				base = 16;
-				text.remove_prefix(2);
-			}
-			uint64_t value = 0;
-			const auto parsed = from_chars(text.data(), text.data() + text.size(), value, base);
-			if (text.empty() || parsed.ec != errc{} || parsed.ptr != text.data() + text.size())
-			{
-				fail("invalid value for " + string(optionName));
-			}
-			return value;
+			result.push_back(move(token));
 		}
+		return result;
+	}
 
-		void printUsage()
+	void expandResponseFiles(const vector<string>& arguments, vector<string>& expanded, set<fs::path>& active, unsigned depth)
+	{
+		if (depth > 32)
 		{
-			cout << "JWlink2 - AMD64 COFF to Windows PE32+ linker\n"
-				"Usage: JWlink2 [options] input.obj [input.lib ...]\n"
-				"  /OUT:<file>, -o <file>      Output image (default: a.exe or a.dll)\n"
-				"  /DLL                        Create a DLL\n"
-				"  /DEF:<file>                 Read module name and exports from a .def file\n"
-				"  /EXPORT:<spec>              Export a symbol\n"
-				"  /IMPLIB[:<file>]            Write a DLL import library\n"
-				"  /ENTRY:<symbol>             Set the image entry point\n"
-				"  /NOENTRY                    Omit the DLL entry point\n"
-				"  /SUBSYSTEM:CONSOLE|WINDOWS  Select PE subsystem\n"
-				"  /LIBPATH:<directory>        Search directory for libraries\n"
-				"  /DEFAULTLIB:<library>       Add a library to the link\n"
-				"  /DELAYLOAD:<dll>            Delay-load imports from a DLL\n"
-				"  /DEBUG                      Generate a PDB and PE CodeView record\n"
-				"  /PDB:<file>                 Set PDB output path (implies /DEBUG)\n"
-				"  /ALIGN:<bytes>              Set PE section alignment\n"
-				"  /BASE:<address>             Set preferred image base\n"
-				"  /DYNAMICBASE | /FIXED       Enable ASLR relocations or fixed image\n"
-				"  /MAP[:<file>]               Write a symbol map\n"
-				"  @<file>                     Read additional options from a response file\n"
-				"  -h, --help                  Show this help\n";
+			fail("response-file nesting exceeds 32 levels");
 		}
+		for (const auto& argument : arguments)
+		{
+			if (argument.size() <= 1 || argument[0] != '@')
+			{
+				expanded.push_back(argument);
+				continue;
+			}
+			const auto path = fs::absolute(fs::path(argument.substr(1))).lexically_normal();
+			if (!active.insert(path).second)
+			{
+				fail("response-file cycle involving '" + path.string() + "'");
+			}
+			ifstream input(path);
+			if (!input)
+			{
+				fail("cannot open response file '" + path.string() + "'");
+			}
+			ostringstream content;
+			content << input.rdbuf();
+			if (!input.eof() && input.fail())
+			{
+				fail("failed reading response file '" + path.string() + "'");
+			}
+			auto nested = tokenizeResponse(content.str(), path);
+			expandResponseFiles(nested, expanded, active, depth + 1);
+			active.erase(path);
+		}
+	}
 
-	} // namespace
+	uint64_t parseUnsignedOption(string_view text, string_view optionName)
+	{
+		int base = 10;
+		if (text.size() > 2 && text[0] == '0' && (text[1] == 'x' || text[1] == 'X'))
+		{
+			base = 16;
+			text.remove_prefix(2);
+		}
+		uint64_t value = 0;
+		const auto parsed = from_chars(text.data(), text.data() + text.size(), value, base);
+		if (text.empty() || parsed.ec != errc{} || parsed.ptr != text.data() + text.size())
+		{
+			fail("invalid value for " + string(optionName));
+		}
+		return value;
+	}
+
+	void printUsage()
+	{
+		cout << "JWlink2 - AMD64 COFF to Windows PE32+ linker\n"
+			"Usage: JWlink2 [options] input.obj [input.lib ...]\n"
+			"  /OUT:<file>, -o <file>      Output image (default: a.exe or a.dll)\n"
+			"  /DLL                        Create a DLL\n"
+			"  /DEF:<file>                 Read module name and exports from a .def file\n"
+			"  /EXPORT:<spec>              Export a symbol\n"
+			"  /IMPLIB[:<file>]            Write a DLL import library\n"
+			"  /ENTRY:<symbol>             Set the image entry point\n"
+			"  /NOENTRY                    Omit the DLL entry point\n"
+			"  /SUBSYSTEM:CONSOLE|WINDOWS  Select PE subsystem\n"
+			"  /LIBPATH:<directory>        Search directory for libraries\n"
+			"  /DEFAULTLIB:<library>       Add a library to the link\n"
+			"  /DELAYLOAD:<dll>            Delay-load imports from a DLL\n"
+			"  /DEBUG                      Generate a PDB and PE CodeView record\n"
+			"  /PDB:<file>                 Set PDB output path (implies /DEBUG)\n"
+			"  /ALIGN:<bytes>              Set PE section alignment\n"
+			"  /BASE:<address>             Set preferred image base\n"
+			"  /DYNAMICBASE | /FIXED       Enable ASLR relocations or fixed image\n"
+			"  /MAP[:<file>]               Write a symbol map\n"
+			"  @<file>                     Read additional options from a response file\n"
+			"  -h, --help                  Show this help\n";
+	}
 
 	ExportDirective parseExportDirective(string_view value, const string& context)
 	{
