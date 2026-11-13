@@ -2708,10 +2708,12 @@ namespace JWlink2
 			writeLe(image, coff, MachineAmd64);
 			writeLe(image, coff + 2, static_cast<uint16_t>(outputSections_.size()));
 			writeLe(image, coff + 16, uint16_t{ 240 });
-			const auto fileCharacteristics = static_cast<uint16_t>(0x0022 | (options_.dll ? 0x2000 : 0) | (relocationDirectorySize_ == 0 ? 0x0001 : 0));
+			const auto fileCharacteristics = static_cast<uint16_t>(0x0002 | (options_.largeAddressAware ? 0x0020 : 0) | (options_.dll ? 0x2000 : 0) | (relocationDirectorySize_ == 0 ? 0x0001 : 0));
 			writeLe(image, coff + 18, fileCharacteristics);
 			const size_t optional = coff + 20;
 			writeLe(image, optional, uint16_t{ 0x020b });
+			writeLe(image, optional + 2, options_.linkerVersionMajor);
+			writeLe(image, optional + 3, options_.linkerVersionMinor);
 			writeLe(image, optional + 4, codeSize);
 			writeLe(image, optional + 8, initializedSize);
 			writeLe(image, optional + 12, uninitializedSize);
@@ -2720,7 +2722,10 @@ namespace JWlink2
 			writeLe(image, optional + 24, options_.imageBase);
 			writeLe(image, optional + 32, options_.sectionAlignment);
 			writeLe(image, optional + 36, options_.fileAlignment);
-			writeLe(image, optional + 40, uint16_t{ 6 });
+			writeLe(image, optional + 40, options_.osVersionMajor);
+			writeLe(image, optional + 42, options_.osVersionMinor);
+			writeLe(image, optional + 44, options_.imageVersionMajor);
+			writeLe(image, optional + 46, options_.imageVersionMinor);
 			writeLe(image, optional + 48, options_.subsystemVersionMajor);
 			writeLe(image, optional + 50, options_.subsystemVersionMinor);
 			writeLe(image, optional + 56, toU32(imageSize, "PE image size"));

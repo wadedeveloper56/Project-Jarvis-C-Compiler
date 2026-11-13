@@ -38,8 +38,15 @@ namespace JWlink2::commandline
 		uint16_t subsystem = 3;
 		uint16_t subsystemVersionMajor = 6;
 		uint16_t subsystemVersionMinor = 0;
+		uint16_t osVersionMajor = 6;
+		uint16_t osVersionMinor = 0;
+		uint16_t imageVersionMajor = 0;
+		uint16_t imageVersionMinor = 0;
+		uint8_t linkerVersionMajor = 0;
+		uint8_t linkerVersionMinor = 0;
 		bool dynamicBase = true;
 		bool nxCompat = true;
+		bool largeAddressAware = true;
 		bool noLogo = false;
 		bool debug = false;
 		bool noDefaultLibraries = false;

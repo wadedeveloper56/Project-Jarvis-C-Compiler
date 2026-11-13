@@ -1700,7 +1700,9 @@ namespace JWlink2Test
 				{ { L"system", L"dos", L"file", L"input.obj" }, "unsupported SYSTEM" },
 				{ { L"runtime", L"native", L"file", L"input.obj" }, "unsupported RUNTIME" },
 				{ { L"debug", L"dwarf", L"file", L"input.obj" }, "unsupported DEBUG format" },
-				{ { L"option", L"stack=0x100000", L"file", L"input.obj" }, "unsupported JWlink OPTION" },
+				{ { L"option", L"stack=bad", L"file", L"input.obj" }, "JWlink size option" },
+				{ { L"option", L"linkversion=256.0", L"file", L"input.obj" }, "invalid JWlink version" },
+				{ { L"option", L"nxcompat=no", L"file", L"input.obj" }, "does not accept" },
 				{ { L"option", L"eliminate", L"file", L"input.obj" }, "unsupported JWlink OPTION" },
 				{ { L"option", L"start", L"file", L"input.obj" }, "requires a value" },
 				{ { L"alias", L"a=b", L"file", L"input.obj" }, "unsupported JWlink directive 'alias'" },
@@ -1708,7 +1710,8 @@ namespace JWlink2Test
 				{ { L"order", L"x", L"file", L"input.obj" }, "unsupported JWlink directive 'order'" },
 				{ { L"format", L"win", L"pe", L"file" }, "requires an argument" },
 				{ { L"format", L"win", L"pe", L"name", L"a.exe", L"b.exe", L"file", L"input.obj" }, "exactly one output" },
-				{ { L"format", L"win", L"pe", L"export", L"a.1", L"file", L"input.obj" }, "unsupported EXPORT" },
+				{ { L"format", L"win", L"pe", L"export", L"a.bad", L"file", L"input.obj" }, "ordinal" },
+				{ { L"format", L"win", L"pe", L"anonymousexport", L"a", L"file", L"input.obj" }, "NONAME requires" },
 				{ { L"format", L"win", L"pe", L"disable", L"abc", L"file", L"input.obj" }, "DISABLE requires" },
 				{ { L"format", L"win", L"pe", L"/OUT:x.exe", L"file", L"input.obj" }, "cannot be mixed" },
 				// MSVC-style switches: accepted
@@ -1745,6 +1748,69 @@ namespace JWlink2Test
 			}
 			Assert::IsTrue(fs::exists(workspace.file(L"m2.exe")), L"directive name without an extension gets .exe");
 			Assert::IsTrue(fs::exists(workspace.file(L"m3.dll")) && fs::exists(workspace.file(L"m3.lib")), L"directive DLL link writes the DLL and import library");
+		}
+
+		TEST_METHOD(JwlinkPeOptionsMatchHeaderFields)
+		{
+			Workspace original;
+			Workspace replacement;
+			const auto object = makeObject({ TestSection{ ".text", { 0xc3 } } }, { TestSymbol{ "main", 0, 1, 2,{} } });
+			original.write(L"program.obj", object);
+			replacement.write(L"program.obj", object);
+			const vector<wstring> args{ L"format", L"win", L"pe", L"option", L"quiet,start=main,stack=2048,heapsize=3072,version=7.8,osversion=10.4,linkversion=12.34,nxcompat,nolargeaddressaware", L"file", L"program.obj", L"name", L"out.exe" };
+			assertSuccess(runExecutable(original, jwlinkPath(), args));
+			assertSuccess(runLinker(replacement, args));
+			const auto expected = original.read(L"out.exe");
+			const auto actual = replacement.read(L"out.exe");
+			const auto expectedOptional = optionalHeader(expected);
+			const auto actualOptional = optionalHeader(actual);
+			for (const size_t offset : { 2u, 3u }) Assert::AreEqual<uint8_t>(expected[expectedOptional + offset], actual[actualOptional + offset]);
+			for (const size_t offset : { 40u, 42u, 44u, 46u }) Assert::AreEqual<uint16_t>(get16(expected, expectedOptional + offset), get16(actual, actualOptional + offset));
+			for (const size_t offset : { 72u, 80u, 88u, 96u }) Assert::AreEqual<uint64_t>(get64(expected, expectedOptional + offset), get64(actual, actualOptional + offset));
+			Assert::AreEqual<uint16_t>(peFileCharacteristics(expected) & 0x20, peFileCharacteristics(actual) & 0x20);
+			Assert::AreEqual<uint16_t>(get16(expected, expectedOptional + 70) & 0x100, get16(actual, actualOptional + 70) & 0x100);
+			const vector<wstring> repeated{ L"format", L"win", L"pe", L"option", L"quiet,start=main,stack=8192,stack=512,heapsize=1024,heapsize=8192,version=2.3,version=4,osversion=6.7,osversion=8,linkversion=4.5,linkversion=9,nolargeaddressaware,largeaddressaware", L"file", L"program.obj", L"name", L"repeat.exe" };
+			assertSuccess(runExecutable(original, jwlinkPath(), repeated));
+			assertSuccess(runLinker(replacement, repeated));
+			const auto originalRepeat = original.read(L"repeat.exe");
+			const auto replacementRepeat = replacement.read(L"repeat.exe");
+			const auto eo = optionalHeader(originalRepeat), ao = optionalHeader(replacementRepeat);
+			for (const size_t offset : { 2u, 3u }) Assert::AreEqual<uint8_t>(originalRepeat[eo + offset], replacementRepeat[ao + offset]);
+			for (const size_t offset : { 40u, 42u, 44u, 46u }) Assert::AreEqual<uint16_t>(get16(originalRepeat, eo + offset), get16(replacementRepeat, ao + offset));
+			for (const size_t offset : { 72u, 80u, 88u, 96u }) Assert::AreEqual<uint64_t>(get64(originalRepeat, eo + offset), get64(replacementRepeat, ao + offset));
+			Assert::AreEqual<uint16_t>(peFileCharacteristics(originalRepeat) & 0x20, peFileCharacteristics(replacementRepeat) & 0x20);
+		}
+
+		TEST_METHOD(JwlinkExportOrdinalAliasAndAnonymousWorkAtRuntime)
+		{
+			Workspace workspace;
+			workspace.write(L"input.obj", makeObject({ TestSection{ ".text", { 0xb8, 42, 0, 0, 0, 0xc3 } } }, { TestSymbol{ "func", 0, 1, 2,{} } }));
+			assertSuccess(runLinker(workspace, { L"format", L"win", L"pe", L"dll", L"file", L"input.obj", L"export", L"publicName.5=func", L"anonymousexport", L"hidden.7=func", L"name", L"out.dll" }));
+			const auto module = LoadLibraryW(workspace.file(L"out.dll").c_str());
+			Assert::IsNotNull(module, L"Windows loads the linked DLL");
+			const auto named = GetProcAddress(module, "publicName");
+			const auto ordinal = GetProcAddress(module, MAKEINTRESOURCEA(5));
+			const auto anonymous = GetProcAddress(module, MAKEINTRESOURCEA(7));
+			Assert::IsNotNull(named);
+			Assert::IsTrue(named == ordinal && ordinal == anonymous, L"ordinals and alias target the same function");
+			Assert::IsNull(GetProcAddress(module, "hidden"), L"anonymous export has no name");
+			Assert::AreEqual<int>(42, reinterpret_cast<int(*)()>(named)());
+			FreeLibrary(module);
+		}
+
+		TEST_METHOD(JwlinkReferencePullsArchiveMember)
+		{
+			Workspace workspace;
+			workspace.write(L"input.obj", makeEntryObject());
+			workspace.write(L"helpers.lib", makeArchive({ { "helper.obj", makeObject({ TestSection{ ".text", { 0x42, 0x53, 0x64 } } }, { TestSymbol{ "helper", 0, 1, 2,{} } }) } }));
+			const auto result = runLinker(workspace, { L"format", L"win", L"pe", L"option", L"start=main", L"file", L"input.obj", L"library", L"helpers.lib", L"reference", L"helper", L"name", L"out.exe" });
+			assertSuccess(result);
+			const auto image = workspace.read(L"out.exe");
+			const auto header = sectionHeader(image, ".text");
+			const auto raw = get32(image, header + 20);
+			const Bytes needle{ 0x42, 0x53, 0x64 };
+			Assert::IsTrue(search(image.begin() + raw, image.begin() + raw + get32(image, header + 16), needle.begin(), needle.end()) != image.begin() + raw + get32(image, header + 16));
+			assertFailureContains(runLinker(workspace, { L"format", L"win", L"pe", L"file", L"input.obj", L"reference", L"missing", L"name", L"fail.exe" }), "missing");
 		}
 
 		TEST_METHOD(JwlinkDirectiveDefaultsAndExplicitEntry)

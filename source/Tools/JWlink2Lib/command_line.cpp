@@ -219,8 +219,8 @@ namespace JWlink2::commandline
 		cout << "JWlink2 - AMD64 COFF to Windows PE32+ linker\n"
 			"Usage: JWlink2 [options] input.obj [input.lib ...]\n"
 			"       JWlink2 format windows pe [dll] option map[=<file>],quiet,start=<sym> file a.obj,b.obj lib c.lib name out.exe\n"
-			"  JWlink directives: format, file, library, libfile, libpath, name, system, runtime, debug, export, disable, option\n"
-			"  JWlink options: map, quiet, start, nodefaultlibs, caseexact, offset, objalign, norelocs, implib (see README.md)\n"
+			"  JWlink directives: format, file, library, libfile, libpath, name, system, runtime, debug, export, anonymousexport, reference, disable, option\n"
+			"  JWlink options: map, quiet, start, nodefaultlibs, caseexact, offset, objalign, norelocs, implib, stack, heapsize, version, osversion, linkversion, nxcompat, largeaddressaware (see README.md)\n"
 			"  /OUT:<file>, -o <file>      Output image (default: a.exe or a.dll)\n"
 			"  /DLL                        Create a DLL\n"
 			"  /DEF:<file>                 Read module name and exports from a .def file\n"
@@ -324,8 +324,8 @@ namespace JWlink2::commandline
 			{ "debug", 3, true }, { "runtime", 2, true }, { "export", 3, true }, { "disable", 3, true },
 			{ "alias", 3, false }, { "commit", 3, false }, { "import", 3, false }, { "language", 3, false },
 			{ "modfile", 4, false }, { "modtrace", 4, false }, { "order", 3, false }, { "path", 4, false },
-			{ "reference", 3, false }, { "segment", 3, false }, { "sort", 4, false }, { "symtrace", 4, false },
-			{ "anonymousexport", 4, false }
+			{ "reference", 3, true }, { "segment", 3, false }, { "sort", 2, false }, { "symtrace", 4, false },
+			{ "optlib", 6, false }, { "anonymousexport", 4, true }
 		};
 
 		const DirectiveName* matchDirective(const string& token)
@@ -472,13 +472,26 @@ namespace JWlink2::commandline
 					}
 					options.push_back("/DEBUG");
 				}
-				else if (keyword == "export")
+				else if (keyword == "export" || keyword == "anonymousexport")
 				{
 					for (const auto& item : items)
 					{
-						if (item.find('.') != string::npos) fail("unsupported EXPORT '" + item + "'; JWlink alias and ordinal syntax is not implemented");
-						options.push_back("/EXPORT:" + item);
+						const auto equals = item.find('=');
+						if (equals != string::npos && item.find('=', equals + 1) != string::npos) fail("unsupported EXPORT import-name alias '" + item + "'");
+						const auto name = item.substr(0, equals);
+						const auto dot = name.find('.');
+						const auto publicName = name.substr(0, dot);
+						if (publicName.empty()) fail("EXPORT requires a name");
+						string exported = "/EXPORT:" + publicName;
+						if (equals != string::npos) exported += "=" + item.substr(equals + 1);
+						if (dot != string::npos) exported += ",@" + name.substr(dot + 1);
+						if (keyword == "anonymousexport") exported += ",NONAME";
+						options.push_back(move(exported));
 					}
+				}
+				else if (keyword == "reference")
+				{
+					for (const auto& item : items) options.push_back("/INCLUDE:" + item);
 				}
 				else if (keyword == "disable")
 				{
@@ -508,6 +521,12 @@ namespace JWlink2::commandline
 						else if (key == "objalign") options.push_back("/ALIGN:" + requireOptionValue());
 						else if (key == "norelocs") options.push_back("/FIXED");
 						else if (key == "implib") options.push_back(value && !value->empty() ? "/IMPLIB:" + *value : "/IMPLIB");
+						else if (key == "stack" || key == "heapsize" || key == "version" || key == "osversion" || key == "linkversion") options.push_back("/jw-" + key + ":" + requireOptionValue());
+						else if (key == "nxcompat" || key == "largeaddressaware" || key == "nolargeaddressaware")
+						{
+							if (value) fail("JWlink OPTION " + key + " does not accept a value");
+							options.push_back("/jw-" + key);
+						}
 						else fail("unsupported JWlink OPTION '" + item + "'");
 					}
 				}
@@ -797,6 +816,33 @@ namespace JWlink2::commandline
 				const auto symbol = requireValue("/INCLUDE");
 				if (symbol.empty()) fail("/INCLUDE requires a symbol name");
 				if (find(options.includeSymbols.begin(), options.includeSymbols.end(), symbol) == options.includeSymbols.end()) options.includeSymbols.push_back(symbol);
+			}
+			else if (directiveSyntax && (optionName == "jw-stack" || optionName == "jw-heapsize"))
+			{
+				const auto number = parseUnsignedOption(requireValue("JWlink size option"), "JWlink size option");
+				if (number > numeric_limits<uint32_t>::max() || (optionName == "jw-heapsize" && number == 0)) fail("invalid JWlink size option");
+				auto& reserve = optionName == "jw-stack" ? options.stackReserve : options.heapReserve;
+				auto& commit = optionName == "jw-stack" ? options.stackCommit : options.heapCommit;
+				reserve = number;
+				commit = min<uint64_t>(0x1000, reserve);
+			}
+			else if (directiveSyntax && (optionName == "jw-nxcompat" || optionName == "jw-largeaddressaware" || optionName == "jw-nolargeaddressaware"))
+			{
+				if (optionName == "jw-nxcompat") options.nxCompat = false;
+				else if (optionName == "jw-nolargeaddressaware") options.largeAddressAware = false;
+			}
+			else if (directiveSyntax && (optionName == "jw-version" || optionName == "jw-osversion" || optionName == "jw-linkversion"))
+			{
+				const auto text = requireValue("JWlink version option");
+				const auto dot = text.find('.');
+				const auto major = parseUnsignedOption(string_view(text).substr(0, dot), "JWlink version option");
+				const auto minor = dot == string::npos ? 0 : parseUnsignedOption(string_view(text).substr(dot + 1), "JWlink version option");
+				const auto maxMajor = optionName == "jw-linkversion" ? 255u : 65535u;
+				const auto maxMinor = optionName == "jw-linkversion" ? 255u : 99u;
+				if (major > maxMajor || minor > maxMinor) fail("invalid JWlink version option");
+				if (optionName == "jw-version") { options.imageVersionMajor = static_cast<uint16_t>(major); options.imageVersionMinor = static_cast<uint16_t>(minor); }
+				else if (optionName == "jw-osversion") { options.osVersionMajor = static_cast<uint16_t>(major); options.osVersionMinor = static_cast<uint16_t>(minor); }
+				else { options.linkerVersionMajor = static_cast<uint8_t>(major); options.linkerVersionMinor = static_cast<uint8_t>(minor); }
 			}
 			else if (optionName == "wholearchive")
 			{

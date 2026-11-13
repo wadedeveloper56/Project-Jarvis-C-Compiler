@@ -1,0 +1,87 @@
+﻿#pragma once
+
+#include <cstdint>
+#include <filesystem>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
+
+using namespace std;
+
+namespace JWlink2::commandline
+{
+	namespace fs = filesystem;
+
+	struct ExportDirective
+	{
+		string name;
+		string internalName;
+		optional<uint16_t> ordinal;
+		bool noname = false;
+		bool data = false;
+		bool privateExport = false;
+	};
+
+	struct LinkOptions
+	{
+		fs::path output = "a.exe";
+		optional<string> entry;
+		optional<fs::path> mapFile;
+		optional<fs::path> pdbFile;
+		optional<fs::path> definitionFile;
+		optional<fs::path> importLibrary;
+		string moduleName;
+		vector<fs::path> libraryPaths;
+		uint64_t imageBase = 0x140000000ULL;
+		uint16_t subsystem = 3;
+		uint16_t subsystemVersionMajor = 6;
+		uint16_t subsystemVersionMinor = 0;
+		uint16_t osVersionMajor = 6;
+		uint16_t osVersionMinor = 0;
+		uint16_t imageVersionMajor = 0;
+		uint16_t imageVersionMinor = 0;
+		uint8_t linkerVersionMajor = 0;
+		uint8_t linkerVersionMinor = 0;
+		bool dynamicBase = true;
+		bool nxCompat = true;
+		bool largeAddressAware = true;
+		bool noLogo = false;
+		bool debug = false;
+		bool noDefaultLibraries = false;
+		vector<string> defaultLibraries;
+		vector<string> excludedDefaultLibraries;
+		vector<string> delayLoadLibraries;
+		vector<string> includeSymbols;
+		vector<pair<string, uint32_t>> commonAlignments;
+		vector<ExportDirective> exports;
+		uint32_t sectionAlignment = 0x1000;
+		uint32_t fileAlignment = 0x200;
+		uint32_t commonAlignment = 8;
+		bool entrySpecified = false;
+		bool sectionAlignmentSpecified = false;
+		bool outputSpecified = false;
+		bool jwlinkDirectiveSyntax = false;
+		bool dll = false;
+		bool noEntry = false;
+		bool importLibrarySpecified = false;
+		bool verbose = false;
+		uint64_t stackReserve = 0x100000;
+		uint64_t stackCommit = 0x1000;
+		uint64_t heapReserve = 0x100000;
+		uint64_t heapCommit = 0x1000;
+		vector<pair<string, string>> mergeSections;
+		vector<pair<string, uint32_t>> sectionFlags;
+		vector<string> wholeArchives;
+		bool wholeArchiveAll = false;
+		enum class ManifestMode { None, External, Embed } manifestMode = ManifestMode::None;
+		optional<fs::path> manifestInput;
+		optional<fs::path> manifestFile;
+		uint16_t manifestId = 0;
+		vector<fs::path> inputs;
+	};
+
+	ExportDirective parseExportDirective(string_view value, const string& context);
+	LinkOptions parseArguments(int argc, char** argv);
+}

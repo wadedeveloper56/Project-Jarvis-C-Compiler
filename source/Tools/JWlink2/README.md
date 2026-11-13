@@ -46,7 +46,9 @@ The repository's real build (`test\run.bat`) invokes JWlink with Watcom-style di
 | `system nt \| nt_con \| nt_win \| nt_dll` | Accepted | Console or Windows subsystem; `nt_dll` also selects a DLL |
 | `runtime console\|windows[=major.minor]` | Accepted | `/SUBSYSTEM` |
 | `debug all \| codeview` | Accepted | `/DEBUG` (CodeView/PDB); DWARF/Watcom/Novell debug formats are rejected |
-| `export name[=internal]` | Accepted | `/EXPORT`; JWlink alias/ordinal (`.`) syntax is rejected |
+| `export name[.ordinal][=internal]` | Accepted (bounded) | Creates a named export with an optional ordinal and internal symbol; export keywords and the second `=importname` are unsupported |
+| `anonymousexport name.ordinal[=internal]` | Accepted (bounded) | Creates an ordinal-only export; an ordinal is required |
+| `reference symbol[,symbol...]` | Accepted | Forces symbol resolution and archive extraction |
 | `disable <n>` | Accepted, no effect | JWlink2 emits no numbered warnings |
 | `option map[=file]` | Accepted | `/MAP` |
 | `option quiet` (`q`) | Accepted | `/NOLOGO` |
@@ -57,7 +59,13 @@ The repository's real build (`test\run.bat`) invokes JWlink with Watcom-style di
 | `option objalign=n` | Accepted | `/ALIGN` (section alignment) |
 | `option norelocs` | Accepted | `/FIXED` |
 | `option implib[=file]` | Accepted | `/IMPLIB` (requires a DLL) |
-| `alias`, `import`, `order`, `segment`, `sort`, `reference`, `path`, `commit`, `language`, `modfile`, `modtrace`, `symtrace`; other `option`s (`stack`, `heap`, `eliminate`, ...) | Unsupported | Diagnosed with `unsupported JWlink directive/OPTION` |
+| `option stack=n,heapsize=n` | Accepted (bounded) | 32-bit reserve sizes; default commit is the smaller of 4096 and reserve. Zero heap size is rejected; `commit` directive is not implemented |
+| `option version=major[.minor],osversion=major[.minor],linkversion=major[.minor]` | Accepted (bounded) | Writes PE image, OS and linker versions; minor is at most 99 for image/OS and 255 for linker. Revision components and JWlink warning-and-continue cases are unsupported |
+| `option largeaddressaware,nolargeaddressaware` | Accepted | AMD64 is large-address-aware by default; `nolargeaddressaware` clears the bit even if `largeaddressaware` also appears |
+| `option nxcompat` | Accepted (JWlink AMD64 behavior) | Clears NX_COMPAT to match the tested JWlink PE32+ output: JWlink sets the flag on its PE32 header but does not copy it to PE32+. Switch-mode `/NXCOMPAT` retains its existing behavior |
+| `alias`, `import`, `order`, `segment`, `sort`, `path`, `optlib`, `commit`, `language`, `modfile`, `modtrace`, `symtrace`; other `option`s (`alignment`, `stub`, `nostub`, `checksum`, `undefsok`, `redefsok`, `eliminate`, ...) | Unsupported | Diagnosed with `unsupported JWlink directive/OPTION` |
+
+Source inventory: JWlink `import` parses an internal name and module, optionally followed by `.external-name` or `.ordinal`; `export` parses `name[.ordinal][=internal[=importname]]` plus attributes, and `anonymousexport` uses the same parser with the anonymous flag. `alias` creates a symbol alias, `reference` marks a symbol referenced and retained, `optlib` marks a library optional, `path` is attached to subsequent file entries, and `order`/`segment` have their own grammars. `alignment` rounds file alignment up to a power of two, unlike `objalign`; `stub` names a load file and `nostub` sets a separate flag. `undefsok`/`noundefsok`, `redefsok`/`noredefsok`, and `eliminate` affect resolution and dead-code elimination. These observations are not claims of support for the unsupported forms. The accepted scalar/header forms and precedence are compared against repository JWlink on a small AMD64 object; export and reference behavior is tested in JWlink2, including Windows DLL lookup, but not yet differential-verified. JWlink option abbreviations and separated `=` tokens are not generally implemented.
 
 Switch-style options not listed in the option summary above (`/OPT`, `/LTCG`, `/MACHINE` other than X64, `/INCREMENTAL` other than `:NO`, and anything else unrecognized) are rejected with `unsupported option`; the `-l<name>` library shorthand applies only to `-` prefixed arguments.
 
