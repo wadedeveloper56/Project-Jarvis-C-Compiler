@@ -1,0 +1,825 @@
+#include "pch.h"
+#include "TestFixtures.h"
+
+namespace JWlink2Test
+{
+	namespace Fixtures
+	{
+		void put16(Bytes& bytes, size_t offset, uint16_t value)
+		{
+			if (bytes.size() < offset + 2) bytes.resize(offset + 2);
+			bytes[offset] = static_cast<uint8_t>(value);
+			bytes[offset + 1] = static_cast<uint8_t>(value >> 8);
+		}
+
+		void put32(Bytes& bytes, size_t offset, uint32_t value)
+		{
+			if (bytes.size() < offset + 4) bytes.resize(offset + 4);
+			for (size_t i = 0; i < 4; ++i) bytes[offset + i] = static_cast<uint8_t>(value >> (i * 8));
+		}
+
+		void put64(Bytes& bytes, size_t offset, uint64_t value)
+		{
+			if (bytes.size() < offset + 8) bytes.resize(offset + 8);
+			for (size_t i = 0; i < 8; ++i) bytes[offset + i] = static_cast<uint8_t>(value >> (i * 8));
+		}
+
+		uint16_t get16(const Bytes& bytes, size_t offset)
+		{
+			Assert::IsTrue(offset + 2 <= bytes.size(), L"PE field exceeds the file");
+			return static_cast<uint16_t>(bytes[offset] | (static_cast<uint16_t>(bytes[offset + 1]) << 8));
+		}
+
+		uint32_t get32(const Bytes& bytes, size_t offset)
+		{
+			Assert::IsTrue(offset + 4 <= bytes.size(), L"PE field exceeds the file");
+			uint32_t value = 0;
+			for (size_t i = 0; i < 4; ++i) value |= static_cast<uint32_t>(bytes[offset + i]) << (8 * i);
+			return value;
+		}
+
+		uint64_t get64(const Bytes& bytes, size_t offset)
+		{
+			Assert::IsTrue(offset + 8 <= bytes.size(), L"PE field exceeds the file");
+			uint64_t value = 0;
+			for (size_t i = 0; i < 8; ++i) value |= static_cast<uint64_t>(bytes[offset + i]) << (8 * i);
+			return value;
+		}
+
+		void appendString(Bytes& bytes, const string& value)
+		{
+			bytes.insert(bytes.end(), value.begin(), value.end());
+			bytes.push_back(0);
+		}
+
+		uint32_t addString(Bytes& table, const string& value)
+		{
+			const auto offset = static_cast<uint32_t>(table.size());
+			appendString(table, value);
+			return offset;
+		}
+
+		Bytes makeObject(vector<TestSection> sections, vector<TestSymbol> symbols, uint16_t machine)
+		{
+			Bytes bytes(20 + sections.size() * 40, 0);
+			put16(bytes, 0, machine);
+			put16(bytes, 2, static_cast<uint16_t>(sections.size()));
+			put16(bytes, 16, 0);
+			Bytes strings(4, 0);
+			vector<size_t> sectionNameOffsets(sections.size(), 0);
+			for (size_t i = 0; i < sections.size(); ++i)
+			{
+				if (sections[i].name.size() > 8) sectionNameOffsets[i] = addString(strings, sections[i].name);
+			}
+			vector<uint32_t> rawOffsets(sections.size(), 0);
+			for (size_t i = 0; i < sections.size(); ++i)
+			{
+				if (!sections[i].data.empty())
+				{
+					rawOffsets[i] = static_cast<uint32_t>(bytes.size());
+					bytes.insert(bytes.end(), sections[i].data.begin(), sections[i].data.end());
+				}
+			}
+			vector<uint32_t> relocationOffsets(sections.size(), 0);
+			for (size_t i = 0; i < sections.size(); ++i)
+			{
+				if (!sections[i].relocations.empty())
+				{
+					relocationOffsets[i] = static_cast<uint32_t>(bytes.size());
+					if (sections[i].relocations.size() >= 0xffff)
+					{
+						const auto entry = bytes.size();
+						bytes.resize(entry + 10, 0);
+						put32(bytes, entry, static_cast<uint32_t>(sections[i].relocations.size() + 1));
+					}
+					for (const auto& relocation : sections[i].relocations)
+					{
+						const auto entry = bytes.size();
+						bytes.resize(entry + 10, 0);
+						put32(bytes, entry, relocation.offset);
+						put32(bytes, entry + 4, relocation.symbolIndex);
+						put16(bytes, entry + 8, relocation.type);
+					}
+				}
+			}
+			const auto symbolOffset = static_cast<uint32_t>(bytes.size());
+			uint32_t symbolCount = 0;
+			for (const auto& symbol : symbols) symbolCount += static_cast<uint32_t>(1 + symbol.auxiliary.size());
+			put32(bytes, 8, symbolOffset);
+			put32(bytes, 12, symbolCount);
+			for (const auto& symbol : symbols)
+			{
+				const auto entry = bytes.size();
+				bytes.resize(entry + 18, 0);
+				if (symbol.name.size() <= 8)
+				{
+					copy(symbol.name.begin(), symbol.name.end(), bytes.begin() + entry);
+				}
+				else
+				{
+					put32(bytes, entry, 0);
+					put32(bytes, entry + 4, addString(strings, symbol.name));
+				}
+				put32(bytes, entry + 8, symbol.value);
+				put16(bytes, entry + 12, static_cast<uint16_t>(symbol.section));
+				bytes[entry + 16] = symbol.storageClass;
+				bytes[entry + 17] = static_cast<uint8_t>(symbol.auxiliary.size());
+				for (const auto& auxiliary : symbol.auxiliary) bytes.insert(bytes.end(), auxiliary.begin(), auxiliary.end());
+			}
+			put32(bytes, bytes.size(), static_cast<uint32_t>(strings.size()));
+			bytes.insert(bytes.end(), strings.begin() + 4, strings.end());
+			for (size_t i = 0; i < sections.size(); ++i)
+			{
+				const auto header = 20 + i * 40;
+				if (sectionNameOffsets[i] == 0)
+				{
+					copy(sections[i].name.begin(), sections[i].name.end(), bytes.begin() + header);
+				}
+				else
+				{
+					const auto longName = "/" + to_string(sectionNameOffsets[i]);
+					copy(longName.begin(), longName.end(), bytes.begin() + header);
+				}
+				put32(bytes, header + 8, static_cast<uint32_t>(sections[i].data.size()));
+				put32(bytes, header + 16, static_cast<uint32_t>(sections[i].data.size()));
+				put32(bytes, header + 20, rawOffsets[i]);
+				put32(bytes, header + 24, relocationOffsets[i]);
+				const bool overflow = sections[i].relocations.size() >= 0xffff;
+				put16(bytes, header + 32, overflow ? 0xffff : static_cast<uint16_t>(sections[i].relocations.size()));
+				put32(bytes, header + 36, sections[i].characteristics | (overflow ? 0x01000000u : 0u));
+			}
+			return bytes;
+		}
+
+		array<uint8_t, 18> sectionAux(uint32_t dataLength, uint16_t associated, uint8_t selection)
+		{
+			array<uint8_t, 18> auxiliary{};
+			for (size_t i = 0; i < 4; ++i) auxiliary[i] = static_cast<uint8_t>(dataLength >> (i * 8));
+			auxiliary[12] = static_cast<uint8_t>(associated);
+			auxiliary[13] = static_cast<uint8_t>(associated >> 8);
+			auxiliary[14] = selection;
+			return auxiliary;
+		}
+
+		array<uint8_t, 20> bigObjSectionAux(uint32_t associated, uint8_t selection)
+		{
+			array<uint8_t, 20> auxiliary{};
+			auxiliary[12] = static_cast<uint8_t>(associated);
+			auxiliary[13] = static_cast<uint8_t>(associated >> 8);
+			auxiliary[18] = static_cast<uint8_t>(associated >> 16);
+			auxiliary[19] = static_cast<uint8_t>(associated >> 24);
+			auxiliary[16] = selection;
+			return auxiliary;
+		}
+
+		array<uint8_t, 18> weakAux(uint32_t tagIndex, uint32_t characteristics)
+		{
+			array<uint8_t, 18> auxiliary{};
+			for (size_t i = 0; i < 4; ++i) auxiliary[i] = static_cast<uint8_t>(tagIndex >> (i * 8));
+			for (size_t i = 0; i < 4; ++i) auxiliary[4 + i] = static_cast<uint8_t>(characteristics >> (i * 8));
+			return auxiliary;
+		}
+
+		Bytes makeEntryObject(const string& entry)
+		{
+			return makeObject({ TestSection{ ".text",{ 0xc3 } } }, { TestSymbol{ entry, 0, 1, 2,{} } });
+		}
+
+		TestSection makeDirectiveSection(const string& directives)
+		{
+			return TestSection{ ".drectve", Bytes(directives.begin(), directives.end()), 0x00100a00 };
+		}
+
+		Bytes makeBigObjObject(const vector<TestSection>& sections, const vector<TestSymbol>& symbols)
+		{
+			Bytes bytes(56 + sections.size() * 40, 0);
+			put16(bytes, 0, 0);
+			put16(bytes, 2, 0xffff);
+			put16(bytes, 4, 2);
+			put16(bytes, 6, 0x8664);
+			const array<uint8_t, 16> classId{ 0xc7, 0xa1, 0xba, 0xd1, 0xee, 0xba, 0xa9, 0x4b, 0xaf, 0x20, 0xfa, 0xf6, 0x6a, 0xa4, 0xdc, 0xb8 };
+			copy(classId.begin(), classId.end(), bytes.begin() + 12);
+			put32(bytes, 44, static_cast<uint32_t>(sections.size()));
+
+			Bytes strings(4, 0);
+			vector<size_t> sectionNameOffsets(sections.size(), 0);
+			for (size_t i = 0; i < sections.size(); ++i)
+			{
+				if (sections[i].name.size() > 8) sectionNameOffsets[i] = addString(strings, sections[i].name);
+			}
+			vector<uint32_t> rawOffsets(sections.size(), 0);
+			vector<uint32_t> relocationOffsets(sections.size(), 0);
+			for (size_t i = 0; i < sections.size(); ++i)
+			{
+				if (!sections[i].data.empty())
+				{
+					rawOffsets[i] = static_cast<uint32_t>(bytes.size());
+					bytes.insert(bytes.end(), sections[i].data.begin(), sections[i].data.end());
+				}
+			}
+			for (size_t i = 0; i < sections.size(); ++i)
+			{
+				if (!sections[i].relocations.empty())
+				{
+					relocationOffsets[i] = static_cast<uint32_t>(bytes.size());
+					if (sections[i].relocations.size() >= 0xffff)
+					{
+						const auto entry = bytes.size();
+						bytes.resize(entry + 10, 0);
+						put32(bytes, entry, static_cast<uint32_t>(sections[i].relocations.size() + 1));
+					}
+					for (const auto& relocation : sections[i].relocations)
+					{
+						const auto entry = bytes.size();
+						bytes.resize(entry + 10, 0);
+						put32(bytes, entry, relocation.offset);
+						put32(bytes, entry + 4, relocation.symbolIndex);
+						put16(bytes, entry + 8, relocation.type);
+					}
+				}
+			}
+			const auto symbolOffset = static_cast<uint32_t>(bytes.size());
+			uint32_t symbolCount = 0;
+			for (const auto& symbol : symbols) symbolCount += static_cast<uint32_t>(1 + symbol.bigObjAuxiliary.size());
+			put32(bytes, 48, symbolOffset);
+			put32(bytes, 52, symbolCount);
+			for (const auto& symbol : symbols)
+			{
+				const auto entry = bytes.size();
+				bytes.resize(entry + 20, 0);
+				if (symbol.name.size() <= 8)
+				{
+					copy(symbol.name.begin(), symbol.name.end(), bytes.begin() + entry);
+				}
+				else
+				{
+					put32(bytes, entry, 0);
+					put32(bytes, entry + 4, addString(strings, symbol.name));
+				}
+				put32(bytes, entry + 8, symbol.value);
+				put32(bytes, entry + 12, static_cast<uint32_t>(symbol.section));
+				put16(bytes, entry + 16, 0);
+				bytes[entry + 18] = symbol.storageClass;
+				bytes[entry + 19] = static_cast<uint8_t>(symbol.bigObjAuxiliary.size());
+				for (const auto& auxiliary : symbol.bigObjAuxiliary) bytes.insert(bytes.end(), auxiliary.begin(), auxiliary.end());
+			}
+			put32(bytes, bytes.size(), static_cast<uint32_t>(strings.size()));
+			bytes.insert(bytes.end(), strings.begin() + 4, strings.end());
+			for (size_t i = 0; i < sections.size(); ++i)
+			{
+				const auto header = 56 + i * 40;
+				if (sectionNameOffsets[i] == 0)
+				{
+					copy(sections[i].name.begin(), sections[i].name.end(), bytes.begin() + header);
+				}
+				else
+				{
+					const auto longName = "/" + to_string(sectionNameOffsets[i]);
+					copy(longName.begin(), longName.end(), bytes.begin() + header);
+				}
+				put32(bytes, header + 8, static_cast<uint32_t>(sections[i].data.size()));
+				put32(bytes, header + 16, static_cast<uint32_t>(sections[i].data.size()));
+				put32(bytes, header + 20, rawOffsets[i]);
+				put32(bytes, header + 24, relocationOffsets[i]);
+				const bool overflow = sections[i].relocations.size() >= 0xffff;
+				put16(bytes, header + 32, overflow ? 0xffff : static_cast<uint16_t>(sections[i].relocations.size()));
+				put32(bytes, header + 36, sections[i].characteristics | (overflow ? 0x01000000u : 0u));
+			}
+			return bytes;
+		}
+
+		Bytes makeBigObjComdatObject(const string& key, const Bytes& content)
+		{
+			TestSymbol sectionSymbol{ ".text$comdat", 0, 1, 3,{} };
+			sectionSymbol.bigObjAuxiliary.push_back(bigObjSectionAux(0, 2));
+			return makeBigObjObject({ TestSection{ ".text$comdat", content, 0x60001020 } }, { sectionSymbol, TestSymbol{ key, 0, 1, 2,{} } });
+		}
+
+		Bytes makeComdatObject(const string& key, const Bytes& content, uint8_t selection)
+		{
+			TestSection section{ ".text$comdat", content, 0x60001020 };
+			TestSymbol sectionSymbol{ ".text$comdat", 0, 1, 3,{ sectionAux(static_cast<uint32_t>(content.size()), 0, selection) } };
+			TestSymbol keySymbol{ key, 0, 1, 2,{} };
+			return makeObject({ section }, { sectionSymbol, keySymbol });
+		}
+
+		Bytes makeAssociativeComdatObject(const Bytes& parentData, const Bytes& childData)
+		{
+			TestSection parent{ ".text$parent", parentData, 0x60001020 };
+			TestSection child{ ".xdata$child", childData, 0x40001040 };
+			TestSymbol parentSection{ ".text$parent", 0, 1, 3,{ sectionAux(static_cast<uint32_t>(parentData.size()), 0, 2) } };
+			TestSymbol parentKey{ "parentKey", 0, 1, 2,{} };
+			TestSymbol childSection{ ".xdata$child", 0, 2, 3,{ sectionAux(static_cast<uint32_t>(childData.size()), 1, 5) } };
+			return makeObject({ parent, child }, { parentSection, parentKey, childSection });
+		}
+
+		Bytes makeImportObject(const string& publicName, const string& dllName, const string& importName, uint16_t hint, uint16_t typeInfo)
+		{
+			Bytes strings;
+			appendString(strings, publicName);
+			appendString(strings, dllName);
+			if (!importName.empty()) appendString(strings, importName);
+			Bytes bytes(20, 0);
+			put16(bytes, 0, 0);
+			put16(bytes, 2, 0xffff);
+			put16(bytes, 6, 0x8664);
+			put32(bytes, 12, static_cast<uint32_t>(strings.size()));
+			put16(bytes, 16, hint);
+			put16(bytes, 18, typeInfo);
+			bytes.insert(bytes.end(), strings.begin(), strings.end());
+			return bytes;
+		}
+
+		void appendArchiveMember(Bytes& archive, const string& name, const Bytes& content)
+		{
+			auto appendField = [&](const string& value, size_t width)
+				{
+					string field = value;
+					field.resize(width, ' ');
+					archive.insert(archive.end(), field.begin(), field.end());
+				};
+			appendField(name + (name.find('/') == string::npos ? "/" : ""), 16);
+			appendField("0", 12);
+			appendField("0", 6);
+			appendField("0", 6);
+			appendField("100644", 8);
+			appendField(to_string(content.size()), 10);
+			archive.push_back('`');
+			archive.push_back('\n');
+			archive.insert(archive.end(), content.begin(), content.end());
+			if ((archive.size() & 1) != 0) archive.push_back('\n');
+		}
+
+		Bytes makeArchive(const vector<pair<string, Bytes>>& members)
+		{
+			const string magic = "!<arch>\n";
+			Bytes bytes(magic.begin(), magic.end());
+			for (const auto& member : members) appendArchiveMember(bytes, member.first, member.second);
+			return bytes;
+		}
+
+		Bytes decodeBase64(string_view encoded)
+		{
+			constexpr string_view alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+			Bytes bytes;
+			uint32_t accumulator = 0;
+			unsigned int bitCount = 0;
+			for (const auto ch : encoded)
+			{
+				if (ch == '=') break;
+				const auto value = alphabet.find(ch);
+				if (value == string_view::npos) throw runtime_error("invalid embedded MSVC archive fixture");
+				accumulator = (accumulator << 6) | static_cast<uint32_t>(value);
+				bitCount += 6;
+				if (bitCount >= 8)
+				{
+					bitCount -= 8;
+					bytes.push_back(static_cast<uint8_t>(accumulator >> bitCount));
+					accumulator &= (uint32_t{ 1 } << bitCount) - 1;
+				}
+			}
+			return bytes;
+		}
+
+		Bytes makeMsvcIndexedArchive()
+		{
+			constexpr string_view encoded =
+				"ITxhcmNoPgovICAgICAgICAgICAgICAgMTc5NDI0MzU0MCAgICAgICAgICAgICAgMCAgICAgICAyMiAgICAgICAgYAoAAAABAAAAsmFyY2hpdmVIZWxwZXIALyAgICAgICAgICAgICAgIDE3OTQyNDM1NDAgICAgICAgICAgICAgIDAgICAgICAgMjggICAgICAgIGAKAQAAALIAAAABAAAAAQBhcmNoaXZlSGVscGVyAGhlbHBlci5vYmovICAgICAxNzk0MjQzNTQwICAgICAgICAgICAgICAxMDA2NjYgIDQ5OCAgICAgICBgCmSGAwDU+/FqPgEAAAkAAAAAAAAALnRleHQkbW4AAAAAAAAAAAEAAACMAAAAAAAAAAAAAAAAAAAAIABQYC5kYXRhAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAUMAuZGVidWckUwAAAAAAAAAAsAAAAI0AAAAAAAAAAAAAAAAAAABAABBCwwQAAADxAAAAogAAAGcAAREAAAAAQzpcZml4dHVyZVxoZWxwZXIub2JqAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADcAPBEDAgAA0AAAAAAAAAAAAA4ANQA3kAAATWljcm9zb2Z0IChSKSBNYWNybyBBc3NlbWJsZXIAAAAAAEBjb21wLmlkN5ADAf//AAADAEBmZWF0LjAwEAAAAP//AAADAC50ZXh0JG1uAAAAAAEAAAADAQEAAAAAAAAAAAAAAAAAAAAAAC5kYXRhAAAAAAAAAAIAAAADAQAAAAAAAAAAAAAAAAAAAAAAAC5kZWJ1ZyRTAAAAAAMAAAADAbAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAEAIAACABIAAABhcmNoaXZlSGVscGVyAA==";
+			return decodeBase64(encoded);
+		}
+
+		Bytes makeMsvcImportArchive()
+		{
+			constexpr string_view encoded = "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";
+			return decodeBase64(encoded);
+		}
+
+			Workspace::Workspace()
+			{
+				wchar_t temp[MAX_PATH]{};
+				const auto tempLength = GetTempPathW(MAX_PATH, temp);
+				Assert::IsTrue(tempLength != 0 && tempLength < MAX_PATH, L"could not locate the temporary directory");
+				static atomic<unsigned long long> sequence{ 0 };
+				const auto suffix = L"JWlink2Test-" + to_wstring(GetCurrentProcessId()) + L"-" + to_wstring(GetTickCount64()) + L"-" + to_wstring(sequence.fetch_add(1));
+				path = fs::path(temp) / suffix;
+				fs::create_directories(path);
+			}
+			Workspace::~Workspace()
+			{
+				error_code ignored;
+				fs::remove_all(path, ignored);
+			}
+			fs::path Workspace::file(const wstring& name) const { return path / name; }
+			void Workspace::write(const wstring& name, const Bytes& bytes) const
+			{
+				ofstream output(file(name), ios::binary);
+				Assert::IsTrue(static_cast<bool>(output), L"could not create fixture file");
+				output.write(reinterpret_cast<const char*>(bytes.data()), static_cast<streamsize>(bytes.size()));
+				Assert::IsTrue(static_cast<bool>(output), L"could not write fixture file");
+			}
+			void Workspace::writeText(const wstring& name, const wstring& text) const
+			{
+				wofstream output(file(name));
+				Assert::IsTrue(static_cast<bool>(output), L"could not create text fixture");
+				output << text;
+				Assert::IsTrue(static_cast<bool>(output), L"could not write text fixture");
+			}
+			Bytes Workspace::read(const wstring& name) const
+			{
+				ifstream input(file(name), ios::binary);
+				Assert::IsTrue(static_cast<bool>(input), L"expected output file was not created");
+				return Bytes(istreambuf_iterator<char>(input), istreambuf_iterator<char>());
+			}
+		void ModuleAnchor() {}
+
+		fs::path toolPath(const wchar_t* executableName)
+		{
+			HMODULE module = nullptr;
+			const auto address = reinterpret_cast<LPCWSTR>(&ModuleAnchor);
+			Assert::IsTrue(GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, address, &module) != 0,
+				L"could not locate the JWlink2Test module");
+			wchar_t path[32768]{};
+			const auto length = GetModuleFileNameW(module, path, static_cast<DWORD>(size(path)));
+			Assert::IsTrue(length != 0 && length < size(path), L"could not read the JWlink2Test module path");
+			auto directory = fs::path(path).parent_path();
+			while (!directory.empty())
+			{
+				for (const auto& configuration : { L"Debug", L"Release" })
+				{
+					const auto candidate = directory / L"bin" / L"tools" / configuration / L"x64" / executableName;
+					if (fs::exists(candidate)) return candidate;
+				}
+				directory = directory.parent_path();
+			}
+			Assert::Fail(L"could not find the required x64 linker build output from the test module location");
+			return {};
+		}
+
+		fs::path jwlink2Path() { return toolPath(L"JWlink2.exe"); }
+		fs::path jwlinkPath() { return toolPath(L"JWlink.exe"); }
+
+		wstring quoteArgument(const wstring& value)
+		{
+			wstring quoted = L"\"";
+			size_t slashes = 0;
+			for (const auto ch : value)
+			{
+				if (ch == L'\\')
+				{
+					++slashes;
+				}
+				else if (ch == L'\"')
+				{
+					quoted.append(slashes * 2 + 1, L'\\');
+					quoted.push_back(ch);
+					slashes = 0;
+				}
+				else
+				{
+					quoted.append(slashes, L'\\');
+					quoted.push_back(ch);
+					slashes = 0;
+				}
+			}
+			quoted.append(slashes * 2, L'\\');
+			quoted.push_back(L'\"');
+			return quoted;
+		}
+
+		ProcessResult runExecutable(const Workspace& workspace, const fs::path& executable, const vector<wstring>& arguments, const vector<pair<wstring, wstring>>& environment, bool quoteAll)
+		{
+			SECURITY_ATTRIBUTES security{ sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE };
+			HANDLE readPipe = nullptr;
+			HANDLE writePipe = nullptr;
+			Assert::IsTrue(CreatePipe(&readPipe, &writePipe, &security, 0) != 0, L"could not create process output pipe");
+			SetHandleInformation(readPipe, HANDLE_FLAG_INHERIT, 0);
+			STARTUPINFOW startup{};
+			startup.cb = sizeof(startup);
+			startup.dwFlags = STARTF_USESTDHANDLES;
+			startup.hStdOutput = writePipe;
+			startup.hStdError = writePipe;
+			startup.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+			PROCESS_INFORMATION process{};
+			wstring command = quoteArgument(executable.wstring());
+			for (const auto& argument : arguments)
+			{
+				command.push_back(L' ');
+				command += quoteAll || argument.empty() || argument.find_first_of(L" \t\"") != wstring::npos ? quoteArgument(argument) : argument;
+			}
+			vector<wchar_t> mutableCommand(command.begin(), command.end());
+			mutableCommand.push_back(L'\0');
+			vector<wchar_t> block;
+			if (!environment.empty())
+			{
+				auto inherited = GetEnvironmentStringsW();
+				Assert::IsNotNull(inherited, L"could not read process environment");
+				for (const wchar_t* item = inherited; *item; item += wcslen(item) + 1)
+				{
+					const wstring entry(item);
+					const auto equals = entry.find(L'=', entry[0] == L'=' ? 1 : 0);
+					const auto overridden = any_of(environment.begin(), environment.end(), [&](const auto& pair) { return equals != wstring::npos && _wcsicmp(entry.substr(0, equals).c_str(), pair.first.c_str()) == 0; });
+					if (!overridden) { block.insert(block.end(), entry.begin(), entry.end()); block.push_back(L'\0'); }
+				}
+				FreeEnvironmentStringsW(inherited);
+				for (const auto& [name, value] : environment)
+				{
+					if (value.empty()) continue;
+					const auto entry = name + L"=" + value;
+					block.insert(block.end(), entry.begin(), entry.end());
+					block.push_back(L'\0');
+				}
+				block.push_back(L'\0');
+			}
+			const auto created = CreateProcessW(nullptr, mutableCommand.data(), nullptr, nullptr, TRUE, CREATE_NO_WINDOW | (environment.empty() ? 0 : CREATE_UNICODE_ENVIRONMENT), environment.empty() ? nullptr : block.data(), workspace.path.c_str(), &startup, &process);
+			CloseHandle(writePipe);
+			Assert::IsTrue(created != 0, L"could not start linker process");
+			ProcessResult result;
+			char buffer[2048];
+			DWORD count = 0;
+			while (ReadFile(readPipe, buffer, sizeof(buffer), &count, nullptr) && count != 0) result.output.append(buffer, count);
+			CloseHandle(readPipe);
+			const auto wait = WaitForSingleObject(process.hProcess, 10000);
+			if (wait == WAIT_TIMEOUT)
+			{
+				TerminateProcess(process.hProcess, 0xffff);
+				WaitForSingleObject(process.hProcess, INFINITE);
+			}
+			Assert::IsTrue(wait == WAIT_OBJECT_0, L"linker did not exit within 10 seconds");
+			GetExitCodeProcess(process.hProcess, &result.exitCode);
+			CloseHandle(process.hThread);
+			CloseHandle(process.hProcess);
+			return result;
+		}
+
+		ProcessResult runLinker(const Workspace& workspace, const vector<wstring>& arguments)
+		{
+			return runExecutable(workspace, jwlink2Path(), arguments);
+		}
+
+		ProcessResult runJwlink(const Workspace& workspace, const vector<wstring>& inputs, const wstring& outputName)
+		{
+			vector<wstring> arguments{ L"format", L"win", L"pe", L"option", L"quiet,start=main", L"file" };
+			wstring inputList;
+			for (const auto& input : inputs)
+			{
+				if (!inputList.empty()) inputList += L',';
+				inputList += input;
+			}
+			arguments.push_back(move(inputList));
+			arguments.push_back(L"name");
+			arguments.push_back(workspace.file(outputName).wstring());
+			return runExecutable(workspace, jwlinkPath(), arguments);
+		}
+
+		vector<wstring> outputArgs(const Workspace& workspace, const wstring& outputName)
+		{
+			return { L"/OUT:" + workspace.file(outputName).wstring(), L"/ENTRY:main" };
+		}
+
+		ProcessResult linkObject(const Workspace& workspace, const Bytes& object, vector<wstring> args)
+		{
+			workspace.write(L"input.obj", object);
+			if (args.empty()) args = outputArgs(workspace);
+			args.push_back(workspace.file(L"input.obj").wstring());
+			return runLinker(workspace, args);
+		}
+
+		void assertSuccess(const ProcessResult& result)
+		{
+			const wstring diagnostic(result.output.begin(), result.output.end());
+			Assert::IsTrue(result.exitCode == 0, diagnostic.c_str());
+		}
+
+		void assertFailureContains(const ProcessResult& result, const string& expected)
+		{
+			Assert::IsTrue(result.exitCode != 0, L"link should fail");
+			const wstring diagnostic(result.output.begin(), result.output.end());
+			Assert::IsTrue(result.output.find(expected) != string::npos, diagnostic.c_str());
+		}
+
+		size_t peHeader(const Bytes& image)
+		{
+			Assert::IsTrue(image.size() >= 0x40, L"PE image is shorter than its DOS header");
+			Assert::AreEqual<uint16_t>(0x5a4d, get16(image, 0), L"DOS signature");
+			const auto offset = static_cast<size_t>(get32(image, 0x3c));
+			Assert::IsTrue(offset <= image.size() && image.size() - offset >= 24, L"PE header is outside the file");
+			Assert::AreEqual<uint32_t>(0x00004550, get32(image, offset), L"PE signature");
+			return offset;
+		}
+
+		size_t optionalHeader(const Bytes& image)
+		{
+			const auto pe = peHeader(image);
+			const auto coff = pe + 4;
+			const auto optional = coff + 20;
+			const auto optionalSize = get16(image, coff + 16);
+			Assert::IsTrue(optional <= image.size() && optionalSize <= image.size() - optional, L"optional header is outside the file");
+			Assert::IsTrue(optionalSize >= 2, L"optional header is missing its format field");
+			Assert::AreEqual<uint16_t>(0x20b, get16(image, optional), L"PE32+ optional header");
+			return optional;
+		}
+
+		size_t sectionTable(const Bytes& image)
+		{
+			const auto pe = peHeader(image);
+			const auto coff = pe + 4;
+			return optionalHeader(image) + get16(image, coff + 16);
+		}
+
+		uint16_t peFileCharacteristics(const Bytes& image)
+		{
+			return get16(image, peHeader(image) + 4 + 18);
+		}
+
+		bool hasSection(const Bytes& image, const string& name)
+		{
+			const auto pe = peHeader(image);
+			const auto sectionCount = get16(image, pe + 4 + 2);
+			const auto table = sectionTable(image);
+			for (size_t i = 0; i < sectionCount; ++i)
+			{
+				const auto header = table + i * 40;
+				const string sectionName(reinterpret_cast<const char*>(image.data() + header), strnlen_s(reinterpret_cast<const char*>(image.data() + header), 8));
+				if (sectionName == name) return true;
+			}
+			return false;
+		}
+
+		size_t sectionHeader(const Bytes& image, const string& name)
+		{
+			const auto pe = peHeader(image);
+			const auto sectionCount = get16(image, pe + 4 + 2);
+			const auto table = sectionTable(image);
+			for (size_t i = 0; i < sectionCount; ++i)
+			{
+				const auto header = table + i * 40;
+				string sectionName(reinterpret_cast<const char*>(image.data() + header), strnlen_s(reinterpret_cast<const char*>(image.data() + header), 8));
+				if (sectionName == name) return header;
+			}
+			Assert::Fail(L"requested PE section is missing");
+			return 0;
+		}
+
+		size_t rvaOffset(const Bytes& image, uint32_t rva);
+
+		// Checks the invariants the Windows loader and PE inspection tools (dumpbin, pefile) enforce on an image layout.
+		void validatePeLayout(const Bytes& image)
+		{
+			const auto pe = peHeader(image);
+			const auto optional = optionalHeader(image);
+			const auto count = get16(image, pe + 6);
+			const auto table = sectionTable(image);
+			const auto sectionAlignment = get32(image, optional + 32);
+			const auto fileAlignment = get32(image, optional + 36);
+			const auto imageSize = get32(image, optional + 56);
+			const auto headersSize = get32(image, optional + 60);
+			const auto imageBase = get64(image, optional + 24);
+			Assert::AreEqual<uint16_t>(0x8664, get16(image, pe + 4), L"machine is AMD64");
+			Assert::IsTrue(count > 0 && count <= 96, L"section count is plausible");
+			Assert::IsTrue(sectionAlignment >= 0x1000 && (sectionAlignment & (sectionAlignment - 1)) == 0, L"section alignment is a power of two >= 4 KiB");
+			Assert::IsTrue(fileAlignment >= 0x200 && fileAlignment <= 0x10000 && (fileAlignment & (fileAlignment - 1)) == 0, L"file alignment is a power of two in [512, 64K]");
+			Assert::IsTrue(fileAlignment <= sectionAlignment, L"file alignment does not exceed section alignment");
+			Assert::AreEqual<uint32_t>(0, imageBase & 0xffff, L"image base is 64-KiB aligned");
+			Assert::AreEqual<uint32_t>(0, headersSize % fileAlignment, L"size of headers is file-aligned");
+			Assert::IsTrue(table + static_cast<size_t>(count) * 40 <= headersSize, L"section table fits inside the headers");
+			Assert::AreEqual<uint32_t>(0, imageSize % sectionAlignment, L"size of image is section-aligned");
+
+			uint32_t previousEnd = (headersSize + sectionAlignment - 1) / sectionAlignment * sectionAlignment;
+			uint32_t previousRawEnd = headersSize;
+			uint32_t codeSize = 0, initializedSize = 0, uninitializedSize = 0;
+			bool entryInExecutableSection = get32(image, optional + 16) == 0;
+			for (size_t i = 0; i < count; ++i)
+			{
+				const auto header = table + i * 40;
+				const auto virtualSize = get32(image, header + 8);
+				const auto rva = get32(image, header + 12);
+				const auto rawSize = get32(image, header + 16);
+				const auto rawPointer = get32(image, header + 20);
+				const auto flags = get32(image, header + 36);
+				Assert::AreEqual<uint32_t>(0, rva % sectionAlignment, L"section RVA is section-aligned");
+				Assert::IsTrue(rva >= previousEnd, L"sections ascend in RVA order without overlap");
+				Assert::AreEqual<uint32_t>(0, rawSize % fileAlignment, L"raw size is file-aligned");
+				if (rawSize != 0)
+				{
+					Assert::AreEqual<uint32_t>(0, rawPointer % fileAlignment, L"raw pointer is file-aligned");
+					Assert::IsTrue(rawPointer >= previousRawEnd, L"raw data does not overlap the headers or a prior section");
+					Assert::IsTrue(static_cast<uint64_t>(rawPointer) + rawSize <= image.size(), L"raw data lies inside the file");
+					previousRawEnd = rawPointer + rawSize;
+				}
+				Assert::IsTrue(virtualSize != 0 || rawSize != 0, L"section is not empty");
+				previousEnd = rva + (max(virtualSize, rawSize) + sectionAlignment - 1) / sectionAlignment * sectionAlignment;
+				Assert::IsTrue((flags & 0x20) == 0 || (flags & 0x20000000) != 0, L"code sections are executable");
+				Assert::IsTrue((flags & 0x20000000) == 0 || (flags & 0x80000000) == 0, L"sections are not both executable and writable");
+				if ((flags & 0x20) != 0) codeSize += rawSize;
+				else if ((flags & 0x40) != 0) initializedSize += rawSize;
+				else if ((flags & 0x80) != 0) uninitializedSize += (max(virtualSize, rawSize) + fileAlignment - 1) / fileAlignment * fileAlignment;
+				const auto entry = get32(image, optional + 16);
+				if (entry != 0 && entry >= rva && entry < rva + max(virtualSize, rawSize) && (flags & 0x20000000) != 0) entryInExecutableSection = true;
+			}
+			Assert::AreEqual<uint32_t>(previousEnd, imageSize, L"size of image covers every section");
+			Assert::IsTrue(entryInExecutableSection, L"entry point lies in an executable section");
+			Assert::AreEqual<uint32_t>(codeSize, get32(image, optional + 4), L"size of code matches code sections");
+			Assert::AreEqual<uint32_t>(initializedSize, get32(image, optional + 8), L"size of initialized data matches");
+			Assert::AreEqual<uint32_t>(uninitializedSize, get32(image, optional + 12), L"size of uninitialized data matches");
+
+			const auto directoryCount = get32(image, optional + 108);
+			Assert::IsTrue(directoryCount <= 16 && get16(image, pe + 20) >= 112 + directoryCount * 8, L"data directory count fits the optional header");
+			for (uint32_t i = 0; i < directoryCount; ++i)
+			{
+				const auto rva = get32(image, optional + 112 + i * 8);
+				const auto size = get32(image, optional + 116 + i * 8);
+				if (i == 4 || (rva == 0 && size == 0)) continue;
+				Assert::IsTrue(rva != 0 && size != 0, L"data directory has both an RVA and a size");
+				Assert::IsTrue(static_cast<uint64_t>(rva) + size <= imageSize, L"data directory lies inside the image");
+			}
+
+			if ((peFileCharacteristics(image) & 1) == 0)
+			{
+				const auto relocRva = get32(image, optional + 152);
+				const auto relocSize = get32(image, optional + 156);
+				const auto relocStart = relocSize == 0 ? 0 : rvaOffset(image, relocRva);
+				uint32_t cursor = 0;
+				while (cursor < relocSize)
+				{
+					const auto pageRva = get32(image, relocStart + cursor);
+					const auto blockSize = get32(image, relocStart + cursor + 4);
+					Assert::IsTrue(blockSize >= 8 && blockSize % 4 == 0 && cursor + blockSize <= relocSize, L"base relocation block is well formed");
+					Assert::AreEqual<uint32_t>(0, pageRva % 0x1000, L"base relocation page is 4-KiB aligned");
+					Assert::IsTrue(pageRva < imageSize, L"base relocation page lies inside the image");
+					for (uint32_t entry = 8; entry < blockSize; entry += 2)
+					{
+						const auto value = get16(image, relocStart + cursor + entry);
+						const auto type = value >> 12;
+						Assert::IsTrue(type == 0 || type == 3 || type == 10, L"base relocation type is ABSOLUTE, HIGHLOW, or DIR64");
+						Assert::IsTrue(pageRva + (value & 0xfff) < imageSize, L"base relocation target lies inside the image");
+					}
+					cursor += blockSize;
+				}
+			}
+		}
+
+		size_t rvaOffset(const Bytes& image, uint32_t rva)
+		{
+			const auto pe = peHeader(image);
+			const auto table = sectionTable(image);
+			const auto count = get16(image, pe + 4 + 2);
+			for (size_t i = 0; i < count; ++i)
+			{
+				const auto section = table + i * 40;
+				const auto virtualSize = get32(image, section + 8);
+				const auto sectionRva = get32(image, section + 12);
+				const auto rawSize = get32(image, section + 16);
+				if (rva >= sectionRva && static_cast<uint64_t>(rva) < static_cast<uint64_t>(sectionRva) + max(virtualSize, rawSize))
+				{
+					const auto delta = rva - sectionRva;
+					Assert::IsTrue(delta < rawSize, L"RVA does not refer to initialized file data");
+					return get32(image, section + 20) + delta;
+				}
+			}
+			Assert::Fail(L"RVA does not map to a PE section");
+			return 0;
+		}
+
+		string cStringAtRva(const Bytes& image, uint32_t rva)
+		{
+			const auto offset = rvaOffset(image, rva);
+			size_t end = offset;
+			while (end < image.size() && image[end] != 0) ++end;
+			Assert::IsTrue(end < image.size(), L"RVA string is not terminated");
+			return string(reinterpret_cast<const char*>(image.data() + offset), end - offset);
+		}
+
+		void assertHasBaseReloc(const Bytes& image, uint32_t targetRva, uint16_t expectedType)
+		{
+			const auto optional = optionalHeader(image);
+			const auto relocRva = get32(image, optional + 152);
+			const auto relocSize = get32(image, optional + 156);
+			Assert::IsTrue(relocRva != 0 && relocSize >= 8, L"base-relocation directory should be present");
+			const auto directory = rvaOffset(image, relocRva);
+			const auto page = targetRva & ~uint32_t{ 0xfff };
+			size_t cursor = directory;
+			const auto limit = directory + relocSize;
+			while (cursor + 8 <= limit)
+			{
+				const auto blockPage = get32(image, cursor);
+				const auto blockSize = get32(image, cursor + 4);
+				Assert::IsTrue(blockSize >= 8 && cursor + blockSize <= limit, L"base-relocation block size must be valid");
+				if (blockPage == page)
+				{
+					for (size_t entry = cursor + 8; entry + 2 <= cursor + blockSize; entry += 2)
+					{
+						const auto value = get16(image, entry);
+						if ((value >> 12) == expectedType && (blockPage + (value & 0x0fff)) == targetRva) return;
+					}
+				}
+				cursor += blockSize;
+			}
+			Assert::Fail(L"expected base-relocation entry is missing");
+		}
+
+		void assertNoOutput(const Workspace& workspace, const wstring& outputName)
+		{
+			Assert::IsFalse(fs::exists(workspace.file(outputName)), L"failed link must not create an output image");
+		}
+	}
+}

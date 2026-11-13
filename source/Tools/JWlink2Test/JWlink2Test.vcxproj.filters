@@ -15,15 +15,26 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="JWlink2Test.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
+    <ClCompile Include="TestFixtures.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="ObjectAndSectionTests.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="DebugTests.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="ImageTests.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="OptionAndJwlinkTests.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="RelocationTests.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="ImportTests.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="LibraryAndDirectiveTests.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="SymbolTests.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="I386Tests.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="DiagnosticTests.cpp"><Filter>Source Files</Filter></ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TestFixtures.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

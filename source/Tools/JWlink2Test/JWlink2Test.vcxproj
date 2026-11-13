@@ -185,7 +185,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="JWlink2Test.cpp" />
+    <ClCompile Include="TestFixtures.cpp" />
+    <ClCompile Include="ObjectAndSectionTests.cpp" />
+    <ClCompile Include="DebugTests.cpp" />
+    <ClCompile Include="ImageTests.cpp" />
+    <ClCompile Include="OptionAndJwlinkTests.cpp" />
+    <ClCompile Include="RelocationTests.cpp" />
+    <ClCompile Include="ImportTests.cpp" />
+    <ClCompile Include="LibraryAndDirectiveTests.cpp" />
+    <ClCompile Include="SymbolTests.cpp" />
+    <ClCompile Include="I386Tests.cpp" />
+    <ClCompile Include="DiagnosticTests.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -195,6 +205,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
+    <ClInclude Include="TestFixtures.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
