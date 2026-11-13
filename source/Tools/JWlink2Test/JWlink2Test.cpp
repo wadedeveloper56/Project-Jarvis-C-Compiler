@@ -1,7 +1,8 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "CppUnitTest.h"
 #define NOMINMAX
 #include <Windows.h>
+#include <DbgHelp.h>
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -950,6 +951,99 @@ namespace JWlink2Test
 			const auto pdbInfoStream = 3 * 4096;
 			Assert::IsTrue(equal(pdb.begin() + pdbInfoStream + 12, pdb.begin() + pdbInfoStream + 28, image.begin() + recordOffset + 4), L"PDB GUID matches the PE RSDS record");
 			Assert::AreEqual<uint32_t>(get32(pdb, pdbInfoStream + 8), get32(image, recordOffset + 20), L"PDB age matches the PE RSDS record");
+
+			// Interoperability: a Windows debugger-engine reader must resolve the public symbol, source file, and remapped line.
+			const auto dbghelp = LoadLibraryW(L"C:\\Windows\\System32\\dbghelp.dll");
+			Assert::IsNotNull(dbghelp, L"dbghelp.dll is available");
+			using SymSetOptionsFn = DWORD(WINAPI*)(DWORD);
+			using SymInitializeWFn = BOOL(WINAPI*)(HANDLE, PCWSTR, BOOL);
+			using SymLoadModuleExWFn = DWORD64(WINAPI*)(HANDLE, HANDLE, PCWSTR, PCWSTR, DWORD64, DWORD, PVOID, DWORD);
+			using SymFromNameFn = BOOL(WINAPI*)(HANDLE, PCSTR, PSYMBOL_INFO);
+			using SymGetLineFn = BOOL(WINAPI*)(HANDLE, DWORD64, PDWORD, PIMAGEHLP_LINE64);
+			using SymCleanupFn = BOOL(WINAPI*)(HANDLE);
+			const auto symSetOptions = reinterpret_cast<SymSetOptionsFn>(GetProcAddress(dbghelp, "SymSetOptions"));
+			const auto symInitialize = reinterpret_cast<SymInitializeWFn>(GetProcAddress(dbghelp, "SymInitializeW"));
+			const auto symLoadModule = reinterpret_cast<SymLoadModuleExWFn>(GetProcAddress(dbghelp, "SymLoadModuleExW"));
+			const auto symFromName = reinterpret_cast<SymFromNameFn>(GetProcAddress(dbghelp, "SymFromName"));
+			const auto symGetLine = reinterpret_cast<SymGetLineFn>(GetProcAddress(dbghelp, "SymGetLineFromAddr64"));
+			const auto symCleanup = reinterpret_cast<SymCleanupFn>(GetProcAddress(dbghelp, "SymCleanup"));
+			Assert::IsTrue(symSetOptions && symInitialize && symLoadModule && symFromName && symGetLine && symCleanup, L"dbghelp exports the symbol APIs");
+			const auto process = reinterpret_cast<HANDLE>(static_cast<uintptr_t>(0x4a574c32));
+			symSetOptions(0x00000002 | 0x00000010); // SYMOPT_UNDNAME | SYMOPT_LOAD_LINES
+			const auto imageBase = get64(image, optional + 24);
+			DWORD64 loaded = 0;
+			// Freshly written files can be briefly held by a scanner, which makes the first dbghelp load fail intermittently.
+			for (int attempt = 0; attempt < 10 && loaded == 0; ++attempt)
+			{
+				if (attempt != 0) Sleep(100);
+				Assert::IsTrue(symInitialize(process, workspace.file(L"").c_str(), FALSE) != FALSE, L"dbghelp initializes");
+				loaded = symLoadModule(process, nullptr, workspace.file(L"linked.exe").c_str(), nullptr, imageBase, get32(image, optional + 56), nullptr, 0);
+				if (loaded == 0) symCleanup(process);
+			}
+			Assert::IsTrue(loaded != 0, L"dbghelp loads the linked image and PDB");
+			alignas(SYMBOL_INFO) BYTE symbolBuffer[sizeof(SYMBOL_INFO) + 64]{};
+			auto* symbol = reinterpret_cast<PSYMBOL_INFO>(symbolBuffer);
+			symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+			symbol->MaxNameLen = 63;
+			const auto found = symFromName(process, "main", symbol) != FALSE;
+			IMAGEHLP_LINE64 line{};
+			line.SizeOfStruct = sizeof(line);
+			DWORD displacement = 0;
+			const auto hasLine = found && symGetLine(process, symbol->Address, &displacement, &line) != FALSE;
+			const string fileName = hasLine ? string(line.FileName) : string();
+			symCleanup(process);
+			Assert::IsTrue(found, L"PDB public symbols resolve main");
+			Assert::AreEqual<uint64_t>(imageBase + get32(image, sectionHeader(image, ".text") + 12), symbol->Address, L"PDB symbol address is the linked RVA");
+			Assert::IsTrue(hasLine, L"PDB line records resolve the entry address");
+			Assert::AreEqual<DWORD>(1, line.LineNumber, L"line number is preserved");
+			Assert::IsTrue(fileName.find("debug.cpp") != string::npos, L"source file name is preserved");
+		}
+
+		TEST_METHOD(DebugOptionAcceptsMsvcTypeAndIdRecordsAndRejectsUnknownLeaves)
+		{
+			auto typeStream = [](const vector<Bytes>& records)
+				{
+					Bytes data(4, 0);
+					put32(data, 0, 4);
+					for (const auto& record : records) data.insert(data.end(), record.begin(), record.end());
+					return data;
+				};
+			auto record = [](uint16_t leaf, const Bytes& body)
+				{
+					Bytes result(4, 0);
+					put16(result, 2, leaf);
+					result.insert(result.end(), body.begin(), body.end());
+					while (result.size() % 4 != 0) result.push_back(static_cast<uint8_t>(0xF0 + 4 - result.size() % 4));
+					put16(result, 0, static_cast<uint16_t>(result.size() - 2));
+					return result;
+				};
+			auto link = [&](Workspace& workspace, const Bytes& types, const wstring& pdbName)
+				{
+					const auto object = makeObject({ TestSection{ ".text",{ 0xc3 }, 0x60000020 }, TestSection{ ".debug$T", types, 0x42000040 } }, { TestSymbol{ "main", 0, 1, 2,{} } });
+					workspace.write(L"types.obj", object);
+					auto args = outputArgs(workspace);
+					args.insert(args.begin() + 1, L"/PDB:" + workspace.file(pdbName).wstring());
+					args.push_back(workspace.file(L"types.obj").wstring());
+					return runLinker(workspace, args);
+				};
+
+			Bytes field;
+			put16(field, field.size(), 0x150D); put16(field, field.size(), 3); put32(field, field.size(), 0x74); put16(field, field.size(), 0); appendString(field, "x");
+			Bytes structure;
+			put16(structure, structure.size(), 1); put16(structure, structure.size(), 0); put32(structure, structure.size(), 0x1000); put32(structure, structure.size(), 0); put32(structure, structure.size(), 0);
+			put16(structure, structure.size(), 4); appendString(structure, "S");
+			Bytes stringId;
+			put32(stringId, stringId.size(), 0); appendString(stringId, "a.c");
+			Bytes substrings;
+			put32(substrings, substrings.size(), 1); put32(substrings, substrings.size(), 0x1002);
+			Bytes buildInfo;
+			put16(buildInfo, buildInfo.size(), 1); put32(buildInfo, buildInfo.size(), 0x1002);
+			Workspace accepted;
+			assertSuccess(link(accepted, typeStream({ record(0x1203, field), record(0x1505, structure), record(0x1605, stringId), record(0x1604, substrings), record(0x1603, buildInfo) }), L"types.pdb"));
+			Assert::IsTrue(fs::exists(accepted.file(L"types.pdb")), L"/PDB writes the requested PDB path");
+
+			Workspace rejected;
+			assertFailureContains(link(rejected, typeStream({ record(0x1700, Bytes(4, 0)) }), L"bad.pdb"), "unsupported CodeView type leaf");
 		}
 
 		TEST_METHOD(ValidAmd64ObjectProducesPe32PlusWithDefaultBaseAndEntry)

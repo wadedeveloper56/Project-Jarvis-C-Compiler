@@ -853,6 +853,110 @@ namespace JWlink2
 			type.references.push_back({ offset });
 		}
 
+		// Returns the byte length of a CodeView numeric leaf (inline value or typed leaf).
+		size_t numericLeafSize(const Bytes& record, size_t offset, string_view objectName)
+		{
+			const auto kind = readLe<uint16_t>(record, offset, objectName);
+			if (kind < 0x8000) return 2;
+			size_t payload = 0;
+			switch (kind)
+			{
+				case 0x8000: payload = 1; break;
+				case 0x8001: case 0x8002: payload = 2; break;
+				case 0x8003: case 0x8004: case 0x8005: payload = 4; break;
+				case 0x8006: case 0x8009: case 0x800A: payload = 8; break;
+				default: fail(string(objectName) + ": unsupported CodeView numeric leaf");
+			}
+			if (2 + payload > record.size() - offset) fail(string(objectName) + ": truncated CodeView numeric leaf");
+			return 2 + payload;
+		}
+
+		size_t cStringLeafSize(const Bytes& record, size_t offset, string_view objectName)
+		{
+			for (size_t i = offset; i < record.size(); ++i)
+			{
+				if (record[i] == 0) return i - offset + 1;
+			}
+			fail(string(objectName) + ": unterminated CodeView name");
+		}
+
+		void parseFieldListReferences(codeview::CodeViewTypeRecord& type, string_view objectName)
+		{
+			size_t cursor = 4;
+			const auto& r = type.record;
+			while (cursor < r.size())
+			{
+				const auto padding = r[cursor];
+				if (padding >= 0xF0)
+				{
+					cursor += padding & 0x0F;
+					continue;
+				}
+				const auto leaf = readLe<uint16_t>(r, cursor, objectName);
+				cursor += 2;
+				switch (leaf)
+				{
+					case 0x1400: // LF_BCLASS
+						addTypeReference(type, cursor + 2);
+						cursor += 6;
+						cursor += numericLeafSize(r, cursor, objectName);
+						break;
+					case 0x1401: // LF_VBCLASS
+					case 0x1402: // LF_IVBCLASS
+						addTypeReference(type, cursor + 2);
+						addTypeReference(type, cursor + 6);
+						cursor += 10;
+						cursor += numericLeafSize(r, cursor, objectName);
+						cursor += numericLeafSize(r, cursor, objectName);
+						break;
+					case 0x1404: // LF_INDEX
+					case 0x1409: // LF_VFUNCTAB
+						addTypeReference(type, cursor + 2);
+						cursor += 6;
+						break;
+					case 0x1502: // LF_ENUMERATE
+						cursor += 2;
+						cursor += numericLeafSize(r, cursor, objectName);
+						cursor += cStringLeafSize(r, cursor, objectName);
+						break;
+					case 0x150D: // LF_MEMBER
+						addTypeReference(type, cursor + 2);
+						cursor += 6;
+						cursor += numericLeafSize(r, cursor, objectName);
+						cursor += cStringLeafSize(r, cursor, objectName);
+						break;
+					case 0x150E: // LF_STMEMBER
+						addTypeReference(type, cursor + 2);
+						cursor += 6;
+						cursor += cStringLeafSize(r, cursor, objectName);
+						break;
+					case 0x150F: // LF_METHOD
+						addTypeReference(type, cursor + 2);
+						cursor += 6;
+						cursor += cStringLeafSize(r, cursor, objectName);
+						break;
+					case 0x1510: // LF_NESTTYPE
+						addTypeReference(type, cursor + 2);
+						cursor += 6;
+						cursor += cStringLeafSize(r, cursor, objectName);
+						break;
+					case 0x1511: // LF_ONEMETHOD
+					{
+						const auto attributes = readLe<uint16_t>(r, cursor, objectName);
+						addTypeReference(type, cursor + 2);
+						cursor += 6;
+						const auto methodKind = (attributes >> 2) & 7;
+						if (methodKind == 4 || methodKind == 6) cursor += 4; // Introducing virtual methods carry a vtable offset.
+						cursor += cStringLeafSize(r, cursor, objectName);
+						break;
+					}
+					default:
+						fail(string(objectName) + ": unsupported CodeView field-list leaf 0x" + [&] { ostringstream s; s << hex << leaf; return s.str(); }());
+				}
+				if (cursor > r.size()) fail(string(objectName) + ": truncated LF_FIELDLIST");
+			}
+		}
+
 		void parseTypeReferenceLayout(codeview::CodeViewTypeRecord& type, string_view objectName)
 		{
 			const auto leaf = readLe<uint16_t>(type.record, 2, objectName);
@@ -899,6 +1003,36 @@ namespace JWlink2
 					addTypeReference(type, 8);
 					addTypeReference(type, 12);
 					break;
+				case 0x1203: // LF_FIELDLIST
+					parseFieldListReferences(type, objectName);
+					break;
+				case 0x1206: // LF_METHODLIST
+				{
+					size_t cursor = 4;
+					while (cursor < type.record.size() && type.record[cursor] < 0xF0)
+					{
+						const auto attributes = readLe<uint16_t>(type.record, cursor, objectName);
+						addTypeReference(type, cursor + 4);
+						cursor += 8;
+						const auto methodKind = (attributes >> 2) & 7;
+						if (methodKind == 4 || methodKind == 6) cursor += 4;
+					}
+					break;
+				}
+				case 0x1603: // LF_BUILDINFO
+				{
+					const auto count = readLe<uint16_t>(type.record, 4, objectName);
+					if (count > (type.record.size() - 6) / 4) fail(string(objectName) + ": truncated LF_BUILDINFO");
+					for (uint16_t i = 0; i < count; ++i) addTypeReference(type, 6 + static_cast<size_t>(i) * 4);
+					break;
+				}
+				case 0x1604: // LF_SUBSTR_LIST
+				{
+					const auto count = readLe<uint32_t>(type.record, 4, objectName);
+					if (count > (type.record.size() - 8) / 4) fail(string(objectName) + ": truncated LF_SUBSTR_LIST");
+					for (uint32_t i = 0; i < count; ++i) addTypeReference(type, 8 + static_cast<size_t>(i) * 4);
+					break;
+				}
 				case 0x1601: // LF_FUNC_ID
 				case 0x1602: // LF_MFUNC_ID
 					addTypeReference(type, 4);
@@ -978,6 +1112,8 @@ namespace JWlink2
 								break;
 							case 0x110C: // S_LDATA32
 							case 0x110D: // S_GDATA32
+							case 0x1112: // S_LTHREAD32
+							case 0x1113: // S_GTHREAD32
 								if (symbol.record.size() < 14) fail(object.objectId + ": truncated C13 data symbol");
 								typeReference(4);
 								address(8, 12);
@@ -989,6 +1125,41 @@ namespace JWlink2
 								if (symbol.record.size() < 39) fail(object.objectId + ": truncated C13 procedure symbol");
 								typeReference(28);
 								address(32, 36);
+								break;
+							case 0x1102: // S_THUNK32
+								if (symbol.record.size() < 22) fail(object.objectId + ": truncated C13 thunk symbol");
+								address(16, 20);
+								break;
+							case 0x1139: // S_CALLSITEINFO
+							case 0x115E: // S_HEAPALLOCSITE
+								if (symbol.record.size() < 16) fail(object.objectId + ": truncated C13 call-site symbol");
+								address(4, 8);
+								typeReference(12);
+								break;
+							case 0x113F: // S_DEFRANGE
+							case 0x1142: // S_DEFRANGE_FRAMEPOINTER_REL
+								if (symbol.record.size() < 16) fail(object.objectId + ": truncated C13 defrange symbol");
+								address(8, 12);
+								break;
+							case 0x1141: // S_DEFRANGE_REGISTER
+								if (symbol.record.size() < 16) fail(object.objectId + ": truncated C13 defrange symbol");
+								address(8, 12);
+								break;
+							case 0x1143: // S_DEFRANGE_SUBFIELD_REGISTER
+							case 0x1145: // S_DEFRANGE_REGISTER_REL
+								if (symbol.record.size() < 20) fail(object.objectId + ": truncated C13 defrange symbol");
+								address(12, 16);
+								break;
+							case 0x1144: // S_DEFRANGE_FRAMEPOINTER_REL_FULL_SCOPE
+							case 0x113A: // S_FRAMECOOKIE
+							case 0x1116: // S_COMPILE2
+							case 0x1124: // S_UNAMESPACE
+								break;
+							case 0x1108: // S_UDT
+							case 0x1106: // S_REGISTER
+							case 0x1153: // S_FILESTATIC
+							case 0x114D: // S_INLINESITE
+								typeReference(kindId == 0x114D ? 12 : 4);
 								break;
 							case 0x1105: // S_LABEL32
 								if (symbol.record.size() < 11) fail(object.objectId + ": truncated C13 label symbol");

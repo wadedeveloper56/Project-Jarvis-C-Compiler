@@ -9,6 +9,8 @@ namespace JWlink2::codeview
 	constexpr uint32_t BlockSize = 4096;
 	constexpr uint32_t CvSignatureC13 = 4;
 	constexpr uint32_t DebugSLines = 0xF2;
+	constexpr uint32_t DebugSStringTable = 0xF3;
+	constexpr uint32_t DebugSFileChecksums = 0xF4;
 	constexpr uint16_t S_PUB32 = 0x110E;
 	constexpr uint32_t PdbVersion = 20000404;
 	constexpr uint32_t DbiVersion = 19990903;
@@ -152,6 +154,7 @@ namespace JWlink2::codeview
 		Bytes symbolRecords;
 		Bytes c13;
 		vector<Bytes> contributions;
+		vector<string> files;
 		uint32_t symbolBytes = 0;
 		uint32_t c13Bytes = 0;
 		uint16_t streamIndex = 0;
@@ -309,15 +312,117 @@ namespace JWlink2::codeview
 		}
 	}
 
-	Bytes makeC13(const CodeViewObject& object)
+	uint32_t hashStringV1(string_view value)
+	{
+		uint32_t result = 0;
+		size_t i = 0;
+		for (; i + 4 <= value.size(); i += 4)
+		{
+			uint32_t word = 0;
+			for (size_t b = 0; b < 4; ++b) word |= static_cast<uint32_t>(static_cast<uint8_t>(value[i + b])) << (b * 8);
+			result ^= word;
+		}
+		if (value.size() - i >= 2)
+		{
+			result ^= static_cast<uint32_t>(static_cast<uint8_t>(value[i])) | (static_cast<uint32_t>(static_cast<uint8_t>(value[i + 1])) << 8);
+			i += 2;
+		}
+		if (value.size() - i == 1)
+		{
+			result ^= static_cast<uint8_t>(value[i]);
+		}
+		result |= 0x20202020;
+		result ^= result >> 11;
+		return result ^ (result >> 16);
+	}
+
+	// Merges per-object DEBUG_S_STRINGTABLE data into the PDB-wide /names stream.
+	class StringPool
+	{
+	public:
+		StringPool() { buffer_.push_back(0); }
+
+		uint32_t add(const string& value)
+		{
+			if (value.empty()) return 0;
+			const auto found = offsets_.find(value);
+			if (found != offsets_.end()) return found->second;
+			const auto offset = toU32(buffer_.size(), "PDB string table");
+			appendString(buffer_, value);
+			offsets_.emplace(value, offset);
+			return offset;
+		}
+
+		Bytes serialize() const
+		{
+			Bytes result;
+			appendLe(result, static_cast<uint32_t>(0xEFFEEFFE));
+			appendLe(result, static_cast<uint32_t>(1));
+			appendLe(result, toU32(buffer_.size(), "PDB string table"));
+			result.insert(result.end(), buffer_.begin(), buffer_.end());
+			const auto bucketCount = static_cast<uint32_t>(offsets_.size() * 2 + 1);
+			vector<uint32_t> buckets(bucketCount, 0);
+			for (const auto& [text, offset] : offsets_)
+			{
+				auto index = hashStringV1(text) % bucketCount;
+				while (buckets[index] != 0) index = (index + 1) % bucketCount;
+				buckets[index] = offset;
+			}
+			appendLe(result, bucketCount);
+			for (const auto bucket : buckets) appendLe(result, bucket);
+			appendLe(result, toU32(offsets_.size(), "PDB string count"));
+			return result;
+		}
+
+	private:
+		Bytes buffer_;
+		map<string, uint32_t> offsets_;
+	};
+
+	string readObjectString(const Bytes& table, uint32_t offset)
+	{
+		if (offset >= table.size()) fail("file checksum refers outside the object string table");
+		const auto end = find(table.begin() + offset, table.end(), uint8_t{ 0 });
+		if (end == table.end()) fail("unterminated object string table entry");
+		return string(table.begin() + offset, end);
+	}
+
+	void rebaseChecksums(Bytes& data, const Bytes& objectStrings, StringPool& pool, vector<string>& files)
+	{
+		size_t cursor = 0;
+		while (cursor < data.size())
+		{
+			if (data.size() - cursor < 6) fail("truncated DEBUG_S_FILECHECKSUMS entry");
+			const auto oldOffset = readLe<uint32_t>(data, cursor, "file checksum name offset");
+			auto name = readObjectString(objectStrings, oldOffset);
+			putLe(data, cursor, pool.add(name));
+			files.push_back(move(name));
+			const auto size = data[cursor + 4];
+			const auto next = align4(cursor + 6 + size);
+			if (next > data.size() && cursor + 6 + size > data.size()) fail("truncated DEBUG_S_FILECHECKSUMS entry");
+			cursor = next;
+		}
+	}
+
+	Bytes makeC13(const CodeViewObject& object, StringPool& pool, vector<string>& files)
 	{
 		Bytes result;
+		Bytes objectStrings;
 		for (const auto& subsection : object.subsections)
 		{
+			if (subsection.kind == DebugSStringTable) objectStrings = subsection.data;
+		}
+		for (const auto& subsection : object.subsections)
+		{
+			if (subsection.kind == DebugSStringTable) continue; // Replaced by the PDB /names stream.
 			Bytes data = subsection.data;
 			if (subsection.kind == DebugSLines)
 			{
 				remapLines(object, data);
+			}
+			else if (subsection.kind == DebugSFileChecksums)
+			{
+				rebaseChecksums(data, objectStrings, pool, files);
 			}
 			appendLe(result, subsection.kind);
 			appendLe(result, toU32(data.size(), "CodeView subsection"));
@@ -366,21 +471,20 @@ namespace JWlink2::codeview
 		{
 			const auto& module = modules[i];
 			appendLe(result, static_cast<uint32_t>(0)); // Unused.
-			appendLe(result, static_cast<uint16_t>(0)); // Section contribution section.
-			appendLe(result, static_cast<uint16_t>(0)); // Padding.
-			appendLe(result, static_cast<uint32_t>(0)); // Contribution offset.
-			appendLe(result, static_cast<uint32_t>(0)); // Contribution size.
-			appendLe(result, static_cast<uint32_t>(0)); // Characteristics.
-			appendLe(result, static_cast<uint16_t>(0)); // Module index.
-			appendLe(result, static_cast<uint16_t>(0)); // Padding.
-			appendLe(result, static_cast<uint32_t>(0)); // Data CRC.
-			appendLe(result, static_cast<uint32_t>(0)); // Relocation CRC.
+			if (module.contributions.empty())
+			{
+				result.resize(result.size() + 28, 0);
+			}
+			else
+			{
+				result.insert(result.end(), module.contributions.front().begin(), module.contributions.front().end()); // First section contribution.
+			}
 			appendLe(result, static_cast<uint16_t>(0)); // Flags.
 			appendLe(result, module.streamIndex);
 			appendLe(result, module.symbolBytes);
 			appendLe(result, static_cast<uint32_t>(0)); // C11 bytes.
 			appendLe(result, module.c13Bytes);
-			appendLe(result, static_cast<uint16_t>(0)); // Source file count.
+			appendLe(result, static_cast<uint16_t>(module.files.size())); // Source file count.
 			appendLe(result, static_cast<uint16_t>(0)); // Padding.
 			appendLe(result, static_cast<uint32_t>(0)); // File-name offset.
 			appendLe(result, static_cast<uint32_t>(0)); // Source file name index.
@@ -394,14 +498,24 @@ namespace JWlink2::codeview
 
 	Bytes makeSectionContributions(const vector<ModuleOutput>& modules)
 	{
-		Bytes result;
-		appendLe(result, SectionContributionVersion);
+		vector<const Bytes*> ordered;
 		for (const auto& module : modules)
 		{
-			for (const auto& contribution : module.contributions)
+			for (const auto& contribution : module.contributions) ordered.push_back(&contribution);
+		}
+		// Readers binary-search this table by (section, offset).
+		stable_sort(ordered.begin(), ordered.end(), [](const Bytes* a, const Bytes* b)
 			{
-				result.insert(result.end(), contribution.begin(), contribution.end());
-			}
+				const auto sectionA = readLe<uint16_t>(*a, 0, "contribution section");
+				const auto sectionB = readLe<uint16_t>(*b, 0, "contribution section");
+				if (sectionA != sectionB) return sectionA < sectionB;
+				return readLe<uint32_t>(*a, 4, "contribution offset") < readLe<uint32_t>(*b, 4, "contribution offset");
+			});
+		Bytes result;
+		appendLe(result, SectionContributionVersion);
+		for (const auto* contribution : ordered)
+		{
+			result.insert(result.end(), contribution->begin(), contribution->end());
 		}
 		return result;
 	}
@@ -413,12 +527,16 @@ namespace JWlink2::codeview
 		appendLe(result, static_cast<uint16_t>(sections.size()));
 		for (const auto& section : sections)
 		{
-			appendLe(result, static_cast<uint16_t>(0)); // Flags.
+			uint16_t flags = 0x0108; // 32-bit offsets in a flat address space.
+			if ((section.characteristics & 0x40000000) != 0) flags |= 1;
+			if ((section.characteristics & 0x80000000) != 0) flags |= 2;
+			if ((section.characteristics & 0x20000000) != 0) flags |= 4;
+			appendLe(result, flags);
 			appendLe(result, static_cast<uint16_t>(0)); // Overlay.
 			appendLe(result, static_cast<uint16_t>(0)); // Group.
 			appendLe(result, section.index);
-			appendLe(result, static_cast<uint16_t>(0)); // Section-name string index.
-			appendLe(result, static_cast<uint16_t>(0)); // Class-name string index.
+			appendLe(result, static_cast<uint16_t>(0xFFFF)); // Section-name string index.
+			appendLe(result, static_cast<uint16_t>(0xFFFF)); // Class-name string index.
 			appendLe(result, static_cast<uint32_t>(0));
 			appendLe(result, section.size);
 		}
@@ -428,23 +546,53 @@ namespace JWlink2::codeview
 	Bytes makeFileInfo(const vector<ModuleOutput>& modules)
 	{
 		Bytes result;
+		size_t total = 0;
+		for (const auto& module : modules) total += module.files.size();
+		if (total > numeric_limits<uint16_t>::max()) fail("too many source files for DBI file info");
 		appendLe(result, static_cast<uint16_t>(modules.size()));
-		appendLe(result, static_cast<uint16_t>(0)); // Total source files.
+		appendLe(result, static_cast<uint16_t>(total));
 		for (size_t i = 0; i < modules.size(); ++i)
 		{
 			appendLe(result, static_cast<uint16_t>(i));
 		}
-		for (size_t i = 0; i < modules.size(); ++i)
+		for (const auto& module : modules)
 		{
-			appendLe(result, static_cast<uint16_t>(0)); // Module source-file count.
+			appendLe(result, static_cast<uint16_t>(module.files.size()));
 		}
+		Bytes nameBuffer;
+		map<string, uint32_t> nameOffsets;
+		for (const auto& module : modules)
+		{
+			for (const auto& file : module.files)
+			{
+				const auto [found, inserted] = nameOffsets.emplace(file, toU32(nameBuffer.size(), "DBI file name buffer"));
+				if (inserted) appendString(nameBuffer, file);
+				appendLe(result, found->second);
+			}
+		}
+		result.insert(result.end(), nameBuffer.begin(), nameBuffer.end());
+		result.resize(align4(result.size()), 0);
 		return result;
 	}
 
+	struct DbiStreams
+	{
+		uint16_t global = NoStream;
+		uint16_t publics = NoStream;
+		uint16_t symbolRecords = NoStream;
+		uint16_t sectionHeaders = NoStream;
+	};
+
 	Bytes makeDbi(const PdbIdentity& identity,
 		const vector<ModuleOutput>& modules,
-		const vector<LinkedSection>& sections)
+		const vector<LinkedSection>& sections,
+		const DbiStreams& streams)
 	{
+		Bytes optionalHeader;
+		for (uint16_t i = 0; i < 11; ++i)
+		{
+			appendLe(optionalHeader, i == 5 ? streams.sectionHeaders : static_cast<uint16_t>(NoStream)); // Index 5 is the section-header stream.
+		}
 		const auto modInfo = makeModuleInfo(modules);
 		const auto sectionContributions = makeSectionContributions(modules);
 		const auto sectionMap = makeSectionMap(sections);
@@ -453,11 +601,11 @@ namespace JWlink2::codeview
 		appendLe(result, static_cast<uint32_t>(0xFFFFFFFF));
 		appendLe(result, DbiVersion);
 		appendLe(result, identity.age);
-		appendLe(result, static_cast<uint16_t>(NoStream)); // Global symbol hash stream.
-		appendLe(result, static_cast<uint16_t>(0)); // Build number.
-		appendLe(result, static_cast<uint16_t>(NoStream)); // Public symbol stream.
-		appendLe(result, static_cast<uint16_t>(0xFFFF)); // PDB DLL version.
-		appendLe(result, static_cast<uint16_t>(NoStream)); // Symbol-record stream.
+		appendLe(result, streams.global); // Global symbol hash stream.
+		appendLe(result, static_cast<uint16_t>(0x8E0B)); // Build number 14.11 in the new-format encoding.
+		appendLe(result, streams.publics); // Public symbol stream.
+		appendLe(result, static_cast<uint16_t>(0)); // PDB DLL version.
+		appendLe(result, streams.symbolRecords); // Symbol-record stream.
 		appendLe(result, static_cast<uint16_t>(0)); // PDB DLL rebuild.
 		appendLe(result, toU32(modInfo.size(), "DBI module info"));
 		appendLe(result, toU32(sectionContributions.size(), "DBI section contributions"));
@@ -465,7 +613,7 @@ namespace JWlink2::codeview
 		appendLe(result, toU32(fileInfo.size(), "DBI file info"));
 		appendLe(result, static_cast<uint32_t>(0)); // Type-server map.
 		appendLe(result, static_cast<uint32_t>(0)); // MFC type-server index.
-		appendLe(result, static_cast<uint32_t>(0)); // Optional debug header.
+		appendLe(result, toU32(optionalHeader.size(), "DBI optional debug header"));
 		appendLe(result, static_cast<uint32_t>(0)); // EC substream.
 		appendLe(result, static_cast<uint16_t>(0)); // Flags.
 		appendLe(result, static_cast<uint16_t>(0x8664)); // AMD64.
@@ -474,22 +622,107 @@ namespace JWlink2::codeview
 		result.insert(result.end(), sectionContributions.begin(), sectionContributions.end());
 		result.insert(result.end(), sectionMap.begin(), sectionMap.end());
 		result.insert(result.end(), fileInfo.begin(), fileInfo.end());
+		result.insert(result.end(), optionalHeader.begin(), optionalHeader.end());
 		return result;
 	}
 
-	Bytes makeInfo(const PdbIdentity& identity)
+	Bytes makeInfo(const PdbIdentity& identity, uint16_t namesStream)
 	{
 		Bytes result;
 		appendLe(result, PdbVersion);
 		appendLe(result, identity.signature);
 		appendLe(result, identity.age);
 		result.insert(result.end(), identity.guid.begin(), identity.guid.end());
-		appendLe(result, static_cast<uint32_t>(0)); // Named-stream string-buffer size.
-		appendLe(result, static_cast<uint32_t>(0)); // Named-stream hash-table size.
-		appendLe(result, static_cast<uint32_t>(8)); // Empty hash tables still require nonzero capacity.
-		appendLe(result, static_cast<uint32_t>(0)); // Present bitmap word count.
+		constexpr string_view namesKey = "/names";
+		appendLe(result, static_cast<uint32_t>(namesKey.size() + 1)); // Named-stream string-buffer size.
+		result.insert(result.end(), namesKey.begin(), namesKey.end());
+		result.push_back(0);
+		constexpr uint32_t capacity = 8;
+		appendLe(result, static_cast<uint32_t>(1)); // Named-stream hash-table size.
+		appendLe(result, capacity);
+		appendLe(result, static_cast<uint32_t>(1)); // Present bitmap word count.
+		appendLe(result, static_cast<uint32_t>(1U << (hashStringV1(namesKey) % capacity)));
 		appendLe(result, static_cast<uint32_t>(0)); // Deleted bitmap word count.
-		appendLe(result, static_cast<uint32_t>(0)); // NMTNI::niMac.
+		appendLe(result, static_cast<uint32_t>(0)); // Key: offset of "/names".
+		appendLe(result, static_cast<uint32_t>(namesStream));
+		appendLe(result, static_cast<uint32_t>(20140508)); // VC140 feature signature.
+		return result;
+	}
+
+	struct PublicRecord
+	{
+		string name;
+		uint32_t offset = 0; // Offset in the symbol-record stream.
+	};
+
+	// Builds a GSI hash section: header, hash records ordered by bucket, bucket bitmap and chain offsets.
+	Bytes makeGsiHash(const vector<PublicRecord>& records)
+	{
+		constexpr uint32_t buckets = 4096;
+		vector<vector<const PublicRecord*>> chains(buckets);
+		for (const auto& record : records)
+		{
+			chains[hashStringV1(record.name) % buckets].push_back(&record);
+		}
+		Bytes hashRecords;
+		vector<uint32_t> bitmap((buckets + 32) / 32, 0);
+		Bytes chainOffsets;
+		uint32_t recordIndex = 0;
+		for (uint32_t bucket = 0; bucket < buckets; ++bucket)
+		{
+			if (chains[bucket].empty()) continue;
+			bitmap[bucket / 32] |= 1U << (bucket % 32);
+			appendLe(chainOffsets, recordIndex * 12);
+			for (const auto* record : chains[bucket])
+			{
+				appendLe(hashRecords, record->offset + 1);
+				appendLe(hashRecords, static_cast<uint32_t>(1));
+				++recordIndex;
+			}
+		}
+		Bytes result;
+		appendLe(result, static_cast<uint32_t>(0xFFFFFFFF));
+		appendLe(result, static_cast<uint32_t>(0xEFFE0000 + 19990810));
+		appendLe(result, toU32(hashRecords.size(), "GSI hash records"));
+		appendLe(result, toU32(bitmap.size() * 4 + chainOffsets.size(), "GSI buckets"));
+		result.insert(result.end(), hashRecords.begin(), hashRecords.end());
+		for (const auto word : bitmap) appendLe(result, word);
+		result.insert(result.end(), chainOffsets.begin(), chainOffsets.end());
+		return result;
+	}
+
+	Bytes makePublicsStream(const vector<PublicRecord>& records, const vector<uint32_t>& addressOrder, size_t sectionCount)
+	{
+		const auto hash = makeGsiHash(records);
+		Bytes result;
+		appendLe(result, toU32(hash.size(), "PSI hash"));
+		appendLe(result, toU32(addressOrder.size() * 4, "PSI address map"));
+		appendLe(result, static_cast<uint32_t>(0)); // Thunk count.
+		appendLe(result, static_cast<uint32_t>(0)); // Thunk size.
+		appendLe(result, static_cast<uint16_t>(0)); // Thunk section.
+		appendLe(result, static_cast<uint16_t>(0));
+		appendLe(result, static_cast<uint32_t>(0)); // Thunk offset.
+		appendLe(result, toU32(sectionCount, "PSI section count"));
+		result.insert(result.end(), hash.begin(), hash.end());
+		for (const auto offset : addressOrder) appendLe(result, offset);
+		return result;
+	}
+
+	Bytes makeSectionHeaders(const vector<LinkedSection>& sections)
+	{
+		Bytes result;
+		for (const auto& section : sections)
+		{
+			array<uint8_t, 8> name{};
+			copy_n(section.name.begin(), min<size_t>(8, section.name.size()), name.begin());
+			result.insert(result.end(), name.begin(), name.end());
+			appendLe(result, section.size);
+			appendLe(result, section.rva);
+			appendLe(result, section.size);
+			for (int i = 0; i < 3; ++i) appendLe(result, static_cast<uint32_t>(0)); // Raw, relocation and line pointers.
+			appendLe(result, static_cast<uint32_t>(0)); // Relocation and line counts.
+			appendLe(result, section.characteristics);
+		}
 		return result;
 	}
 
@@ -720,6 +953,11 @@ namespace JWlink2::codeview
 		}
 
 		vector<ModuleOutput> modules;
+		StringPool names;
+		Bytes symbolRecordStream;
+		vector<PublicRecord> globalRefs;
+		vector<pair<uint16_t, pair<uint32_t, uint32_t>>> publicsByAddress; // (section, (offset, record offset))
+		vector<PublicRecord> publics;
 		modules.reserve(objects_.size() + (symbols_.empty() ? 0 : 1));
 		for (const auto& object : objects_)
 		{
@@ -729,9 +967,34 @@ namespace JWlink2::codeview
 			for (const auto& symbol : object.symbols)
 			{
 				const auto normalized = normalizeSymbol(object, symbol, typeMap);
+				const auto kind = readLe<uint16_t>(normalized, 2, "symbol kind");
+				const auto moduleOffset = toU32(4 + module.symbolRecords.size(), "module symbol offset");
+				string name;
+				uint16_t refKind = 0;
+				size_t nameOffset = 0;
+				if (kind == 0x1110 || kind == 0x1147) { refKind = 0x1125; nameOffset = 39; }      // S_GPROC32 / S_GPROC32_ID -> S_PROCREF
+				else if (kind == 0x110F || kind == 0x1146) { refKind = 0x1127; nameOffset = 39; } // S_LPROC32 / S_LPROC32_ID -> S_LPROCREF
+				else if (kind == 0x110D) { refKind = 0x1126; nameOffset = 14; }                  // S_GDATA32 -> S_DATAREF
+				if (refKind != 0)
+				{
+					if (nameOffset >= normalized.size()) fail("symbol record is too short for its name");
+					const auto end = find(normalized.begin() + static_cast<ptrdiff_t>(nameOffset), normalized.end(), uint8_t{ 0 });
+					name.assign(normalized.begin() + static_cast<ptrdiff_t>(nameOffset), end);
+					Bytes ref;
+					appendLe(ref, static_cast<uint16_t>(0));
+					appendLe(ref, refKind);
+					appendLe(ref, static_cast<uint32_t>(0));
+					appendLe(ref, moduleOffset);
+					appendLe(ref, static_cast<uint16_t>(modules.size() + 1));
+					appendString(ref, name);
+					padCodeViewRecord(ref, "symbol reference");
+					putLe(ref, 0, static_cast<uint16_t>(ref.size() - 2));
+					globalRefs.push_back({ name, toU32(symbolRecordStream.size(), "symbol record stream") });
+					symbolRecordStream.insert(symbolRecordStream.end(), ref.begin(), ref.end());
+				}
 				module.symbolRecords.insert(module.symbolRecords.end(), normalized.begin(), normalized.end());
 			}
-			module.c13 = makeC13(object);
+			module.c13 = makeC13(object, names, module.files);
 			for (const auto& source : object.contributions)
 			{
 				const auto found = sectionByIndex.find(source.linkedSection);
@@ -750,7 +1013,7 @@ namespace JWlink2::codeview
 				appendLe(contribution, source.linkedOffset);
 				appendLe(contribution, source.size);
 				appendLe(contribution, found->second->characteristics);
-				appendLe(contribution, static_cast<uint16_t>(modules.size() + 1));
+				appendLe(contribution, static_cast<uint16_t>(modules.size())); // Zero-based module index.
 				appendLe(contribution, static_cast<uint16_t>(0));
 				appendLe(contribution, static_cast<uint32_t>(0));
 				appendLe(contribution, static_cast<uint32_t>(0));
@@ -767,29 +1030,50 @@ namespace JWlink2::codeview
 			generated.objectName = generated.moduleName;
 			for (const auto& symbol : symbols_)
 			{
-				const auto record = makePublicSymbol(symbol);
+				auto adjusted = symbol;
+				const auto section = sectionByIndex.at(symbol.section);
+				if ((section->characteristics & 0x20000000) != 0) adjusted.flags |= 2; // cvpsfFunction
+				const auto record = makePublicSymbol(adjusted);
+				publics.push_back({ adjusted.name, toU32(symbolRecordStream.size(), "symbol record stream") });
+				publicsByAddress.push_back({ adjusted.section, { adjusted.offset, publics.back().offset } });
+				symbolRecordStream.insert(symbolRecordStream.end(), record.begin(), record.end());
 				generated.symbolRecords.insert(generated.symbolRecords.end(), record.begin(), record.end());
 			}
 			generated.symbolBytes = toU32(4 + generated.symbolRecords.size(), "generated symbol records");
 			modules.push_back(move(generated));
 		}
-		if (modules.size() + 5 > NoStream)
+		constexpr size_t fixedStreams = 10;
+		if (modules.size() + fixedStreams > NoStream)
 		{
 			fail("too many PDB module streams");
 		}
 		for (size_t i = 0; i < modules.size(); ++i)
 		{
-			modules[i].streamIndex = static_cast<uint16_t>(5 + i);
+			modules[i].streamIndex = static_cast<uint16_t>(fixedStreams + i);
 		}
 
+		sort(publicsByAddress.begin(), publicsByAddress.end());
+		vector<uint32_t> addressOrder;
+		for (const auto& entry : publicsByAddress) addressOrder.push_back(entry.second.second);
+
+		DbiStreams dbiStreams;
+		dbiStreams.global = 6;
+		dbiStreams.publics = 7;
+		dbiStreams.symbolRecords = 8;
+		dbiStreams.sectionHeaders = 9;
+
 		vector<Bytes> streams;
-		streams.reserve(5 + modules.size());
+		streams.reserve(fixedStreams + modules.size());
 		streams.emplace_back(); // MSF directory is stream zero.
-		streams.push_back(makeInfo(identity_));
+		streams.push_back(makeInfo(identity_, 5));
 		streams.push_back(makeTpi(typeRecords));
-		streams.push_back(makeDbi(identity_, modules, sections));
+		streams.push_back(makeDbi(identity_, modules, sections, dbiStreams));
 		streams.push_back(makeTpi({})); // Empty IPI stream with a valid TPI header.
-		for (const auto& module : modules)
+		streams.push_back(names.serialize());
+		streams.push_back(makeGsiHash(globalRefs));
+		streams.push_back(makePublicsStream(publics, addressOrder, sections.size()));
+		streams.push_back(symbolRecordStream);
+		streams.push_back(makeSectionHeaders(sections));		for (const auto& module : modules)
 		{
 			streams.push_back(makeModuleStream(module));
 		}

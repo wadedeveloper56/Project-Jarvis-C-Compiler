@@ -1,4 +1,4 @@
-# JWlink2
+﻿# JWlink2
 
 JWlink2 is an independent AMD64 linker that reads 64-bit COFF objects and Microsoft `.lib` archives and emits Windows PE32+ executables or DLLs. The existing JWlink remains unchanged and is still the full-featured linker.
 
@@ -24,6 +24,6 @@ JWlink2 targets native Windows AMD64 PE32+ executables and DLLs, using the conso
 
 JWlink2 generates PE import descriptors, lookup tables, IAT entries, ordinary function thunks, and delay-import descriptors. `/DELAYLOAD:<dll>` and COFF `.drectve` delay-load directives currently support one function import in the link; requests with additional delay-loaded functions, data imports, or DLLs without selected imports are rejected explicitly. The delay IAT entry initially points to a generated AMD64 resolver which calls eager `KERNEL32.dll` imports of `LoadLibraryA` and `GetProcAddress`, preserves the Microsoft x64 argument registers, caches the resolved function address in the delay IAT, and tail-jumps to it. Missing DLLs or symbols raise noncontinuable delay-load exceptions (`0xC06D007E`/`0xC06D007F`); resolver unwind records are emitted. Delay module handles, bound/unload IATs, delayimp hooks, and unload semantics are not implemented; the resolved function retains its `LoadLibraryA` reference for the image lifetime. Ordinary imports retain their existing eager-IAT path.
 
-`/DEBUG` and `/PDB` currently emit PE RSDS metadata and a basic MSF PDB with limited CodeView type, symbol, and line records. This is experimental and not yet validated as a complete debugger-usable PDB; broader CodeView coverage, symbol indexes, source metadata, and full-reader interoperability remain open in [MISSING_FEATURES.md](MISSING_FEATURES.md).
+`/DEBUG` writes a PE RSDS debug directory entry and an MSF 7.0 PDB beside the output (`<output>.pdb`); `/PDB:<file>` selects another path, and the RSDS GUID/age match the PDB. The linker consumes MSVC `/Z7` CodeView object data (`.debug$T` type records including field lists, method lists, string/build-info ids, and `.debug$S` symbols, file checksums, string tables, and line subsections), remaps it to final RVAs, and writes the PDB info, TPI, DBI (modules, section contributions, section map, file info), empty IPI, `/names`, GSI, PSI, symbol-record, and section-header streams plus per-module symbol/line streams. Windows `dbghelp` resolves public symbols, source files, and lines from the result (covered by `JWlink2Test`). Unsupported CodeView leaves and subsections (inline lines, frame data, cross-scope records) are rejected explicitly; separate IPI/TPI hash streams are not produced and LLVM `llvm-pdbutil` validation has not been performed.
 
 LTCG/LLVM bitcode is not linked:
