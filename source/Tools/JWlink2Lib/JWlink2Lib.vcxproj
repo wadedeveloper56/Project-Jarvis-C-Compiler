@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -71,20 +71,20 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>..\..\..\..\bin\libraries\$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>..\..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
+    <OutDir>..\..\..\bin\libraries\$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>..\..\..\..\bin\libraries\$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>..\..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
+    <OutDir>..\..\..\bin\libraries\$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>..\..\..\..\bin\libraries\$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>..\..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
+    <OutDir>..\..\..\bin\libraries\$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>..\..\..\..\bin\libraries\$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>..\..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
+    <OutDir>..\..\..\bin\libraries\$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>..\..\..\bin\intermediate\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
