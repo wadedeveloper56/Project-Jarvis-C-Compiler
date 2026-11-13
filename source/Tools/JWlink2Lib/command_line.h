@@ -73,7 +73,7 @@ namespace JWlink2::commandline
 		uint64_t heapCommit = 0x1000;
 		vector<pair<string, string>> mergeSections;
 		vector<pair<string, uint32_t>> sectionFlags;
-		vector<string> wholeArchives;
+		vector<fs::path> wholeArchives;
 		bool wholeArchiveAll = false;
 		enum class ManifestMode { None, External, Embed } manifestMode = ManifestMode::None;
 		optional<fs::path> manifestInput;

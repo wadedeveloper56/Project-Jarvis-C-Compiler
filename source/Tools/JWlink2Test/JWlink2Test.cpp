@@ -13,6 +13,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <tuple>
 #include <vector>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -1790,6 +1791,63 @@ namespace JWlink2Test
 			assertFailureContains(missing, "nope");
 		}
 
+		TEST_METHOD(NamedWholeArchiveLoadsAndDistinguishesLibraries)
+		{
+			Workspace workspace;
+			fs::create_directories(workspace.file(L"first"));
+			fs::create_directories(workspace.file(L"second"));
+			const auto entry = makeObject({ TestSection{ ".text",{ 0xb8, 42, 0, 0, 0, 0xc3 } } }, { TestSymbol{ "main", 0, 1, 2,{} } });
+			const auto extra = makeObject({ TestSection{ ".text",{ 0xaa, 0xbb, 0xcc, 0xdd, 0xee } } }, { TestSymbol{ "unused_fn", 0, 1, 2,{} } });
+			const auto other = makeObject({ TestSection{ ".text",{ 0x11, 0x22, 0x33, 0x44, 0x55 } } }, { TestSymbol{ "other_fn", 0, 1, 2,{} } });
+			workspace.write(L"first\\same.lib", makeArchive({ { "entry.obj", entry }, { "extra.obj", extra } }));
+			workspace.write(L"second\\same.lib", makeArchive({ { "other.obj", other } }));
+			const Bytes marker{ 0xaa, 0xbb, 0xcc, 0xdd, 0xee };
+			const Bytes otherMarker{ 0x11, 0x22, 0x33, 0x44, 0x55 };
+			const auto contains = [](const Bytes& image, const Bytes& needle) { return search(image.begin(), image.end(), needle.begin(), needle.end()) != image.end(); };
+			assertSuccess(runLinker(workspace, { L"/entry:main", L"/out:alone.exe", L"/wholearchive:first\\same.lib" }));
+			Assert::IsTrue(contains(workspace.read(L"alone.exe"), marker), L"named option loads unreferenced archive members");
+			Assert::AreEqual<DWORD>(42, runExecutable(workspace, workspace.file(L"alone.exe"), {}).exitCode);
+			assertSuccess(runLinker(workspace, { L"/entry:main", L"/out:duplicate.exe", L"/wholearchive:first\\same.lib", L"first\\same.lib", L"/wholearchive:first\\same.lib", L"second\\same.lib" }));
+			const auto image = workspace.read(L"duplicate.exe");
+			Assert::IsTrue(contains(image, marker));
+			Assert::IsFalse(contains(image, otherMarker), L"same basename in a different directory is not selected wholesale");
+			Assert::AreEqual<DWORD>(42, runExecutable(workspace, workspace.file(L"duplicate.exe"), {}).exitCode);
+			assertSuccess(runLinker(workspace, { L"/entry:main", L"/out:search.exe", L"/libpath:first", L"/wholearchive:same", L"/defaultlib:same.lib" }));
+			Assert::IsTrue(contains(workspace.read(L"search.exe"), marker), L"named library uses library search and is not loaded twice as a default library");
+			Assert::AreEqual<DWORD>(42, runExecutable(workspace, workspace.file(L"search.exe"), {}).exitCode);
+			assertSuccess(runLinker(workspace, { L"/entry:main", L"/out:nodefault.exe", L"/nodefaultlib", L"/wholearchive:first\\same.lib" }));
+			Assert::AreEqual<DWORD>(42, runExecutable(workspace, workspace.file(L"nodefault.exe"), {}).exitCode, L"explicit whole archive is not suppressed by /NODEFAULTLIB");
+			assertFailureContains(runLinker(workspace, { L"/entry:main", L"/wholearchive:missing.lib" }), "missing.lib");
+			workspace.write(L"notarchive.obj", entry);
+			assertFailureContains(runLinker(workspace, { L"/entry:main", L"/wholearchive:notarchive.obj" }), "/WHOLEARCHIVE requires an archive");
+		}
+
+		TEST_METHOD(NamedWholeArchiveMatchesMsvcForStandaloneLibrary)
+		{
+			fs::path toolDirectory;
+			error_code ignored;
+			wchar_t programFiles[MAX_PATH]{};
+			GetEnvironmentVariableW(L"ProgramFiles", programFiles, MAX_PATH);
+			for (const auto& entry : fs::recursive_directory_iterator(fs::path(programFiles) / L"Microsoft Visual Studio", fs::directory_options::skip_permission_denied, ignored))
+			{
+				if (entry.path().filename() == L"lib.exe" && entry.path().parent_path().filename() == L"x64" && entry.path().parent_path().parent_path().filename() == L"Hostx64" && fs::exists(entry.path().parent_path() / L"link.exe")) toolDirectory = entry.path().parent_path();
+			}
+			if (toolDirectory.empty()) { Logger::WriteMessage("MSVC x64 tools not found; whole-archive comparison skipped"); return; }
+			Workspace workspace;
+			workspace.write(L"entry.obj", makeObject({ TestSection{ ".text",{ 0xb8, 42, 0, 0, 0, 0xc3 } } }, { TestSymbol{ "main", 0, 1, 2,{} } }));
+			workspace.write(L"extra.obj", makeObject({ TestSection{ ".text",{ 0xb8, 73, 0, 0, 0, 0xc3 } } }, { TestSymbol{ "unused_fn", 0, 1, 2,{} } }));
+			assertSuccess(runExecutable(workspace, toolDirectory / L"lib.exe", { L"/nologo", L"/out:members.lib", L"entry.obj", L"extra.obj" }));
+			assertSuccess(runExecutable(workspace, toolDirectory / L"link.exe", { L"/nologo", L"/nodefaultlib", L"/subsystem:console", L"/entry:main", L"/opt:noref", L"/out:msvc.exe", L"/wholearchive:members.lib" }));
+			assertSuccess(runLinker(workspace, { L"/nodefaultlib", L"/entry:main", L"/out:jw2.exe", L"/wholearchive:members.lib" }));
+			const Bytes marker{ 0xb8, 73, 0, 0, 0, 0xc3 };
+			for (const auto* name : { L"msvc.exe", L"jw2.exe" })
+			{
+				const auto image = workspace.read(name);
+				Assert::IsTrue(search(image.begin(), image.end(), marker.begin(), marker.end()) != image.end(), L"unreferenced member is present");
+				Assert::AreEqual<DWORD>(42, runExecutable(workspace, workspace.file(name), {}).exitCode);
+			}
+		}
+
 		TEST_METHOD(VerboseReportsInputsAndLayout)
 		{
 			Workspace workspace;
@@ -1828,6 +1886,21 @@ namespace JWlink2Test
 			Assert::AreEqual<uint32_t>(2, get32(dll, dllBase + 24 + 16), L"DLL manifest resource ID is 2");
 			const string custom(reinterpret_cast<const char*>(dll.data() + dllBase + 88), get32(dll, dllBase + 76));
 			Assert::AreEqual<string>("<assembly>custom</assembly>", custom);
+			assertSuccess(runLinker(workspace, { L"/ENTRY:main", L"/MANIFEST:EMBED,ID=17", L"/MANIFESTINPUT:" + workspace.file(L"app.manifest").wstring(), L"/OUT:custom-id.exe", input }));
+
+			for (const auto& [name, id, expected] : vector<tuple<wstring, WORD, string>>{ { L"embed.exe", 1, text }, { L"m.dll", 2, custom }, { L"custom-id.exe", 17, custom } })
+			{
+				const auto module = LoadLibraryExW(workspace.file(name).c_str(), nullptr, LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE);
+				Assert::IsNotNull(module, L"Windows loads image resources");
+				const auto resourceInfo = FindResourceExW(module, MAKEINTRESOURCEW(24), MAKEINTRESOURCEW(id), 0x409);
+				Assert::IsNotNull(resourceInfo, L"Windows locates the manifest by type, ID and language");
+				const auto resourceData = LoadResource(module, resourceInfo);
+				Assert::IsNotNull(resourceData);
+				const auto data = static_cast<const char*>(LockResource(resourceData));
+				Assert::IsNotNull(data);
+				Assert::AreEqual(expected, string(data, SizeofResource(module, resourceInfo)));
+				Assert::IsTrue(FreeLibrary(module) != 0);
+			}
 
 			assertSuccess(runLinker(workspace, { L"/ENTRY:main", L"/MANIFEST", L"/OUT:" + workspace.file(L"ext.exe").wstring(), input }));
 			Assert::IsTrue(fs::exists(workspace.file(L"ext.exe.manifest")));
@@ -2351,6 +2424,41 @@ namespace JWlink2Test
 			Assert::AreEqual<uint8_t>(7, image[unwindInfo + 1], L"resolver unwind data describes its stack-allocation prolog");
 			const auto runtime = runExecutable(workspace, workspace.file(L"linked.exe"), {});
 			Assert::AreEqual<DWORD>(42, runtime.exitCode, L"delay-loaded function resolves on first use");
+		}
+
+		TEST_METHOD(DelayLoadCachesResolvedFunctionAcrossCalls)
+		{
+			if (sizeof(void*) != 8) { Logger::WriteMessage("An x64 test host is required to load the generated DLL; delay cache test skipped"); return; }
+			Workspace workspace;
+			workspace.write(L"provider.obj", makeObject({ TestSection{ ".text",{ 0x8d, 0x04, 0x11, 0x44, 0x01, 0xc0, 0x44, 0x01, 0xc8, 0x03, 0x44, 0x24, 0x28, 0xc3 } } }, { TestSymbol{ "api", 0, 1, 2,{} } }));
+			assertSuccess(runLinker(workspace, { L"/dll", L"/noentry", L"/export:api", L"/out:delay_provider_unique.dll", L"provider.obj" }));
+			const auto providerPath = workspace.file(L"delay_provider_unique.dll");
+			workspace.write(L"delay.lib", makeArchive({ { "api.obj", makeImportObject("api", providerPath.string(), "api", 0, 4) } }));
+			TestSection text{ ".text",{ 0xe9, 0, 0, 0, 0 } };
+			text.relocations = { { 1, 1, 4 } };
+			workspace.write(L"client.obj", makeObject({ text }, { TestSymbol{ "callApi", 0, 1, 2,{} }, TestSymbol{ "api", 0, 0, 2,{} } }));
+			assertSuccess(runLinker(workspace, { L"/dll", L"/noentry", L"/export:callApi", L"/out:delay_client.dll", L"/delayload:" + providerPath.wstring(), L"client.obj", L"delay.lib" }));
+			const auto image = workspace.read(L"delay_client.dll");
+			const auto descriptor = rvaOffset(image, get32(image, optionalHeader(image) + 216));
+			const auto iatRva = get32(image, descriptor + 12);
+			Assert::IsNull(GetModuleHandleW(L"delay_provider_unique.dll"), L"provider is not already loaded");
+			const auto client = LoadLibraryW(workspace.file(L"delay_client.dll").c_str());
+			Assert::IsNotNull(client, L"Windows loads the client without loading the delayed DLL");
+			Assert::IsNull(GetModuleHandleW(L"delay_provider_unique.dll"), L"the import remains lazy");
+			using Api = int(*)(int, int, int, int, int);
+			const auto call = reinterpret_cast<Api>(GetProcAddress(client, "callApi"));
+			Assert::IsNotNull(call);
+			const auto iat = reinterpret_cast<const volatile uintptr_t*>(reinterpret_cast<const uint8_t*>(client) + iatRva);
+			const auto initial = *iat;
+			Assert::AreEqual(15, call(1, 2, 3, 4, 5), L"first call preserves register and stack arguments");
+			const auto provider = GetModuleHandleW(L"delay_provider_unique.dll");
+			Assert::IsNotNull(provider, L"first call loads the provider");
+			const auto resolved = reinterpret_cast<uintptr_t>(GetProcAddress(provider, "api"));
+			Assert::IsTrue(resolved != 0 && resolved != initial && *iat == resolved, L"first call caches the actual function address");
+			Assert::AreEqual(40, call(6, 7, 8, 9, 10), L"cached call preserves arguments");
+			Assert::IsTrue(*iat == resolved, L"subsequent calls retain the cached address");
+			Assert::IsTrue(FreeLibrary(client) != 0);
+			Assert::IsTrue(FreeLibrary(provider) != 0);
 		}
 
 		TEST_METHOD(DelayLoadRejectsMalformedRequestsAndDataImports)

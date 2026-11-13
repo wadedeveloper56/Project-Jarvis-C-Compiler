@@ -291,6 +291,7 @@ namespace JWlink2
 			vector<BaseRelocation> baseRelocations_;
 			vector<string> pendingDefaultLibraries_;
 			set<string> loadedDefaultLibraryPaths_;
+			set<string> loadedWholeArchivePaths_;
 			size_t nextDefaultLibrary_ = 0;
 			size_t nextDirectiveObject_ = 0;
 			bool directiveAlignmentSpecified_ = false;

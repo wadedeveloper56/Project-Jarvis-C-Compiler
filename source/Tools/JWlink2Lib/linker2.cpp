@@ -258,13 +258,19 @@ namespace JWlink2
 		void Linker::loadInput(const fs::path& inputPath)
 		{
 			const auto path = resolveInputPath(inputPath);
+			const auto identity = lowerAscii(fs::absolute(path).lexically_normal().string());
+			const bool namedWholeArchive = any_of(options_.wholeArchives.begin(), options_.wholeArchives.end(), [&](const fs::path& requested)
+				{
+					return lowerAscii(fs::absolute(resolveInputPath(requested)).lexically_normal().string()) == identity;
+				});
+			if (namedWholeArchive && loadedWholeArchivePaths_.contains(identity)) return;
 			const auto bytes = readFile(path);
 			rejectBitcode(bytes, 0, bytes.size(), path.string());
 			if (bytes.size() >= 8 && string_view(reinterpret_cast<const char*>(bytes.data()), 8) == "!<arch>\n")
 			{
 				auto archive = parseArchive(bytes, path.string());
-				const auto libraryName = lowerAscii(path.filename().string());
-				if (options_.wholeArchiveAll || find(options_.wholeArchives.begin(), options_.wholeArchives.end(), libraryName) != options_.wholeArchives.end())
+				if (namedWholeArchive) loadedWholeArchivePaths_.insert(identity);
+				if (options_.wholeArchiveAll || namedWholeArchive)
 				{
 					for (auto& member : archive.members)
 					{
@@ -284,6 +290,7 @@ namespace JWlink2
 			}
 			else
 			{
+				if (namedWholeArchive) fail("/WHOLEARCHIVE requires an archive: '" + path.string() + "'");
 				objects_.push_back(parseObject(bytes, path.string()));
 				if (options_.verbose)
 				{
@@ -550,6 +557,10 @@ namespace JWlink2
 			for (const auto& inputPath : options_.inputs)
 			{
 				loadInput(inputPath);
+			}
+			for (const auto& library : options_.wholeArchives)
+			{
+				loadInput(library);
 			}
 			for (const auto& library : options_.defaultLibraries)
 			{
@@ -1373,6 +1384,8 @@ namespace JWlink2
 			addFixup(RipTargetKind::NormalIat, imports_[getProcAddressImport_].iatOffset);
 			emit({ 0x48, 0x85, 0xc0 });
 			const auto procedureMissing = jz();
+			emit({ 0x48, 0x89, 0x05 });
+			addFixup(RipTargetKind::DelayData, record.delayIatOffset);
 			emit({ 0x48, 0x89, 0x84, 0x24, 0xa0, 0, 0, 0 });
 			for (uint8_t xmm = 0; xmm < 6; ++xmm) emitXmmStack(0x6f, xmm);
 			emit({ 0x48, 0x8b, 0x4c, 0x24, 0x20, 0x48, 0x8b, 0x54, 0x24, 0x28 });

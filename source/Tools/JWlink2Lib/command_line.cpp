@@ -853,8 +853,8 @@ namespace JWlink2::commandline
 				}
 				else
 				{
-					auto library = lowerAscii(fs::path(*value).filename().string());
-					if (fs::path(library).extension().empty()) library += ".lib";
+					fs::path library(*value);
+					if (library.extension().empty()) library += ".lib";
 					options.wholeArchives.push_back(move(library));
 				}
 			}
@@ -1016,7 +1016,7 @@ namespace JWlink2::commandline
 			mapPath.replace_extension(".map");
 			options.mapFile = move(mapPath);
 		}
-		if (options.inputs.empty() && options.defaultLibraries.empty())
+		if (options.inputs.empty() && options.defaultLibraries.empty() && options.wholeArchives.empty())
 		{
 			fail("no input object files or libraries were supplied; use --help for usage");
 		}
