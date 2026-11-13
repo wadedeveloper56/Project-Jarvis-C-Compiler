@@ -1643,12 +1643,19 @@ namespace JWlink2
 
 		void Linker::buildSections()
 		{
+			struct Contribution
+			{
+				size_t objectIndex;
+				size_t sectionIndex;
+				size_t sourceGroup;
+			};
+			vector<vector<Contribution>> contributions;
+			vector<vector<string>> sourceGroups;
 			sectionMaps_.resize(objects_.size());
 			for (size_t objectIndex = 0; objectIndex < objects_.size(); ++objectIndex)
 			{
 				const auto& object = objects_[objectIndex];
-				auto& maps = sectionMaps_[objectIndex];
-				maps.resize(object.sections.size());
+				sectionMaps_[objectIndex].resize(object.sections.size());
 				for (size_t sectionIndex = 0; sectionIndex < object.sections.size(); ++sectionIndex)
 				{
 					const auto& input = object.sections[sectionIndex];
@@ -1657,7 +1664,35 @@ namespace JWlink2
 						continue;
 					}
 					const auto outputIndex = getOutputSection(input);
-					auto& output = outputSections_[outputIndex];
+					if (contributions.size() <= outputIndex)
+					{
+						contributions.resize(outputIndex + 1);
+						sourceGroups.resize(outputIndex + 1);
+					}
+					const auto baseName = input.name.substr(0, input.name.find('$'));
+					auto& groups = sourceGroups[outputIndex];
+					auto group = find(groups.begin(), groups.end(), baseName);
+					if (group == groups.end())
+					{
+						groups.push_back(baseName);
+						group = prev(groups.end());
+					}
+					contributions[outputIndex].push_back({ objectIndex, sectionIndex, static_cast<size_t>(group - groups.begin()) });
+				}
+			}
+			for (size_t outputIndex = 0; outputIndex < contributions.size(); ++outputIndex)
+			{
+				auto& group = contributions[outputIndex];
+				stable_sort(group.begin(), group.end(), [&](const Contribution& left, const Contribution& right)
+					{
+						if (left.sourceGroup != right.sourceGroup) return left.sourceGroup < right.sourceGroup;
+						return objects_[left.objectIndex].sections[left.sectionIndex].name < objects_[right.objectIndex].sections[right.sectionIndex].name;
+					});
+				auto& output = outputSections_[outputIndex];
+				for (const auto& contribution : group)
+				{
+					const auto& object = objects_[contribution.objectIndex];
+					const auto& input = object.sections[contribution.sectionIndex];
 					const auto offset = alignUp(output.virtualSize, input.alignment);
 					if (input.data.size() > numeric_limits<size_t>::max() - offset || input.virtualSize > numeric_limits<size_t>::max() - offset)
 					{
@@ -1672,7 +1707,7 @@ namespace JWlink2
 						copy(input.data.begin(), input.data.end(), output.data.begin() + offset);
 					}
 					output.virtualSize = max(offset + input.virtualSize, offset + input.data.size());
-					maps[sectionIndex] = { outputIndex, offset };
+					sectionMaps_[contribution.objectIndex][contribution.sectionIndex] = { outputIndex, offset };
 				}
 			}
 			for (size_t objectIndex = 0; objectIndex < objects_.size(); ++objectIndex)
