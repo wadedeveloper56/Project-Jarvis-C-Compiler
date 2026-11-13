@@ -1399,6 +1399,87 @@ namespace JWlink2Test
 				Assert::IsTrue(dll.output.find(expected) != string::npos, (L"dumpbin output for the DLL contains " + wstring(expected, expected + strlen(expected))).c_str());
 		}
 
+		TEST_METHOD(JwlinkDirectiveSyntaxLinksLikeEquivalentSwitches)
+		{
+			Workspace workspace;
+			TestSection text{ ".text",{ 0xb9, 42, 0, 0, 0, 0xe8, 0, 0, 0, 0, 0xcc } };
+			text.relocations = { { 6, 1, 4 } };
+			workspace.write(L"input.obj", makeObject({ text }, { TestSymbol{ "main", 0, 1, 2,{} }, TestSymbol{ "ExitProcess", 0, 0, 2,{} } }));
+			workspace.write(L"kernel.lib", makeArchive({ { "exit.obj", makeImportObject("ExitProcess", "KERNEL32.dll", "ExitProcess", 0, 4) } }));
+			// Mirrors test\run.bat: format win pe, option map=..., file ..., lib ..., name ...
+			assertSuccess(runLinker(workspace, { L"format", L"win", L"pe", L"option", L"map=directive.map,quiet,start=main", L"file", L"input", L"lib", L"kernel.lib", L"name", L"directive.exe" }));
+			assertSuccess(runLinker(workspace, { L"/MAP:switch.map", L"/NOLOGO", L"/ENTRY:main", L"/OUT:switch.exe", L"input.obj", L"kernel.lib" }));
+			Assert::IsTrue(workspace.read(L"directive.exe") == workspace.read(L"switch.exe"), L"directive and switch spellings produce identical images");
+			Assert::IsTrue(fs::exists(workspace.file(L"directive.map")), L"option map=<file> writes the requested map");
+			Assert::AreEqual<DWORD>(42, runExecutable(workspace, workspace.file(L"directive.exe"), {}).exitCode, L"directive-linked image executes");
+
+			workspace.writeText(L"build.rsp", L"format windows pe\r\noption start=main\r\nfile input.obj\r\nlibrary kernel.lib\r\nname response.exe\r\n");
+			assertSuccess(runLinker(workspace, { L"@build.rsp" }));
+			Assert::IsTrue(workspace.read(L"response.exe") == workspace.read(L"switch.exe"), L"directives in a response file link identically");
+		}
+
+		TEST_METHOD(OptionMatrixAcceptsAndRejectsDocumentedForms)
+		{
+			Workspace workspace;
+			workspace.write(L"input.obj", makeEntryObject());
+			workspace.write(L"dll.obj", makeObject({ TestSection{ ".text",{ 0xc3 } } }, { TestSymbol{ "api", 0, 1, 2,{} } }));
+			workspace.write(L"kernel.lib", makeArchive({ { "exit.obj", makeImportObject("ExitProcess", "KERNEL32.dll", "ExitProcess", 0, 4) } }));
+			struct Row { vector<wstring> args; const char* rejected; };
+			const vector<Row> matrix = {
+				// JWlink directives: accepted
+				{ { L"format", L"windows", L"pe", L"file", L"input.obj", L"name", L"m1.exe", L"option", L"start=main" }, nullptr },
+				{ { L"form", L"win", L"nt", L"fi", L"input", L"na", L"m2", L"op", L"start=main,quiet,caseexact" }, nullptr },
+				{ { L"format", L"windows", L"pe", L"dll", L"file", L"dll.obj", L"export", L"api", L"option", L"implib=m3.lib,nodefaultlibs", L"name", L"m3.dll" }, nullptr },
+				{ { L"system", L"nt_dll", L"file", L"dll.obj", L"export", L"api", L"name", L"m4.dll" }, nullptr },
+				{ { L"system", L"nt_win", L"file", L"input.obj", L"option", L"start=main" }, nullptr },
+				{ { L"runtime", L"console=6.0", L"debug", L"all", L"file", L"input.obj", L"option", L"start=main,map" }, nullptr },
+				{ { L"format", L"win", L"pe", L"file", L"input.obj", L"libpath", L".", L"library", L"kernel", L"disable", L"1014", L"option", L"start=main,offset=0x10000,objalign=8192,norelocs" }, nullptr },
+				// JWlink directives: rejected explicitly
+				{ { L"format", L"os2", L"file", L"input.obj" }, "unsupported FORMAT" },
+				{ { L"format", L"windows", L"file", L"input.obj" }, "requires PE" },
+				{ { L"format", L"windows", L"pe", L"elf", L"file", L"input.obj" }, "unsupported FORMAT modifier" },
+				{ { L"system", L"dos", L"file", L"input.obj" }, "unsupported SYSTEM" },
+				{ { L"runtime", L"native", L"file", L"input.obj" }, "unsupported RUNTIME" },
+				{ { L"debug", L"dwarf", L"file", L"input.obj" }, "unsupported DEBUG format" },
+				{ { L"option", L"stack=0x100000", L"file", L"input.obj" }, "unsupported JWlink OPTION" },
+				{ { L"option", L"eliminate", L"file", L"input.obj" }, "unsupported JWlink OPTION" },
+				{ { L"option", L"start", L"file", L"input.obj" }, "requires a value" },
+				{ { L"alias", L"a=b", L"file", L"input.obj" }, "unsupported JWlink directive 'alias'" },
+				{ { L"segment", L"x", L"file", L"input.obj" }, "unsupported JWlink directive 'segment'" },
+				{ { L"order", L"x", L"file", L"input.obj" }, "unsupported JWlink directive 'order'" },
+				{ { L"format", L"win", L"pe", L"file" }, "requires an argument" },
+				{ { L"format", L"win", L"pe", L"name", L"a.exe", L"b.exe", L"file", L"input.obj" }, "exactly one output" },
+				{ { L"format", L"win", L"pe", L"export", L"a.1", L"file", L"input.obj" }, "unsupported EXPORT" },
+				{ { L"format", L"win", L"pe", L"disable", L"abc", L"file", L"input.obj" }, "DISABLE requires" },
+				{ { L"format", L"win", L"pe", L"/OUT:x.exe", L"file", L"input.obj" }, "cannot be mixed" },
+				// MSVC-style switches: accepted
+				{ { L"/ENTRY:main", L"/OUT:s1.exe", L"/NOLOGO", L"/MACHINE:X64", L"/INCREMENTAL:NO", L"input.obj" }, nullptr },
+				{ { L"/ENTRY:main", L"/OUT:s2.exe", L"/NXCOMPAT", L"/DYNAMICBASE:NO", L"/SUBSYSTEM:WINDOWS,6.0", L"input.obj" }, nullptr },
+				// Switches whose behavior JWlink2 does not implement are rejected, never silently ignored.
+				{ { L"/MANIFEST:EMBED", L"input.obj" }, "unsupported option" },
+				{ { L"/STACK:0x100000", L"input.obj" }, "unsupported option" },
+				{ { L"/HEAP:0x100000", L"input.obj" }, "unsupported option" },
+				{ { L"/MERGE:.rdata=.text", L"input.obj" }, "unsupported option" },
+				{ { L"/SECTION:.x,R", L"input.obj" }, "unsupported option" },
+				{ { L"/WHOLEARCHIVE:kernel.lib", L"input.obj" }, "unsupported option" },
+				{ { L"/VERBOSE", L"input.obj" }, "unsupported option" },
+				{ { L"/OPT:REF", L"input.obj" }, "unsupported option" },
+				{ { L"/LTCG", L"input.obj" }, "unsupported option" },
+				{ { L"/MACHINE:ARM64", L"input.obj" }, "only supports /MACHINE:X64" },
+				{ { L"/INCREMENTAL", L"input.obj" }, "INCREMENTAL:NO" }
+			};
+			for (const auto& row : matrix)
+			{
+				const auto result = runLinker(workspace, row.args);
+				wstring label;
+				for (const auto& argument : row.args) label += argument + L" ";
+				if (row.rejected) Assert::IsTrue(result.exitCode != 0 && result.output.find(row.rejected) != string::npos, (L"expected rejection '" + wstring(row.rejected, row.rejected + strlen(row.rejected)) + L"' for: " + label + wstring(result.output.begin(), result.output.end())).c_str());
+				else Assert::AreEqual<DWORD>(0, result.exitCode, (L"expected success for: " + label + wstring(result.output.begin(), result.output.end())).c_str());
+			}
+			Assert::IsTrue(fs::exists(workspace.file(L"m2.exe")), L"directive name without an extension gets .exe");
+			Assert::IsTrue(fs::exists(workspace.file(L"m3.dll")) && fs::exists(workspace.file(L"m3.lib")), L"directive DLL link writes the DLL and import library");
+		}
+
 		TEST_METHOD(RepresentativeObjectMatchesJWlinkPeBehavior)
 		{
 			Workspace workspace;

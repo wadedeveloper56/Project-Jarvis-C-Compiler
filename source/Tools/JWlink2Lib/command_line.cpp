@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "command_line.h"
 
 using namespace std;
@@ -142,6 +142,9 @@ namespace JWlink2::commandline
 	{
 		cout << "JWlink2 - AMD64 COFF to Windows PE32+ linker\n"
 			"Usage: JWlink2 [options] input.obj [input.lib ...]\n"
+			"       JWlink2 format windows pe [dll] option map[=<file>],quiet,start=<sym> file a.obj,b.obj lib c.lib name out.exe\n"
+			"  JWlink directives: format, file, library, libfile, libpath, name, system, runtime, debug, export, disable, option\n"
+			"  JWlink options: map, quiet, start, nodefaultlibs, caseexact, offset, objalign, norelocs, implib (see README.md)\n"
 			"  /OUT:<file>, -o <file>      Output image (default: a.exe or a.dll)\n"
 			"  /DLL                        Create a DLL\n"
 			"  /DEF:<file>                 Read module name and exports from a .def file\n"
@@ -221,6 +224,218 @@ namespace JWlink2::commandline
 		return directive;
 	}
 
+	namespace
+	{
+		struct DirectiveName
+		{
+			const char* name;
+			size_t minimum;
+			bool supported;
+		};
+
+		// JWlink directives accept abbreviations down to a minimum length; unsupported directives are recognized only so they can be diagnosed.
+		constexpr DirectiveName directiveNames[] = {
+			{ "format", 4, true }, { "file", 2, true }, { "option", 2, true }, { "name", 2, true },
+			{ "library", 3, true }, { "libpath", 4, true }, { "libfile", 4, true }, { "system", 3, true },
+			{ "debug", 3, true }, { "runtime", 2, true }, { "export", 3, true }, { "disable", 3, true },
+			{ "alias", 3, false }, { "commit", 3, false }, { "import", 3, false }, { "language", 3, false },
+			{ "modfile", 4, false }, { "modtrace", 4, false }, { "order", 3, false }, { "path", 4, false },
+			{ "reference", 3, false }, { "segment", 3, false }, { "sort", 4, false }, { "symtrace", 4, false },
+			{ "anonymousexport", 4, false }
+		};
+
+		const DirectiveName* matchDirective(const string& token)
+		{
+			if (token.empty() || token[0] == '-' || token[0] == '/' || token[0] == '@')
+			{
+				return nullptr;
+			}
+			const auto lowered = lowerAscii(token);
+			for (const auto& directive : directiveNames)
+			{
+				const string_view name(directive.name);
+				if (lowered.size() >= directive.minimum && lowered.size() <= name.size() && name.substr(0, lowered.size()) == lowered)
+				{
+					return &directive;
+				}
+			}
+			return nullptr;
+		}
+
+		vector<string> splitItems(const vector<string>& tokens)
+		{
+			vector<string> items;
+			for (const auto& token : tokens)
+			{
+				size_t start = 0;
+				while (start <= token.size())
+				{
+					const auto comma = token.find(',', start);
+					auto part = token.substr(start, comma == string::npos ? string::npos : comma - start);
+					if (!part.empty())
+					{
+						items.push_back(move(part));
+					}
+					if (comma == string::npos)
+					{
+						break;
+					}
+					start = comma + 1;
+				}
+			}
+			return items;
+		}
+
+		string withDefaultExtension(string path, const char* extension)
+		{
+			return fs::path(path).extension().empty() ? path + extension : path;
+		}
+
+		// Rewrites JWlink directive syntax (format win pe option map=x file a,b lib c name out) into the option form the parser below understands.
+		vector<string> translateDirectives(const vector<string>& arguments)
+		{
+			vector<string> options;
+			vector<string> inputs;
+			optional<string> name;
+			bool dll = false;
+			for (size_t i = 0; i < arguments.size();)
+			{
+				const auto* directive = matchDirective(arguments[i]);
+				if (!directive)
+				{
+					fail("expected a JWlink directive but found '" + arguments[i] + "'; JWlink directives cannot be mixed with /option switches");
+				}
+				vector<string> tokens;
+				for (++i; i < arguments.size() && !matchDirective(arguments[i]); ++i)
+				{
+					if (arguments[i].size() > 1 && (arguments[i][0] == '/' || arguments[i][0] == '-') && arguments[i][1] != '\\' && arguments[i][1] != '/')
+					{
+						fail("JWlink directives cannot be mixed with '" + arguments[i] + "' switches");
+					}
+					tokens.push_back(arguments[i]);
+				}
+				const string keyword = directive->name;
+				const auto spelling = "JWlink directive '" + keyword + "'";
+				if (!directive->supported)
+				{
+					fail("unsupported " + spelling);
+				}
+				const auto items = splitItems(tokens);
+				if (items.empty())
+				{
+					fail(spelling + " requires an argument");
+				}
+				if (keyword == "format")
+				{
+					const auto platform = lowerAscii(items[0]);
+					if (platform != "windows" && platform != "win" && platform != "nt")
+					{
+						fail("unsupported FORMAT '" + items[0] + "'; only FORMAT WINDOWS PE is supported");
+					}
+					bool pe = platform == "nt";
+					for (size_t item = 1; item < items.size(); ++item)
+					{
+						const auto kind = lowerAscii(items[item]);
+						if (kind == "pe" || kind == "nt") pe = true;
+						else if (kind == "dll") dll = true;
+						else if (kind != "exe") fail("unsupported FORMAT modifier '" + items[item] + "'");
+					}
+					if (!pe)
+					{
+						fail("FORMAT WINDOWS requires PE (16-bit and NE formats are unsupported)");
+					}
+				}
+				else if (keyword == "file" || keyword == "library" || keyword == "libfile")
+				{
+					for (const auto& item : items)
+					{
+						inputs.push_back(withDefaultExtension(item, keyword == "file" ? ".obj" : ".lib"));
+					}
+				}
+				else if (keyword == "libpath")
+				{
+					for (const auto& item : items) options.push_back("/LIBPATH:" + item);
+				}
+				else if (keyword == "name")
+				{
+					if (items.size() != 1) fail("JWlink directive 'name' accepts exactly one output file");
+					name = items[0];
+				}
+				else if (keyword == "system")
+				{
+					const auto system = lowerAscii(items[0]);
+					if (items.size() != 1) fail("JWlink directive 'system' accepts exactly one system name");
+					if (system == "nt" || system == "nt_con") options.push_back("/SUBSYSTEM:console");
+					else if (system == "nt_win" || system == "nt_windows") options.push_back("/SUBSYSTEM:windows");
+					else if (system == "nt_dll") { dll = true; options.push_back("/SUBSYSTEM:console"); }
+					else fail("unsupported SYSTEM '" + items[0] + "' (choose nt, nt_con, nt_win, or nt_dll)");
+				}
+				else if (keyword == "runtime")
+				{
+					if (items.size() != 1) fail("JWlink directive 'runtime' accepts one subsystem");
+					const auto equals = items[0].find('=');
+					const auto subsystem = lowerAscii(items[0].substr(0, equals));
+					if (subsystem != "console" && subsystem != "windows") fail("unsupported RUNTIME '" + items[0] + "' (choose console or windows)");
+					options.push_back("/SUBSYSTEM:" + subsystem + (equals == string::npos ? "" : "," + items[0].substr(equals + 1)));
+				}
+				else if (keyword == "debug")
+				{
+					for (const auto& item : items)
+					{
+						const auto kind = lowerAscii(item);
+						if (kind != "all" && kind != "codeview") fail("unsupported DEBUG format '" + item + "' (only CodeView/PDB output exists)");
+					}
+					options.push_back("/DEBUG");
+				}
+				else if (keyword == "export")
+				{
+					for (const auto& item : items)
+					{
+						if (item.find('.') != string::npos) fail("unsupported EXPORT '" + item + "'; JWlink alias and ordinal syntax is not implemented");
+						options.push_back("/EXPORT:" + item);
+					}
+				}
+				else if (keyword == "disable")
+				{
+					for (const auto& item : items)
+					{
+						if (item.find_first_not_of("0123456789") != string::npos) fail("DISABLE requires warning numbers, found '" + item + "'");
+					}
+				}
+				else
+				{
+					for (const auto& item : items)
+					{
+						const auto equals = item.find('=');
+						const auto key = lowerAscii(item.substr(0, equals));
+						const optional<string> value = equals == string::npos ? nullopt : optional<string>(item.substr(equals + 1));
+						auto requireOptionValue = [&]()
+							{
+								if (!value || value->empty()) fail("JWlink OPTION " + key + " requires a value");
+								return *value;
+							};
+						if (key == "map") options.push_back(value && !value->empty() ? "/MAP:" + *value : "/MAP");
+						else if (key == "quiet" || key == "q") options.push_back("/NOLOGO");
+						else if (key == "start") options.push_back("/ENTRY:" + requireOptionValue());
+						else if (key == "nodefaultlibs" || key == "nodefaultlib") options.push_back("/NODEFAULTLIB");
+						else if (key == "caseexact") continue; // symbol lookup is already case-sensitive
+						else if (key == "offset") options.push_back("/BASE:" + requireOptionValue());
+						else if (key == "objalign") options.push_back("/ALIGN:" + requireOptionValue());
+						else if (key == "norelocs") options.push_back("/FIXED");
+						else if (key == "implib") options.push_back(value && !value->empty() ? "/IMPLIB:" + *value : "/IMPLIB");
+						else fail("unsupported JWlink OPTION '" + item + "'");
+					}
+				}
+			}
+			if (dll) options.push_back("/DLL");
+			if (name) options.push_back("/OUT:" + withDefaultExtension(*name, dll ? ".dll" : ".exe"));
+			else if (!inputs.empty()) options.push_back("/OUT:" + fs::path(inputs.front()).stem().string() + (dll ? ".dll" : ".exe"));
+			options.push_back("--");
+			options.insert(options.end(), inputs.begin(), inputs.end());
+			return options;
+		}
+	}
+
 	LinkOptions parseArguments(int argc, char** argv)
 	{
 		LinkOptions options;
@@ -232,6 +447,10 @@ namespace JWlink2::commandline
 		vector<string> arguments;
 		set<fs::path> activeResponses;
 		expandResponseFiles(supplied, arguments, activeResponses, 0);
+		if (!arguments.empty() && matchDirective(arguments.front()))
+		{
+			arguments = translateDirectives(arguments);
+		}
 		vector<string> excludedLibraries;
 		bool mapUsesDefaultName = false;
 		bool parseOptions = true;
@@ -372,7 +591,7 @@ namespace JWlink2::commandline
 					start = end + 1;
 				}
 			}
-			else if (optionName == "defaultlib" || (optionName.size() > 1 && optionName[0] == 'l'))
+			else if (optionName == "defaultlib" || (argument[0] == '-' && optionName.size() > 1 && optionName[0] == 'l'))
 			{
 				const auto library = optionName == "defaultlib" ? requireValue("/DEFAULTLIB") : optionName.substr(1);
 				if (library.empty())

@@ -60,7 +60,7 @@ This is an inventory of checked-in repository usage, not a claim that no develop
 
 ## Command-line compatibility
 
-- [ ] Inventory JWlink options used by real builds and implement their semantics; maintain a tested accepted/unsupported option matrix.
+- [x] Inventory JWlink options used by real builds and implement their semantics; maintain a tested accepted/unsupported option matrix. The only real build (`test\run.bat`) uses JWlink directive syntax (`format win pe option map=... file ... lib ... name ...`), which JWlink2 now accepts; the supported/unsupported matrix lives in `README.md` and is exercised by `JWlink2Test`. Add a row and a test whenever a new build needs another option. Also fixed `/LTCG`-style switches being misread as `-l` libraries.
 - [ ] Add commonly used missing controls as required by that inventory, such as `/INCLUDE`, `/WHOLEARCHIVE`, `/DEBUG`, `/PDB`, `/MANIFEST`, `/SECTION`, `/MERGE`, `/STACK`, `/HEAP`, and `/VERBOSE`.
 - [ ] Match option precedence, quoting, path resolution, response-file nesting/encoding, environment-variable expansion, and library search order where JWlink relies on them.
 - [ ] Match relevant defaults and diagnostics: output naming, entry point, subsystem, default libraries, duplicate/unresolved symbol reporting, and exit codes.
