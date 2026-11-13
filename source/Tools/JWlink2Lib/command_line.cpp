@@ -229,7 +229,7 @@ namespace JWlink2::commandline
 			"  /ENTRY:<symbol>             Set the image entry point\n"
 			"  /NOENTRY                    Omit the DLL entry point\n"
 			"  /SUBSYSTEM:CONSOLE|WINDOWS  Select PE subsystem\n"
-			"  /MACHINE:X64|X86            Select target (X86 requires /ENTRY)\n"
+			"  /MACHINE:X64|X86            Select target (otherwise inferred)\n"
 			"  /LIBPATH:<directory>        Search directory for libraries\n"
 			"  /DEFAULTLIB:<library>       Add a library to the link\n"
 			"  /DELAYLOAD:<dll>            Delay-load imports from a DLL\n"
@@ -640,6 +640,7 @@ namespace JWlink2::commandline
 			else if (optionName == "e" || optionName == "entry")
 			{
 				options.entry = requireValue("/ENTRY");
+				if (options.entry->empty()) fail("/ENTRY requires a symbol name");
 				options.entrySpecified = true;
 			}
 			else if (optionName == "subsystem")

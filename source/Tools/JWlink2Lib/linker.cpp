@@ -86,7 +86,7 @@ namespace JWlink2
 			return string(reinterpret_cast<const char*>(bytes.data() + start), end - start);
 		}
 
-		ImportedSymbol parseImportObject(const Bytes& bytes, const string& path, uint16_t expectedMachine)
+		ImportedSymbol parseImportObject(const Bytes& bytes, const string& path, uint16_t& expectedMachine)
 		{
 			requireRange(bytes, 0, 20, path + " import object");
 			if (readLe<uint16_t>(bytes, 0, path) != 0 || readLe<uint16_t>(bytes, 2, path) != 0xffff)
@@ -94,6 +94,8 @@ namespace JWlink2
 				fail(path + ": malformed COFF import object signature");
 			}
 			const auto machine = readLe<uint16_t>(bytes, 6, path);
+			if (machine != MachineAmd64 && machine != 0x014c) fail(path + ": unsupported import library member machine");
+			if (expectedMachine == 0) expectedMachine = machine;
 			if (machine != expectedMachine)
 			{
 				fail(path + ": import library member machine does not match the target");
@@ -274,7 +276,7 @@ namespace JWlink2
 				readLe<uint16_t>(bytes, 4, "BigObj version") >= 2;
 		}
 
-		ObjectFile parseObject(const Bytes& bytes, string name, uint16_t expectedMachine)
+		ObjectFile parseObject(const Bytes& bytes, string name, uint16_t& expectedMachine)
 		{
 			requireRange(bytes, 0, 20, name);
 			const bool bigObj = isBigObjCandidate(bytes);
@@ -305,6 +307,16 @@ namespace JWlink2
 				symbolOffset = readLe<uint32_t>(bytes, 8, name);
 				symbolCount = readLe<uint32_t>(bytes, 12, name);
 				sectionTable += readLe<uint16_t>(bytes, 16, name);
+			}
+			if (expectedMachine == 0)
+			{
+				if (machine != MachineAmd64 && machine != 0x014c)
+				{
+					ostringstream message;
+					message << name << ": unsupported COFF machine 0x" << hex << machine;
+					fail(message.str());
+				}
+				expectedMachine = machine;
 			}
 			if (machine != expectedMachine)
 			{
@@ -712,7 +724,7 @@ namespace JWlink2
 			return symbols;
 		}
 
-		Archive parseArchive(const Bytes& bytes, const string& path, uint16_t expectedMachine)
+		Archive parseArchive(const Bytes& bytes, const string& path, uint16_t& expectedMachine)
 		{
 			constexpr string_view magic = "!<arch>\n";
 			if (bytes.size() < magic.size() || !equal(magic.begin(), magic.end(), bytes.begin()))

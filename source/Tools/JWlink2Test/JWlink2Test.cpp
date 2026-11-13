@@ -3309,12 +3309,63 @@ namespace JWlink2Test
 			assertNoOutput(workspace);
 		}
 
-		TEST_METHOD(NonAmd64ObjectIsRejected)
+		TEST_METHOD(ExplicitAmd64RejectsI386Object)
 		{
 			Workspace workspace;
-			const auto result = linkObject(workspace, makeObject({ TestSection{ ".text",{ 0xc3 } } }, { TestSymbol{ "main", 0, 1, 2,{} } }, 0x14c));
-			assertFailureContains(result, "expected AMD64 COFF object");
+			workspace.write(L"input.obj", makeObject({ TestSection{ ".text",{ 0xc3 } } }, { TestSymbol{ "main", 0, 1, 2,{} } }, 0x14c));
+			assertFailureContains(runLinker(workspace, { L"/machine:x64", L"/entry:main", L"/out:linked.exe", L"input.obj" }), "expected AMD64 COFF object");
 			assertNoOutput(workspace);
+		}
+
+		TEST_METHOD(I386TargetAndStartupSelection)
+		{
+			Workspace workspace;
+			TestSection text{ ".text",{ 0xb8, 11, 0, 0, 0, 0xc3, 0xb8, 22, 0, 0, 0, 0xc3, 0xb8, 33, 0, 0, 0, 0xc3 } };
+			workspace.write(L"entry.obj", makeObject({ text }, { TestSymbol{ "_main", 0, 1, 2,{} }, TestSymbol{ "_mainCRTStartup", 6, 1, 2,{} }, TestSymbol{ "_WinMainCRTStartup", 12, 1, 2,{} } }, 0x14c));
+			struct Case { vector<wstring> args; const wchar_t* name; DWORD result; uint16_t subsystem; };
+			const vector<Case> cases{
+				{ { L"/out:console.exe", L"entry.obj" }, L"console.exe", 22, 3 },
+				{ { L"/subsystem:windows", L"/out:gui.exe", L"entry.obj" }, L"gui.exe", 33, 2 },
+				{ { L"/entry:main", L"/out:plain.exe", L"entry.obj" }, L"plain.exe", 11, 3 },
+				{ { L"/entry:_main", L"/out:decorated.exe", L"entry.obj" }, L"decorated.exe", 11, 3 },
+				{ { L"system", L"nt_win", L"option", L"start=_main", L"file", L"entry.obj", L"name", L"jw.exe" }, L"jw.exe", 11, 2 },
+				{ { L"format", L"windows", L"pe", L"runtime", L"console", L"option", L"start=_mainCRTStartup", L"file", L"entry.obj", L"name", L"format.exe" }, L"format.exe", 22, 3 }
+			};
+			for (const auto& test : cases)
+			{
+				assertSuccess(runLinker(workspace, test.args));
+				const auto image = workspace.read(test.name);
+				const auto pe = peHeader(image);
+				Assert::AreEqual<uint16_t>(0x14c, get16(image, pe + 4));
+				Assert::AreEqual<uint16_t>(0x10b, get16(image, pe + 24));
+				Assert::AreEqual<uint32_t>(0x400000, get32(image, pe + 24 + 28));
+				Assert::AreEqual(test.subsystem, get16(image, pe + 24 + 68));
+				Assert::AreEqual(test.result, runExecutable(workspace, workspace.file(test.name), {}).exitCode);
+			}
+			workspace.write(L"start.lib", makeArchive({ { "start.obj", makeObject({ TestSection{ ".text",{ 0xb8, 44, 0, 0, 0, 0xc3 } } }, { TestSymbol{ "_WinMainCRTStartup", 0, 1, 2,{} } }, 0x14c) } }));
+			assertSuccess(runLinker(workspace, { L"/subsystem:windows", L"/out:archive.exe", L"start.lib" }));
+			Assert::AreEqual<DWORD>(44, runExecutable(workspace, workspace.file(L"archive.exe"), {}).exitCode);
+			assertSuccess(runLinker(workspace, { L"/entry:WinMainCRTStartup", L"/out:force-archive.exe", L"start.lib" }));
+			Assert::AreEqual<DWORD>(44, runExecutable(workspace, workspace.file(L"force-archive.exe"), {}).exitCode);
+			workspace.write(L"stdcall.obj", makeObject({ TestSection{ ".text",{ 0xb8, 55, 0, 0, 0, 0xc3 } } }, { TestSymbol{ "_start@0", 0, 1, 2,{} } }, 0x14c));
+			assertSuccess(runLinker(workspace, { L"/entry:_start@0", L"/out:stdcall.exe", L"stdcall.obj" }));
+			Assert::AreEqual<DWORD>(55, runExecutable(workspace, workspace.file(L"stdcall.exe"), {}).exitCode);
+			const auto fallback = runLinker(workspace, { L"format", L"windows", L"pe", L"file", L"entry.obj", L"name", L"fallback32.exe" });
+			assertSuccess(fallback);
+			Assert::IsTrue(fallback.output.find("no start address specified") != string::npos);
+			Assert::AreEqual<DWORD>(11, runExecutable(workspace, workspace.file(L"fallback32.exe"), {}).exitCode);
+			workspace.write(L"direct.obj", makeObject({ text, makeDirectiveSection("/ENTRY:_WinMainCRTStartup") }, { TestSymbol{ "_main", 0, 1, 2,{} }, TestSymbol{ "_WinMainCRTStartup", 12, 1, 2,{} } }, 0x14c));
+			assertSuccess(runLinker(workspace, { L"/out:direct.exe", L"direct.obj" }));
+			Assert::AreEqual<DWORD>(33, runExecutable(workspace, workspace.file(L"direct.exe"), {}).exitCode);
+			assertSuccess(runLinker(workspace, { L"/entry:_main", L"/out:override.exe", L"direct.obj" }));
+			Assert::AreEqual<DWORD>(11, runExecutable(workspace, workspace.file(L"override.exe"), {}).exitCode);
+			assertFailureContains(runLinker(workspace, { L"/entry:_missing", L"entry.obj" }), "_missing");
+			assertFailureContains(runLinker(workspace, { L"/entry:", L"entry.obj" }), "/ENTRY requires a symbol name");
+			workspace.write(L"x64.obj", makeEntryObject());
+			assertFailureContains(runLinker(workspace, { L"/entry:_main", L"entry.obj", L"x64.obj" }), "expected I386");
+			workspace.write(L"mixed.lib", makeArchive({ { "x86.obj", makeObject({ text }, { TestSymbol{ "_main", 0, 1, 2,{} } }, 0x14c) }, { "x64.obj", makeEntryObject() } }));
+			assertFailureContains(runLinker(workspace, { L"/entry:_main", L"mixed.lib" }), "expected I386");
+			assertFailureContains(runLinker(workspace, { L"system", L"nt", L"option", L"start=main", L"file", L"entry.obj" }), "'main'");
 		}
 
 		TEST_METHOD(I386StaticArchiveProducesRunnablePe32)
@@ -3428,6 +3479,36 @@ namespace JWlink2Test
 			assertSuccess(thunkInspection);
 			Assert::IsTrue(thunkInspection.output.find("ExitProcess") != string::npos && thunkInspection.output.find("HIGHLOW") != string::npos, L"x86 import thunk has a base relocation");
 			Assert::AreEqual<DWORD>(44, runExecutable(workspace, workspace.file(L"thunk.exe"), {}).exitCode, L"x86 function thunk executes");
+			workspace.writeText(L"start.c", L"__declspec(dllimport) __declspec(noreturn) void __stdcall ExitProcess(unsigned); void mainCRTStartup(void) { ExitProcess(45); }\n");
+			assertSuccess(runExecutable(workspace, tools / L"cl.exe", { L"/nologo", L"/c", L"/Od", L"/GS-", L"/Zl", L"start.c" }));
+			const auto original = runExecutable(workspace, jwlinkPath(), { L"format", L"windows", L"pe", L"runtime", L"console", L"option", L"quiet,start=_main", L"file", L"main.obj", L"library", L"helper.lib", L"name", L"original32.exe" });
+			if (original.exitCode == 0) Assert::AreEqual<DWORD>(42, runExecutable(workspace, workspace.file(L"original32.exe"), {}).exitCode);
+			else
+			{
+				Assert::AreEqual<DWORD>(0xc0000005, original.exitCode, L"unexpected JWlink x86 comparison failure");
+				Logger::WriteMessage("JWlink x86 comparison unavailable: bundled JWlink crashed with access violation");
+			}
+			assertSuccess(runExecutable(workspace, tools / L"lib.exe", { L"/nologo", L"/out:start.lib", L"start.obj" }));
+			assertSuccess(runLinker(workspace, { L"/out:inferred.exe", L"start.lib", kernel.wstring() }));
+			assertSuccess(runExecutable(workspace, tools / L"link.exe", { L"/nologo", L"/nodefaultlib", L"/machine:x86", L"/safeseh:no", L"/subsystem:console", L"/out:msvc-start.exe", L"start.lib", kernel.wstring() }));
+			for (const auto* name : { L"inferred.exe", L"msvc-start.exe" }) Assert::AreEqual<DWORD>(45, runExecutable(workspace, workspace.file(name), {}).exitCode);
+			const auto user32 = kernel.parent_path() / L"user32.lib";
+			if (!fs::exists(user32)) { Logger::WriteMessage("Windows SDK x86 user32.lib unavailable; GUI test skipped"); return; }
+			workspace.writeText(L"gui32.c", L"typedef void *HANDLE; typedef unsigned short WCHAR;\n"
+				L"__declspec(dllimport) HANDLE __stdcall CreateWindowExW(unsigned long,const WCHAR*,const WCHAR*,unsigned long,int,int,int,int,HANDLE,HANDLE,HANDLE,void*);\n"
+				L"__declspec(dllimport) int __stdcall DestroyWindow(HANDLE);\n"
+				L"__declspec(dllimport) __declspec(noreturn) void __stdcall ExitProcess(unsigned);\n"
+				L"void WinMainCRTStartup(void) { HANDLE w=CreateWindowExW(0,L\"STATIC\",L\"x86\",0,0,0,16,16,0,0,0,0); if (!w) ExitProcess(41); if (!DestroyWindow(w)) ExitProcess(42); ExitProcess(0); }\n");
+			assertSuccess(runExecutable(workspace, tools / L"cl.exe", { L"/nologo", L"/c", L"/Od", L"/GS-", L"/Zl", L"gui32.c" }));
+			assertSuccess(runLinker(workspace, { L"/subsystem:windows", L"/out:gui32.exe", L"gui32.obj", user32.wstring(), kernel.wstring() }));
+			assertSuccess(runLinker(workspace, { L"system", L"nt_win", L"option", L"start=_WinMainCRTStartup", L"file", L"gui32.obj", L"library", user32.wstring(), kernel.wstring(), L"name", L"jwgui32.exe" }));
+			assertSuccess(runExecutable(workspace, tools / L"link.exe", { L"/nologo", L"/nodefaultlib", L"/safeseh:no", L"/subsystem:windows", L"/out:msvc-gui32.exe", L"gui32.obj", user32.wstring(), kernel.wstring() }));
+			for (const auto* name : { L"gui32.exe", L"jwgui32.exe", L"msvc-gui32.exe" })
+			{
+				const auto image = workspace.read(name);
+				Assert::AreEqual<uint16_t>(2, get16(image, peHeader(image) + 24 + 68));
+				Assert::AreEqual<DWORD>(0, runExecutable(workspace, workspace.file(name), {}).exitCode);
+			}
 		}
 
 		TEST_METHOD(UnresolvedExternalIsReported)

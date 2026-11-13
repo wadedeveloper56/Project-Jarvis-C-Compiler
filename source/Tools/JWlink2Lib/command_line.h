@@ -35,7 +35,7 @@ namespace JWlink2::commandline
 		string moduleName;
 		vector<fs::path> libraryPaths;
 		uint64_t imageBase = 0x140000000ULL;
-		uint16_t machine = 0x8664;
+		uint16_t machine = 0;
 		bool imageBaseSpecified = false;
 		uint16_t subsystem = 3;
 		uint16_t subsystemVersionMajor = 6;

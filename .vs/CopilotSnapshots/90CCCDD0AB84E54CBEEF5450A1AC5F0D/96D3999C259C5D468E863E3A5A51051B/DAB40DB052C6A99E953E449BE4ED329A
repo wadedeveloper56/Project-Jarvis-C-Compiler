@@ -1,0 +1,1027 @@
+﻿#include "pch.h"
+#include "command_line.h"
+#define NOMINMAX
+#include <Windows.h>
+
+using namespace std;
+
+namespace JWlink2::commandline
+{
+	[[noreturn]] void fail(const string& message)
+	{
+		throw runtime_error(message);
+	}
+
+	string lowerAscii(string value)
+	{
+		transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) { return static_cast<char>(tolower(ch)); });
+		return value;
+	}
+
+	vector<string> tokenizeResponse(string_view text, const fs::path& path)
+	{
+		vector<string> result;
+		string token;
+		bool quoted = false;
+		bool started = false;
+		for (size_t i = 0; i < text.size();)
+		{
+			if (text[i] == '\\')
+			{
+				size_t end = i;
+				while (end < text.size() && text[end] == '\\')
+				{
+					++end;
+				}
+				const auto slashCount = end - i;
+				if (end < text.size() && text[end] == '"')
+				{
+					token.append(slashCount / 2, '\\');
+					if ((slashCount & 1) != 0)
+					{
+						token.push_back('"');
+					}
+					else
+					{
+						quoted = !quoted;
+					}
+					started = true;
+					i = end + 1;
+				}
+				else
+				{
+					token.append(slashCount, '\\');
+					started = true;
+					i = end;
+				}
+			}
+			else if (text[i] == '"')
+			{
+				quoted = !quoted;
+				started = true;
+				++i;
+			}
+			else if (isspace(static_cast<unsigned char>(text[i])) && !quoted)
+			{
+				if (started)
+				{
+					result.push_back(move(token));
+					token.clear();
+					started = false;
+				}
+				++i;
+			}
+			else
+			{
+				token.push_back(text[i++]);
+				started = true;
+			}
+		}
+		if (quoted)
+		{
+			fail(path.string() + ": unterminated quote in response file");
+		}
+		if (started)
+		{
+			result.push_back(move(token));
+		}
+		return result;
+	}
+
+	optional<string> environmentValue(const string& name)
+	{
+		char* value = nullptr;
+		size_t length = 0;
+		if (_dupenv_s(&value, &length, name.c_str()) != 0)
+		{
+			fail("cannot read environment variable '" + name + "'");
+		}
+		if (!value) return nullopt;
+		string result(value);
+		free(value);
+		return result;
+	}
+
+	string decodeResponse(string bytes, const fs::path& path)
+	{
+		wstring wide;
+		if (bytes.size() >= 2 && static_cast<unsigned char>(bytes[0]) == 0xff && static_cast<unsigned char>(bytes[1]) == 0xfe)
+		{
+			if ((bytes.size() - 2) % 2 != 0) fail(path.string() + ": invalid UTF-16LE response file");
+			for (size_t i = 2; i < bytes.size(); i += 2)
+			{
+				wide.push_back(static_cast<wchar_t>(static_cast<unsigned char>(bytes[i]) | (static_cast<unsigned char>(bytes[i + 1]) << 8)));
+			}
+		}
+		else if (bytes.size() >= 3 && bytes.compare(0, 3, "\xef\xbb\xbf") == 0)
+		{
+			const auto length = bytes.size() - 3;
+			if (length > static_cast<size_t>(numeric_limits<int>::max())) fail(path.string() + ": response file is too large");
+			if (length != 0)
+			{
+				const int count = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, bytes.data() + 3, static_cast<int>(length), nullptr, 0);
+				if (!count) fail(path.string() + ": invalid UTF-8 response file");
+				wide.resize(count);
+				if (!MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, bytes.data() + 3, static_cast<int>(length), wide.data(), count)) fail(path.string() + ": invalid UTF-8 response file");
+			}
+		}
+		else
+		{
+			if (bytes.size() >= 2 && static_cast<unsigned char>(bytes[0]) == 0xfe && static_cast<unsigned char>(bytes[1]) == 0xff) fail(path.string() + ": UTF-16BE response files are unsupported");
+			if (bytes.find('\0') != string::npos) fail(path.string() + ": response file contains a NUL byte");
+			return bytes;
+		}
+		if (wide.find(L'\0') != wstring::npos) fail(path.string() + ": response file contains a NUL character");
+		if (wide.empty()) return {};
+		if (wide.size() > static_cast<size_t>(numeric_limits<int>::max())) fail(path.string() + ": response file is too large");
+		BOOL substituted = FALSE;
+		const auto utf8 = GetACP() == CP_UTF8;
+		const DWORD flags = utf8 ? WC_ERR_INVALID_CHARS : WC_NO_BEST_FIT_CHARS;
+		const auto usedDefault = utf8 ? nullptr : &substituted;
+		const int count = WideCharToMultiByte(CP_ACP, flags, wide.data(), static_cast<int>(wide.size()), nullptr, 0, nullptr, usedDefault);
+		if (!count || substituted) fail(path.string() + ": response file contains characters not representable in the active code page");
+		string result(count, '\0');
+		if (!WideCharToMultiByte(CP_ACP, flags, wide.data(), static_cast<int>(wide.size()), result.data(), count, nullptr, usedDefault) || substituted) fail(path.string() + ": cannot decode response file");
+		return result;
+	}
+
+	void expandResponseFiles(const vector<string>& arguments, vector<string>& expanded, set<string>& active, unsigned depth)
+	{
+		if (depth > 32) fail("response-file nesting exceeds 32 levels");
+		for (const auto& argument : arguments)
+		{
+			if (argument.size() > 1 && argument[0] == '%')
+			{
+				const auto end = argument.find('%', 1);
+				if (end == string::npos || end == 1) fail("invalid environment variable reference '" + argument + "'");
+				const auto name = argument.substr(1, end - 1);
+				const auto value = environmentValue(name);
+				if (!value) fail("environment variable '" + name + "' is not defined");
+				const auto key = "env:" + lowerAscii(name);
+				if (!active.insert(key).second) fail("environment expansion cycle involving '" + name + "'");
+				auto nested = tokenizeResponse(*value + argument.substr(end + 1), fs::path("%" + name + "%"));
+				expandResponseFiles(nested, expanded, active, depth + 1);
+				active.erase(key);
+				continue;
+			}
+			if (argument.size() <= 1 || argument[0] != '@')
+			{
+				expanded.push_back(argument);
+				continue;
+			}
+			const auto name = argument.substr(1);
+			auto path = fs::path(name);
+			if (path.extension().empty()) path += ".lnk";
+			path = fs::absolute(path).lexically_normal();
+			ifstream input(path, ios::binary);
+			string contents;
+			string key;
+			if (input)
+			{
+				key = "file:" + lowerAscii(path.string());
+				contents.assign(istreambuf_iterator<char>(input), istreambuf_iterator<char>());
+				if (input.bad()) fail("failed reading response file '" + path.string() + "'");
+				contents = decodeResponse(move(contents), path);
+			}
+			else
+			{
+				const auto value = environmentValue(name);
+				if (!value) fail("cannot open response file '" + path.string() + "' and environment variable '" + name + "' is not defined");
+				contents = *value;
+				key = "env:" + lowerAscii(name);
+			}
+			if (!active.insert(key).second) fail("response-file or environment cycle involving '" + name + "'");
+			auto nested = tokenizeResponse(contents, path);
+			expandResponseFiles(nested, expanded, active, depth + 1);
+			active.erase(key);
+		}
+	}
+
+	uint64_t parseUnsignedOption(string_view text, string_view optionName)
+	{
+		int base = 10;
+		if (text.size() > 2 && text[0] == '0' && (text[1] == 'x' || text[1] == 'X'))
+		{
+			base = 16;
+			text.remove_prefix(2);
+		}
+		uint64_t value = 0;
+		const auto parsed = from_chars(text.data(), text.data() + text.size(), value, base);
+		if (text.empty() || parsed.ec != errc{} || parsed.ptr != text.data() + text.size())
+		{
+			fail("invalid value for " + string(optionName));
+		}
+		return value;
+	}
+
+	void printUsage()
+	{
+		cout << "JWlink2 - COFF to Windows PE linker (AMD64 and bounded x86)\n"
+			"Usage: JWlink2 [options] input.obj [input.lib ...]\n"
+			"       JWlink2 format windows pe [dll] option map[=<file>],quiet,start=<sym> file a.obj,b.obj lib c.lib name out.exe\n"
+			"  JWlink directives: format, file, library, libfile, libpath, name, system, runtime, debug, export, anonymousexport, reference, disable, option\n"
+			"  JWlink options: map, quiet, start, nodefaultlibs, caseexact, offset, objalign, norelocs, implib, stack, heapsize, version, osversion, linkversion, nxcompat, largeaddressaware (see README.md)\n"
+			"  /OUT:<file>, -o <file>      Output image (default: a.exe or a.dll)\n"
+			"  /DLL                        Create a DLL\n"
+			"  /DEF:<file>                 Read module name and exports from a .def file\n"
+			"  /EXPORT:<spec>              Export a symbol\n"
+			"  /IMPLIB[:<file>]            Write a DLL import library\n"
+			"  /ENTRY:<symbol>             Set the image entry point\n"
+			"  /NOENTRY                    Omit the DLL entry point\n"
+			"  /SUBSYSTEM:CONSOLE|WINDOWS  Select PE subsystem\n"
+			"  /MACHINE:X64|X86            Select target (X86 requires /ENTRY)\n"
+			"  /LIBPATH:<directory>        Search directory for libraries\n"
+			"  /DEFAULTLIB:<library>       Add a library to the link\n"
+			"  /DELAYLOAD:<dll>            Delay-load imports from a DLL\n"
+			"  /DEBUG                      Generate a PDB and PE CodeView record\n"
+			"  /PDB:<file>                 Set PDB output path (implies /DEBUG)\n"
+			"  /ALIGN:<bytes>              Set PE section alignment\n"
+			"  /BASE:<address>             Set preferred image base\n"
+			"  /DYNAMICBASE | /FIXED       Enable ASLR relocations or fixed image\n"
+			"  /MAP[:<file>]               Write a symbol map\n"
+			"  /INCLUDE:<symbol>           Force a symbol to be resolved\n"
+			"  /WHOLEARCHIVE[:<lib>]       Link every object member of an archive\n"
+			"  /STACK:<reserve>[,<commit>] Set stack sizes\n"
+			"  /HEAP:<reserve>[,<commit>]  Set heap sizes\n"
+			"  /MERGE:<from>=<to>          Merge an output section into another\n"
+			"  /SECTION:<name>,[ERWSDKP]   Override section attributes\n"
+			"  /MANIFEST[:NO|:EMBED[,ID=n]] External or embedded manifest; /MANIFESTINPUT:<file>, /MANIFESTFILE:<file>\n"
+			"  /VERBOSE                    Report inputs and the final section layout\n"
+			"  @<file>                     Read additional options from a response file\n"
+			"  -h, --help                  Show this help\n";
+	}
+
+	ExportDirective parseExportDirective(string_view value, const string& context)
+	{
+		ExportDirective directive;
+		const auto firstComma = value.find(',');
+		const auto symbol = value.substr(0, firstComma);
+		const auto equals = symbol.find('=');
+		directive.name = string(symbol.substr(0, equals));
+		directive.internalName = equals == string_view::npos ? directive.name : string(symbol.substr(equals + 1));
+		if (directive.name.empty() || directive.internalName.empty())
+		{
+			fail(context + ": /EXPORT requires a public and internal symbol name");
+		}
+		bool ordinalSpecified = false;
+		size_t cursor = firstComma;
+		while (cursor != string_view::npos)
+		{
+			const auto next = value.find(',', cursor + 1);
+			const auto attribute = value.substr(cursor + 1, next == string_view::npos ? string_view::npos : next - cursor - 1);
+			const auto normalized = lowerAscii(string(attribute));
+			if (normalized == "noname")
+			{
+				directive.noname = true;
+			}
+			else if (normalized == "data")
+			{
+				directive.data = true;
+			}
+			else if (normalized == "private")
+			{
+				directive.privateExport = true;
+			}
+			else if (!attribute.empty() && attribute.front() == '@')
+			{
+				if (ordinalSpecified)
+				{
+					fail(context + ": /EXPORT specifies more than one ordinal");
+				}
+				ordinalSpecified = true;
+				const auto ordinal = parseUnsignedOption(attribute.substr(1), "/EXPORT ordinal");
+				if (ordinal == 0 || ordinal > numeric_limits<uint16_t>::max())
+				{
+					fail(context + ": /EXPORT ordinal must be between 1 and 65535");
+				}
+				directive.ordinal = static_cast<uint16_t>(ordinal);
+			}
+			else
+			{
+				fail(context + ": unsupported /EXPORT attribute '" + string(attribute) + "'");
+			}
+			cursor = next;
+		}
+		if (directive.noname && !directive.ordinal)
+		{
+			fail(context + ": /EXPORT NONAME requires an ordinal");
+		}
+		return directive;
+	}
+
+	namespace
+	{
+		struct DirectiveName
+		{
+			const char* name;
+			size_t minimum;
+			bool supported;
+		};
+
+		// JWlink directives accept abbreviations down to a minimum length; unsupported directives are recognized only so they can be diagnosed.
+		constexpr DirectiveName directiveNames[] = {
+			{ "format", 4, true }, { "file", 2, true }, { "option", 2, true }, { "name", 2, true },
+			{ "library", 3, true }, { "libpath", 4, true }, { "libfile", 4, true }, { "system", 3, true },
+			{ "debug", 3, true }, { "runtime", 2, true }, { "export", 3, true }, { "disable", 3, true },
+			{ "alias", 3, false }, { "commit", 3, false }, { "import", 3, false }, { "language", 3, false },
+			{ "modfile", 4, false }, { "modtrace", 4, false }, { "order", 3, false }, { "path", 4, false },
+			{ "reference", 3, true }, { "segment", 3, false }, { "sort", 2, false }, { "symtrace", 4, false },
+			{ "optlib", 6, false }, { "anonymousexport", 4, true }
+		};
+
+		const DirectiveName* matchDirective(const string& token)
+		{
+			if (token.empty() || token[0] == '-' || token[0] == '/' || token[0] == '@')
+			{
+				return nullptr;
+			}
+			const auto lowered = lowerAscii(token);
+			for (const auto& directive : directiveNames)
+			{
+				const string_view name(directive.name);
+				if (lowered.size() >= directive.minimum && lowered.size() <= name.size() && name.substr(0, lowered.size()) == lowered)
+				{
+					return &directive;
+				}
+			}
+			return nullptr;
+		}
+
+		vector<string> splitItems(const vector<string>& tokens)
+		{
+			vector<string> items;
+			for (const auto& token : tokens)
+			{
+				size_t start = 0;
+				while (start <= token.size())
+				{
+					const auto comma = token.find(',', start);
+					auto part = token.substr(start, comma == string::npos ? string::npos : comma - start);
+					if (!part.empty())
+					{
+						items.push_back(move(part));
+					}
+					if (comma == string::npos)
+					{
+						break;
+					}
+					start = comma + 1;
+				}
+			}
+			return items;
+		}
+
+		string withDefaultExtension(string path, const char* extension)
+		{
+			return fs::path(path).extension().empty() ? path + extension : path;
+		}
+
+		// Rewrites JWlink directive syntax (format win pe option map=x file a,b lib c name out) into the option form the parser below understands.
+		vector<string> translateDirectives(const vector<string>& arguments)
+		{
+			vector<string> options;
+			vector<string> inputs;
+			vector<string> libraryPathDirectives;
+			optional<string> name;
+			bool dll = false;
+			for (size_t i = 0; i < arguments.size();)
+			{
+				const auto* directive = matchDirective(arguments[i]);
+				if (!directive)
+				{
+					fail("expected a JWlink directive but found '" + arguments[i] + "'; JWlink directives cannot be mixed with /option switches");
+				}
+				vector<string> tokens;
+				for (++i; i < arguments.size() && !matchDirective(arguments[i]); ++i)
+				{
+					if (arguments[i].size() > 1 && (arguments[i][0] == '/' || arguments[i][0] == '-') && arguments[i][1] != '\\' && arguments[i][1] != '/')
+					{
+						fail("JWlink directives cannot be mixed with '" + arguments[i] + "' switches");
+					}
+					tokens.push_back(arguments[i]);
+				}
+				const string keyword = directive->name;
+				const auto spelling = "JWlink directive '" + keyword + "'";
+				if (!directive->supported)
+				{
+					fail("unsupported " + spelling);
+				}
+				const auto items = splitItems(tokens);
+				if (items.empty())
+				{
+					fail(spelling + " requires an argument");
+				}
+				if (keyword == "format")
+				{
+					const auto platform = lowerAscii(items[0]);
+					if (platform != "windows" && platform != "win" && platform != "nt")
+					{
+						fail("unsupported FORMAT '" + items[0] + "'; only FORMAT WINDOWS PE is supported");
+					}
+					bool pe = platform == "nt";
+					for (size_t item = 1; item < items.size(); ++item)
+					{
+						const auto kind = lowerAscii(items[item]);
+						if (kind == "pe" || kind == "nt") pe = true;
+						else if (kind == "dll") dll = true;
+						else if (kind != "exe") fail("unsupported FORMAT modifier '" + items[item] + "'");
+					}
+					if (!pe)
+					{
+						fail("FORMAT WINDOWS requires PE (16-bit and NE formats are unsupported)");
+					}
+				}
+				else if (keyword == "file" || keyword == "library" || keyword == "libfile")
+				{
+					for (const auto& item : items)
+					{
+						inputs.push_back(withDefaultExtension(item, keyword == "file" ? ".obj" : ".lib"));
+					}
+				}
+				else if (keyword == "libpath")
+				{
+					libraryPathDirectives.insert(libraryPathDirectives.begin(), items.begin(), items.end());
+				}
+				else if (keyword == "name")
+				{
+					if (items.size() != 1) fail("JWlink directive 'name' accepts exactly one output file");
+					name = items[0];
+				}
+				else if (keyword == "system")
+				{
+					const auto system = lowerAscii(items[0]);
+					if (items.size() != 1) fail("JWlink directive 'system' accepts exactly one system name");
+					if (system == "nt" || system == "nt_con") options.push_back("/SUBSYSTEM:console");
+					else if (system == "nt_win" || system == "nt_windows") options.push_back("/SUBSYSTEM:windows");
+					else if (system == "nt_dll") { dll = true; options.push_back("/SUBSYSTEM:console"); }
+					else fail("unsupported SYSTEM '" + items[0] + "' (choose nt, nt_con, nt_win, or nt_dll)");
+				}
+				else if (keyword == "runtime")
+				{
+					if (items.size() != 1) fail("JWlink directive 'runtime' accepts one subsystem");
+					const auto equals = items[0].find('=');
+					const auto subsystem = lowerAscii(items[0].substr(0, equals));
+					if (subsystem != "console" && subsystem != "windows") fail("unsupported RUNTIME '" + items[0] + "' (choose console or windows)");
+					options.push_back("/SUBSYSTEM:" + subsystem + (equals == string::npos ? "" : "," + items[0].substr(equals + 1)));
+				}
+				else if (keyword == "debug")
+				{
+					for (const auto& item : items)
+					{
+						const auto kind = lowerAscii(item);
+						if (kind == "lines" || kind == "types" || kind == "locals") fail("unsupported DEBUG modifier '" + item + "'; selective debug output is not implemented");
+						if (kind != "all" && kind != "codeview") fail("unsupported DEBUG format '" + item + "' (only CodeView/PDB output exists)");
+					}
+					options.push_back("/DEBUG");
+				}
+				else if (keyword == "export" || keyword == "anonymousexport")
+				{
+					for (const auto& item : items)
+					{
+						const auto equals = item.find('=');
+						if (equals != string::npos && item.find('=', equals + 1) != string::npos) fail("unsupported EXPORT import-name alias '" + item + "'");
+						const auto name = item.substr(0, equals);
+						const auto dot = name.find('.');
+						const auto publicName = name.substr(0, dot);
+						if (publicName.empty()) fail("EXPORT requires a name");
+						string exported = "/EXPORT:" + publicName;
+						if (equals != string::npos) exported += "=" + item.substr(equals + 1);
+						if (dot != string::npos) exported += ",@" + name.substr(dot + 1);
+						if (keyword == "anonymousexport") exported += ",NONAME";
+						options.push_back(move(exported));
+					}
+				}
+				else if (keyword == "reference")
+				{
+					for (const auto& item : items) options.push_back("/INCLUDE:" + item);
+				}
+				else if (keyword == "disable")
+				{
+					for (const auto& item : items)
+					{
+						if (item.find_first_not_of("0123456789") != string::npos) fail("DISABLE requires warning numbers, found '" + item + "'");
+					}
+				}
+				else
+				{
+					for (const auto& item : items)
+					{
+						const auto equals = item.find('=');
+						const auto key = lowerAscii(item.substr(0, equals));
+						const optional<string> value = equals == string::npos ? nullopt : optional<string>(item.substr(equals + 1));
+						auto requireOptionValue = [&]()
+							{
+								if (!value || value->empty()) fail("JWlink OPTION " + key + " requires a value");
+								return *value;
+							};
+						if (key == "map") options.push_back(value && !value->empty() ? "/MAP:" + *value : "/MAP");
+						else if (key == "quiet" || key == "q") options.push_back("/NOLOGO");
+						else if (key == "start") options.push_back("/ENTRY:" + requireOptionValue());
+						else if (key == "nodefaultlibs" || key == "nodefaultlib") options.push_back("/NODEFAULTLIB");
+						else if (key == "caseexact") continue; // symbol lookup is already case-sensitive
+						else if (key == "offset") options.push_back("/BASE:" + requireOptionValue());
+						else if (key == "objalign") options.push_back("/ALIGN:" + requireOptionValue());
+						else if (key == "norelocs") options.push_back("/FIXED");
+						else if (key == "implib") options.push_back(value && !value->empty() ? "/IMPLIB:" + *value : "/IMPLIB");
+						else if (key == "stack" || key == "heapsize" || key == "version" || key == "osversion" || key == "linkversion") options.push_back("/jw-" + key + ":" + requireOptionValue());
+						else if (key == "nxcompat" || key == "largeaddressaware" || key == "nolargeaddressaware")
+						{
+							if (value) fail("JWlink OPTION " + key + " does not accept a value");
+							options.push_back("/jw-" + key);
+						}
+						else fail("unsupported JWlink OPTION '" + item + "'");
+					}
+				}
+			}
+			for (const auto& path : libraryPathDirectives) options.push_back("/LIBPATH:" + path);
+			if (dll) options.push_back("/DLL");
+			if (name) options.push_back("/OUT:" + withDefaultExtension(*name, dll ? ".dll" : ".exe"));
+			else if (!inputs.empty()) options.push_back("/OUT:" + fs::path(inputs.front()).stem().string() + (dll ? ".dll" : ".exe"));
+			options.push_back("--");
+			options.insert(options.end(), inputs.begin(), inputs.end());
+			return options;
+		}
+	}
+
+	LinkOptions parseArguments(int argc, char** argv)
+	{
+		LinkOptions options;
+		vector<string> supplied;
+		for (int i = 1; i < argc; ++i)
+		{
+			supplied.emplace_back(argv[i]);
+		}
+		vector<string> arguments;
+		set<string> activeResponses;
+		expandResponseFiles(supplied, arguments, activeResponses, 0);
+		const bool directiveSyntax = !arguments.empty() && matchDirective(arguments.front());
+		options.jwlinkDirectiveSyntax = directiveSyntax;
+		if (directiveSyntax)
+		{
+			arguments = translateDirectives(arguments);
+		}
+		vector<string> excludedLibraries;
+		bool mapUsesDefaultName = false;
+		bool parseOptions = true;
+		auto nextValue = [&](size_t& index, string_view option) -> string
+			{
+				if (++index >= arguments.size())
+				{
+					fail(string(option) + " requires a value");
+				}
+				return arguments[index];
+			};
+		for (size_t i = 0; i < arguments.size(); ++i)
+		{
+			const auto& argument = arguments[i];
+			if (parseOptions && argument == "--")
+			{
+				parseOptions = false;
+				continue;
+			}
+			if (!parseOptions || argument.empty() || (argument[0] != '-' && argument[0] != '/'))
+			{
+				options.inputs.emplace_back(argument);
+				continue;
+			}
+			size_t prefixLength = argument[0] == '/' ? 1 : (argument.size() > 1 && argument[1] == '-' ? 2 : 1);
+			const bool attachedOutputOption = argument.size() > 2 && argument[0] == '-' && prefixLength == 1 && (argument[1] == 'o' || argument[1] == 'O') && argument[2] != ':' && argument[2] != '=' && tolower(static_cast<unsigned char>(argument[2])) != 'u';
+			const bool attachedEntryOption = argument.size() > 2 && argument[0] == '-' && prefixLength == 1 && (argument[1] == 'e' || argument[1] == 'E') && argument[2] != ':' && argument[2] != '=' && tolower(static_cast<unsigned char>(argument[2])) != 'n';
+			const bool attachedPathOption = argument.size() > 2 && argument[0] == '-' && argument[1] == 'L' && prefixLength == 1 && argument[2] != ':' && argument[2] != '=';
+			const bool shortPathOption = argument.size() > 1 && argument[0] == '-' && argument[1] == 'L' && prefixLength == 1;
+			const auto delimiter = argument.find_first_of(":=", prefixLength);
+			const string optionName = attachedOutputOption ? "o" : attachedEntryOption ? "e" : attachedPathOption ? "libpath" : lowerAscii(argument.substr(prefixLength, delimiter == string::npos ? string::npos : delimiter - prefixLength));
+			optional<string> value;
+			if (attachedOutputOption || attachedEntryOption || attachedPathOption)
+			{
+				value = argument.substr(prefixLength + 1);
+			}
+			else if (delimiter != string::npos)
+			{
+				value = argument.substr(delimiter + 1);
+			}
+			auto requireValue = [&](string_view spelling)
+				{
+					return value ? *value : nextValue(i, spelling);
+				};
+			if (optionName == "h" || optionName == "help" || optionName == "?")
+			{
+				printUsage();
+				exit(0);
+			}
+			else if (optionName == "o" || optionName == "out")
+			{
+				options.output = requireValue("/OUT");
+				options.outputSpecified = true;
+			}
+			else if (optionName == "dll")
+			{
+				if (value) fail("/DLL does not accept a value");
+				options.dll = true;
+			}
+			else if (optionName == "def")
+			{
+				options.definitionFile = requireValue("/DEF");
+			}
+			else if (optionName == "export")
+			{
+				options.exports.push_back(parseExportDirective(requireValue("/EXPORT"), "/EXPORT"));
+			}
+			else if (optionName == "implib")
+			{
+				options.importLibrarySpecified = true;
+				if (value && !value->empty()) options.importLibrary = fs::path(*value);
+			}
+			else if (optionName == "noentry")
+			{
+				if (value) fail("/NOENTRY does not accept a value");
+				options.noEntry = true;
+			}
+			else if (optionName == "e" || optionName == "entry")
+			{
+				options.entry = requireValue("/ENTRY");
+				options.entrySpecified = true;
+			}
+			else if (optionName == "subsystem")
+			{
+				auto subsystem = lowerAscii(requireValue("/SUBSYSTEM"));
+				const auto comma = subsystem.find(',');
+				if (comma != string::npos)
+				{
+					const auto version = subsystem.substr(comma + 1);
+					const auto dot = version.find('.');
+					if (dot == string::npos || dot == 0 || dot + 1 == version.size())
+					{
+						fail("invalid /SUBSYSTEM version; expected major.minor");
+					}
+					auto parseVersionPart = [&](string_view part)
+						{
+							unsigned int parsedValue = 0;
+							const auto parsed = from_chars(part.data(), part.data() + part.size(), parsedValue);
+							if (parsed.ec != errc{} || parsed.ptr != part.data() + part.size() || parsedValue > numeric_limits<uint16_t>::max())
+							{
+								fail("invalid /SUBSYSTEM version; expected major.minor");
+							}
+							return static_cast<uint16_t>(parsedValue);
+						};
+					options.subsystemVersionMajor = parseVersionPart(string_view(version).substr(0, dot));
+					options.subsystemVersionMinor = parseVersionPart(string_view(version).substr(dot + 1));
+					subsystem.resize(comma);
+				}
+				if (subsystem == "console" || subsystem == "3")
+				{
+					options.subsystem = 3;
+				}
+				else if (subsystem == "windows" || subsystem == "2")
+				{
+					options.subsystem = 2;
+				}
+				else
+				{
+					fail("unsupported subsystem '" + subsystem + "' (choose console or windows)");
+				}
+			}
+			else if (optionName == "libpath" || shortPathOption)
+			{
+				const auto paths = requireValue("/LIBPATH");
+				size_t start = 0;
+				while (start <= paths.size())
+				{
+					const auto end = paths.find(';', start);
+					const auto part = paths.substr(start, end == string::npos ? string::npos : end - start);
+					if (!part.empty())
+					{
+						options.libraryPaths.emplace_back(part);
+					}
+					if (end == string::npos)
+					{
+						break;
+					}
+					start = end + 1;
+				}
+			}
+			else if (optionName == "defaultlib" || (argument[0] == '-' && optionName.size() > 1 && optionName[0] == 'l'))
+			{
+				const auto library = optionName == "defaultlib" ? requireValue("/DEFAULTLIB") : optionName.substr(1);
+				if (library.empty())
+				{
+					fail("/DEFAULTLIB requires a library name");
+				}
+				options.defaultLibraries.push_back(library);
+			}
+			else if (optionName == "delayload")
+			{
+				if (!value || value->empty())
+				{
+					fail("/DELAYLOAD requires an attached DLL name, for example /DELAYLOAD:plugin.dll");
+				}
+				options.delayLoadLibraries.push_back(*value);
+			}
+			else if (optionName == "debug")
+			{
+				if (value) fail("/DEBUG does not accept a value");
+				options.debug = true;
+			}
+			else if (optionName == "pdb")
+			{
+				options.pdbFile = fs::path(requireValue("/PDB"));
+				if (options.pdbFile->empty()) fail("/PDB requires an output path");
+				options.debug = true;
+			}
+			else if (optionName == "align")
+			{
+				const auto alignment = parseUnsignedOption(requireValue("/ALIGN"), "/ALIGN");
+				if (alignment < 0x200 || alignment > numeric_limits<uint32_t>::max() || (alignment & (alignment - 1)) != 0)
+				{
+					fail("/ALIGN must be a power of two between 512 and 0x80000000");
+				}
+				options.sectionAlignment = static_cast<uint32_t>(alignment);
+				options.fileAlignment = alignment < 0x1000 ? static_cast<uint32_t>(alignment) : 0x200;
+				options.sectionAlignmentSpecified = true;
+			}
+			else if (optionName == "base")
+			{
+				options.imageBase = parseUnsignedOption(requireValue("/BASE"), "/BASE");
+				options.imageBaseSpecified = true;
+				if (options.imageBase == 0 || (options.imageBase & 0xffff) != 0)
+				{
+					fail("/BASE must be a nonzero 64-KiB-aligned address");
+				}
+			}
+			else if (optionName == "dynamicbase")
+			{
+				if (value && lowerAscii(*value) != "yes" && lowerAscii(*value) != "no")
+				{
+					fail("/DYNAMICBASE accepts only YES or NO");
+				}
+				options.dynamicBase = !value || lowerAscii(*value) == "yes";
+			}
+			else if (optionName == "fixed")
+			{
+				if (value && lowerAscii(*value) != "yes" && lowerAscii(*value) != "no")
+				{
+					fail("/FIXED accepts only YES or NO");
+				}
+				options.dynamicBase = value && lowerAscii(*value) == "no";
+			}
+			else if (optionName == "nodefaultlib")
+			{
+				if (value)
+				{
+					auto excluded = lowerAscii(fs::path(*value).filename().string());
+					if (fs::path(excluded).extension().empty())
+					{
+						excluded += ".lib";
+					}
+					excludedLibraries.push_back(excluded);
+					options.excludedDefaultLibraries.push_back(move(excluded));
+				}
+				else
+				{
+					options.noDefaultLibraries = true;
+				}
+			}
+			else if (optionName == "map")
+			{
+				if (value && !value->empty())
+				{
+					options.mapFile = fs::path(*value);
+					mapUsesDefaultName = false;
+				}
+				else
+				{
+					options.mapFile.reset();
+					mapUsesDefaultName = true;
+				}
+			}
+			else if (optionName == "machine")
+			{
+				const auto machine = lowerAscii(requireValue("/MACHINE"));
+				if (machine == "x64" || machine == "amd64") options.machine = 0x8664;
+				else if (machine == "x86" || machine == "i386") options.machine = 0x014c;
+				else fail("JWlink2 supports /MACHINE:X64 or /MACHINE:X86");
+			}
+			else if (optionName == "nologo")
+			{
+				options.noLogo = true;
+			}
+			else if (optionName == "nxcompat")
+			{
+				if (value && lowerAscii(*value) != "yes" && lowerAscii(*value) != "no")
+				{
+					fail("/NXCOMPAT accepts only YES or NO");
+				}
+				options.nxCompat = !value || lowerAscii(*value) == "yes";
+			}
+			else if (optionName == "include")
+			{
+				const auto symbol = requireValue("/INCLUDE");
+				if (symbol.empty()) fail("/INCLUDE requires a symbol name");
+				if (find(options.includeSymbols.begin(), options.includeSymbols.end(), symbol) == options.includeSymbols.end()) options.includeSymbols.push_back(symbol);
+			}
+			else if (directiveSyntax && (optionName == "jw-stack" || optionName == "jw-heapsize"))
+			{
+				const auto number = parseUnsignedOption(requireValue("JWlink size option"), "JWlink size option");
+				if (number > numeric_limits<uint32_t>::max() || (optionName == "jw-heapsize" && number == 0)) fail("invalid JWlink size option");
+				auto& reserve = optionName == "jw-stack" ? options.stackReserve : options.heapReserve;
+				auto& commit = optionName == "jw-stack" ? options.stackCommit : options.heapCommit;
+				reserve = number;
+				commit = min<uint64_t>(0x1000, reserve);
+			}
+			else if (directiveSyntax && (optionName == "jw-nxcompat" || optionName == "jw-largeaddressaware" || optionName == "jw-nolargeaddressaware"))
+			{
+				if (optionName == "jw-nxcompat") options.nxCompat = false;
+				else if (optionName == "jw-nolargeaddressaware") options.largeAddressAware = false;
+			}
+			else if (directiveSyntax && (optionName == "jw-version" || optionName == "jw-osversion" || optionName == "jw-linkversion"))
+			{
+				const auto text = requireValue("JWlink version option");
+				const auto dot = text.find('.');
+				const auto major = parseUnsignedOption(string_view(text).substr(0, dot), "JWlink version option");
+				const auto minor = dot == string::npos ? 0 : parseUnsignedOption(string_view(text).substr(dot + 1), "JWlink version option");
+				const auto maxMajor = optionName == "jw-linkversion" ? 255u : 65535u;
+				const auto maxMinor = optionName == "jw-linkversion" ? 255u : 99u;
+				if (major > maxMajor || minor > maxMinor) fail("invalid JWlink version option");
+				if (optionName == "jw-version") { options.imageVersionMajor = static_cast<uint16_t>(major); options.imageVersionMinor = static_cast<uint16_t>(minor); }
+				else if (optionName == "jw-osversion") { options.osVersionMajor = static_cast<uint16_t>(major); options.osVersionMinor = static_cast<uint16_t>(minor); }
+				else { options.linkerVersionMajor = static_cast<uint8_t>(major); options.linkerVersionMinor = static_cast<uint8_t>(minor); }
+			}
+			else if (optionName == "wholearchive")
+			{
+				if (!value || value->empty())
+				{
+					options.wholeArchiveAll = true;
+				}
+				else
+				{
+					fs::path library(*value);
+					if (library.extension().empty()) library += ".lib";
+					options.wholeArchives.push_back(move(library));
+				}
+			}
+			else if (optionName == "stack" || optionName == "heap")
+			{
+				const auto spelling = optionName == "stack" ? "/STACK" : "/HEAP";
+				const auto text = requireValue(spelling);
+				const auto comma = text.find(',');
+				const auto reserve = parseUnsignedOption(string_view(text).substr(0, comma), spelling);
+				auto commit = optionName == "stack" ? options.stackCommit : options.heapCommit;
+				if (comma != string::npos) commit = parseUnsignedOption(string_view(text).substr(comma + 1), spelling);
+				if (reserve == 0 || commit > reserve) fail(string(spelling) + " reserve must be nonzero and not smaller than commit");
+				(optionName == "stack" ? options.stackReserve : options.heapReserve) = reserve;
+				(optionName == "stack" ? options.stackCommit : options.heapCommit) = commit;
+			}
+			else if (optionName == "merge")
+			{
+				const auto text = requireValue("/MERGE");
+				const auto equals = text.find('=');
+				if (equals == string::npos || equals == 0 || equals + 1 == text.size()) fail("/MERGE requires <from>=<to>");
+				auto from = text.substr(0, equals);
+				auto to = text.substr(equals + 1);
+				for (const auto* name : { &from, &to })
+				{
+					if (name->size() > 8 || (*name)[0] != '.') fail("/MERGE section names must start with '.' and be at most 8 characters");
+					for (const auto* reserved : { ".pdata", ".reloc", ".idata", ".edata", ".rsrc", ".tls", ".didat", ".debug" })
+					{
+						if (*name == reserved) fail("/MERGE cannot move or target the linker-managed section '" + *name + "'");
+					}
+				}
+				if (from == to) fail("/MERGE source and destination are the same section");
+				if (any_of(options.mergeSections.begin(), options.mergeSections.end(), [&](const auto& item) { return item.first == from || item.second == from || item.first == to; })) fail("/MERGE would chain or repeat section '" + from + "'");
+				options.mergeSections.emplace_back(move(from), move(to));
+			}
+			else if (optionName == "section")
+			{
+				const auto text = requireValue("/SECTION");
+				const auto comma = text.find(',');
+				if (comma == string::npos || comma == 0 || comma + 1 == text.size()) fail("/SECTION requires <name>,<attributes>");
+				uint32_t flags = 0;
+				for (const auto ch : lowerAscii(text.substr(comma + 1)))
+				{
+					switch (ch)
+					{
+						case 'e': flags |= 0x20000000; break;
+						case 'r': flags |= 0x40000000; break;
+						case 'w': flags |= 0x80000000; break;
+						case 's': flags |= 0x10000000; break;
+						case 'd': flags |= 0x02000000; break;
+						case 'k': flags |= 0x04000000; break;
+						case 'p': flags |= 0x08000000; break;
+						default: fail(string("/SECTION attribute '") + ch + "' is not one of E R W S D K P");
+					}
+				}
+				options.sectionFlags.emplace_back(text.substr(0, comma), flags);
+			}
+			else if (optionName == "verbose")
+			{
+				if (value) fail("/VERBOSE does not accept a value");
+				options.verbose = true;
+			}
+			else if (optionName == "manifest")
+			{
+				const auto mode = value ? lowerAscii(*value) : string();
+				if (!value || mode == "external") options.manifestMode = LinkOptions::ManifestMode::External;
+				else if (mode == "no") options.manifestMode = LinkOptions::ManifestMode::None;
+				else if (mode == "embed" || mode.rfind("embed,id=", 0) == 0)
+				{
+					options.manifestMode = LinkOptions::ManifestMode::Embed;
+					if (mode.size() > 5)
+					{
+						const auto id = parseUnsignedOption(string_view(mode).substr(9), "/MANIFEST:EMBED,ID");
+						if (id == 0 || id > 65535) fail("/MANIFEST:EMBED,ID must be between 1 and 65535");
+						options.manifestId = static_cast<uint16_t>(id);
+					}
+				}
+				else fail("/MANIFEST accepts NO, EXTERNAL, EMBED, or EMBED,ID=<n>");
+			}
+			else if (optionName == "manifestinput")
+			{
+				options.manifestInput = fs::path(requireValue("/MANIFESTINPUT"));
+				if (options.manifestInput->empty()) fail("/MANIFESTINPUT requires a file");
+				if (options.manifestMode == LinkOptions::ManifestMode::None) options.manifestMode = LinkOptions::ManifestMode::Embed;
+			}
+			else if (optionName == "manifestfile")
+			{
+				options.manifestFile = fs::path(requireValue("/MANIFESTFILE"));
+				if (options.manifestFile->empty()) fail("/MANIFESTFILE requires a path");
+			}
+			else if (optionName == "incremental")
+			{
+				if (!value || lowerAscii(*value) != "no")
+				{
+					fail("incremental linking is not supported; use /INCREMENTAL:NO");
+				}
+			}
+			else
+			{
+				fail("unsupported option '" + argument + "'");
+			}
+		}
+		for (const auto* name : directiveSyntax ? vector<const char*>{ "LIBPE", "LIB386", "LIB" } : vector<const char*>{ "LIB" })
+		{
+			const auto paths = environmentValue(name);
+			if (!paths) continue;
+			size_t start = 0;
+			while (start <= paths->size())
+			{
+				const auto end = paths->find(';', start);
+				const auto part = paths->substr(start, end == string::npos ? string::npos : end - start);
+				if (!part.empty()) options.libraryPaths.emplace_back(part);
+				if (end == string::npos) break;
+				start = end + 1;
+			}
+		}
+		if (options.machine == 0x014c && !options.imageBaseSpecified) options.imageBase = 0x400000;
+		if (options.noEntry && (!options.dll || options.entrySpecified))
+		{
+			fail("/NOENTRY is valid only for a DLL without /ENTRY");
+		}
+		if (options.importLibrarySpecified && !options.dll)
+		{
+			fail("/IMPLIB requires /DLL");
+		}
+		if (options.dll && !options.outputSpecified)
+		{
+			options.output.replace_extension(".dll");
+		}
+		if (options.debug && !options.pdbFile)
+		{
+			auto pdbPath = options.output;
+			pdbPath.replace_extension(".pdb");
+			options.pdbFile = move(pdbPath);
+		}
+		if (options.dll && !options.importLibrary)
+		{
+			auto libraryPath = options.output;
+			libraryPath.replace_extension(".lib");
+			options.importLibrary = move(libraryPath);
+		}
+		if (options.noDefaultLibraries)
+		{
+			options.defaultLibraries.clear();
+		}
+		else if (!excludedLibraries.empty())
+		{
+			erase_if(options.defaultLibraries, [&](const string& library)
+				{
+					auto normalized = lowerAscii(fs::path(library).filename().string());
+					if (fs::path(normalized).extension().empty())
+					{
+						normalized += ".lib";
+					}
+					return find(excludedLibraries.begin(), excludedLibraries.end(), normalized) != excludedLibraries.end();
+				});
+		}
+		if (mapUsesDefaultName && !options.mapFile)
+		{
+			auto mapPath = options.output;
+			mapPath.replace_extension(".map");
+			options.mapFile = move(mapPath);
+		}
+		if (options.inputs.empty() && options.defaultLibraries.empty() && options.wholeArchives.empty())
+		{
+			fail("no input object files or libraries were supplied; use --help for usage");
+		}
+		return options;
+	}
+} // namespace jwlink2

@@ -108,7 +108,7 @@ namespace JWlink2
 			bool byOrdinal = false;
 		};
 
-		ImportedSymbol parseImportObject(const Bytes& bytes, const string& path, uint16_t machine);
+		ImportedSymbol parseImportObject(const Bytes& bytes, const string& path, uint16_t& machine);
 
 		bool hasBitcodeMagic(const Bytes& bytes, size_t offset, size_t size);
 
@@ -124,7 +124,7 @@ namespace JWlink2
 
 		bool isBigObjCandidate(const Bytes& bytes);
 
-		ObjectFile parseObject(const Bytes& bytes, string name, uint16_t machine);
+		ObjectFile parseObject(const Bytes& bytes, string name, uint16_t& machine);
 
 		struct ArchiveMember
 		{
@@ -159,7 +159,7 @@ namespace JWlink2
 
 		vector<PendingArchiveSymbol> parseSym64LinkerMember(const Bytes& bytes, size_t offset, size_t size, const string& path);;
 
-		Archive parseArchive(const Bytes& bytes, const string& path, uint16_t machine);
+		Archive parseArchive(const Bytes& bytes, const string& path, uint16_t& machine);
 
 		Bytes readFile(const fs::path& path);
 
@@ -325,6 +325,7 @@ namespace JWlink2
 			uint32_t debugDirectorySize_ = 0;
 
 			bool isDefined(const CoffSymbol& symbol) const;
+			string explicitEntryName() const;
 			set<string> unresolvedNames() const;
 			void validateUnresolvedSymbols() const;
 			fs::path resolveInputPath(const fs::path& path) const;

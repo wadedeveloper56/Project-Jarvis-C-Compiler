@@ -23,14 +23,6 @@ namespace JWlink2
 
 		void Linker::run()
 		{
-			if (options_.machine == 0x014c)
-			{
-				if (options_.dll || options_.importLibrarySpecified || options_.definitionFile || !options_.exports.empty()) fail("x86 DLLs and exports are not yet supported");
-				if (options_.debug || !options_.delayLoadLibraries.empty()) fail("x86 debug and delay-load output are not yet supported");
-				if (options_.manifestMode == LinkOptions::ManifestMode::Embed) fail("x86 embedded manifests are not yet supported");
-				if (!options_.entry) fail("x86 links require an explicit /ENTRY symbol");
-				if (options_.stackReserve > UINT32_MAX || options_.stackCommit > UINT32_MAX || options_.heapReserve > UINT32_MAX || options_.heapCommit > UINT32_MAX) fail("x86 stack and heap sizes must fit in 32 bits");
-			}
 			if (options_.importLibrary && lowerAscii(fs::absolute(*options_.importLibrary).lexically_normal().string()) == lowerAscii(fs::absolute(options_.output).lexically_normal().string()))
 			{
 				fail("import-library output path must differ from the image output path");
@@ -42,9 +34,14 @@ namespace JWlink2
 			loadDefinitionFile();
 			loadInputs();
 			resolveLibraries();
+			if (options_.machine == 0) options_.machine = MachineAmd64;
 			if (options_.machine == 0x014c)
 			{
-				if (!options_.delayLoadLibraries.empty() || !options_.exports.empty()) fail("x86 exports and delay-load output are not yet supported");
+				if (!options_.imageBaseSpecified) options_.imageBase = 0x400000;
+				if (options_.dll || options_.importLibrarySpecified || options_.definitionFile || !options_.exports.empty()) fail("x86 DLLs and exports are not yet supported");
+				if (options_.debug || !options_.delayLoadLibraries.empty()) fail("x86 debug and delay-load output are not yet supported");
+				if (options_.manifestMode == LinkOptions::ManifestMode::Embed) fail("x86 embedded manifests are not yet supported");
+				if (options_.stackReserve > UINT32_MAX || options_.stackCommit > UINT32_MAX || options_.heapReserve > UINT32_MAX || options_.heapCommit > UINT32_MAX) fail("x86 stack and heap sizes must fit in 32 bits");
 				for (const auto& object : objects_) for (const auto& section : object.sections)
 				{
 					const auto name = section.name.substr(0, section.name.find('$'));
@@ -93,6 +90,19 @@ namespace JWlink2
 		bool Linker::isDefined(const CoffSymbol& symbol) const
 		{
 			return symbol.storageClass == 2 && (symbol.sectionNumber > 0 || symbol.sectionNumber == -1 || (symbol.sectionNumber == 0 && symbol.value != 0));
+		}
+
+		string Linker::explicitEntryName() const
+		{
+			const auto& entry = *options_.entry;
+			if (options_.machine != 0x014c || options_.jwlinkDirectiveSyntax || entry.empty() || entry[0] == '_' || entry[0] == '@' || entry[0] == '?') return entry;
+			auto defines = [&](const ObjectFile& object)
+				{
+					return any_of(object.symbols.begin(), object.symbols.end(), [&](const CoffSymbol& symbol) { return !symbol.auxiliary && symbol.name == entry && isDefined(symbol); });
+				};
+			if (any_of(objects_.begin(), objects_.end(), defines)) return entry;
+			for (const auto& archive : archives_) for (const auto& member : archive.members) if (member.object && defines(*member.object)) return entry;
+			return "_" + entry;
 		}
 
 		set<string> Linker::unresolvedNames() const
@@ -190,9 +200,10 @@ namespace JWlink2
 			}
 			if (options_.entry)
 			{
-				if (!defined.contains(*options_.entry))
+				const auto entry = explicitEntryName();
+				if (!defined.contains(entry))
 				{
-					unresolved.insert(*options_.entry);
+					unresolved.insert(entry);
 				}
 			}
 			else if (!options_.jwlinkDirectiveSyntax)
@@ -204,8 +215,9 @@ namespace JWlink2
 						unresolved.insert("DllMainCRTStartup");
 					}
 				}
-				else if (!(options_.subsystem == 2 && defined.contains("WinMainCRTStartup")) &&
-					!defined.contains("mainCRTStartup") && !defined.contains("main"))
+				else if (const string prefix = options_.machine == 0x014c ? "_" : "";
+					!(options_.subsystem == 2 && defined.contains(prefix + "WinMainCRTStartup")) &&
+					!defined.contains(prefix + "mainCRTStartup") && !defined.contains(prefix + "main"))
 				{
 					auto archiveDefines = [&](string_view name)
 						{
@@ -219,8 +231,8 @@ namespace JWlink2
 								});
 						};
 					const bool useGuiStartup = options_.subsystem == 2 &&
-						(archiveDefines("WinMainCRTStartup") || !archiveDefines("mainCRTStartup"));
-					unresolved.insert(useGuiStartup ? "WinMainCRTStartup" : "mainCRTStartup");
+						(archiveDefines(prefix + "WinMainCRTStartup") || !archiveDefines(prefix + "mainCRTStartup"));
+					unresolved.insert(prefix + (useGuiStartup ? "WinMainCRTStartup" : "mainCRTStartup"));
 				}
 			}
 			return unresolved;
@@ -2137,26 +2149,27 @@ namespace JWlink2
 				return options_.dll ? 0 : outputSections_.front().rva;
 			}
 			string entry;
+			const string prefix = options_.machine == 0x014c ? "_" : "";
 			if (options_.entry)
 			{
-				entry = *options_.entry;
+				entry = explicitEntryName();
 			}
 			else if (options_.dll)
 			{
 				if (!globals_.contains("DllMainCRTStartup")) return 0;
 				entry = "DllMainCRTStartup";
 			}
-			else if (options_.subsystem == 2 && globals_.contains("WinMainCRTStartup"))
+			else if (options_.subsystem == 2 && globals_.contains(prefix + "WinMainCRTStartup"))
 			{
-				entry = "WinMainCRTStartup";
+				entry = prefix + "WinMainCRTStartup";
 			}
-			else if (globals_.contains("mainCRTStartup"))
+			else if (globals_.contains(prefix + "mainCRTStartup"))
 			{
-				entry = "mainCRTStartup";
+				entry = prefix + "mainCRTStartup";
 			}
-			else if (globals_.contains("main"))
+			else if (globals_.contains(prefix + "main"))
 			{
-				entry = "main";
+				entry = prefix + "main";
 			}
 			else
 			{
