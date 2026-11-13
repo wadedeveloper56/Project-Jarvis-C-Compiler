@@ -389,17 +389,35 @@ namespace JWlink2
 					requireRange(bytes, rawOffset, rawSize, object.name + " section data");
 					section.data.assign(bytes.begin() + rawOffset, bytes.begin() + rawOffset + rawSize);
 				}
-				if (relocationCount == 0xffff)
+				const bool overflow = (section.characteristics & 0x01000000u) != 0;
+				size_t tableCount = relocationCount;
+				size_t firstRelocation = 0;
+				if (overflow)
 				{
-					fail(object.name + ": extended COFF relocation tables are not supported");
-				}
-				if (relocationCount != 0)
-				{
-					requireRange(bytes, relocationOffset, static_cast<size_t>(relocationCount) * 10, object.name + " relocation table");
-					section.relocations.reserve(relocationCount);
-					for (uint16_t r = 0; r < relocationCount; ++r)
+					if (relocationCount != 0xffff || relocationOffset == 0)
 					{
-						const auto entry = static_cast<size_t>(relocationOffset) + static_cast<size_t>(r) * 10;
+						fail(object.name + ": invalid COFF relocation overflow header");
+					}
+					const auto record = static_cast<size_t>(relocationOffset);
+					requireRange(bytes, record, 10, object.name + " relocation overflow record");
+					tableCount = readLe<uint32_t>(bytes, record, object.name);
+					if (tableCount < 0x10000 || readLe<uint32_t>(bytes, record + 4, object.name) != 0 || readLe<uint16_t>(bytes, record + 8, object.name) != 0)
+					{
+						fail(object.name + ": invalid COFF relocation overflow record");
+					}
+					firstRelocation = 1;
+				}
+				if (tableCount != 0)
+				{
+					if (relocationOffset == 0 || tableCount > numeric_limits<size_t>::max() / 10)
+					{
+						fail(object.name + ": invalid COFF relocation table size or offset");
+					}
+					requireRange(bytes, relocationOffset, tableCount * 10, object.name + " relocation table");
+					section.relocations.reserve(tableCount - firstRelocation);
+					for (size_t r = firstRelocation; r < tableCount; ++r)
+					{
+						const auto entry = static_cast<size_t>(relocationOffset) + r * 10;
 						section.relocations.push_back({
 							readLe<uint32_t>(bytes, entry, object.name),
 							readLe<uint32_t>(bytes, entry + 4, object.name),
@@ -515,7 +533,7 @@ namespace JWlink2
 			{
 				for (const auto& relocation : section.relocations)
 				{
-					if (relocation.symbolIndex >= object.symbols.size() || object.symbols[relocation.symbolIndex].auxiliary)
+					if (relocation.type != 0 && (relocation.symbolIndex >= object.symbols.size() || object.symbols[relocation.symbolIndex].auxiliary))
 					{
 						fail(object.name + ": relocation refers to an invalid COFF symbol");
 					}

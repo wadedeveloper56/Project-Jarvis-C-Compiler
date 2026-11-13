@@ -1,0 +1,19 @@
+﻿option casemap:none
+.data
+public table
+table label byte
+ dw section target
+ dd secrel target+3
+ dd imagerel target
+ dq target
+.code
+public main
+main proc
+ mov eax, dword ptr [table]
+ lea rax, table
+ ret
+main endp
+target proc
+ ret
+target endp
+end

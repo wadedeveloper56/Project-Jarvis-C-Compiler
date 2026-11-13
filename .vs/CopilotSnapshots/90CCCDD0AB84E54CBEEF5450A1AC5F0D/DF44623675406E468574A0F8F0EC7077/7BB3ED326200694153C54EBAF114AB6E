@@ -1,0 +1,1234 @@
+﻿#include "pch.h"
+#include "command_line.h"
+#include "codeview_pdb.h"
+#include "linker.h"
+
+using namespace std;
+
+namespace JWlink2
+{
+	using Bytes = vector<uint8_t>;
+
+	namespace LinkerEngine
+	{
+		constexpr uint16_t MachineAmd64 = 0x8664;
+		constexpr array<uint8_t, 16> BigObjClassId{ 0xc7, 0xa1, 0xba, 0xd1, 0xee, 0xba, 0xa9, 0x4b, 0xaf, 0x20, 0xfa, 0xf6, 0x6a, 0xa4, 0xdc, 0xb8 };
+
+		[[noreturn]] void fail(const string& message)
+		{
+			throw runtime_error(message);
+		}
+
+		void requireRange(const Bytes& bytes, size_t offset, size_t size, string_view what)
+		{
+			if (offset > bytes.size() || size > bytes.size() - offset)
+			{
+				fail("truncated " + string(what));
+			}
+		}
+
+		size_t alignUp(size_t value, size_t alignment)
+		{
+			if (alignment == 0 || (alignment & (alignment - 1)) != 0)
+			{
+				fail("invalid alignment in input object");
+			}
+			const auto remainder = value & (alignment - 1);
+			if (remainder == 0)
+			{
+				return value;
+			}
+			const auto padding = alignment - remainder;
+			if (value > numeric_limits<size_t>::max() - padding)
+			{
+				fail("input is too large");
+			}
+			return value + padding;
+		}
+
+		uint32_t toU32(size_t value, string_view what)
+		{
+			if (value > numeric_limits<uint32_t>::max())
+			{
+				fail(string(what) + " exceeds the PE32+ size limit");
+			}
+			return static_cast<uint32_t>(value);
+		}
+
+		string fixedString(const Bytes& bytes, size_t offset, size_t length)
+		{
+			requireRange(bytes, offset, length, "string field");
+			size_t end = offset;
+			while (end < offset + length && bytes[end] != 0)
+			{
+				++end;
+			}
+			return string(reinterpret_cast<const char*>(bytes.data() + offset), end - offset);
+		}
+
+		string stringAt(const Bytes& bytes, size_t tableOffset, uint32_t tableSize, uint32_t stringOffset, string_view what)
+		{
+			if (stringOffset < 4 || stringOffset >= tableSize)
+			{
+				fail("invalid " + string(what) + " string-table offset");
+			}
+			const auto start = tableOffset + stringOffset;
+			requireRange(bytes, start, tableSize - stringOffset, what);
+			auto end = start;
+			while (end < tableOffset + tableSize && bytes[end] != 0)
+			{
+				++end;
+			}
+			if (end == tableOffset + tableSize)
+			{
+				fail("unterminated " + string(what) + " string");
+			}
+			return string(reinterpret_cast<const char*>(bytes.data() + start), end - start);
+		}
+
+		ImportedSymbol parseImportObject(const Bytes& bytes, const string& path)
+		{
+			requireRange(bytes, 0, 20, path + " import object");
+			if (readLe<uint16_t>(bytes, 0, path) != 0 || readLe<uint16_t>(bytes, 2, path) != 0xffff)
+			{
+				fail(path + ": malformed COFF import object signature");
+			}
+			const auto machine = readLe<uint16_t>(bytes, 6, path);
+			if (machine != MachineAmd64)
+			{
+				fail(path + ": import library member is not AMD64");
+			}
+			const auto dataSize = readLe<uint32_t>(bytes, 12, path);
+			const auto hint = readLe<uint16_t>(bytes, 16, path);
+			const auto typeInfo = readLe<uint16_t>(bytes, 18, path);
+			if ((typeInfo & 3) > 2 || ((typeInfo >> 2) & 7) > 4)
+			{
+				fail(path + ": unsupported COFF import-object type or name encoding");
+			}
+			requireRange(bytes, 20, dataSize, path + " import-object strings");
+			auto readString = [&](size_t& offset)
+				{
+					if (offset >= 20 + dataSize)
+					{
+						fail(path + ": truncated COFF import-object strings");
+					}
+					const auto begin = offset;
+					while (offset < 20 + dataSize && bytes[offset] != 0)
+					{
+						++offset;
+					}
+					if (offset == 20 + dataSize)
+					{
+						fail(path + ": unterminated COFF import-object string");
+					}
+					string value(reinterpret_cast<const char*>(bytes.data() + begin), offset - begin);
+					++offset;
+					return value;
+				};
+			size_t cursor = 20;
+			ImportedSymbol result;
+			result.publicName = readString(cursor);
+			result.dllName = readString(cursor);
+			result.ordinalOrHint = hint;
+			result.type = static_cast<uint8_t>(typeInfo & 3);
+			result.nameType = static_cast<uint8_t>((typeInfo >> 2) & 7);
+			result.byOrdinal = result.nameType == 0;
+			if (result.publicName.empty() || result.dllName.empty())
+			{
+				fail(path + ": import object has an empty symbol or DLL name");
+			}
+			if (result.byOrdinal)
+			{
+				result.importName = result.publicName;
+			}
+			else if (result.nameType == 1)
+			{
+				result.importName = result.publicName;
+			}
+			else if (result.nameType == 2 || result.nameType == 3)
+			{
+				result.importName = result.publicName;
+				if (!result.importName.empty() && (result.importName.front() == '?' || result.importName.front() == '@' || result.importName.front() == '_'))
+				{
+					result.importName.erase(result.importName.begin());
+				}
+				if (result.nameType == 3)
+				{
+					const auto decoration = result.importName.rfind('@');
+					if (decoration != string::npos)
+					{
+						result.importName.erase(decoration);
+					}
+				}
+			}
+			else
+			{
+				result.importName = readString(cursor);
+			}
+			if (result.importName.empty() && !result.byOrdinal)
+			{
+				fail(path + ": import object resolves to an empty import name");
+			}
+			return result;
+		}
+
+		bool hasBitcodeMagic(const Bytes& bytes, size_t offset, size_t size)
+		{
+			if (size < 4 || offset > bytes.size() || size > bytes.size() - offset)
+			{
+				return false;
+			}
+			const auto* data = bytes.data() + offset;
+			const bool rawBitcode = data[0] == 0x42 && data[1] == 0x43 && data[2] == 0xc0 && data[3] == 0xde;
+			const bool wrappedBitcode = data[0] == 0xde && data[1] == 0xc0 && data[2] == 0x17 && data[3] == 0x0b;
+			return rawBitcode || wrappedBitcode;
+		}
+
+		void rejectBitcode(const Bytes& bytes, size_t offset, size_t size, const string& inputName)
+		{
+			if (hasBitcodeMagic(bytes, offset, size))
+			{
+				fail(inputName + ": LLVM bitcode/LTCG input is not supported; compile without LTO or provide native AMD64 COFF objects");
+			}
+		}
+
+		uint32_t coffNameOffset(const Bytes& bytes, size_t offset)
+		{
+			if (bytes[offset] == '/' && bytes[offset + 1] != 0)
+			{
+				string text = fixedString(bytes, offset + 1, 7);
+				uint32_t result = 0;
+				const auto parsed = from_chars(text.data(), text.data() + text.size(), result);
+				if (parsed.ec != errc{} || parsed.ptr == text.data())
+				{
+					fail("invalid long COFF section name");
+				}
+				return result;
+			}
+			return 0;
+		}
+
+		string lowerAscii(string value)
+		{
+			transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) { return static_cast<char>(tolower(ch)); });
+			return value;
+		}
+
+		uint64_t parseDirectiveNumber(string_view text, const string& objectName, string_view option)
+		{
+			int base = 10;
+			if (text.size() > 2 && text[0] == '0' && (text[1] == 'x' || text[1] == 'X'))
+			{
+				text.remove_prefix(2);
+				base = 16;
+			}
+			uint64_t value = 0;
+			const auto parsed = from_chars(text.data(), text.data() + text.size(), value, base);
+			if (text.empty() || parsed.ec != errc{} || parsed.ptr != text.data() + text.size())
+			{
+				fail(objectName + ": invalid value for .drectve " + string(option));
+			}
+			return value;
+		}
+
+		vector<string> tokenizeDirectives(const Bytes& bytes, const string& objectName)
+		{
+			vector<string> tokens;
+			string token;
+			bool quoted = false;
+			for (size_t i = 0; i < bytes.size(); ++i)
+			{
+				const auto ch = bytes[i] == 0 ? ' ' : static_cast<char>(bytes[i]);
+				if (ch == '"')
+				{
+					quoted = !quoted;
+				}
+				else if (isspace(static_cast<unsigned char>(ch)) && !quoted)
+				{
+					if (!token.empty())
+					{
+						tokens.push_back(move(token));
+						token.clear();
+					}
+				}
+				else
+				{
+					token.push_back(ch);
+				}
+			}
+			if (quoted)
+			{
+				fail(objectName + ": unterminated quote in .drectve section");
+			}
+			if (!token.empty())
+			{
+				tokens.push_back(move(token));
+			}
+			return tokens;
+		}
+
+		bool isBigObjCandidate(const Bytes& bytes)
+		{
+			return bytes.size() >= 8 && readLe<uint16_t>(bytes, 0, "BigObj signature") == 0 &&
+				readLe<uint16_t>(bytes, 2, "BigObj signature") == 0xffff &&
+				readLe<uint16_t>(bytes, 4, "BigObj version") >= 2;
+		}
+
+		ObjectFile parseObject(const Bytes& bytes, string name)
+		{
+			requireRange(bytes, 0, 20, name);
+			const bool bigObj = isBigObjCandidate(bytes);
+			uint32_t sectionCount = 0;
+			uint32_t symbolOffset = 0;
+			uint32_t symbolCount = 0;
+			size_t symbolSize = 18;
+			size_t sectionTable = 20;
+			uint16_t machine = 0;
+			if (bigObj)
+			{
+				requireRange(bytes, 0, 56, name + " BigObj header");
+				if (readLe<uint16_t>(bytes, 4, name) != 2 || !equal(BigObjClassId.begin(), BigObjClassId.end(), bytes.begin() + 12))
+				{
+					fail(name + ": unsupported anonymous COFF object signature");
+				}
+				machine = readLe<uint16_t>(bytes, 6, name);
+				sectionCount = readLe<uint32_t>(bytes, 44, name);
+				symbolOffset = readLe<uint32_t>(bytes, 48, name);
+				symbolCount = readLe<uint32_t>(bytes, 52, name);
+				symbolSize = 20;
+				sectionTable = 56;
+			}
+			else
+			{
+				machine = readLe<uint16_t>(bytes, 0, name);
+				sectionCount = readLe<uint16_t>(bytes, 2, name);
+				symbolOffset = readLe<uint32_t>(bytes, 8, name);
+				symbolCount = readLe<uint32_t>(bytes, 12, name);
+				sectionTable += readLe<uint16_t>(bytes, 16, name);
+			}
+			if (machine != MachineAmd64)
+			{
+				ostringstream message;
+				message << name << ": expected AMD64 COFF object (machine 0x8664), got 0x" << hex << machine;
+				fail(message.str());
+			}
+			if (sectionCount > (numeric_limits<size_t>::max() - sectionTable) / 40)
+			{
+				fail(name + ": section table is too large");
+			}
+			requireRange(bytes, sectionTable, static_cast<size_t>(sectionCount) * 40, name + " section table");
+
+			size_t stringTableOffset = 0;
+			uint32_t stringTableSize = 0;
+			if (symbolCount != 0)
+			{
+				if (symbolOffset == 0)
+				{
+					fail(name + ": missing COFF symbol table");
+				}
+				if (symbolCount > numeric_limits<size_t>::max() / symbolSize)
+				{
+					fail(name + ": symbol table is too large");
+				}
+				const auto symbolsBytes = static_cast<size_t>(symbolCount) * symbolSize;
+				requireRange(bytes, symbolOffset, symbolsBytes, name + " symbol table");
+				stringTableOffset = static_cast<size_t>(symbolOffset) + symbolsBytes;
+				requireRange(bytes, stringTableOffset, 4, name + " string table");
+				stringTableSize = readLe<uint32_t>(bytes, stringTableOffset, name + " string table");
+				if (stringTableSize < 4)
+				{
+					fail(name + ": invalid COFF string table size");
+				}
+				requireRange(bytes, stringTableOffset, stringTableSize, name + " string table");
+			}
+
+			ObjectFile object;
+			object.name = move(name);
+			object.sections.reserve(sectionCount);
+			for (uint32_t i = 0; i < sectionCount; ++i)
+			{
+				const auto header = sectionTable + static_cast<size_t>(i) * 40;
+				const auto nameOffset = coffNameOffset(bytes, header);
+				string sectionName = fixedString(bytes, header, 8);
+				if (nameOffset != 0)
+				{
+					if (stringTableSize == 0)
+					{
+						fail(object.name + ": long section name without a COFF string table");
+					}
+					sectionName = stringAt(bytes, stringTableOffset, stringTableSize, nameOffset, "section");
+				}
+				if (sectionName.empty())
+				{
+					fail(object.name + ": section with an empty name");
+				}
+				const auto normalizedSectionName = lowerAscii(sectionName);
+				if (normalizedSectionName == ".llvmbc" || normalizedSectionName == ".llvm.lto" || normalizedSectionName.rfind(".lto$", 0) == 0)
+				{
+					fail(object.name + ": LLVM bitcode/LTCG section '" + sectionName + "' is not supported; compile without LTO or provide native AMD64 COFF objects");
+				}
+				InputSection section;
+				section.codeViewTypes = normalizedSectionName == ".debug$t";
+				section.codeViewSymbols = normalizedSectionName == ".debug$s";
+				section.name = move(sectionName);
+				section.linkerDirective = section.name == ".drectve";
+				section.virtualSize = readLe<uint32_t>(bytes, header + 8, object.name);
+				const auto rawSize = readLe<uint32_t>(bytes, header + 16, object.name);
+				const auto rawOffset = readLe<uint32_t>(bytes, header + 20, object.name);
+				const auto relocationOffset = readLe<uint32_t>(bytes, header + 24, object.name);
+				const auto relocationCount = readLe<uint16_t>(bytes, header + 32, object.name);
+				section.characteristics = readLe<uint32_t>(bytes, header + 36, object.name);
+				const auto alignmentCode = (section.characteristics >> 20) & 0x0f;
+				if (alignmentCode > 14)
+				{
+					fail(object.name + ": unsupported section alignment");
+				}
+				section.alignment = alignmentCode == 0 ? 1u : (1u << (alignmentCode - 1));
+				if (rawSize != 0)
+				{
+					requireRange(bytes, rawOffset, rawSize, object.name + " section data");
+					section.data.assign(bytes.begin() + rawOffset, bytes.begin() + rawOffset + rawSize);
+				}
+				const bool overflow = (section.characteristics & 0x01000000u) != 0;
+				size_t tableCount = relocationCount;
+				size_t firstRelocation = 0;
+				if (overflow)
+				{
+					if (relocationCount != 0xffff || relocationOffset == 0)
+					{
+						fail(object.name + ": invalid COFF relocation overflow header");
+					}
+					requireRange(bytes, relocationOffset, 10, object.name + " relocation overflow record");
+					tableCount = readLe<uint32_t>(bytes, relocationOffset, object.name);
+					if (tableCount < 0x10000 || readLe<uint32_t>(bytes, relocationOffset + 4, object.name) != 0 || readLe<uint16_t>(bytes, relocationOffset + 8, object.name) != 0)
+					{
+						fail(object.name + ": invalid COFF relocation overflow record");
+					}
+					firstRelocation = 1;
+				}
+				if (tableCount != 0)
+				{
+					if (relocationOffset == 0 || tableCount > numeric_limits<size_t>::max() / 10)
+					{
+						fail(object.name + ": invalid COFF relocation table size or offset");
+					}
+					requireRange(bytes, relocationOffset, tableCount * 10, object.name + " relocation table");
+					section.relocations.reserve(tableCount - firstRelocation);
+					for (size_t r = firstRelocation; r < tableCount; ++r)
+					{
+						const auto entry = static_cast<size_t>(relocationOffset) + r * 10;
+						section.relocations.push_back({
+							readLe<uint32_t>(bytes, entry, object.name),
+							readLe<uint32_t>(bytes, entry + 4, object.name),
+							readLe<uint16_t>(bytes, entry + 8, object.name)
+							});
+					}
+				}
+				if (section.virtualSize < rawSize)
+				{
+					section.virtualSize = rawSize;
+				}
+				if (section.linkerDirective)
+				{
+					auto directives = tokenizeDirectives(section.data, object.name);
+					object.directives.insert(object.directives.end(), make_move_iterator(directives.begin()), make_move_iterator(directives.end()));
+				}
+				object.sections.push_back(move(section));
+			}
+
+			object.symbols.resize(symbolCount);
+			for (uint32_t i = 0; i < symbolCount;)
+			{
+				const auto entry = static_cast<size_t>(symbolOffset) + static_cast<size_t>(i) * symbolSize;
+				const auto nameZeroes = readLe<uint32_t>(bytes, entry, object.name);
+				const auto nameOffset = readLe<uint32_t>(bytes, entry + 4, object.name);
+				auto& symbol = object.symbols[i];
+				if (nameZeroes == 0)
+				{
+					if (stringTableSize == 0)
+					{
+						fail(object.name + ": symbol uses a missing COFF string table");
+					}
+					symbol.name = stringAt(bytes, stringTableOffset, stringTableSize, nameOffset, "symbol");
+				}
+				else
+				{
+					symbol.name = fixedString(bytes, entry, 8);
+				}
+				symbol.value = readLe<uint32_t>(bytes, entry + 8, object.name);
+				symbol.sectionNumber = bigObj
+					? static_cast<int32_t>(readLe<uint32_t>(bytes, entry + 12, object.name))
+					: static_cast<int16_t>(readLe<uint16_t>(bytes, entry + 12, object.name));
+				const auto storageClassOffset = bigObj ? 18u : 16u;
+				const auto auxiliaryCountOffset = bigObj ? 19u : 17u;
+				symbol.storageClass = bytes[entry + storageClassOffset];
+				const auto auxiliaryCount = bytes[entry + auxiliaryCountOffset];
+				if (auxiliaryCount > symbolCount - i - 1)
+				{
+					fail(object.name + ": invalid COFF auxiliary symbol count");
+				}
+				if (auxiliaryCount != 0)
+				{
+					const auto auxiliary = entry + symbolSize;
+					if (symbol.storageClass == 105 && symbol.sectionNumber == 0)
+					{
+						symbol.weakTagIndex = readLe<uint32_t>(bytes, auxiliary, object.name);
+						symbol.weakCharacteristics = readLe<uint32_t>(bytes, auxiliary + 4, object.name);
+					}
+					else if (symbol.storageClass == 3 && symbol.sectionNumber > 0)
+					{
+						if (static_cast<size_t>(symbol.sectionNumber) > object.sections.size())
+						{
+							fail(object.name + ": section symbol refers to an invalid section");
+						}
+						auto& section = object.sections.at(static_cast<size_t>(symbol.sectionNumber - 1));
+						if ((section.characteristics & 0x00001000) != 0)
+						{
+							if (bigObj)
+							{
+								section.comdatSelection = bytes[auxiliary + 16];
+								section.associatedSection = readLe<uint16_t>(bytes, auxiliary + 12, object.name) |
+									(static_cast<uint32_t>(readLe<uint16_t>(bytes, auxiliary + 18, object.name)) << 16);
+							}
+							else
+							{
+								section.comdatSelection = bytes[auxiliary + 14];
+								section.associatedSection = readLe<uint16_t>(bytes, auxiliary + 12, object.name);
+							}
+						}
+					}
+				}
+				for (uint32_t aux = 1; aux <= auxiliaryCount; ++aux)
+				{
+					object.symbols[i + aux].auxiliary = true;
+				}
+				i += static_cast<uint32_t>(auxiliaryCount) + 1;
+			}
+			for (const auto& symbol : object.symbols)
+			{
+				if (!symbol.auxiliary && symbol.storageClass == 2 && symbol.sectionNumber > 0 && static_cast<size_t>(symbol.sectionNumber) <= object.sections.size())
+				{
+					auto& section = object.sections[static_cast<size_t>(symbol.sectionNumber - 1)];
+					if (section.comdatSelection != 0 && section.comdatKey.empty())
+					{
+						section.comdatKey = symbol.name;
+					}
+				}
+			}
+			for (size_t sectionIndex = 0; sectionIndex < object.sections.size(); ++sectionIndex)
+			{
+				auto& section = object.sections[sectionIndex];
+				if (section.comdatSelection > 7)
+				{
+					fail(object.name + ": unsupported COMDAT selection type");
+				}
+				if (section.comdatSelection != 0 && section.comdatSelection != 5 && section.comdatKey.empty())
+				{
+					// MSVC /Gy places static functions in COMDATs with no external symbol; they cannot collide, so key them uniquely.
+					section.comdatKey = "<local>" + object.name + "#" + to_string(sectionIndex + 1);
+				}
+			}
+			for (const auto& section : object.sections)
+			{
+				for (const auto& relocation : section.relocations)
+				{
+					if (relocation.symbolIndex >= object.symbols.size() || object.symbols[relocation.symbolIndex].auxiliary)
+					{
+						fail(object.name + ": relocation refers to an invalid COFF symbol");
+					}
+				}
+			}
+			return object;
+		}
+
+		size_t parseDecimal(const Bytes& bytes, size_t offset, size_t length, string_view what)
+		{
+			const auto text = fixedString(bytes, offset, length);
+			const auto first = text.find_first_not_of(' ');
+			if (first == string::npos)
+			{
+				return 0;
+			}
+			auto last = text.find_last_not_of(' ');
+			size_t value = 0;
+			const auto parsed = from_chars(text.data() + first, text.data() + last + 1, value);
+			if (parsed.ec != errc{} || parsed.ptr != text.data() + last + 1)
+			{
+				fail("invalid archive " + string(what));
+			}
+			return value;
+		}
+
+		uint32_t readBigEndian32(const Bytes& bytes, size_t offset, string_view what)
+		{
+			requireRange(bytes, offset, 4, what);
+			return (static_cast<uint32_t>(bytes[offset]) << 24) |
+				(static_cast<uint32_t>(bytes[offset + 1]) << 16) |
+				(static_cast<uint32_t>(bytes[offset + 2]) << 8) |
+				static_cast<uint32_t>(bytes[offset + 3]);
+		}
+
+		uint64_t readBigEndian64(const Bytes& bytes, size_t offset, string_view what)
+		{
+			requireRange(bytes, offset, 8, what);
+			uint64_t value = 0;
+			for (size_t i = 0; i < 8; ++i)
+			{
+				value = (value << 8) | bytes[offset + i];
+			}
+			return value;
+		}
+
+		vector<PendingArchiveSymbol> parseFirstLinkerMember(const Bytes& bytes, size_t offset, size_t size, const string& path)
+		{
+			requireRange(bytes, offset, size, path + " first linker member");
+			if (size < 4)
+			{
+				fail(path + ": truncated first archive linker member");
+			}
+			const auto count = readBigEndian32(bytes, offset, path + " first archive linker member");
+			if (count > (size - 4) / 4)
+			{
+				fail(path + ": invalid first archive linker-member symbol count");
+			}
+			const auto namesOffset = offset + 4 + static_cast<size_t>(count) * 4;
+			const auto namesEnd = offset + size;
+			vector<PendingArchiveSymbol> symbols;
+			symbols.reserve(count);
+			size_t cursor = namesOffset;
+			for (uint32_t i = 0; i < count; ++i)
+			{
+				if (cursor >= namesEnd)
+				{
+					fail(path + ": truncated first archive linker-member names");
+				}
+				const auto end = find(bytes.begin() + cursor, bytes.begin() + namesEnd, 0);
+				if (end == bytes.begin() + namesEnd)
+				{
+					fail(path + ": unterminated first archive linker-member name");
+				}
+				const auto nameEnd = static_cast<size_t>(end - bytes.begin());
+				const string name(reinterpret_cast<const char*>(bytes.data() + cursor), nameEnd - cursor);
+				const auto memberOffset = readBigEndian32(bytes, offset + 4 + static_cast<size_t>(i) * 4, path + " first archive linker member");
+				if (name.empty() || memberOffset < 8)
+				{
+					fail(path + ": invalid first archive linker-member entry");
+				}
+				symbols.push_back({ name, memberOffset });
+				cursor = nameEnd + 1;
+			}
+			return symbols;
+		}
+
+		vector<PendingArchiveSymbol> parseSecondLinkerMember(const Bytes& bytes, size_t offset, size_t size, const string& path)
+		{
+			requireRange(bytes, offset, size, path + " second linker member");
+			if (size < 4)
+			{
+				fail(path + ": truncated second archive linker member");
+			}
+			const auto memberCount = readLe<uint32_t>(bytes, offset, path + " second archive linker member");
+			if (memberCount > (size - 4) / 4)
+			{
+				fail(path + ": invalid second archive linker-member member count");
+			}
+			const auto symbolCountOffset = offset + 4 + static_cast<size_t>(memberCount) * 4;
+			requireRange(bytes, symbolCountOffset, 4, path + " second archive linker member");
+			const auto symbolCount = readLe<uint32_t>(bytes, symbolCountOffset, path + " second archive linker member");
+			const auto indicesOffset = symbolCountOffset + 4;
+			if (symbolCount > (offset + size - indicesOffset) / 2)
+			{
+				fail(path + ": invalid second archive linker-member symbol count");
+			}
+			const auto namesOffset = indicesOffset + static_cast<size_t>(symbolCount) * 2;
+			const auto namesEnd = offset + size;
+			vector<PendingArchiveSymbol> symbols;
+			symbols.reserve(symbolCount);
+			size_t cursor = namesOffset;
+			for (uint32_t i = 0; i < symbolCount; ++i)
+			{
+				const auto memberIndex = readLe<uint16_t>(bytes, indicesOffset + static_cast<size_t>(i) * 2, path + " second archive linker member");
+				if (memberIndex == 0 || memberIndex > memberCount || cursor >= namesEnd)
+				{
+					fail(path + ": invalid second archive linker-member symbol entry");
+				}
+				const auto end = find(bytes.begin() + cursor, bytes.begin() + namesEnd, 0);
+				if (end == bytes.begin() + namesEnd)
+				{
+					fail(path + ": unterminated second archive linker-member name");
+				}
+				const auto nameEnd = static_cast<size_t>(end - bytes.begin());
+				const string name(reinterpret_cast<const char*>(bytes.data() + cursor), nameEnd - cursor);
+				const auto memberOffset = readLe<uint32_t>(bytes, offset + 4 + static_cast<size_t>(memberIndex - 1) * 4, path + " second archive linker member");
+				if (name.empty() || memberOffset < 8)
+				{
+					fail(path + ": invalid second archive linker-member entry");
+				}
+				symbols.push_back({ name, memberOffset });
+				cursor = nameEnd + 1;
+			}
+			return symbols;
+		}
+
+		vector<PendingArchiveSymbol> parseSym64LinkerMember(const Bytes& bytes, size_t offset, size_t size, const string& path)
+		{
+			requireRange(bytes, offset, size, path + " 64-bit linker member");
+			if (size < 8)
+			{
+				fail(path + ": truncated 64-bit archive linker member");
+			}
+			const auto count = readBigEndian64(bytes, offset, path + " 64-bit archive linker member");
+			if (count > (size - 8) / 8)
+			{
+				fail(path + ": invalid 64-bit archive linker-member symbol count");
+			}
+			const auto namesOffset = offset + 8 + static_cast<size_t>(count) * 8;
+			const auto namesEnd = offset + size;
+			vector<PendingArchiveSymbol> symbols;
+			symbols.reserve(static_cast<size_t>(count));
+			size_t cursor = namesOffset;
+			for (uint64_t i = 0; i < count; ++i)
+			{
+				if (cursor >= namesEnd)
+				{
+					fail(path + ": truncated 64-bit archive linker-member names");
+				}
+				const auto end = find(bytes.begin() + cursor, bytes.begin() + namesEnd, 0);
+				if (end == bytes.begin() + namesEnd)
+				{
+					fail(path + ": unterminated 64-bit archive linker-member name");
+				}
+				const auto nameEnd = static_cast<size_t>(end - bytes.begin());
+				const string name(reinterpret_cast<const char*>(bytes.data() + cursor), nameEnd - cursor);
+				const auto memberOffset = readBigEndian64(bytes, offset + 8 + static_cast<size_t>(i) * 8, path + " 64-bit archive linker member");
+				if (name.empty() || memberOffset < 8)
+				{
+					fail(path + ": invalid 64-bit archive linker-member entry");
+				}
+				symbols.push_back({ name, memberOffset });
+				cursor = nameEnd + 1;
+			}
+			return symbols;
+		}
+
+		Archive parseArchive(const Bytes& bytes, const string& path)
+		{
+			constexpr string_view magic = "!<arch>\n";
+			if (bytes.size() < magic.size() || !equal(magic.begin(), magic.end(), bytes.begin()))
+			{
+				fail(path + ": not a Microsoft COFF library archive");
+			}
+			Archive archive;
+			vector<PendingArchiveSymbol> pendingSymbols;
+			unordered_map<size_t, size_t> memberByOffset;
+			string longNames;
+			size_t linkerMemberCount = 0;
+			size_t position = magic.size();
+			while (position < bytes.size())
+			{
+				requireRange(bytes, position, 60, path + " archive member header");
+				if (bytes[position + 58] != '`' || bytes[position + 59] != '\n')
+				{
+					fail(path + ": malformed archive member header");
+				}
+				const auto memberSize = parseDecimal(bytes, position + 48, 10, "member size");
+				const auto dataOffset = position + 60;
+				requireRange(bytes, dataOffset, memberSize, path + " archive member");
+				auto rawName = fixedString(bytes, position, 16);
+				while (!rawName.empty() && rawName.back() == ' ')
+				{
+					rawName.pop_back();
+				}
+				string memberName = rawName;
+				if (memberName == "//")
+				{
+					longNames.assign(reinterpret_cast<const char*>(bytes.data() + dataOffset), memberSize);
+				}
+				else if (memberName == "/")
+				{
+					archive.hasSymbolIndex = true;
+					if (linkerMemberCount++ == 0)
+					{
+						auto symbols = parseFirstLinkerMember(bytes, dataOffset, memberSize, path);
+						pendingSymbols.insert(pendingSymbols.end(), make_move_iterator(symbols.begin()), make_move_iterator(symbols.end()));
+					}
+					else if (linkerMemberCount == 2)
+					{
+						auto symbols = parseSecondLinkerMember(bytes, dataOffset, memberSize, path);
+						pendingSymbols.insert(pendingSymbols.end(), make_move_iterator(symbols.begin()), make_move_iterator(symbols.end()));
+					}
+					else
+					{
+						fail(path + ": archive contains more than two Microsoft linker members");
+					}
+				}
+				else if (memberName == "/SYM64/")
+				{
+					archive.hasSymbolIndex = true;
+					auto symbols = parseSym64LinkerMember(bytes, dataOffset, memberSize, path);
+					pendingSymbols.insert(pendingSymbols.end(), make_move_iterator(symbols.begin()), make_move_iterator(symbols.end()));
+				}
+				else
+				{
+					if (memberName.size() > 1 && memberName[0] == '/' && isdigit(static_cast<unsigned char>(memberName[1])))
+					{
+						size_t nameOffset = 0;
+						const auto parsed = from_chars(memberName.data() + 1, memberName.data() + memberName.size(), nameOffset);
+						if (parsed.ec != errc{} || nameOffset >= longNames.size())
+						{
+							fail(path + ": invalid archive long-name offset");
+						}
+						const auto end = longNames.find("/\n", nameOffset);
+						memberName = longNames.substr(nameOffset, end == string::npos ? string::npos : end - nameOffset);
+					}
+					else if (memberName.size() > 1 && memberName.back() == '/')
+					{
+						memberName.pop_back();
+					}
+					ArchiveMember member;
+					member.name = memberName;
+					rejectBitcode(bytes, dataOffset, memberSize, path + "(" + memberName + ")");
+					if (memberSize >= 20)
+					{
+						const auto machine = readLe<uint16_t>(bytes, dataOffset, path);
+						const auto signature = readLe<uint16_t>(bytes, dataOffset + 2, path);
+						const auto anonymousVersion = memberSize >= 6 ? readLe<uint16_t>(bytes, dataOffset + 4, path) : 0;
+						if (signature == 0xffff && anonymousVersion >= 2)
+						{
+							Bytes objectBytes(bytes.begin() + dataOffset, bytes.begin() + dataOffset + memberSize);
+							member.object = parseObject(objectBytes, path + "(" + memberName + ")");
+						}
+						else if (machine == 0 && signature == 0xffff)
+						{
+							Bytes importBytes(bytes.begin() + dataOffset, bytes.begin() + dataOffset + memberSize);
+							member.imported = parseImportObject(importBytes, path + "(" + memberName + ")");
+						}
+						else if (machine == MachineAmd64)
+						{
+							Bytes objectBytes(bytes.begin() + dataOffset, bytes.begin() + dataOffset + memberSize);
+							member.object = parseObject(objectBytes, path + "(" + memberName + ")");
+						}
+					}
+					memberByOffset.emplace(position, archive.members.size());
+					archive.members.push_back(move(member));
+				}
+				position = dataOffset + memberSize;
+				if ((position & 1) != 0)
+				{
+					++position;
+				}
+			}
+			if (position != bytes.size())
+			{
+				fail(path + ": archive ends with an incomplete member");
+			}
+			for (const auto& symbol : pendingSymbols)
+			{
+				if (symbol.memberOffset > numeric_limits<size_t>::max())
+				{
+					fail(path + ": archive linker member references an invalid object-member offset");
+				}
+				const auto member = memberByOffset.find(static_cast<size_t>(symbol.memberOffset));
+				if (member == memberByOffset.end())
+				{
+					fail(path + ": archive linker member references an invalid object-member offset");
+				}
+				archive.symbolMembers[symbol.name].push_back(member->second);
+			}
+			return archive;
+		}
+
+		Bytes readFile(const fs::path& path)
+		{
+			ifstream input(path, ios::binary);
+			if (!input)
+			{
+				fail("cannot open '" + path.string() + "'");
+			}
+			input.seekg(0, ios::end);
+			const auto length = input.tellg();
+			if (length < 0 || static_cast<uint64_t>(length) > numeric_limits<size_t>::max())
+			{
+				fail("cannot determine file size for '" + path.string() + "'");
+			}
+			Bytes bytes(static_cast<size_t>(length));
+			input.seekg(0, ios::beg);
+			if (!bytes.empty() && !input.read(reinterpret_cast<char*>(bytes.data()), static_cast<streamsize>(bytes.size())))
+			{
+				fail("failed reading '" + path.string() + "'");
+			}
+			return bytes;
+		}
+
+		constexpr uint32_t CvSignatureC13 = 4;
+		constexpr uint32_t DebugSSymbols = 0xF1;
+		constexpr uint32_t DebugSLines = 0xF2;
+		constexpr uint32_t DebugSStringTable = 0xF3;
+		constexpr uint32_t DebugSFileChecksums = 0xF4;
+
+		void addTypeReference(codeview::CodeViewTypeRecord& type, size_t offset)
+		{
+			if (offset > type.record.size() || 4 > type.record.size() - offset) fail("truncated CodeView type reference");
+			type.references.push_back({ offset });
+		}
+
+		// Returns the byte length of a CodeView numeric leaf (inline value or typed leaf).
+		size_t numericLeafSize(const Bytes& record, size_t offset, string_view objectName)
+		{
+			const auto kind = readLe<uint16_t>(record, offset, objectName);
+			if (kind < 0x8000) return 2;
+			size_t payload = 0;
+			switch (kind)
+			{
+				case 0x8000: payload = 1; break;
+				case 0x8001: case 0x8002: payload = 2; break;
+				case 0x8003: case 0x8004: case 0x8005: payload = 4; break;
+				case 0x8006: case 0x8009: case 0x800A: payload = 8; break;
+				default: fail(string(objectName) + ": unsupported CodeView numeric leaf");
+			}
+			if (2 + payload > record.size() - offset) fail(string(objectName) + ": truncated CodeView numeric leaf");
+			return 2 + payload;
+		}
+
+		size_t cStringLeafSize(const Bytes& record, size_t offset, string_view objectName)
+		{
+			for (size_t i = offset; i < record.size(); ++i)
+			{
+				if (record[i] == 0) return i - offset + 1;
+			}
+			fail(string(objectName) + ": unterminated CodeView name");
+		}
+
+		void parseFieldListReferences(codeview::CodeViewTypeRecord& type, string_view objectName)
+		{
+			size_t cursor = 4;
+			const auto& r = type.record;
+			while (cursor < r.size())
+			{
+				const auto padding = r[cursor];
+				if (padding >= 0xF0)
+				{
+					cursor += padding & 0x0F;
+					continue;
+				}
+				const auto leaf = readLe<uint16_t>(r, cursor, objectName);
+				cursor += 2;
+				switch (leaf)
+				{
+					case 0x1400: // LF_BCLASS
+						addTypeReference(type, cursor + 2);
+						cursor += 6;
+						cursor += numericLeafSize(r, cursor, objectName);
+						break;
+					case 0x1401: // LF_VBCLASS
+					case 0x1402: // LF_IVBCLASS
+						addTypeReference(type, cursor + 2);
+						addTypeReference(type, cursor + 6);
+						cursor += 10;
+						cursor += numericLeafSize(r, cursor, objectName);
+						cursor += numericLeafSize(r, cursor, objectName);
+						break;
+					case 0x1404: // LF_INDEX
+					case 0x1409: // LF_VFUNCTAB
+						addTypeReference(type, cursor + 2);
+						cursor += 6;
+						break;
+					case 0x1502: // LF_ENUMERATE
+						cursor += 2;
+						cursor += numericLeafSize(r, cursor, objectName);
+						cursor += cStringLeafSize(r, cursor, objectName);
+						break;
+					case 0x150D: // LF_MEMBER
+						addTypeReference(type, cursor + 2);
+						cursor += 6;
+						cursor += numericLeafSize(r, cursor, objectName);
+						cursor += cStringLeafSize(r, cursor, objectName);
+						break;
+					case 0x150E: // LF_STMEMBER
+						addTypeReference(type, cursor + 2);
+						cursor += 6;
+						cursor += cStringLeafSize(r, cursor, objectName);
+						break;
+					case 0x150F: // LF_METHOD
+						addTypeReference(type, cursor + 2);
+						cursor += 6;
+						cursor += cStringLeafSize(r, cursor, objectName);
+						break;
+					case 0x1510: // LF_NESTTYPE
+						addTypeReference(type, cursor + 2);
+						cursor += 6;
+						cursor += cStringLeafSize(r, cursor, objectName);
+						break;
+					case 0x1511: // LF_ONEMETHOD
+					{
+						const auto attributes = readLe<uint16_t>(r, cursor, objectName);
+						addTypeReference(type, cursor + 2);
+						cursor += 6;
+						const auto methodKind = (attributes >> 2) & 7;
+						if (methodKind == 4 || methodKind == 6) cursor += 4; // Introducing virtual methods carry a vtable offset.
+						cursor += cStringLeafSize(r, cursor, objectName);
+						break;
+					}
+					default:
+						fail(string(objectName) + ": unsupported CodeView field-list leaf 0x" + [&] { ostringstream s; s << hex << leaf; return s.str(); }());
+				}
+				if (cursor > r.size()) fail(string(objectName) + ": truncated LF_FIELDLIST");
+			}
+		}
+
+		void parseTypeReferenceLayout(codeview::CodeViewTypeRecord& type, string_view objectName)
+		{
+			const auto leaf = readLe<uint16_t>(type.record, 2, objectName);
+			switch (leaf)
+			{
+				case 0x1001: // LF_MODIFIER
+				case 0x1002: // LF_POINTER
+				case 0x1205: // LF_BITFIELD
+				case 0x150A: // LF_ALIAS
+				case 0x1605: // LF_STRING_ID
+					addTypeReference(type, 4);
+					break;
+				case 0x1008: // LF_PROCEDURE
+					addTypeReference(type, 4);
+					addTypeReference(type, 12);
+					break;
+				case 0x1009: // LF_MFUNCTION
+					addTypeReference(type, 4);
+					addTypeReference(type, 8);
+					addTypeReference(type, 12);
+					addTypeReference(type, 20);
+					break;
+				case 0x1201:
+				{ // LF_ARGLIST
+					const auto count = readLe<uint32_t>(type.record, 4, objectName);
+					if (count > (type.record.size() - 8) / 4) fail(string(objectName) + ": truncated LF_ARGLIST");
+					for (uint32_t i = 0; i < count; ++i) addTypeReference(type, 8 + static_cast<size_t>(i) * 4);
+					break;
+				}
+				case 0x1503: // LF_ARRAY
+					addTypeReference(type, 4);
+					addTypeReference(type, 8);
+					break;
+				case 0x1504: // LF_CLASS
+				case 0x1505: // LF_STRUCTURE
+					addTypeReference(type, 8);
+					addTypeReference(type, 12);
+					addTypeReference(type, 16);
+					break;
+				case 0x1506: // LF_UNION
+					addTypeReference(type, 8);
+					break;
+				case 0x1507: // LF_ENUM
+					addTypeReference(type, 8);
+					addTypeReference(type, 12);
+					break;
+				case 0x1203: // LF_FIELDLIST
+					parseFieldListReferences(type, objectName);
+					break;
+				case 0x1206: // LF_METHODLIST
+				{
+					size_t cursor = 4;
+					while (cursor < type.record.size() && type.record[cursor] < 0xF0)
+					{
+						const auto attributes = readLe<uint16_t>(type.record, cursor, objectName);
+						addTypeReference(type, cursor + 4);
+						cursor += 8;
+						const auto methodKind = (attributes >> 2) & 7;
+						if (methodKind == 4 || methodKind == 6) cursor += 4;
+					}
+					break;
+				}
+				case 0x1603: // LF_BUILDINFO
+				{
+					const auto count = readLe<uint16_t>(type.record, 4, objectName);
+					if (count > (type.record.size() - 6) / 4) fail(string(objectName) + ": truncated LF_BUILDINFO");
+					for (uint16_t i = 0; i < count; ++i) addTypeReference(type, 6 + static_cast<size_t>(i) * 4);
+					break;
+				}
+				case 0x1604: // LF_SUBSTR_LIST
+				{
+					const auto count = readLe<uint32_t>(type.record, 4, objectName);
+					if (count > (type.record.size() - 8) / 4) fail(string(objectName) + ": truncated LF_SUBSTR_LIST");
+					for (uint32_t i = 0; i < count; ++i) addTypeReference(type, 8 + static_cast<size_t>(i) * 4);
+					break;
+				}
+				case 0x1601: // LF_FUNC_ID
+				case 0x1602: // LF_MFUNC_ID
+					addTypeReference(type, 4);
+					addTypeReference(type, 8);
+					break;
+				case 0x1606: // LF_UDT_SRC_LINE
+					addTypeReference(type, 4);
+					addTypeReference(type, 8);
+					break;
+				case 0x000A: // LF_VTSHAPE
+				case 0x000D: // LF_LABEL
+				case 0x1200: // LF_EASY (no type references)
+					break;
+				default:
+					fail(string(objectName) + ": unsupported CodeView type leaf 0x" + [&] { ostringstream s; s << hex << leaf; return s.str(); }());
+			}
+		}
+
+		void parseCodeViewTypeStream(const Bytes& data, codeview::CodeViewObject& object)
+		{
+			if (data.size() < 4 || readLe<uint32_t>(data, 0, object.objectId) != CvSignatureC13) fail(object.objectId + ": unsupported .debug$T signature");
+			size_t cursor = 4;
+			uint32_t index = 0x1000;
+			while (cursor < data.size())
+			{
+				if (data.size() - cursor < 2) fail(object.objectId + ": truncated .debug$T type record length");
+				const auto recordLength = readLe<uint16_t>(data, cursor, object.objectId);
+				const auto total = static_cast<size_t>(recordLength) + 2;
+				if (recordLength < 2 || total > data.size() - cursor) fail(object.objectId + ": invalid .debug$T type record length");
+				codeview::CodeViewTypeRecord type;
+				type.originalIndex = index++;
+				type.record.assign(data.begin() + static_cast<ptrdiff_t>(cursor), data.begin() + static_cast<ptrdiff_t>(cursor + total));
+				parseTypeReferenceLayout(type, object.objectId);
+				object.types.push_back(move(type));
+				cursor += total;
+			}
+		}
+
+		void parseCodeViewSymbolStream(const Bytes& data, codeview::CodeViewObject& object)
+		{
+			if (data.size() < 4 || readLe<uint32_t>(data, 0, object.objectId) != CvSignatureC13) fail(object.objectId + ": unsupported .debug$S signature");
+			size_t cursor = 4;
+			while (cursor < data.size())
+			{
+				if (data.size() - cursor < 8) fail(object.objectId + ": truncated C13 subsection header");
+				const auto kind = readLe<uint32_t>(data, cursor, object.objectId);
+				const auto size = readLe<uint32_t>(data, cursor + 4, object.objectId);
+				if (size > data.size() - cursor - 8) fail(object.objectId + ": C13 subsection exceeds .debug$S data");
+				Bytes payload(data.begin() + static_cast<ptrdiff_t>(cursor + 8), data.begin() + static_cast<ptrdiff_t>(cursor + 8 + size));
+				if (kind == DebugSSymbols)
+				{
+					size_t recordOffset = 0;
+					while (recordOffset < payload.size())
+					{
+						if (payload.size() - recordOffset < 4) fail(object.objectId + ": truncated C13 symbol record");
+						const auto length = readLe<uint16_t>(payload, recordOffset, object.objectId);
+						const auto total = static_cast<size_t>(length) + 2;
+						if (length < 2 || total > payload.size() - recordOffset) fail(object.objectId + ": invalid C13 symbol record length");
+						codeview::CodeViewSymbolRecord symbol;
+						symbol.record.assign(payload.begin() + static_cast<ptrdiff_t>(recordOffset), payload.begin() + static_cast<ptrdiff_t>(recordOffset + total));
+						const auto kindId = readLe<uint16_t>(symbol.record, 2, object.objectId);
+						auto address = [&](size_t offsetField, size_t sectionField)
+							{
+								if (sectionField + 2 > symbol.record.size()) fail(object.objectId + ": truncated C13 symbol address");
+								symbol.sourceSection = readLe<uint16_t>(symbol.record, sectionField, object.objectId);
+								symbol.addresses.push_back({ offsetField, sectionField });
+							};
+						auto typeReference = [&](size_t field)
+							{
+								if (field > symbol.record.size() || 4 > symbol.record.size() - field) fail(object.objectId + ": truncated C13 symbol type index");
+								symbol.typeReferences.push_back({ field });
+							};
+						switch (kindId)
+						{
+							case 0x110E: // S_PUB32
+								address(8, 12);
+								break;
+							case 0x110C: // S_LDATA32
+							case 0x110D: // S_GDATA32
+							case 0x1112: // S_LTHREAD32
+							case 0x1113: // S_GTHREAD32
+								if (symbol.record.size() < 14) fail(object.objectId + ": truncated C13 data symbol");
+								typeReference(4);
+								address(8, 12);
+								break;
+							case 0x110F: // S_LPROC32
+							case 0x1110: // S_GPROC32
+							case 0x1146: // S_LPROC32_ID
+							case 0x1147: // S_GPROC32_ID
+								if (symbol.record.size() < 39) fail(object.objectId + ": truncated C13 procedure symbol");
+								typeReference(28);
+								address(32, 36);
+								break;
+							case 0x1102: // S_THUNK32
+								if (symbol.record.size() < 22) fail(object.objectId + ": truncated C13 thunk symbol");
+								address(16, 20);
+								break;
+							case 0x1139: // S_CALLSITEINFO
+							case 0x115E: // S_HEAPALLOCSITE
+								if (symbol.record.size() < 16) fail(object.objectId + ": truncated C13 call-site symbol");
+								address(4, 8);
+								typeReference(12);
+								break;
+							case 0x113F: // S_DEFRANGE
+							case 0x1142: // S_DEFRANGE_FRAMEPOINTER_REL
+								if (symbol.record.size() < 16) fail(object.objectId + ": truncated C13 defrange symbol");
+								address(8, 12);
+								break;
+							case 0x1141: // S_DEFRANGE_REGISTER
+								if (symbol.record.size() < 16) fail(object.objectId + ": truncated C13 defrange symbol");
+								address(8, 12);
+								break;
+							case 0x1143: // S_DEFRANGE_SUBFIELD_REGISTER
+							case 0x1145: // S_DEFRANGE_REGISTER_REL
+								if (symbol.record.size() < 20) fail(object.objectId + ": truncated C13 defrange symbol");
+								address(12, 16);
+								break;
+							case 0x1144: // S_DEFRANGE_FRAMEPOINTER_REL_FULL_SCOPE
+							case 0x113A: // S_FRAMECOOKIE
+							case 0x1116: // S_COMPILE2
+							case 0x1124: // S_UNAMESPACE
+								break;
+							case 0x1108: // S_UDT
+							case 0x1106: // S_REGISTER
+							case 0x1153: // S_FILESTATIC
+							case 0x114D: // S_INLINESITE
+								typeReference(kindId == 0x114D ? 12 : 4);
+								break;
+							case 0x1105: // S_LABEL32
+								if (symbol.record.size() < 11) fail(object.objectId + ": truncated C13 label symbol");
+								address(4, 8);
+								break;
+							case 0x1103: // S_BLOCK32
+								if (symbol.record.size() < 22) fail(object.objectId + ": truncated C13 block symbol");
+								address(16, 20);
+								break;
+							case 0x113E: // S_LOCAL
+							case 0x1107: // S_CONSTANT
+								typeReference(4);
+								break;
+							case 0x110B: // S_BPREL32
+							case 0x1111: // S_REGREL32
+								typeReference(8);
+								break;
+							case 0x114C: // S_BUILDINFO
+								typeReference(4);
+								break;
+							case 0x0006: // S_END
+							case 0x1101: // S_OBJNAME
+							case 0x1012: // S_FRAMEPROC
+							case 0x113C: // S_COMPILE3
+							case 0x113D: // S_ENVBLOCK
+							case 0x114E: // S_INLINESITE_END
+							case 0x114F: // S_PROC_ID_END
+								break;
+							default:
+								fail(object.objectId + ": unsupported C13 symbol kind 0x" + [&] { ostringstream s; s << hex << kindId; return s.str(); }());
+						}
+						object.symbols.push_back(move(symbol));
+						recordOffset += total;
+					}
+				}
+				else if (kind == DebugSLines || kind == DebugSStringTable || kind == DebugSFileChecksums)
+				{
+					object.subsections.push_back({ kind, move(payload) });
+				}
+				else
+				{
+					fail(object.objectId + ": unsupported C13 subsection kind 0x" + [&] { ostringstream s; s << hex << kind; return s.str(); }());
+				}
+				cursor = alignUp(cursor + 8 + size, 4);
+				if (cursor > data.size()) fail(object.objectId + ": truncated C13 subsection padding");
+			}
+		}	
+	}
+	void runLinker(LinkOptions options)
+	{
+		JWlink2::LinkerEngine::Linker(move(options)).run();
+	}
+}

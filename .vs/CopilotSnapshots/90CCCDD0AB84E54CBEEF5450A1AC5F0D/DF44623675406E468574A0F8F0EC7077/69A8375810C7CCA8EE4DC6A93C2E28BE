@@ -1,0 +1,14 @@
+﻿option casemap:none
+.data
+extrn target:byte
+public table
+table label byte
+rept 65535
+ dq target
+endm
+.code
+public main
+main proc
+ ret
+main endp
+end

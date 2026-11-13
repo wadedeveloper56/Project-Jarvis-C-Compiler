@@ -1611,6 +1611,7 @@ namespace JWlink2
 			}
 			const auto finishCharacteristics = [&](uint32_t characteristics)
 			{
+				characteristics &= ~0x01000000u;
 				if ((characteristics & 0x40) != 0)
 				{
 					characteristics &= ~0x80u;
@@ -1977,6 +1978,39 @@ namespace JWlink2
 			}
 			const auto& mapping = sectionMaps_.at(definition.objectIndex).at(static_cast<size_t>(definingSymbol.sectionNumber - 1));
 			return options_.imageBase + outputSections_.at(mapping.outputIndex).rva + mapping.offset + definingSymbol.value;
+		}
+
+		size_t Linker::symbolOutputSection(size_t objectIndex, size_t symbolIndex) const
+		{
+			const auto& symbol = objects_.at(objectIndex).symbols.at(symbolIndex);
+			if (symbol.sectionNumber > 0)
+			{
+				return sectionMaps_.at(objectIndex).at(static_cast<size_t>(symbol.sectionNumber - 1)).outputIndex;
+			}
+			if (symbol.sectionNumber == -1) return outputSections_.size();
+			if (symbol.sectionNumber == 0)
+			{
+				const auto found = globals_.find(symbol.name);
+				if (found != globals_.end())
+				{
+					const auto& definition = found->second;
+					if (definition.imported)
+					{
+						const auto& imported = imports_.at(definition.importIndex);
+						return definition.importAddress || !imported.hasFunction
+							? (imported.delayed ? delayImportSection_ : idataSection_) : imported.thunkSection;
+					}
+					if (definition.common) return definition.outputIndex;
+					if (definition.weakUndefined) return outputSections_.size();
+					const auto& target = objects_.at(definition.objectIndex).symbols.at(definition.symbolIndex);
+					if (target.sectionNumber == -1) return outputSections_.size();
+					if (target.sectionNumber > 0)
+					{
+						return sectionMaps_.at(definition.objectIndex).at(static_cast<size_t>(target.sectionNumber - 1)).outputIndex;
+					}
+				}
+			}
+			fail(objects_.at(objectIndex).name + ": section-relative relocation target has no output section");
 		}
 
 		string Linker::dllModuleName() const
@@ -2369,6 +2403,26 @@ namespace JWlink2
 							if (relocation.type == 2 && options_.dynamicBase && symbolAddressIsImageRelative(objectIndex, relocation.symbolIndex) && target >= options_.imageBase && target - options_.imageBase <= numeric_limits<uint32_t>::max() && relocated >= 0 && static_cast<uint64_t>(relocated) >= options_.imageBase && static_cast<uint64_t>(relocated) - options_.imageBase <= numeric_limits<uint32_t>::max())
 							{
 								baseRelocations_.push_back({ toU32(static_cast<size_t>(placeRva), "base relocation RVA"), 3 });
+							}
+						}
+						else if (relocation.type == 0x000a || relocation.type == 0x000b)
+						{
+							const auto targetSection = symbolOutputSection(objectIndex, relocation.symbolIndex);
+							if (relocation.type == 0x000a)
+							{
+								if (input.data.size() - relocation.offset < 2) fail(object.name + ": SECTION relocation is outside initialized section data");
+								const auto value = targetSection + 1 + readLe<uint16_t>(output.data, outputOffset, object.name);
+								if (value > numeric_limits<uint16_t>::max()) fail(object.name + ": SECTION relocation overflows");
+								writeLe(output.data, outputOffset, static_cast<uint16_t>(value));
+							}
+							else
+							{
+								if (input.data.size() - relocation.offset < 4) fail(object.name + ": SECREL relocation is outside initialized section data");
+								if (targetSection >= outputSections_.size()) fail(object.name + ": SECREL relocation target has no output section");
+								const auto base = options_.imageBase + outputSections_[targetSection].rva;
+								if (target < base || target - base > numeric_limits<uint32_t>::max()) fail(object.name + ": SECREL relocation target is out of range");
+								const auto value = static_cast<uint32_t>(target - base) + readLe<uint32_t>(output.data, outputOffset, object.name);
+								writeLe(output.data, outputOffset, value);
 							}
 						}
 						else

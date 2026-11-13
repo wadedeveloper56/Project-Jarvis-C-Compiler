@@ -351,6 +351,7 @@ namespace JWlink2
 			void resolveGlobals();
 			bool symbolAddressIsImageRelative(size_t objectIndex, size_t symbolIndex) const;
 			uint64_t symbolAddress(size_t objectIndex, size_t symbolIndex) const;
+			size_t symbolOutputSection(size_t objectIndex, size_t symbolIndex) const;
 			string dllModuleName() const;
 			optional<pair<uint32_t, uint32_t>> sectionDirectory(const string& name) const;
 			optional<pair<uint32_t, uint32_t>> symbolDirectory(const vector<string>& names, size_t minimumSize, const string& description) const;

@@ -1,0 +1,5 @@
+﻿__declspec(thread) int tls_value = 7;
+int global_value = 5;
+int *global_pointer = &global_value;
+__declspec(noinline) int helper(int n) { return n + tls_value; }
+int main(void) { return helper(*global_pointer); }

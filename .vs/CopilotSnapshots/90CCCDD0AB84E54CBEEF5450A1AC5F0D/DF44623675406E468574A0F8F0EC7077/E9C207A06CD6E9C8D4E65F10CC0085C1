@@ -1,0 +1,2842 @@
+﻿#include "pch.h"
+#include "command_line.h"
+#include "codeview_pdb.h"
+#include "linker.h"
+
+using namespace std;
+
+namespace JWlink2
+{
+	using Bytes = vector<uint8_t>;
+
+	namespace LinkerEngine
+	{
+		constexpr uint16_t MachineAmd64 = 0x8664;
+		constexpr uint32_t SectionCntCode = 0x00000020;
+		constexpr uint32_t SectionCntUninitializedData = 0x00000080;
+		constexpr uint32_t SectionMemExecute = 0x20000000;
+		constexpr uint32_t SectionMemRead = 0x40000000;
+		constexpr uint32_t SectionMemWrite = 0x80000000;
+
+		Linker::Linker(LinkOptions options) : options_(move(options)) {}
+
+		void Linker::run()
+		{
+			if (options_.importLibrary && lowerAscii(fs::absolute(*options_.importLibrary).lexically_normal().string()) == lowerAscii(fs::absolute(options_.output).lexically_normal().string()))
+			{
+				fail("import-library output path must differ from the image output path");
+			}
+			if (options_.debug && lowerAscii(fs::absolute(*options_.pdbFile).lexically_normal().string()) == lowerAscii(fs::absolute(options_.output).lexically_normal().string()))
+			{
+				fail("PDB output path must differ from the image output path");
+			}
+			loadDefinitionFile();
+			loadInputs();
+			resolveLibraries();
+			addManifestResource();
+			collectCodeViewObjects();
+			prepareDelayLoadImports();
+			validateUnresolvedSymbols();
+			selectComdats();
+			buildSections();
+			prepareImports();
+			resolveGlobals();
+			prepareExports();
+			if (options_.importLibrarySpecified && none_of(exportRecords_.begin(), exportRecords_.end(), [](const ExportOutput& record) { return !record.privateExport; }))
+			{
+				fail("/IMPLIB requested but the DLL has no importable exports");
+			}
+			prepareBaseRelocations();
+			prepareDebugSection();
+			layoutImage();
+			if (options_.jwlinkDirectiveSyntax && !options_.entry && !options_.dll)
+			{
+				cerr << "JWlink2: warning: no start address specified; using the first output section\n";
+			}
+			if (options_.verbose)
+			{
+				for (const auto& section : outputSections_)
+				{
+					cout << "jwlink2: section " << section.name << " rva=0x" << hex << section.rva << " size=0x" << section.virtualSize << " flags=0x" << section.characteristics << dec << "\n";
+				}
+			}
+			applyRelocations();
+			finalizeGeneratedData();
+			finalizeDebugSection();
+			writeImage();
+			writeExternalManifest();
+			writePdb();
+			if (options_.verbose)
+			{
+				cout << "jwlink2: wrote " << options_.output.string() << "\n";
+			}
+		}
+
+		bool Linker::isDefined(const CoffSymbol& symbol) const
+		{
+			return symbol.storageClass == 2 && (symbol.sectionNumber > 0 || symbol.sectionNumber == -1 || (symbol.sectionNumber == 0 && symbol.value != 0));
+		}
+
+		set<string> Linker::unresolvedNames() const
+		{
+			set<string> defined;
+			set<string> unresolved;
+			set<string> weakFallbacks;
+			set<string> referencedWeakFallbacks;
+			for (const auto& object : objects_)
+			{
+				for (const auto& symbol : object.symbols)
+				{
+					if (!symbol.auxiliary && symbol.storageClass == 105 && symbol.weakTagIndex < object.symbols.size())
+					{
+						const auto& fallback = object.symbols[symbol.weakTagIndex];
+						if (!fallback.auxiliary && !fallback.name.empty())
+						{
+							weakFallbacks.insert(fallback.name);
+						}
+					}
+				}
+			}
+			for (const auto& object : objects_)
+			{
+				for (const auto& section : object.sections)
+				{
+					for (const auto& relocation : section.relocations)
+					{
+						if (relocation.symbolIndex < object.symbols.size())
+						{
+							const auto& symbol = object.symbols[relocation.symbolIndex];
+							if (weakFallbacks.contains(symbol.name))
+							{
+								referencedWeakFallbacks.insert(symbol.name);
+							}
+						}
+					}
+				}
+			}
+			for (const auto& object : objects_)
+			{
+				for (const auto& symbol : object.symbols)
+				{
+					if (symbol.auxiliary || symbol.name.empty())
+					{
+						continue;
+					}
+					if (symbol.storageClass == 2)
+					{
+						if (isDefined(symbol))
+						{
+							defined.insert(symbol.name);
+						}
+						else if (symbol.sectionNumber == 0 && symbol.value == 0 &&
+							(!weakFallbacks.contains(symbol.name) || referencedWeakFallbacks.contains(symbol.name)))
+						{
+							unresolved.insert(symbol.name);
+						}
+					}
+					else if (symbol.storageClass == 105 && symbol.weakCharacteristics >= 2 && symbol.weakCharacteristics <= 3 && symbol.weakTagIndex < object.symbols.size())
+					{
+						const auto& fallback = object.symbols[symbol.weakTagIndex];
+						if (!fallback.auxiliary && !fallback.name.empty() && !defined.contains(fallback.name))
+						{
+							unresolved.insert(fallback.name);
+						}
+					}
+				}
+			}
+			for (const auto& name : options_.includeSymbols)
+			{
+				if (!defined.contains(name))
+				{
+					unresolved.insert(name);
+				}
+			}
+			for (const auto& exportDirective : options_.exports)
+			{
+				if (!defined.contains(exportDirective.internalName))
+				{
+					unresolved.insert(exportDirective.internalName);
+				}
+			}
+			for (const auto& imported : imports_)
+			{
+				defined.insert("__imp_" + imported.symbol.publicName);
+				if (imported.hasPublicSymbol && (imported.hasFunction || imported.hasData))
+				{
+					defined.insert(imported.symbol.publicName);
+				}
+			}
+			for (const auto& name : defined)
+			{
+				unresolved.erase(name);
+			}
+			if (options_.entry)
+			{
+				if (!defined.contains(*options_.entry))
+				{
+					unresolved.insert(*options_.entry);
+				}
+			}
+			else if (!options_.jwlinkDirectiveSyntax)
+			{
+				if (options_.dll)
+				{
+					if (!options_.noEntry && !defined.contains("DllMainCRTStartup"))
+					{
+						unresolved.insert("DllMainCRTStartup");
+					}
+				}
+				else if (!defined.contains("mainCRTStartup") && !defined.contains("main"))
+				{
+					unresolved.insert("mainCRTStartup");
+				}
+			}
+			return unresolved;
+		}
+
+		void Linker::validateUnresolvedSymbols() const
+		{
+			auto unresolved = unresolvedNames();
+			if (options_.dll && !options_.entry && !options_.noEntry)
+			{
+				unresolved.erase("DllMainCRTStartup");
+			}
+			if (unresolved.empty())
+			{
+				return;
+			}
+			ostringstream message;
+			message << "unresolved external symbol" << (unresolved.size() == 1 ? " " : "s ");
+			bool first = true;
+			for (const auto& name : unresolved)
+			{
+				message << (first ? "'" : ", '") << name << "'";
+				bool hasSource = false;
+				for (const auto& object : objects_)
+				{
+					const bool referenced = any_of(object.symbols.begin(), object.symbols.end(), [&](const CoffSymbol& symbol)
+						{
+							return !symbol.auxiliary && symbol.name == name && symbol.storageClass == 2 && symbol.sectionNumber == 0 && symbol.value == 0;
+						});
+					if (referenced)
+					{
+						message << (hasSource ? ", " : " (referenced by ") << object.name;
+						hasSource = true;
+					}
+				}
+				if (hasSource) message << ")";
+				first = false;
+			}
+			if (!imports_.empty())
+			{
+				message << "; unresolved references remain after selecting DLL import objects";
+			}
+			else
+			{
+				message << "; supply an object or static library containing each definition";
+			}
+			fail(message.str());
+		}
+
+		fs::path Linker::resolveInputPath(const fs::path& path) const
+		{
+			if (fs::exists(path) || path.has_parent_path())
+			{
+				return path;
+			}
+			for (const auto& directory : options_.libraryPaths)
+			{
+				const auto candidate = directory / path;
+				if (fs::exists(candidate))
+				{
+					return candidate;
+				}
+			}
+			return path;
+		}
+
+		void Linker::loadInput(const fs::path& inputPath)
+		{
+			const auto path = resolveInputPath(inputPath);
+			const auto bytes = readFile(path);
+			rejectBitcode(bytes, 0, bytes.size(), path.string());
+			if (bytes.size() >= 8 && string_view(reinterpret_cast<const char*>(bytes.data()), 8) == "!<arch>\n")
+			{
+				auto archive = parseArchive(bytes, path.string());
+				const auto libraryName = lowerAscii(path.filename().string());
+				if (options_.wholeArchiveAll || find(options_.wholeArchives.begin(), options_.wholeArchives.end(), libraryName) != options_.wholeArchives.end())
+				{
+					for (auto& member : archive.members)
+					{
+						if (member.object)
+						{
+							member.selected = true;
+							objects_.push_back(move(*member.object));
+							member.object.reset();
+						}
+					}
+				}
+				if (options_.verbose)
+				{
+					cout << "jwlink2: archive " << path.string() << " (" << archive.members.size() << " members)\n";
+				}
+				archives_.push_back(move(archive));
+			}
+			else
+			{
+				objects_.push_back(parseObject(bytes, path.string()));
+				if (options_.verbose)
+				{
+					cout << "jwlink2: object " << path.string() << "\n";
+				}
+			}
+		}
+
+		void Linker::queueDefaultLibrary(const string& library)
+		{
+			if (options_.noDefaultLibraries || library.empty())
+			{
+				return;
+			}
+			auto normalized = lowerAscii(fs::path(library).filename().string());
+			if (fs::path(normalized).extension().empty())
+			{
+				normalized += ".lib";
+			}
+			if (find(options_.excludedDefaultLibraries.begin(), options_.excludedDefaultLibraries.end(), normalized) == options_.excludedDefaultLibraries.end())
+			{
+				pendingDefaultLibraries_.push_back(library);
+			}
+		}
+
+		void Linker::processDirective(const string& directive, const string& objectName)
+		{
+			if (directive.empty() || (directive.front() != '/' && directive.front() != '-'))
+			{
+				fail(objectName + ": malformed .drectve option '" + directive + "'");
+			}
+			const auto delimiter = directive.find_first_of(":=", 1);
+			const auto name = lowerAscii(directive.substr(1, delimiter == string::npos ? string::npos : delimiter - 1));
+			const auto value = delimiter == string::npos ? string{} : directive.substr(delimiter + 1);
+			if (name == "defaultlib")
+			{
+				if (value.empty())
+				{
+					fail(objectName + ": .drectve /DEFAULTLIB requires a library name");
+				}
+				queueDefaultLibrary(value);
+			}
+			else if (name == "nodefaultlib")
+			{
+				if (value.empty())
+				{
+					options_.noDefaultLibraries = true;
+				}
+				else
+				{
+					auto excluded = lowerAscii(fs::path(value).filename().string());
+					if (fs::path(excluded).extension().empty())
+					{
+						excluded += ".lib";
+					}
+					options_.excludedDefaultLibraries.push_back(move(excluded));
+				}
+			}
+			else if (name == "include")
+			{
+				if (value.empty())
+				{
+					fail(objectName + ": .drectve /INCLUDE requires a symbol name");
+				}
+				if (find(options_.includeSymbols.begin(), options_.includeSymbols.end(), value) == options_.includeSymbols.end())
+				{
+					options_.includeSymbols.push_back(value);
+				}
+			}
+			else if (name == "entry")
+			{
+				if (value.empty())
+				{
+					fail(objectName + ": .drectve /ENTRY requires a symbol name");
+				}
+				if (options_.noEntry)
+				{
+					fail("/NOENTRY conflicts with .drectve /ENTRY");
+				}
+				if (!options_.entrySpecified)
+				{
+					if (options_.entry && *options_.entry != value)
+					{
+						fail("conflicting .drectve /ENTRY values '" + *options_.entry + "' and '" + value + "'");
+					}
+					options_.entry = value;
+				}
+			}
+			else if (name == "align")
+			{
+				const auto alignment = parseDirectiveNumber(value, objectName, "/ALIGN");
+				if (alignment < 0x200 || alignment > numeric_limits<uint32_t>::max() || (alignment & (alignment - 1)) != 0)
+				{
+					fail(objectName + ": .drectve /ALIGN must be a power of two between 512 and 0x80000000");
+				}
+				if (!options_.sectionAlignmentSpecified)
+				{
+					const auto parsed = static_cast<uint32_t>(alignment);
+					if (directiveAlignmentSpecified_ && options_.sectionAlignment != parsed)
+					{
+						fail("conflicting .drectve /ALIGN values");
+					}
+					options_.sectionAlignment = parsed;
+					options_.fileAlignment = parsed < 0x1000 ? parsed : 0x200;
+					directiveAlignmentSpecified_ = true;
+				}
+			}
+			else if (name == "export")
+			{
+				options_.exports.push_back(parseExportDirective(value, objectName));
+			}
+			else if (name == "delayload")
+			{
+				if (value.empty())
+				{
+					fail(objectName + ": .drectve /DELAYLOAD requires a DLL name");
+				}
+				auto sameDll = [&](const string& existing) { return lowerAscii(existing) == lowerAscii(value); };
+				if (none_of(options_.delayLoadLibraries.begin(), options_.delayLoadLibraries.end(), sameDll))
+				{
+					options_.delayLoadLibraries.push_back(value);
+				}
+			}
+			else if (name == "aligncomm")
+			{
+				const auto comma = value.find(',');
+				if (comma == string::npos || comma == 0 || comma + 1 == value.size())
+				{
+					fail(objectName + ": .drectve /ALIGNCOMM requires symbol,alignment");
+				}
+				const auto symbol = value.substr(0, comma);
+				const auto alignment = parseDirectiveNumber(string_view(value).substr(comma + 1), objectName, "/ALIGNCOMM");
+				if (alignment == 0 || alignment > 8192 || (alignment & (alignment - 1)) != 0)
+				{
+					fail(objectName + ": .drectve /ALIGNCOMM alignment must be a power of two from 1 through 8192");
+				}
+				auto found = find_if(options_.commonAlignments.begin(), options_.commonAlignments.end(), [&](const auto& item) { return item.first == symbol; });
+				if (found == options_.commonAlignments.end())
+				{
+					options_.commonAlignments.emplace_back(symbol, static_cast<uint32_t>(alignment));
+				}
+				else
+				{
+					found->second = max(found->second, static_cast<uint32_t>(alignment));
+				}
+			}
+			else
+			{
+				fail(objectName + ": unsupported .drectve option '" + directive + "'");
+			}
+		}
+
+		void Linker::processDirectivesAndLibraries()
+		{
+			for (;;)
+			{
+				while (nextDirectiveObject_ < objects_.size())
+				{
+					const auto& object = objects_[nextDirectiveObject_++];
+					for (const auto& directive : object.directives)
+					{
+						processDirective(directive, object.name);
+					}
+				}
+				if (nextDefaultLibrary_ == pendingDefaultLibraries_.size())
+				{
+					return;
+				}
+				const auto library = pendingDefaultLibraries_[nextDefaultLibrary_++];
+				if (options_.noDefaultLibraries)
+				{
+					continue;
+				}
+				auto normalizedLibrary = lowerAscii(fs::path(library).filename().string());
+				if (fs::path(normalizedLibrary).extension().empty())
+				{
+					normalizedLibrary += ".lib";
+				}
+				if (find(options_.excludedDefaultLibraries.begin(), options_.excludedDefaultLibraries.end(), normalizedLibrary) != options_.excludedDefaultLibraries.end())
+				{
+					continue;
+				}
+				fs::path libraryPath(library);
+				if (libraryPath.extension().empty())
+				{
+					libraryPath += ".lib";
+				}
+				const auto resolvedPath = resolveInputPath(libraryPath);
+				const auto identity = lowerAscii(fs::absolute(resolvedPath).lexically_normal().string());
+				if (loadedDefaultLibraryPaths_.insert(identity).second)
+				{
+					loadInput(resolvedPath);
+				}
+			}
+		}
+
+		void Linker::loadDefinitionFile()
+		{
+			if (!options_.definitionFile)
+			{
+				return;
+			}
+			ifstream input(*options_.definitionFile);
+			if (!input)
+			{
+				fail("cannot open definition file '" + options_.definitionFile->string() + "'");
+			}
+			bool inExports = false;
+			string line;
+			size_t lineNumber = 0;
+			while (getline(input, line))
+			{
+				++lineNumber;
+				const auto comment = line.find(';');
+				if (comment != string::npos) line.resize(comment);
+				istringstream words(line);
+				vector<string> tokens;
+				for (string token; words >> token;)
+				{
+					if (token.size() >= 2 && token.front() == '"' && token.back() == '"') token = token.substr(1, token.size() - 2);
+					tokens.push_back(move(token));
+				}
+				if (tokens.empty()) continue;
+				const auto keyword = lowerAscii(tokens.front());
+				if (keyword == "library" || keyword == "name")
+				{
+					if (tokens.size() != 2 || tokens[1].empty())
+					{
+						fail(options_.definitionFile->string() + ":" + to_string(lineNumber) + ": " + tokens.front() + " requires exactly one module name");
+					}
+					options_.moduleName = tokens[1];
+					continue;
+				}
+				if (keyword == "exports")
+				{
+					inExports = true;
+					tokens.erase(tokens.begin());
+					if (tokens.empty()) continue;
+				}
+				else if (!inExports)
+				{
+					fail(options_.definitionFile->string() + ":" + to_string(lineNumber) + ": unsupported .def statement '" + tokens.front() + "'");
+				}
+				string specification = tokens.front();
+				for (size_t i = 1; i < tokens.size(); ++i)
+				{
+					const auto attribute = lowerAscii(tokens[i]);
+					if (tokens[i].empty() || (tokens[i][0] != '@' && attribute != "noname" && attribute != "data" && attribute != "private"))
+					{
+						fail(options_.definitionFile->string() + ":" + to_string(lineNumber) + ": unsupported .def export attribute '" + tokens[i] + "'");
+					}
+					specification += "," + tokens[i];
+				}
+				options_.exports.push_back(parseExportDirective(specification, options_.definitionFile->string() + ":" + to_string(lineNumber)));
+			}
+			if (!input.eof() && input.fail())
+			{
+				fail("failed reading definition file '" + options_.definitionFile->string() + "'");
+			}
+		}
+
+		void Linker::loadInputs()
+		{
+			for (const auto& inputPath : options_.inputs)
+			{
+				loadInput(inputPath);
+			}
+			for (const auto& library : options_.defaultLibraries)
+			{
+				queueDefaultLibrary(library);
+			}
+			processDirectivesAndLibraries();
+		}
+
+		void Linker::collectCodeViewObjects()
+		{
+			if (!options_.debug) return;
+			for (size_t objectIndex = 0; objectIndex < objects_.size(); ++objectIndex)
+			{
+				auto& object = objects_[objectIndex];
+				object.codeView.objectId = to_string(objectIndex) + ":" + object.name;
+				object.codeView.moduleName = fs::path(object.name).filename().string();
+				object.codeView.objectFileName = object.codeView.moduleName;
+				const InputSection* types = nullptr;
+				const InputSection* symbols = nullptr;
+				for (const auto& section : object.sections)
+				{
+					if (section.codeViewTypes)
+					{
+						if (types) fail(object.name + ": duplicate .debug$T sections are unsupported");
+						types = &section;
+					}
+					else if (section.codeViewSymbols)
+					{
+						if (symbols) fail(object.name + ": duplicate .debug$S sections are unsupported");
+						symbols = &section;
+					}
+				}
+				if (!types && !symbols) continue;
+				object.hasCodeView = true;
+				if (types)
+				{
+					if (!types->relocations.empty()) fail(object.name + ": .debug$T relocations are not supported");
+					parseCodeViewTypeStream(types->data, object.codeView);
+				}
+				if (symbols)
+				{
+					Bytes data = symbols->data;
+					for (const auto& relocation : symbols->relocations)
+					{
+						if (relocation.symbolIndex >= object.symbols.size()) fail(object.name + ": .debug$S relocation refers to an invalid COFF symbol");
+						const auto& target = object.symbols[relocation.symbolIndex];
+						if (target.sectionNumber <= 0 || static_cast<size_t>(target.sectionNumber) > object.sections.size()) fail(object.name + ": .debug$S relocation target must be a defined section symbol");
+						if (relocation.type == 0x000A)
+						{
+							if (relocation.offset > data.size() || 2 > data.size() - relocation.offset) fail(object.name + ": truncated .debug$S SECTION relocation");
+							writeLe(data, relocation.offset, static_cast<uint16_t>(target.sectionNumber));
+						}
+						else if (relocation.type == 0x000B)
+						{
+							if (relocation.offset > data.size() || 4 > data.size() - relocation.offset) fail(object.name + ": truncated .debug$S SECREL relocation");
+							const auto addend = readLe<uint32_t>(data, relocation.offset, object.name);
+							if (target.value > numeric_limits<uint32_t>::max() - addend) fail(object.name + ": .debug$S SECREL relocation overflows");
+							writeLe(data, relocation.offset, target.value + addend);
+						}
+						else
+						{
+							fail(object.name + ": unsupported .debug$S relocation type 0x" + [&] { ostringstream s; s << hex << relocation.type; return s.str(); }());
+						}
+					}
+					parseCodeViewSymbolStream(data, object.codeView);
+				}
+			}
+		}
+
+		void Linker::resolveLibraries()
+		{
+			for (;;)
+			{
+				processDirectivesAndLibraries();
+				auto unresolved = unresolvedNames();
+				if (unresolved.empty())
+				{
+					return;
+				}
+				bool added = false;
+				for (size_t archiveIndex = 0; archiveIndex < archives_.size(); ++archiveIndex)
+				{
+					auto& archive = archives_[archiveIndex];
+					set<size_t> candidateMembers;
+					if (archive.hasSymbolIndex)
+					{
+						for (const auto& name : unresolved)
+						{
+							const auto indexed = archive.symbolMembers.find(name);
+							if (indexed != archive.symbolMembers.end())
+							{
+								candidateMembers.insert(indexed->second.begin(), indexed->second.end());
+							}
+						}
+					}
+					else
+					{
+						for (size_t memberIndex = 0; memberIndex < archive.members.size(); ++memberIndex)
+						{
+							candidateMembers.insert(memberIndex);
+						}
+					}
+					for (const auto memberIndex : candidateMembers)
+					{
+						auto& member = archive.members.at(memberIndex);
+						if (member.selected)
+						{
+							continue;
+						}
+						if (member.imported)
+						{
+							const auto& imported = *member.imported;
+							const auto publicName = imported.publicName.rfind("__imp_", 0) == 0 ? imported.publicName.substr(6) : imported.publicName;
+							const auto iatName = "__imp_" + publicName;
+							if (!unresolved.contains(imported.publicName) && !unresolved.contains(iatName))
+							{
+								continue;
+							}
+							const auto normalizedName = [](const string& name)
+								{
+									return name.rfind("__imp_", 0) == 0 ? name.substr(6) : name;
+								};
+							auto duplicate = find_if(imports_.begin(), imports_.end(), [&](const ImportRecord& record)
+								{
+									return record.symbol.dllName == imported.dllName && record.symbol.importName == imported.importName && record.symbol.byOrdinal == imported.byOrdinal && record.symbol.publicName == normalizedName(imported.publicName);
+								});
+							if (duplicate == imports_.end())
+							{
+								ImportRecord record;
+								record.symbol = imported;
+								record.symbol.publicName = normalizedName(imported.publicName);
+								record.hasFunction = imported.type == 0 && imported.publicName.rfind("__imp_", 0) != 0;
+								record.hasData = imported.type != 0;
+								record.hasPublicSymbol = imported.publicName.rfind("__imp_", 0) != 0;
+								imports_.push_back(move(record));
+							}
+							else
+							{
+								duplicate->hasFunction = duplicate->hasFunction || (imported.type == 0 && imported.publicName.rfind("__imp_", 0) != 0);
+								duplicate->hasData = duplicate->hasData || imported.type != 0;
+								duplicate->hasPublicSymbol = duplicate->hasPublicSymbol || imported.publicName.rfind("__imp_", 0) != 0;
+							}
+							if (imported.publicName.rfind("__imp_", 0) != 0 && imported.type != 0)
+							{
+								unresolved.erase(imported.publicName);
+							}
+							else if (imported.publicName.rfind("__imp_", 0) != 0 && imported.type == 0)
+							{
+								unresolved.erase(imported.publicName);
+							}
+							unresolved.erase(iatName);
+							member.selected = true;
+							added = true;
+							continue;
+						}
+						if (!member.object)
+						{
+							continue;
+						}
+						const bool needed = any_of(member.object->symbols.begin(), member.object->symbols.end(), [&](const CoffSymbol& symbol)
+							{
+								return isDefined(symbol) && unresolved.contains(symbol.name);
+							});
+						if (needed)
+						{
+							for (const auto& symbol : member.object->symbols)
+							{
+								if (isDefined(symbol))
+								{
+									unresolved.erase(symbol.name);
+								}
+							}
+							member.selected = true;
+							objects_.push_back(move(*member.object));
+							member.object.reset();
+							added = true;
+						}
+					}
+				}
+				if (!added)
+				{
+					return;
+				}
+			}
+		}
+
+		string Linker::manifestText() const
+		{
+			if (options_.manifestInput)
+			{
+				const auto bytes = readFile(*options_.manifestInput);
+				return string(bytes.begin(), bytes.end());
+			}
+			return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\r\n"
+				"<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">\r\n"
+				"  <trustInfo xmlns=\"urn:schemas-microsoft-com:asm.v3\">\r\n"
+				"    <security>\r\n"
+				"      <requestedPrivileges>\r\n"
+				"        <requestedExecutionLevel level=\"asInvoker\" uiAccess=\"false\"/>\r\n"
+				"      </requestedPrivileges>\r\n"
+				"    </security>\r\n"
+				"  </trustInfo>\r\n"
+				"</assembly>\r\n";
+		}
+
+		void Linker::addManifestResource()
+		{
+			if (options_.manifestMode != LinkOptions::ManifestMode::Embed)
+			{
+				return;
+			}
+			for (const auto& object : objects_)
+			{
+				for (const auto& section : object.sections)
+				{
+					if (section.name.substr(0, section.name.find('$')) == ".rsrc")
+					{
+						fail("/MANIFEST:EMBED cannot be combined with an input that already contains a .rsrc resource section (" + object.name + ")");
+					}
+				}
+			}
+			const auto text = manifestText();
+			const auto id = options_.manifestId != 0 ? options_.manifestId : static_cast<uint16_t>(options_.dll ? 2 : 1);
+			// Type 24 (RT_MANIFEST) -> id -> language 0x409 -> data entry -> data.
+			Bytes data(88, 0);
+			const auto put16 = [&](size_t offset, uint16_t value) { data[offset] = static_cast<uint8_t>(value); data[offset + 1] = static_cast<uint8_t>(value >> 8); };
+			const auto put32 = [&](size_t offset, uint32_t value) { put16(offset, static_cast<uint16_t>(value)); put16(offset + 2, static_cast<uint16_t>(value >> 16)); };
+			put16(14, 1);
+			put32(16, 24);
+			put32(20, 0x80000000u | 24);
+			put16(24 + 14, 1);
+			put32(40, id);
+			put32(44, 0x80000000u | 48);
+			put16(48 + 14, 1);
+			put32(64, 0x409);
+			put32(68, 72);
+			put32(72, 88);
+			put32(76, toU32(text.size(), "manifest size"));
+			data.insert(data.end(), text.begin(), text.end());
+			ObjectFile object;
+			object.name = "<manifest>";
+			InputSection section;
+			section.name = ".rsrc";
+			section.characteristics = 0x40000040;
+			section.alignment = 4;
+			section.virtualSize = toU32(data.size(), "manifest resource size");
+			section.data = move(data);
+			section.relocations.push_back({ 72, 0, 3 });
+			object.sections.push_back(move(section));
+			CoffSymbol symbol;
+			symbol.name = "$manifest";
+			symbol.sectionNumber = 1;
+			symbol.storageClass = 3;
+			object.symbols.push_back(move(symbol));
+			objects_.push_back(move(object));
+		}
+
+		void Linker::writeExternalManifest()
+		{
+			if (options_.manifestMode != LinkOptions::ManifestMode::External)
+			{
+				return;
+			}
+			auto path = options_.manifestFile ? *options_.manifestFile : fs::path(options_.output.string() + ".manifest");
+			const auto text = manifestText();
+			ofstream output(path, ios::binary | ios::trunc);
+			if (!output)
+			{
+				fail("cannot create manifest '" + path.string() + "'");
+			}
+			output.write(text.data(), static_cast<streamsize>(text.size()));
+		}
+
+		void Linker::selectComdats()
+		{
+			struct Candidate
+			{
+				size_t objectIndex;
+				size_t sectionIndex;
+			};
+			unordered_map<string, Candidate> selected;
+			auto sameContents = [&](const InputSection& left, const ObjectFile& leftObject, const InputSection& right, const ObjectFile& rightObject)
+				{
+					if (left.data != right.data || left.virtualSize != right.virtualSize || left.alignment != right.alignment || left.relocations.size() != right.relocations.size())
+					{
+						return false;
+					}
+					for (size_t i = 0; i < left.relocations.size(); ++i)
+					{
+						const auto& a = left.relocations[i];
+						const auto& b = right.relocations[i];
+						if (a.offset != b.offset || a.type != b.type || leftObject.symbols[a.symbolIndex].name != rightObject.symbols[b.symbolIndex].name)
+						{
+							return false;
+						}
+					}
+					return true;
+				};
+			for (size_t objectIndex = 0; objectIndex < objects_.size(); ++objectIndex)
+			{
+				auto& object = objects_[objectIndex];
+				for (size_t sectionIndex = 0; sectionIndex < object.sections.size(); ++sectionIndex)
+				{
+					auto& section = object.sections[sectionIndex];
+					if ((section.characteristics & 0x00001000) == 0)
+					{
+						continue;
+					}
+					if (section.comdatSelection == 0 || (section.comdatSelection != 5 && section.comdatKey.empty()))
+					{
+						fail(object.name + ": COMDAT section is missing its selection metadata or key");
+					}
+					if (section.comdatSelection == 5)
+					{
+						continue;
+					}
+					const auto existing = selected.find(section.comdatKey);
+					if (existing == selected.end())
+					{
+						selected.emplace(section.comdatKey, Candidate{ objectIndex, sectionIndex });
+						continue;
+					}
+					auto& winner = objects_[existing->second.objectIndex].sections[existing->second.sectionIndex];
+					if (winner.comdatSelection != section.comdatSelection)
+					{
+						fail("inconsistent COMDAT selection for '" + section.comdatKey + "'");
+					}
+					const auto winnerSize = max(static_cast<size_t>(winner.virtualSize), winner.data.size());
+					const auto candidateSize = max(static_cast<size_t>(section.virtualSize), section.data.size());
+					bool replaceWinner = false;
+					switch (section.comdatSelection)
+					{
+						case 1:
+							fail("duplicate NODUPLICATES COMDAT '" + section.comdatKey + "'");
+						case 2:
+							break;
+						case 3:
+							if (candidateSize != winnerSize)
+							{
+								fail("SAME_SIZE COMDAT mismatch for '" + section.comdatKey + "'");
+							}
+							break;
+						case 4:
+							if (!sameContents(section, object, winner, objects_[existing->second.objectIndex]))
+							{
+								fail("EXACT_MATCH COMDAT mismatch for '" + section.comdatKey + "'");
+							}
+							break;
+						case 6:
+							replaceWinner = candidateSize > winnerSize;
+							break;
+						case 7:
+							replaceWinner = true;
+							break;
+						default:
+							fail("unsupported COMDAT selection for '" + section.comdatKey + "'");
+					}
+					if (replaceWinner)
+					{
+						winner.discarded = true;
+						section.leaderObject = objectIndex;
+						section.leaderSection = sectionIndex;
+						existing->second = { objectIndex, sectionIndex };
+					}
+					else
+					{
+						section.discarded = true;
+						section.leaderObject = existing->second.objectIndex;
+						section.leaderSection = existing->second.sectionIndex;
+					}
+				}
+			}
+			for (auto& object : objects_)
+			{
+				for (auto& section : object.sections)
+				{
+					if (!section.discarded || section.comdatSelection == 5 || section.comdatKey.empty())
+					{
+						continue;
+					}
+					const auto leader = selected.find(section.comdatKey);
+					if (leader == selected.end())
+					{
+						fail(object.name + ": selected COMDAT leader is missing");
+					}
+					section.leaderObject = leader->second.objectIndex;
+					section.leaderSection = leader->second.sectionIndex;
+				}
+			}
+			for (size_t objectIndex = 0; objectIndex < objects_.size(); ++objectIndex)
+			{
+				auto& object = objects_[objectIndex];
+				for (size_t sectionIndex = 0; sectionIndex < object.sections.size(); ++sectionIndex)
+				{
+					auto& section = object.sections[sectionIndex];
+					if ((section.characteristics & 0x00001000) == 0 || section.comdatSelection != 5)
+					{
+						continue;
+					}
+					if (section.associatedSection == 0 || section.associatedSection > object.sections.size())
+					{
+						fail(object.name + ": associative COMDAT has an invalid parent section");
+					}
+					const auto parentIndex = static_cast<size_t>(section.associatedSection - 1);
+					const auto& parent = object.sections[parentIndex];
+					if (parent.comdatSelection == 0 || parent.comdatSelection == 5 || parent.comdatKey.empty())
+					{
+						fail(object.name + ": associative COMDAT parent is not a primary COMDAT section");
+					}
+					const auto selectedParent = selected.find(parent.comdatKey);
+					if (selectedParent == selected.end())
+					{
+						fail(object.name + ": associative COMDAT parent was not selected");
+					}
+					const auto winnerObjectIndex = selectedParent->second.objectIndex;
+					const auto winnerParentIndex = selectedParent->second.sectionIndex;
+					if (winnerObjectIndex == objectIndex && winnerParentIndex == parentIndex)
+					{
+						continue;
+					}
+					size_t ordinal = 0;
+					for (size_t prior = 0; prior < sectionIndex; ++prior)
+					{
+						const auto& candidate = object.sections[prior];
+						if (candidate.comdatSelection == 5 && candidate.associatedSection == section.associatedSection && candidate.name == section.name)
+						{
+							++ordinal;
+						}
+					}
+					size_t matchingOrdinal = 0;
+					optional<size_t> leaderSection;
+					for (size_t candidateIndex = 0; candidateIndex < objects_[winnerObjectIndex].sections.size(); ++candidateIndex)
+					{
+						const auto& candidate = objects_[winnerObjectIndex].sections[candidateIndex];
+						if (candidate.comdatSelection == 5 && candidate.associatedSection == winnerParentIndex + 1 && candidate.name == section.name)
+						{
+							if (matchingOrdinal++ == ordinal)
+							{
+								leaderSection = candidateIndex;
+								break;
+							}
+						}
+					}
+					section.discarded = true;
+					section.leaderObject = winnerObjectIndex;
+					section.leaderSection = leaderSection.value_or(winnerParentIndex);
+				}
+			}
+		}
+
+		void Linker::prepareDelayLoadImports()
+		{
+			if (options_.delayLoadLibraries.empty())
+			{
+				return;
+			}
+			for (const auto& requested : options_.delayLoadLibraries)
+			{
+				if (requested.empty())
+				{
+					fail("/DELAYLOAD requires a DLL name");
+				}
+				bool matched = false;
+				for (auto& imported : imports_)
+				{
+					if (lowerAscii(imported.symbol.dllName) != lowerAscii(requested))
+					{
+						continue;
+					}
+					matched = true;
+					if (imported.hasData)
+					{
+						fail("/DELAYLOAD cannot be used with data imports from '" + imported.symbol.dllName + "'");
+					}
+					if (!imported.hasFunction)
+					{
+						fail("/DELAYLOAD has no callable imports from '" + imported.symbol.dllName + "'");
+					}
+					imported.delayed = true;
+				}
+				if (!matched)
+				{
+					fail("/DELAYLOAD requested '" + requested + "' but no imports from that DLL were selected");
+				}
+			}
+			const auto delayedFunctionCount = static_cast<size_t>(count_if(imports_.begin(), imports_.end(), [](const ImportRecord& imported) { return imported.delayed; }));
+			if (delayedFunctionCount > 1)
+			{
+				fail("JWlink2 currently supports one delay-loaded function import per link; additional delayed imports are unsupported");
+			}
+			auto ensureHelperImport = [&](const string& functionName)
+				{
+					for (size_t i = 0; i < imports_.size(); ++i)
+					{
+						auto& imported = imports_[i];
+						if (lowerAscii(imported.symbol.dllName) == "kernel32.dll" && imported.symbol.importName == functionName && !imported.symbol.byOrdinal)
+						{
+							if (imported.hasData)
+							{
+								fail("delay-load runtime helper conflicts with a data import for '" + functionName + "'");
+							}
+							imported.hasFunction = true;
+							return i;
+						}
+					}
+					ImportRecord imported;
+					imported.symbol.publicName = "__jwlink2_delay_" + functionName;
+					imported.symbol.dllName = "KERNEL32.dll";
+					imported.symbol.importName = functionName;
+					imported.symbol.type = 0;
+					imported.symbol.nameType = 1;
+					imported.hasFunction = true;
+					imports_.push_back(move(imported));
+					return imports_.size() - 1;
+				};
+			delayLoadLibraryImport_ = ensureHelperImport("LoadLibraryA");
+			getProcAddressImport_ = ensureHelperImport("GetProcAddress");
+			raiseExceptionImport_ = ensureHelperImport("RaiseException");
+		}
+
+		void Linker::prepareImports()
+		{
+			if (imports_.empty())
+			{
+				return;
+			}
+			map<string, size_t> moduleLookup;
+			for (size_t i = 0; i < imports_.size(); ++i)
+			{
+				if (imports_[i].delayed)
+				{
+					continue;
+				}
+				string key = imports_[i].symbol.dllName;
+				transform(key.begin(), key.end(), key.begin(), [](unsigned char ch) { return static_cast<char>(tolower(ch)); });
+				auto [found, inserted] = moduleLookup.emplace(key, importModules_.size());
+				if (inserted)
+				{
+					ImportModule module;
+					module.name = imports_[i].symbol.dllName;
+					importModules_.push_back(move(module));
+				}
+				importModules_[found->second].imports.push_back(i);
+			}
+			map<string, size_t> delayModuleLookup;
+			for (size_t i = 0; i < imports_.size(); ++i)
+			{
+				if (!imports_[i].delayed)
+				{
+					continue;
+				}
+				const auto key = lowerAscii(imports_[i].symbol.dllName);
+				auto [found, inserted] = delayModuleLookup.emplace(key, delayImportModules_.size());
+				if (inserted)
+				{
+					DelayImportModule module;
+					module.name = imports_[i].symbol.dllName;
+					delayImportModules_.push_back(move(module));
+				}
+				delayImportModules_[found->second].imports.push_back(i);
+			}
+			InputSection idata;
+			idata.name = ".idata";
+			idata.alignment = 8;
+			idata.characteristics = 0x00000040 | SectionMemRead | SectionMemWrite;
+			const auto descriptorsSize = (importModules_.size() + 1) * 20;
+			idata.data.resize(descriptorsSize, 0);
+			for (auto& module : importModules_)
+			{
+				idata.data.resize(alignUp(idata.data.size(), 8), 0);
+				module.lookupOffset = idata.data.size();
+				idata.data.resize(idata.data.size() + (module.imports.size() + 1) * 8, 0);
+			}
+			for (auto& module : importModules_)
+			{
+				idata.data.resize(alignUp(idata.data.size(), 8), 0);
+				module.iatOffset = idata.data.size();
+				idata.data.resize(idata.data.size() + (module.imports.size() + 1) * 8, 0);
+				for (size_t i = 0; i < module.imports.size(); ++i)
+				{
+					imports_[module.imports[i]].iatOffset = module.iatOffset + i * 8;
+				}
+			}
+			for (auto& module : importModules_)
+			{
+				module.nameOffset = idata.data.size();
+				idata.data.insert(idata.data.end(), module.name.begin(), module.name.end());
+				idata.data.push_back(0);
+			}
+			for (auto& module : importModules_)
+			{
+				for (const auto importIndex : module.imports)
+				{
+					auto& record = imports_[importIndex];
+					idata.data.resize(alignUp(idata.data.size(), 2), 0);
+					record.hintNameOffset = idata.data.size();
+					idata.data.push_back(static_cast<uint8_t>(record.symbol.ordinalOrHint));
+					idata.data.push_back(static_cast<uint8_t>(record.symbol.ordinalOrHint >> 8));
+					idata.data.insert(idata.data.end(), record.symbol.importName.begin(), record.symbol.importName.end());
+					idata.data.push_back(0);
+				}
+			}
+			idata.virtualSize = toU32(idata.data.size(), "import section size");
+			idataSection_ = getOutputSection(idata);
+			auto& idataOutput = outputSections_[idataSection_];
+			const auto idataOffset = alignUp(idataOutput.virtualSize, 8);
+			importDescriptorOffset_ = idataOffset;
+			if (idataOutput.data.size() < idataOffset)
+			{
+				idataOutput.data.resize(idataOffset, 0);
+			}
+			idataOutput.data.insert(idataOutput.data.end(), idata.data.begin(), idata.data.end());
+			idataOutput.virtualSize = idataOffset + idata.virtualSize;
+			for (auto& module : importModules_)
+			{
+				module.lookupOffset += idataOffset;
+				module.iatOffset += idataOffset;
+				module.nameOffset += idataOffset;
+				for (const auto importIndex : module.imports)
+				{
+					auto& record = imports_[importIndex];
+					record.iatOffset += idataOffset;
+					record.hintNameOffset += idataOffset;
+				}
+			}
+			if (!delayImportModules_.empty())
+			{
+				InputSection delayData;
+				delayData.name = ".didat";
+				delayData.alignment = 8;
+				delayData.characteristics = 0x00000040 | SectionMemRead | SectionMemWrite;
+				const auto descriptorsSize = (delayImportModules_.size() + 1) * 32;
+				delayData.data.resize(descriptorsSize, 0);
+				for (auto& module : delayImportModules_)
+				{
+					delayData.data.resize(alignUp(delayData.data.size(), 8), 0);
+					module.lookupOffset = delayData.data.size();
+					delayData.data.resize(delayData.data.size() + (module.imports.size() + 1) * 8, 0);
+				}
+				for (auto& module : delayImportModules_)
+				{
+					delayData.data.resize(alignUp(delayData.data.size(), 8), 0);
+					module.iatOffset = delayData.data.size();
+					delayData.data.resize(delayData.data.size() + (module.imports.size() + 1) * 8, 0);
+					for (size_t i = 0; i < module.imports.size(); ++i)
+					{
+						imports_[module.imports[i]].delayIatOffset = module.iatOffset + i * 8;
+					}
+				}
+				for (auto& module : delayImportModules_)
+				{
+					module.nameOffset = delayData.data.size();
+					delayData.data.insert(delayData.data.end(), module.name.begin(), module.name.end());
+					delayData.data.push_back(0);
+					for (const auto importIndex : module.imports) imports_[importIndex].delayModuleNameOffset = module.nameOffset;
+				}
+				for (auto& module : delayImportModules_)
+				{
+					for (const auto importIndex : module.imports)
+					{
+						auto& record = imports_[importIndex];
+						if (!record.symbol.byOrdinal)
+						{
+							delayData.data.resize(alignUp(delayData.data.size(), 2), 0);
+							record.delayHintNameOffset = delayData.data.size();
+							delayData.data.push_back(static_cast<uint8_t>(record.symbol.ordinalOrHint));
+							delayData.data.push_back(static_cast<uint8_t>(record.symbol.ordinalOrHint >> 8));
+							delayData.data.insert(delayData.data.end(), record.symbol.importName.begin(), record.symbol.importName.end());
+							delayData.data.push_back(0);
+						}
+					}
+				}
+				delayData.virtualSize = toU32(delayData.data.size(), "delay-import section size");
+				delayImportSection_ = getOutputSection(delayData);
+				auto& delayOutput = outputSections_[delayImportSection_];
+				const auto delayOffset = alignUp(delayOutput.virtualSize, 8);
+				delayImportDescriptorOffset_ = delayOffset;
+				if (delayOutput.data.size() < delayOffset) delayOutput.data.resize(delayOffset, 0);
+				delayOutput.data.insert(delayOutput.data.end(), delayData.data.begin(), delayData.data.end());
+				delayOutput.virtualSize = delayOffset + delayData.virtualSize;
+				for (auto& module : delayImportModules_)
+				{
+					module.lookupOffset += delayOffset;
+					module.iatOffset += delayOffset;
+					module.nameOffset += delayOffset;
+					for (const auto importIndex : module.imports)
+					{
+						auto& record = imports_[importIndex];
+						record.delayIatOffset += delayOffset;
+						record.delayModuleNameOffset += delayOffset;
+						if (!record.symbol.byOrdinal) record.delayHintNameOffset += delayOffset;
+					}
+				}
+				delayImportDirectorySize_ = toU32(descriptorsSize, "delay-import directory size");
+			}
+			for (const auto& module : importModules_)
+			{
+				if (any_of(module.imports.begin(), module.imports.end(), [&](size_t index) { return imports_[index].hasFunction; }))
+				{
+					InputSection text;
+					text.name = ".text";
+					text.alignment = 16;
+					text.characteristics = SectionCntCode | SectionMemRead | SectionMemExecute;
+					const auto textIndex = getOutputSection(text);
+					auto& textOutput = outputSections_[textIndex];
+					for (const auto importIndex : module.imports)
+					{
+						auto& record = imports_[importIndex];
+						if (!record.hasFunction)
+						{
+							continue;
+						}
+						textOutput.data.resize(alignUp(textOutput.data.size(), 16), 0x90);
+						record.thunkOffset = textOutput.data.size();
+						record.thunkSection = textIndex;
+						const array<uint8_t, 6> thunk{ 0xff, 0x25, 0, 0, 0, 0 };
+						textOutput.data.insert(textOutput.data.end(), thunk.begin(), thunk.end());
+						textOutput.virtualSize = max(textOutput.virtualSize, textOutput.data.size());
+					}
+				}
+			}
+			if (!delayImportModules_.empty())
+			{
+				InputSection text;
+				text.name = ".text";
+				text.alignment = 16;
+				text.characteristics = SectionCntCode | SectionMemRead | SectionMemExecute;
+				const auto textIndex = getOutputSection(text);
+				for (const auto& module : delayImportModules_)
+				{
+					for (const auto importIndex : module.imports)
+					{
+						auto& textOutput = outputSections_[textIndex];
+						auto& record = imports_[importIndex];
+						textOutput.data.resize(alignUp(textOutput.data.size(), 16), 0x90);
+						record.thunkOffset = textOutput.data.size();
+						record.thunkSection = textIndex;
+						const array<uint8_t, 6> thunk{ 0xff, 0x25, 0, 0, 0, 0 };
+						textOutput.data.insert(textOutput.data.end(), thunk.begin(), thunk.end());
+						delayFixups_.push_back({ textIndex, record.thunkOffset + 2, record.thunkOffset + 6, RipTargetKind::DelayData, record.delayIatOffset });
+						textOutput.data.resize(alignUp(textOutput.data.size(), 16), 0x90);
+						record.resolverOffset = textOutput.data.size();
+						appendDelayResolver(textOutput, textIndex, record);
+						record.resolverEndOffset = textOutput.data.size();
+						appendDelayUnwindInfo(record);
+						auto& updatedTextOutput = outputSections_[textIndex];
+						updatedTextOutput.virtualSize = max(updatedTextOutput.virtualSize, updatedTextOutput.data.size());
+					}
+				}
+			}
+			importDirectorySize_ = toU32(descriptorsSize, "import directory size");
+		}
+
+		void Linker::appendDelayResolver(OutputSection& text, size_t textIndex, const ImportRecord& record)
+		{
+			Bytes code;
+			vector<pair<size_t, size_t>> localBranches;
+			auto emit = [&](initializer_list<uint8_t> bytes) { code.insert(code.end(), bytes.begin(), bytes.end()); };
+			auto addFixup = [&](RipTargetKind kind, size_t offset)
+				{
+					const auto displacement = code.size();
+					code.resize(code.size() + 4, 0);
+					delayFixups_.push_back({ textIndex, text.data.size() + displacement, text.data.size() + displacement + 4, kind, offset });
+				};
+			auto jz = [&]()
+				{
+					emit({ 0x0f, 0x84 });
+					const auto displacement = code.size();
+					code.resize(code.size() + 4, 0);
+					return displacement;
+				};
+			auto jmp = [&]()
+				{
+					emit({ 0xe9 });
+					const auto displacement = code.size();
+					code.resize(code.size() + 4, 0);
+					return displacement;
+				};
+			auto patchBranch = [&](size_t displacement, size_t target)
+				{
+					const auto relative = static_cast<int64_t>(target) - static_cast<int64_t>(displacement + 4);
+					if (relative < numeric_limits<int32_t>::min() || relative > numeric_limits<int32_t>::max()) fail("delay resolver branch is out of range");
+					writeLe(code, displacement, static_cast<uint32_t>(relative));
+				};
+			auto emitXmmStack = [&](uint8_t opcode, uint8_t xmm)
+				{
+					const auto offset = static_cast<uint32_t>(0x40 + xmm * 16);
+					emit({ 0xf3, 0x0f, opcode });
+					if (offset <= 0x7f)
+					{
+						emit({ static_cast<uint8_t>(0x44 + xmm * 8), 0x24, static_cast<uint8_t>(offset) });
+					}
+					else
+					{
+						emit({ static_cast<uint8_t>(0x84 + xmm * 8), 0x24 });
+						for (size_t i = 0; i < 4; ++i) code.push_back(static_cast<uint8_t>(offset >> (i * 8)));
+					}
+				};
+			emit({ 0x48, 0x81, 0xec, 0xb8, 0, 0, 0 });
+			emit({ 0x48, 0x89, 0x4c, 0x24, 0x20, 0x48, 0x89, 0x54, 0x24, 0x28 });
+			emit({ 0x4c, 0x89, 0x44, 0x24, 0x30, 0x4c, 0x89, 0x4c, 0x24, 0x38 });
+			for (uint8_t xmm = 0; xmm < 6; ++xmm) emitXmmStack(0x7f, xmm);
+			emit({ 0x48, 0x8d, 0x0d });
+			addFixup(RipTargetKind::DelayData, record.delayModuleNameOffset);
+			emit({ 0xff, 0x15 });
+			addFixup(RipTargetKind::NormalIat, imports_[delayLoadLibraryImport_].iatOffset);
+			emit({ 0x48, 0x85, 0xc0 });
+			const auto moduleMissing = jz();
+			emit({ 0x48, 0x89, 0xc1 });
+			if (record.symbol.byOrdinal)
+			{
+				emit({ 0xba });
+				for (size_t i = 0; i < 4; ++i) code.push_back(static_cast<uint8_t>(record.symbol.ordinalOrHint >> (i * 8)));
+			}
+			else
+			{
+				emit({ 0x48, 0x8d, 0x15 });
+				addFixup(RipTargetKind::DelayData, record.delayHintNameOffset + 2);
+			}
+			emit({ 0xff, 0x15 });
+			addFixup(RipTargetKind::NormalIat, imports_[getProcAddressImport_].iatOffset);
+			emit({ 0x48, 0x85, 0xc0 });
+			const auto procedureMissing = jz();
+			emit({ 0x48, 0x89, 0x84, 0x24, 0xa0, 0, 0, 0 });
+			for (uint8_t xmm = 0; xmm < 6; ++xmm) emitXmmStack(0x6f, xmm);
+			emit({ 0x48, 0x8b, 0x4c, 0x24, 0x20, 0x48, 0x8b, 0x54, 0x24, 0x28 });
+			emit({ 0x4c, 0x8b, 0x44, 0x24, 0x30, 0x4c, 0x8b, 0x4c, 0x24, 0x38 });
+			emit({ 0x4c, 0x8b, 0x9c, 0x24, 0xa0, 0, 0, 0, 0x48, 0x81, 0xc4, 0xb8, 0, 0, 0, 0x41, 0xff, 0xe3 });
+			const auto moduleFailure = code.size();
+			emit({ 0xb9, 0x7e, 0x00, 0x6d, 0xc0 });
+			const auto raiseFromModuleFailure = jmp();
+			const auto procedureFailure = code.size();
+			emit({ 0xb9, 0x7f, 0x00, 0x6d, 0xc0 });
+			const auto raiseException = code.size();
+			emit({ 0xba, 1, 0, 0, 0, 0x45, 0x33, 0xc0, 0x45, 0x33, 0xc9, 0xff, 0x15 });
+			addFixup(RipTargetKind::NormalIat, imports_[raiseExceptionImport_].iatOffset);
+			emit({ 0x0f, 0x0b });
+			patchBranch(moduleMissing, moduleFailure);
+			patchBranch(procedureMissing, procedureFailure);
+			patchBranch(raiseFromModuleFailure, raiseException);
+			text.data.insert(text.data.end(), code.begin(), code.end());
+		}
+
+		void Linker::appendDelayUnwindInfo(ImportRecord& record)
+		{
+			InputSection unwind;
+			unwind.name = ".xdata";
+			unwind.alignment = 4;
+			unwind.characteristics = 0x00000040 | SectionMemRead;
+			const auto unwindIndex = getOutputSection(unwind);
+			auto& unwindOutput = outputSections_[unwindIndex];
+			record.unwindInfoOffset = alignUp(unwindOutput.virtualSize, 4);
+			if (unwindOutput.data.size() < record.unwindInfoOffset) unwindOutput.data.resize(record.unwindInfoOffset, 0);
+			const array<uint8_t, 8> unwindInfo{ 1, 7, 2, 0, 7, 1, 0x17, 0 };
+			unwindOutput.data.insert(unwindOutput.data.end(), unwindInfo.begin(), unwindInfo.end());
+			unwindOutput.virtualSize = unwindOutput.data.size();
+
+			InputSection runtimeFunctions;
+			runtimeFunctions.name = ".pdata";
+			runtimeFunctions.alignment = 4;
+			runtimeFunctions.characteristics = 0x00000040 | SectionMemRead;
+			const auto runtimeIndex = getOutputSection(runtimeFunctions);
+			auto& runtimeOutput = outputSections_[runtimeIndex];
+			record.runtimeFunctionOffset = alignUp(runtimeOutput.virtualSize, 4);
+			if (runtimeOutput.data.size() < record.runtimeFunctionOffset) runtimeOutput.data.resize(record.runtimeFunctionOffset, 0);
+			runtimeOutput.data.resize(record.runtimeFunctionOffset + 12, 0);
+			runtimeOutput.virtualSize = runtimeOutput.data.size();
+		}
+
+		void Linker::prepareExports()
+		{
+			if (options_.exports.empty())
+			{
+				return;
+			}
+			set<uint16_t> assignedOrdinals;
+			set<string> exportNames;
+			for (const auto& directive : options_.exports)
+			{
+				if (!exportNames.insert(directive.name).second)
+				{
+					fail("duplicate export name '" + directive.name + "'");
+				}
+				const auto found = globals_.find(directive.internalName);
+				if (found == globals_.end())
+				{
+					fail("exported symbol '" + directive.internalName + "' was not found");
+				}
+				const auto& definition = found->second;
+				if (definition.imported || definition.common || definition.weakUndefined || definition.objectIndex >= objects_.size() || definition.symbolIndex >= objects_[definition.objectIndex].symbols.size())
+				{
+					fail("exported symbol '" + directive.internalName + "' must be defined in an input section");
+				}
+				const auto& symbol = objects_[definition.objectIndex].symbols[definition.symbolIndex];
+				if (symbol.sectionNumber <= 0 || static_cast<size_t>(symbol.sectionNumber) > objects_[definition.objectIndex].sections.size())
+				{
+					fail("exported symbol '" + directive.internalName + "' must be defined in an input section");
+				}
+				if (directive.ordinal && !assignedOrdinals.insert(*directive.ordinal).second)
+				{
+					fail("duplicate export ordinal " + to_string(*directive.ordinal));
+				}
+			}
+			uint32_t nextOrdinal = 1;
+			for (const auto& directive : options_.exports)
+			{
+				uint16_t ordinal = directive.ordinal.value_or(0);
+				if (ordinal == 0)
+				{
+					while (nextOrdinal <= numeric_limits<uint16_t>::max() && assignedOrdinals.contains(static_cast<uint16_t>(nextOrdinal)))
+					{
+						++nextOrdinal;
+					}
+					if (nextOrdinal > numeric_limits<uint16_t>::max())
+					{
+						fail("too many exported symbols");
+					}
+					ordinal = static_cast<uint16_t>(nextOrdinal++);
+					assignedOrdinals.insert(ordinal);
+				}
+				ExportOutput output;
+				output.name = directive.name;
+				output.internalName = directive.internalName;
+				output.ordinal = ordinal;
+				output.noname = directive.noname;
+				output.data = directive.data;
+				output.privateExport = directive.privateExport;
+				exportRecords_.push_back(move(output));
+			}
+			sort(exportRecords_.begin(), exportRecords_.end(), [](const ExportOutput& left, const ExportOutput& right) { return left.name < right.name; });
+			exportBaseOrdinal_ = numeric_limits<uint16_t>::max();
+			uint32_t maximumOrdinal = 0;
+			size_t namedCount = 0;
+			for (const auto& record : exportRecords_)
+			{
+				exportBaseOrdinal_ = min(exportBaseOrdinal_, static_cast<uint32_t>(record.ordinal));
+				maximumOrdinal = max(maximumOrdinal, static_cast<uint32_t>(record.ordinal));
+				namedCount += record.noname ? 0 : 1;
+			}
+			exportFunctionCount_ = maximumOrdinal - exportBaseOrdinal_ + 1;
+			if (exportFunctionCount_ > numeric_limits<uint16_t>::max() || namedCount > numeric_limits<uint16_t>::max())
+			{
+				fail("export table exceeds the PE32+ limits");
+			}
+			InputSection section;
+			section.name = ".edata";
+			section.alignment = 4;
+			section.characteristics = 0x00000040 | SectionMemRead;
+			exportFunctionsOffset_ = 40;
+			exportNamesOffset_ = exportFunctionsOffset_ + static_cast<size_t>(exportFunctionCount_) * 4;
+			exportOrdinalsOffset_ = exportNamesOffset_ + namedCount * 4;
+			exportModuleNameOffset_ = exportOrdinalsOffset_ + namedCount * 2;
+			section.data.resize(exportModuleNameOffset_, 0);
+			const auto moduleName = dllModuleName();
+			section.data.insert(section.data.end(), moduleName.begin(), moduleName.end());
+			section.data.push_back(0);
+			for (auto& record : exportRecords_)
+			{
+				if (record.noname)
+				{
+					continue;
+				}
+				record.nameOffset = section.data.size();
+				section.data.insert(section.data.end(), record.name.begin(), record.name.end());
+				section.data.push_back(0);
+			}
+			size_t nameIndex = 0;
+			for (auto& record : exportRecords_)
+			{
+				record.addressOffset = exportFunctionsOffset_ + static_cast<size_t>(record.ordinal - exportBaseOrdinal_) * 4;
+				if (!record.noname)
+				{
+					record.ordinalOffset = exportOrdinalsOffset_ + nameIndex * 2;
+					++nameIndex;
+				}
+			}
+			section.virtualSize = section.data.size();
+			edataSection_ = getOutputSection(section);
+			auto& output = outputSections_[edataSection_];
+			if (!output.data.empty() || output.virtualSize != 0)
+			{
+				fail("input .edata section conflicts with linker-generated exports");
+			}
+			const auto offset = alignUp(output.virtualSize, 4);
+			if (output.data.size() < offset)
+			{
+				output.data.resize(offset, 0);
+			}
+			for (auto& record : exportRecords_)
+			{
+				record.addressOffset += offset;
+				if (record.ordinalOffset != 0)
+				{
+					record.ordinalOffset += offset;
+					record.nameOffset += offset;
+				}
+			}
+			exportFunctionsOffset_ += offset;
+			exportNamesOffset_ += offset;
+			exportOrdinalsOffset_ += offset;
+			exportModuleNameOffset_ += offset;
+			output.data.insert(output.data.end(), section.data.begin(), section.data.end());
+			output.virtualSize = offset + section.virtualSize;
+		}
+
+		void Linker::prepareBaseRelocations()
+		{
+			if (!options_.dynamicBase)
+			{
+				return;
+			}
+			size_t count = 0;
+			for (const auto& object : objects_)
+			{
+				for (const auto& section : object.sections)
+				{
+					if (!section.discarded && !section.linkerDirective && !section.codeViewTypes && !section.codeViewSymbols)
+					{
+						count += static_cast<size_t>(count_if(section.relocations.begin(), section.relocations.end(), [](const Relocation& reloc) { return reloc.type == 1 || reloc.type == 2; }));
+					}
+				}
+			}
+			count += static_cast<size_t>(count_if(imports_.begin(), imports_.end(), [](const ImportRecord& record) { return record.delayed; }));
+			if (count == 0)
+			{
+				return;
+			}
+			if (count > (numeric_limits<size_t>::max() - 8) / 12)
+			{
+				fail("too many base relocations");
+			}
+			InputSection reloc;
+			reloc.name = ".reloc";
+			reloc.alignment = 4;
+			reloc.characteristics = 0x00000040 | 0x02000000 | SectionMemRead;
+			reloc.data.resize(count * 12, 0);
+			reloc.virtualSize = toU32(reloc.data.size(), "base relocation section size");
+			relocSection_ = getOutputSection(reloc);
+			auto& output = outputSections_[relocSection_];
+			if (!output.data.empty() || output.virtualSize != 0)
+			{
+				fail("input .reloc section conflicts with linker-generated base relocations");
+			}
+			output.data = move(reloc.data);
+			output.virtualSize = output.data.size();
+		}
+
+		size_t Linker::getOutputSection(const InputSection& input)
+		{
+			const auto subsection = input.name.find('$');
+			auto outputName = input.name.substr(0, subsection);
+			for (const auto& merge : options_.mergeSections)
+			{
+				if (merge.first == outputName)
+				{
+					outputName = merge.second;
+					break;
+				}
+			}
+			const auto finishCharacteristics = [&](uint32_t characteristics)
+			{
+				if ((characteristics & 0x40) != 0)
+				{
+					characteristics &= ~0x80u;
+				}
+				for (const auto& override : options_.sectionFlags)
+				{
+					if (override.first == outputName)
+					{
+						characteristics = (characteristics & ~0xFE000000u) | override.second;
+					}
+				}
+				return characteristics;
+			};
+			for (size_t i = 0; i < outputSections_.size(); ++i)
+			{
+				if (outputSections_[i].name == outputName)
+				{
+					outputSections_[i].characteristics = finishCharacteristics(outputSections_[i].characteristics | input.characteristics);
+					outputSections_[i].alignment = max(outputSections_[i].alignment, static_cast<size_t>(input.alignment));
+					return i;
+				}
+			}
+			OutputSection section;
+			section.name = outputName;
+			section.characteristics = finishCharacteristics(input.characteristics);
+			section.alignment = input.alignment;
+			outputSections_.push_back(move(section));
+			return outputSections_.size() - 1;
+		}
+
+		void Linker::buildSections()
+		{
+			struct Contribution
+			{
+				size_t objectIndex;
+				size_t sectionIndex;
+				size_t sourceGroup;
+			};
+			vector<vector<Contribution>> contributions;
+			vector<vector<string>> sourceGroups;
+			sectionMaps_.resize(objects_.size());
+			for (size_t objectIndex = 0; objectIndex < objects_.size(); ++objectIndex)
+			{
+				const auto& object = objects_[objectIndex];
+				sectionMaps_[objectIndex].resize(object.sections.size());
+				for (size_t sectionIndex = 0; sectionIndex < object.sections.size(); ++sectionIndex)
+				{
+					const auto& input = object.sections[sectionIndex];
+					if (input.discarded || input.linkerDirective || input.codeViewTypes || input.codeViewSymbols)
+					{
+						continue;
+					}
+					const auto outputIndex = getOutputSection(input);
+					if (contributions.size() <= outputIndex)
+					{
+						contributions.resize(outputIndex + 1);
+						sourceGroups.resize(outputIndex + 1);
+					}
+					const auto baseName = input.name.substr(0, input.name.find('$'));
+					auto& groups = sourceGroups[outputIndex];
+					auto group = find(groups.begin(), groups.end(), baseName);
+					if (group == groups.end())
+					{
+						groups.push_back(baseName);
+						group = prev(groups.end());
+					}
+					contributions[outputIndex].push_back({ objectIndex, sectionIndex, static_cast<size_t>(group - groups.begin()) });
+				}
+			}
+			for (size_t outputIndex = 0; outputIndex < contributions.size(); ++outputIndex)
+			{
+				auto& group = contributions[outputIndex];
+				stable_sort(group.begin(), group.end(), [&](const Contribution& left, const Contribution& right)
+					{
+						if (left.sourceGroup != right.sourceGroup) return left.sourceGroup < right.sourceGroup;
+						return objects_[left.objectIndex].sections[left.sectionIndex].name < objects_[right.objectIndex].sections[right.sectionIndex].name;
+					});
+				auto& output = outputSections_[outputIndex];
+				for (const auto& contribution : group)
+				{
+					const auto& object = objects_[contribution.objectIndex];
+					const auto& input = object.sections[contribution.sectionIndex];
+					const auto offset = alignUp(output.virtualSize, input.alignment);
+					if (input.data.size() > numeric_limits<size_t>::max() - offset || input.virtualSize > numeric_limits<size_t>::max() - offset)
+					{
+						fail(object.name + ": section size overflow");
+					}
+					if (!input.data.empty())
+					{
+						if (output.data.size() < offset + input.data.size())
+						{
+							output.data.resize(offset + input.data.size(), 0);
+						}
+						copy(input.data.begin(), input.data.end(), output.data.begin() + offset);
+					}
+					output.virtualSize = max(offset + input.virtualSize, offset + input.data.size());
+					sectionMaps_[contribution.objectIndex][contribution.sectionIndex] = { outputIndex, offset };
+				}
+			}
+			for (size_t objectIndex = 0; objectIndex < objects_.size(); ++objectIndex)
+			{
+				for (size_t sectionIndex = 0; sectionIndex < objects_[objectIndex].sections.size(); ++sectionIndex)
+				{
+					const auto& input = objects_[objectIndex].sections[sectionIndex];
+					if (!input.discarded)
+					{
+						continue;
+					}
+					if (input.leaderObject >= objects_.size() || input.leaderSection >= sectionMaps_[input.leaderObject].size())
+					{
+						fail(objects_[objectIndex].name + ": missing selected COMDAT leader");
+					}
+					sectionMaps_[objectIndex][sectionIndex] = sectionMaps_[input.leaderObject][input.leaderSection];
+				}
+			}
+		}
+
+		size_t Linker::commonAlignmentFor(const string& symbolName) const
+		{
+			const auto found = find_if(options_.commonAlignments.begin(), options_.commonAlignments.end(), [&](const auto& alignment) { return alignment.first == symbolName; });
+			return found == options_.commonAlignments.end() ? options_.commonAlignment : found->second;
+		}
+
+		void Linker::resolveGlobals()
+		{
+			for (size_t objectIndex = 0; objectIndex < objects_.size(); ++objectIndex)
+			{
+				const auto& object = objects_[objectIndex];
+				for (size_t symbolIndex = 0; symbolIndex < object.symbols.size(); ++symbolIndex)
+				{
+					const auto& symbol = object.symbols[symbolIndex];
+					if (symbol.auxiliary || symbol.storageClass != 2 || symbol.name.empty())
+					{
+						continue;
+					}
+					if (symbol.sectionNumber > 0)
+					{
+						if (static_cast<size_t>(symbol.sectionNumber) > object.sections.size())
+						{
+							fail(object.name + ": symbol refers to an invalid section");
+						}
+						if (object.sections[static_cast<size_t>(symbol.sectionNumber - 1)].discarded)
+						{
+							continue;
+						}
+					}
+					else if (symbol.sectionNumber != -1)
+					{
+						continue;
+					}
+					const GlobalSymbol definition{ objectIndex, symbolIndex };
+					const auto [existing, inserted] = globals_.emplace(symbol.name, definition);
+					if (!inserted)
+					{
+						fail("duplicate definition of symbol '" + symbol.name + "' in '" + objects_.at(existing->second.objectIndex).name + "' and '" + object.name + "'");
+					}
+				}
+			}
+			struct CommonCandidate
+			{
+				size_t objectIndex;
+				size_t symbolIndex;
+				uint32_t size;
+			};
+			vector<CommonCandidate> commonCandidates;
+			unordered_map<string, size_t> commonByName;
+			for (size_t objectIndex = 0; objectIndex < objects_.size(); ++objectIndex)
+			{
+				const auto& object = objects_[objectIndex];
+				for (size_t symbolIndex = 0; symbolIndex < object.symbols.size(); ++symbolIndex)
+				{
+					const auto& symbol = object.symbols[symbolIndex];
+					if (symbol.auxiliary || symbol.storageClass != 2 || symbol.name.empty() || symbol.sectionNumber != 0 || symbol.value == 0 || globals_.contains(symbol.name))
+					{
+						continue;
+					}
+					const auto [candidate, inserted] = commonByName.emplace(symbol.name, commonCandidates.size());
+					if (inserted)
+					{
+						commonCandidates.push_back({ objectIndex, symbolIndex, symbol.value });
+					}
+					else
+					{
+						commonCandidates[candidate->second].size = max(commonCandidates[candidate->second].size, symbol.value);
+					}
+				}
+			}
+			for (const auto& candidate : commonCandidates)
+			{
+				const auto& object = objects_[candidate.objectIndex];
+				const auto& symbol = object.symbols[candidate.symbolIndex];
+				InputSection commonSection;
+				commonSection.name = ".bss";
+				commonSection.characteristics = SectionCntUninitializedData | SectionMemRead | SectionMemWrite;
+				const auto alignment = commonAlignmentFor(symbol.name);
+				commonSection.alignment = alignment;
+				const auto outputIndex = getOutputSection(commonSection);
+				auto& output = outputSections_[outputIndex];
+				const auto offset = alignUp(output.virtualSize, alignment);
+				if (candidate.size > numeric_limits<size_t>::max() - offset)
+				{
+					fail(object.name + ": common symbol size overflow");
+				}
+				output.virtualSize = offset + candidate.size;
+				GlobalSymbol definition;
+				definition.objectIndex = candidate.objectIndex;
+				definition.symbolIndex = candidate.symbolIndex;
+				definition.common = true;
+				definition.commonSize = candidate.size;
+				definition.outputIndex = outputIndex;
+				definition.outputOffset = offset;
+				globals_.emplace(symbol.name, definition);
+			}
+			for (const auto& record : imports_)
+			{
+				const auto importIndex = static_cast<size_t>(&record - imports_.data());
+				const auto iatName = record.symbol.publicName.rfind("__imp_", 0) == 0 ? record.symbol.publicName : "__imp_" + record.symbol.publicName;
+				auto addImportSymbol = [&](const string& name, bool importAddress)
+					{
+						GlobalSymbol definition;
+						definition.imported = true;
+						definition.importAddress = importAddress;
+						definition.importIndex = importIndex;
+						if (!globals_.emplace(name, definition).second)
+						{
+							fail("duplicate definition of imported symbol '" + name + "'");
+						}
+					};
+				if (record.hasPublicSymbol)
+				{
+					addImportSymbol(record.symbol.publicName, record.hasFunction ? false : true);
+				}
+				addImportSymbol(iatName, true);
+			}
+			struct WeakExternal
+			{
+				size_t objectIndex;
+				size_t symbolIndex;
+			};
+			vector<WeakExternal> weakExternals;
+			for (size_t objectIndex = 0; objectIndex < objects_.size(); ++objectIndex)
+			{
+				const auto& object = objects_[objectIndex];
+				for (size_t symbolIndex = 0; symbolIndex < object.symbols.size(); ++symbolIndex)
+				{
+					const auto& symbol = object.symbols[symbolIndex];
+					if (!symbol.auxiliary && symbol.storageClass == 105 && !symbol.name.empty() && symbol.weakTagIndex < object.symbols.size())
+					{
+						weakExternals.push_back({ objectIndex, symbolIndex });
+					}
+				}
+			}
+			bool addedWeakAlias = true;
+			while (addedWeakAlias)
+			{
+				addedWeakAlias = false;
+				for (const auto& weak : weakExternals)
+				{
+					const auto& object = objects_[weak.objectIndex];
+					const auto& symbol = object.symbols[weak.symbolIndex];
+					if (globals_.contains(symbol.name))
+					{
+						continue;
+					}
+					const auto& fallback = object.symbols[symbol.weakTagIndex];
+					const auto target = globals_.find(fallback.name);
+					if (target != globals_.end())
+					{
+						globals_.emplace(symbol.name, target->second);
+						addedWeakAlias = true;
+					}
+				}
+			}
+			for (const auto& weak : weakExternals)
+			{
+				const auto& object = objects_[weak.objectIndex];
+				const auto& symbol = object.symbols[weak.symbolIndex];
+				if (globals_.contains(symbol.name))
+				{
+					continue;
+				}
+				const auto& fallback = object.symbols[symbol.weakTagIndex];
+				if (symbol.weakCharacteristics == 1 || symbol.weakCharacteristics == 2)
+				{
+					GlobalSymbol definition;
+					definition.weakUndefined = true;
+					globals_.emplace(symbol.name, definition);
+				}
+				else if (symbol.weakCharacteristics == 3)
+				{
+					fail(object.name + ": weak alias target '" + fallback.name + "' was not found");
+				}
+				else
+				{
+					fail(object.name + ": unsupported weak-external search mode");
+				}
+			}
+		}
+
+		bool Linker::symbolAddressIsImageRelative(size_t objectIndex, size_t symbolIndex) const
+		{
+			const auto& symbol = objects_.at(objectIndex).symbols.at(symbolIndex);
+			if (symbol.sectionNumber > 0)
+			{
+				return true;
+			}
+			const auto found = globals_.find(symbol.name);
+			if (found == globals_.end())
+			{
+				return false;
+			}
+			const auto& definition = found->second;
+			if (definition.imported || definition.common)
+			{
+				return true;
+			}
+			return !definition.weakUndefined && definition.objectIndex < objects_.size() && definition.symbolIndex < objects_[definition.objectIndex].symbols.size() && objects_[definition.objectIndex].symbols[definition.symbolIndex].sectionNumber > 0;
+		}
+
+		uint64_t Linker::symbolAddress(size_t objectIndex, size_t symbolIndex) const
+		{
+			const auto& object = objects_.at(objectIndex);
+			const auto& symbol = object.symbols.at(symbolIndex);
+			if (symbol.sectionNumber == -1)
+			{
+				return symbol.value;
+			}
+			if (symbol.sectionNumber > 0)
+			{
+				const auto& mapping = sectionMaps_.at(objectIndex).at(static_cast<size_t>(symbol.sectionNumber - 1));
+				return options_.imageBase + outputSections_.at(mapping.outputIndex).rva + mapping.offset + symbol.value;
+			}
+			const auto found = globals_.find(symbol.name);
+			if (found == globals_.end())
+			{
+				fail("unresolved external symbol '" + symbol.name + "'");
+			}
+			const auto& definition = found->second;
+			if (definition.weakUndefined)
+			{
+				return 0;
+			}
+			if (definition.imported)
+			{
+				const auto& imported = imports_.at(definition.importIndex);
+				const auto& output = outputSections_.at(imported.delayed ? delayImportSection_ : idataSection_);
+				const auto iatOffset = imported.delayed ? imported.delayIatOffset : imported.iatOffset;
+				if (definition.importAddress || !imported.hasFunction)
+				{
+					return options_.imageBase + output.rva + iatOffset;
+				}
+				const auto& thunkSection = outputSections_.at(imported.thunkSection);
+				return options_.imageBase + thunkSection.rva + imported.thunkOffset;
+			}
+			if (definition.common)
+			{
+				return options_.imageBase + outputSections_.at(definition.outputIndex).rva + definition.outputOffset;
+			}
+			const auto& definingObject = objects_.at(definition.objectIndex);
+			const auto& definingSymbol = definingObject.symbols.at(definition.symbolIndex);
+			if (definingSymbol.sectionNumber == -1)
+			{
+				return definingSymbol.value;
+			}
+			const auto& mapping = sectionMaps_.at(definition.objectIndex).at(static_cast<size_t>(definingSymbol.sectionNumber - 1));
+			return options_.imageBase + outputSections_.at(mapping.outputIndex).rva + mapping.offset + definingSymbol.value;
+		}
+
+		string Linker::dllModuleName() const
+		{
+			if (!options_.moduleName.empty())
+			{
+				auto name = fs::path(options_.moduleName).filename().string();
+				if (fs::path(name).extension().empty()) name += ".dll";
+				return name;
+			}
+			return options_.output.filename().string();
+		}
+
+		optional<pair<uint32_t, uint32_t>> Linker::sectionDirectory(const string& name) const
+		{
+			const auto found = find_if(outputSections_.begin(), outputSections_.end(), [&](const OutputSection& section) { return section.name == name; });
+			if (found == outputSections_.end() || found->virtualSize == 0) return nullopt;
+			if (found->data.empty() || found->virtualSize > found->data.size()) fail(name + " runtime directory has no complete initialized data");
+			return pair{ found->rva, toU32(found->virtualSize, name + " directory size") };
+		}
+
+		optional<pair<uint32_t, uint32_t>> Linker::symbolDirectory(const vector<string>& names, size_t minimumSize, const string& description) const
+		{
+			for (const auto& name : names)
+			{
+				const auto found = globals_.find(name);
+				if (found == globals_.end()) continue;
+				const auto& definition = found->second;
+				if (definition.imported || definition.common || definition.weakUndefined || definition.objectIndex >= objects_.size() || definition.symbolIndex >= objects_[definition.objectIndex].symbols.size())
+				{
+					fail(description + " directory symbol '" + name + "' is not defined in initialized input data");
+				}
+				const auto& symbol = objects_[definition.objectIndex].symbols[definition.symbolIndex];
+				if (symbol.sectionNumber <= 0 || static_cast<size_t>(symbol.sectionNumber) > sectionMaps_[definition.objectIndex].size())
+				{
+					fail(description + " directory symbol '" + name + "' is not defined in an input section");
+				}
+				const auto& mapping = sectionMaps_[definition.objectIndex][static_cast<size_t>(symbol.sectionNumber - 1)];
+				const auto offset = mapping.offset + symbol.value;
+				const auto& output = outputSections_[mapping.outputIndex];
+				if (offset > output.data.size() || minimumSize > output.data.size() - offset || offset > output.virtualSize || minimumSize > output.virtualSize - offset)
+				{
+					fail(description + " directory structure is truncated");
+				}
+				return pair{ toU32(static_cast<size_t>(output.rva) + offset, description + " directory RVA"), toU32(minimumSize, description + " directory size") };
+			}
+			return nullopt;
+		}
+
+		optional<pair<uint32_t, uint32_t>> Linker::loadConfigurationDirectory() const
+		{
+			const auto symbol = symbolDirectory({ "__load_config_used", "_load_config_used" }, 4, "load-configuration");
+			if (symbol)
+			{
+				const auto rva = symbol->first;
+				const auto section = find_if(outputSections_.begin(), outputSections_.end(), [&](const OutputSection& output) { return rva >= output.rva && static_cast<uint64_t>(rva) < static_cast<uint64_t>(output.rva) + output.data.size(); });
+				const auto offset = static_cast<size_t>(rva - section->rva);
+				const auto size = readLe<uint32_t>(section->data, offset, "load-configuration directory");
+				if (size < 4 || size > section->data.size() - offset || offset > section->virtualSize || size > section->virtualSize - offset) fail("load-configuration directory has an invalid structure size");
+				return pair{ rva, size };
+			}
+			const auto section = sectionDirectory(".loadcfg");
+			if (!section) return nullopt;
+			const auto output = find_if(outputSections_.begin(), outputSections_.end(), [&](const OutputSection& candidate) { return candidate.rva == section->first; });
+			const auto size = readLe<uint32_t>(output->data, 0, "load-configuration directory");
+			if (size < 4 || size > output->data.size() || size > output->virtualSize) fail("load-configuration directory has an invalid structure size");
+			return pair{ section->first, size };
+		}
+
+		uint32_t Linker::entryRva() const
+		{
+			if (options_.dll && options_.noEntry)
+			{
+				return 0;
+			}
+			if (options_.jwlinkDirectiveSyntax && !options_.entry)
+			{
+				return options_.dll ? 0 : outputSections_.front().rva;
+			}
+			string entry;
+			if (options_.entry)
+			{
+				entry = *options_.entry;
+			}
+			else if (options_.dll)
+			{
+				if (!globals_.contains("DllMainCRTStartup")) return 0;
+				entry = "DllMainCRTStartup";
+			}
+			else if (globals_.contains("mainCRTStartup"))
+			{
+				entry = "mainCRTStartup";
+			}
+			else if (globals_.contains("main"))
+			{
+				entry = "main";
+			}
+			else
+			{
+				fail("no entry point found; use --entry <symbol> (for example, --entry main)");
+			}
+			const auto found = globals_.find(entry);
+			if (found == globals_.end())
+			{
+				fail("entry point symbol '" + entry + "' was not found");
+			}
+			const auto& definition = found->second;
+			if (definition.common || definition.imported || definition.weakUndefined)
+			{
+				fail("entry point '" + entry + "' must be defined in an input code section");
+			}
+			const auto& symbol = objects_.at(definition.objectIndex).symbols.at(definition.symbolIndex);
+			if (symbol.sectionNumber <= 0)
+			{
+				fail("entry point '" + entry + "' is not defined in a section");
+			}
+			const auto& mapping = sectionMaps_.at(definition.objectIndex).at(static_cast<size_t>(symbol.sectionNumber - 1));
+			const auto rva = static_cast<uint64_t>(outputSections_.at(mapping.outputIndex).rva) + mapping.offset + symbol.value;
+			return toU32(static_cast<size_t>(rva), "entry point RVA");
+		}
+
+		void Linker::layoutImage()
+		{
+			if (outputSections_.empty())
+			{
+				fail("input objects contain no sections");
+			}
+			if (outputSections_.size() > 96)
+			{
+				fail("PE image exceeds the Windows section-count limit");
+			}
+			const auto headersUnaligned = 0x80u + 4u + 20u + 240u + outputSections_.size() * 40u;
+			const auto headersSize = alignUp(headersUnaligned, options_.fileAlignment);
+			size_t nextRva = options_.sectionAlignment;
+			size_t nextRaw = headersSize;
+			for (auto& section : outputSections_)
+			{
+				nextRva = alignUp(nextRva, options_.sectionAlignment);
+				section.rva = toU32(nextRva, "section RVA");
+				const auto virtualSize = max(section.virtualSize, section.data.size());
+				if (virtualSize > numeric_limits<size_t>::max() - nextRva)
+				{
+					fail("PE image size overflow");
+				}
+				nextRva += alignUp(virtualSize, options_.sectionAlignment);
+				if (!section.data.empty())
+				{
+					nextRaw = alignUp(nextRaw, options_.fileAlignment);
+					section.rawOffset = toU32(nextRaw, "section raw offset");
+					section.rawSize = toU32(alignUp(section.data.size(), options_.fileAlignment), "section raw size");
+					nextRaw += section.rawSize;
+				}
+			}
+			const auto imageSize = toU32(nextRva, "PE image size");
+			toU32(nextRaw, "PE file size");
+			if (options_.imageBase > numeric_limits<uint64_t>::max() - imageSize || options_.imageBase > static_cast<uint64_t>(numeric_limits<int64_t>::max()) - imageSize)
+			{
+				fail("image base and image size exceed the supported PE32+ address range");
+			}
+			(void)entryRva();
+		}
+
+		void Linker::finalizeGeneratedData()
+		{
+			if (edataSection_ != numeric_limits<size_t>::max())
+			{
+				auto& edata = outputSections_[edataSection_];
+				exportDirectoryRva_ = edata.rva;
+				exportDirectorySize_ = toU32(edata.virtualSize, "export directory size");
+				writeLe(edata.data, 12, toU32(static_cast<size_t>(edata.rva) + exportModuleNameOffset_, "export module name RVA"));
+				writeLe(edata.data, 16, exportBaseOrdinal_);
+				writeLe(edata.data, 20, exportFunctionCount_);
+				const auto namedCount = static_cast<uint32_t>(count_if(exportRecords_.begin(), exportRecords_.end(), [](const ExportOutput& record) { return !record.noname; }));
+				writeLe(edata.data, 24, namedCount);
+				writeLe(edata.data, 28, toU32(static_cast<size_t>(edata.rva) + exportFunctionsOffset_, "export address table RVA"));
+				writeLe(edata.data, 32, toU32(static_cast<size_t>(edata.rva) + exportNamesOffset_, "export name table RVA"));
+				writeLe(edata.data, 36, toU32(static_cast<size_t>(edata.rva) + exportOrdinalsOffset_, "export ordinal table RVA"));
+				for (const auto& record : exportRecords_)
+				{
+					const auto found = globals_.find(record.internalName);
+					if (found == globals_.end())
+					{
+						fail("exported symbol '" + record.internalName + "' was not found");
+					}
+					const auto& definition = found->second;
+					const auto& symbol = objects_[definition.objectIndex].symbols[definition.symbolIndex];
+					const auto& mapping = sectionMaps_[definition.objectIndex][static_cast<size_t>(symbol.sectionNumber - 1)];
+					const auto address = static_cast<uint64_t>(outputSections_[mapping.outputIndex].rva) + mapping.offset + symbol.value;
+					writeLe(edata.data, record.addressOffset, toU32(static_cast<size_t>(address), "exported symbol RVA"));
+					if (!record.noname)
+					{
+						const auto nameIndex = (record.ordinalOffset - exportOrdinalsOffset_) / 2;
+						writeLe(edata.data, exportNamesOffset_ + nameIndex * 4, toU32(static_cast<size_t>(edata.rva) + record.nameOffset, "export name RVA"));
+						writeLe(edata.data, record.ordinalOffset, static_cast<uint16_t>(record.ordinal - exportBaseOrdinal_));
+					}
+				}
+			}
+			if (idataSection_ != numeric_limits<size_t>::max())
+			{
+				auto& idata = outputSections_[idataSection_];
+				importDirectoryRva_ = toU32(static_cast<size_t>(idata.rva) + importDescriptorOffset_, "import directory RVA");
+				for (size_t moduleIndex = 0; moduleIndex < importModules_.size(); ++moduleIndex)
+				{
+					const auto& module = importModules_[moduleIndex];
+					const auto descriptor = importDescriptorOffset_ + moduleIndex * 20;
+					writeLe(idata.data, descriptor, toU32(static_cast<size_t>(idata.rva) + module.lookupOffset, "import lookup table RVA"));
+					writeLe(idata.data, descriptor + 12, toU32(static_cast<size_t>(idata.rva) + module.nameOffset, "import DLL name RVA"));
+					writeLe(idata.data, descriptor + 16, toU32(static_cast<size_t>(idata.rva) + module.iatOffset, "import address table RVA"));
+					for (size_t entryIndex = 0; entryIndex < module.imports.size(); ++entryIndex)
+					{
+						const auto& record = imports_[module.imports[entryIndex]];
+						const auto thunk = record.symbol.byOrdinal
+							? (uint64_t{ 1 } << 63) | record.symbol.ordinalOrHint
+							: static_cast<uint64_t>(idata.rva) + record.hintNameOffset;
+						writeLe(idata.data, module.lookupOffset + entryIndex * 8, thunk);
+						writeLe(idata.data, record.iatOffset, thunk);
+					}
+				}
+			}
+			if (delayImportSection_ != numeric_limits<size_t>::max())
+			{
+				auto& delay = outputSections_[delayImportSection_];
+				delayImportDirectoryRva_ = toU32(static_cast<size_t>(delay.rva) + delayImportDescriptorOffset_, "delay-import directory RVA");
+				for (size_t moduleIndex = 0; moduleIndex < delayImportModules_.size(); ++moduleIndex)
+				{
+					const auto& module = delayImportModules_[moduleIndex];
+					const auto descriptor = delayImportDescriptorOffset_ + moduleIndex * 32;
+					writeLe(delay.data, descriptor, uint32_t{ 1 });
+					writeLe(delay.data, descriptor + 4, toU32(static_cast<size_t>(delay.rva) + module.nameOffset, "delay-import DLL name RVA"));
+					writeLe(delay.data, descriptor + 12, toU32(static_cast<size_t>(delay.rva) + module.iatOffset, "delay-import IAT RVA"));
+					writeLe(delay.data, descriptor + 16, toU32(static_cast<size_t>(delay.rva) + module.lookupOffset, "delay-import lookup table RVA"));
+					for (size_t entryIndex = 0; entryIndex < module.imports.size(); ++entryIndex)
+					{
+						auto& record = imports_[module.imports[entryIndex]];
+						const auto thunk = record.symbol.byOrdinal
+							? (uint64_t{ 1 } << 63) | record.symbol.ordinalOrHint
+							: static_cast<uint64_t>(delay.rva) + record.delayHintNameOffset;
+						writeLe(delay.data, module.lookupOffset + entryIndex * 8, thunk);
+						writeLe(delay.data, record.delayIatOffset, options_.imageBase + outputSections_[record.thunkSection].rva + record.resolverOffset);
+						if (options_.dynamicBase) baseRelocations_.push_back({ toU32(static_cast<size_t>(delay.rva) + record.delayIatOffset, "delay-import IAT relocation RVA"), 10 });
+					}
+				}
+			}
+			for (const auto& record : imports_)
+			{
+				if (!record.delayed) continue;
+				auto& runtimeFunctions = outputSections_[find_if(outputSections_.begin(), outputSections_.end(), [](const OutputSection& section) { return section.name == ".pdata"; }) - outputSections_.begin()];
+				auto& unwindInfo = outputSections_[find_if(outputSections_.begin(), outputSections_.end(), [](const OutputSection& section) { return section.name == ".xdata"; }) - outputSections_.begin()];
+				const auto& code = outputSections_[record.thunkSection];
+				writeLe(runtimeFunctions.data, record.runtimeFunctionOffset, code.rva + static_cast<uint32_t>(record.resolverOffset));
+				writeLe(runtimeFunctions.data, record.runtimeFunctionOffset + 4, code.rva + static_cast<uint32_t>(record.resolverEndOffset));
+				writeLe(runtimeFunctions.data, record.runtimeFunctionOffset + 8, unwindInfo.rva + static_cast<uint32_t>(record.unwindInfoOffset));
+			}
+			for (const auto& record : imports_)
+			{
+				if (!record.hasFunction)
+				{
+					continue;
+				}
+				const auto& text = outputSections_.at(record.thunkSection);
+				const auto& iat = outputSections_.at(record.delayed ? delayImportSection_ : idataSection_);
+				const auto iatOffset = record.delayed ? record.delayIatOffset : record.iatOffset;
+				const auto iatRva = static_cast<int64_t>(iat.rva + iatOffset);
+				const auto nextInstruction = static_cast<int64_t>(text.rva + record.thunkOffset + 6);
+				const auto displacement = iatRva - nextInstruction;
+				if (displacement < numeric_limits<int32_t>::min() || displacement > numeric_limits<int32_t>::max())
+				{
+					fail("import thunk is out of range of its IAT entry");
+				}
+				writeLe(outputSections_[record.thunkSection].data, record.thunkOffset + 2, static_cast<uint32_t>(displacement));
+			}
+			for (const auto& fixup : delayFixups_)
+			{
+				const auto& text = outputSections_.at(fixup.section);
+				const auto targetSection = fixup.targetKind == RipTargetKind::NormalIat ? idataSection_ : delayImportSection_;
+				const auto targetRva = static_cast<int64_t>(outputSections_.at(targetSection).rva + fixup.targetOffset);
+				const auto nextInstruction = static_cast<int64_t>(text.rva + fixup.instructionEnd);
+				const auto displacement = targetRva - nextInstruction;
+				if (displacement < numeric_limits<int32_t>::min() || displacement > numeric_limits<int32_t>::max()) fail("delay-load thunk reference is out of range");
+				writeLe(outputSections_[fixup.section].data, fixup.displacementOffset, static_cast<uint32_t>(displacement));
+			}
+			if (relocSection_ != numeric_limits<size_t>::max() && !baseRelocations_.empty())
+			{
+				auto& reloc = outputSections_[relocSection_];
+				sort(baseRelocations_.begin(), baseRelocations_.end(), [](const BaseRelocation& left, const BaseRelocation& right) { return left.rva < right.rva; });
+				size_t cursor = 0;
+				for (size_t i = 0; i < baseRelocations_.size();)
+				{
+					const auto page = baseRelocations_[i].rva & ~uint32_t{ 0xfff };
+					const auto blockStart = cursor;
+					cursor += 8;
+					size_t count = 0;
+					while (i < baseRelocations_.size() && (baseRelocations_[i].rva & ~uint32_t{ 0xfff }) == page)
+					{
+						const auto entry = static_cast<uint16_t>((baseRelocations_[i].type << 12) | (baseRelocations_[i].rva & 0x0fff));
+						writeLe(reloc.data, cursor, entry);
+						cursor += 2;
+						++count;
+						++i;
+					}
+					if ((count & 1) != 0)
+					{
+						writeLe(reloc.data, cursor, uint16_t{ 0 });
+						cursor += 2;
+					}
+					writeLe(reloc.data, blockStart, page);
+					writeLe(reloc.data, blockStart + 4, toU32(cursor - blockStart, "base relocation block size"));
+				}
+				reloc.virtualSize = cursor;
+				relocationDirectoryRva_ = reloc.rva;
+				relocationDirectorySize_ = toU32(cursor, "base relocation directory size");
+			}
+		}
+
+		void Linker::applyRelocations()
+		{
+			for (size_t objectIndex = 0; objectIndex < objects_.size(); ++objectIndex)
+			{
+				const auto& object = objects_[objectIndex];
+				for (size_t inputIndex = 0; inputIndex < object.sections.size(); ++inputIndex)
+				{
+					const auto& input = object.sections[inputIndex];
+					if (input.discarded || input.linkerDirective || input.codeViewTypes || input.codeViewSymbols)
+					{
+						continue;
+					}
+					const auto& mapping = sectionMaps_[objectIndex][inputIndex];
+					auto& output = outputSections_[mapping.outputIndex];
+					for (const auto& relocation : input.relocations)
+					{
+						if (relocation.type == 0)
+						{
+							continue;
+						}
+						if (relocation.offset >= input.data.size())
+						{
+							fail(object.name + ": relocation offset is outside its section");
+						}
+						auto target = symbolAddress(objectIndex, relocation.symbolIndex);
+						const auto placeRva = static_cast<uint64_t>(output.rva) + mapping.offset + relocation.offset;
+						const auto outputOffset = mapping.offset + relocation.offset;
+						if (relocation.type == 1)
+						{
+							if (input.data.size() - relocation.offset < 8)
+							{
+								fail(object.name + ": ADDR64 relocation is outside initialized section data");
+							}
+							const auto addend = static_cast<int64_t>(readLe<uint64_t>(output.data, outputOffset, object.name));
+							const auto relocatedSigned = static_cast<int64_t>(target) + addend;
+							if (relocatedSigned < 0)
+							{
+								fail(object.name + ": ADDR64 relocation underflow");
+							}
+							const auto relocated = static_cast<uint64_t>(relocatedSigned);
+							writeLe(output.data, outputOffset, relocated);
+							if (options_.dynamicBase && symbolAddressIsImageRelative(objectIndex, relocation.symbolIndex) && target >= options_.imageBase && target - options_.imageBase <= numeric_limits<uint32_t>::max() && relocated >= options_.imageBase && relocated - options_.imageBase <= numeric_limits<uint32_t>::max())
+							{
+								baseRelocations_.push_back({ toU32(static_cast<size_t>(placeRva), "base relocation RVA"), 10 });
+							}
+						}
+						else if (relocation.type == 2 || relocation.type == 3 || (relocation.type >= 4 && relocation.type <= 9))
+						{
+							if (input.data.size() - relocation.offset < 4)
+							{
+								fail(object.name + ": 32-bit relocation is outside initialized section data");
+							}
+							const auto addend = static_cast<int32_t>(readLe<uint32_t>(output.data, outputOffset, object.name));
+							int64_t relocated = 0;
+							if (relocation.type == 2)
+							{
+								relocated = static_cast<int64_t>(target) + addend;
+							}
+							else if (relocation.type == 3)
+							{
+								relocated = static_cast<int64_t>(target) - static_cast<int64_t>(options_.imageBase) + addend;
+							}
+							else
+							{
+								const auto extra = static_cast<int64_t>(relocation.type - 4);
+								relocated = static_cast<int64_t>(target) + addend - static_cast<int64_t>(options_.imageBase + placeRva + 4 + extra);
+							}
+							const bool pcRelative = relocation.type >= 4;
+							const auto minimum = pcRelative ? static_cast<int64_t>(numeric_limits<int32_t>::min()) : 0;
+							const auto maximum = pcRelative ? static_cast<int64_t>(numeric_limits<int32_t>::max()) : static_cast<int64_t>(numeric_limits<uint32_t>::max());
+							if (relocated < minimum || relocated > maximum)
+							{
+								fail(object.name + ": relocation result does not fit its 32-bit relocation type");
+							}
+							writeLe(output.data, outputOffset, static_cast<uint32_t>(relocated));
+							if (relocation.type == 2 && options_.dynamicBase && symbolAddressIsImageRelative(objectIndex, relocation.symbolIndex) && target >= options_.imageBase && target - options_.imageBase <= numeric_limits<uint32_t>::max() && relocated >= 0 && static_cast<uint64_t>(relocated) >= options_.imageBase && static_cast<uint64_t>(relocated) - options_.imageBase <= numeric_limits<uint32_t>::max())
+							{
+								baseRelocations_.push_back({ toU32(static_cast<size_t>(placeRva), "base relocation RVA"), 3 });
+							}
+						}
+						else
+						{
+							ostringstream message;
+							message << object.name << ": unsupported AMD64 relocation type 0x" << hex << relocation.type;
+							fail(message.str());
+						}
+					}
+				}
+			}
+		}
+
+		void Linker::writeImportLibrary()
+		{
+			if (!options_.dll || exportRecords_.empty())
+			{
+				if (options_.importLibrarySpecified && exportRecords_.empty())
+				{
+					fail("/IMPLIB requested but the DLL has no exports");
+				}
+				return;
+			}
+			vector<const ExportOutput*> exported;
+			for (const auto& record : exportRecords_)
+			{
+				if (!record.privateExport) exported.push_back(&record);
+			}
+			if (exported.empty())
+			{
+				if (options_.importLibrarySpecified) fail("/IMPLIB requested but all DLL exports are PRIVATE");
+				return;
+			}
+			struct ImportMember
+			{
+				string name;
+				Bytes contents;
+			};
+			struct ArchiveSymbol
+			{
+				string name;
+				size_t memberIndex;
+			};
+			const auto dllName = dllModuleName();
+			vector<ImportMember> members;
+			vector<ArchiveSymbol> symbols;
+			set<string> indexedNames;
+			for (const auto* record : exported)
+			{
+				if (record->name.rfind("__imp_", 0) == 0 || !indexedNames.insert(record->name).second || !indexedNames.insert("__imp_" + record->name).second)
+				{
+					fail("DLL export names conflict in the generated import library");
+				}
+				Bytes importObject(20, 0);
+				const auto importNameType = record->noname ? 0u : 1u;
+				const auto typeInfo = static_cast<uint16_t>((record->data ? 1u : 0u) | (importNameType << 2));
+				writeLe(importObject, 0, uint16_t{ 0 });
+				writeLe(importObject, 2, uint16_t{ 0xffff });
+				writeLe(importObject, 4, uint16_t{ 0 });
+				writeLe(importObject, 6, MachineAmd64);
+				writeLe(importObject, 8, uint32_t{ 0 });
+				writeLe(importObject, 16, record->noname ? record->ordinal : uint16_t{ 0 });
+				writeLe(importObject, 18, typeInfo);
+				Bytes strings;
+				strings.insert(strings.end(), record->name.begin(), record->name.end());
+				strings.push_back(0);
+				strings.insert(strings.end(), dllName.begin(), dllName.end());
+				strings.push_back(0);
+				writeLe(importObject, 12, toU32(strings.size(), "import-object string size"));
+				importObject.insert(importObject.end(), strings.begin(), strings.end());
+				const auto memberIndex = members.size();
+				members.push_back({ "imp" + to_string(memberIndex) + ".obj", move(importObject) });
+				symbols.push_back({ record->name, memberIndex });
+				symbols.push_back({ "__imp_" + record->name, memberIndex });
+			}
+			sort(symbols.begin(), symbols.end(), [](const ArchiveSymbol& left, const ArchiveSymbol& right) { return left.name < right.name; });
+			if (members.size() > numeric_limits<uint16_t>::max())
+			{
+				fail("generated import library exceeds the Microsoft archive index limit");
+			}
+			auto appendLe32 = [](Bytes& bytes, uint32_t value)
+				{
+					const auto offset = bytes.size();
+					bytes.resize(offset + 4, 0);
+					writeLe(bytes, offset, value);
+				};
+			auto appendBe32 = [](Bytes& bytes, uint32_t value)
+				{
+					bytes.push_back(static_cast<uint8_t>(value >> 24));
+					bytes.push_back(static_cast<uint8_t>(value >> 16));
+					bytes.push_back(static_cast<uint8_t>(value >> 8));
+					bytes.push_back(static_cast<uint8_t>(value));
+				};
+			auto symbolNamesSize = [&]()
+				{
+					size_t size = 0;
+					for (const auto& symbol : symbols) size += symbol.name.size() + 1;
+					return size;
+				};
+			const auto namesSize = symbolNamesSize();
+			const auto firstSize = 4 + symbols.size() * 4 + namesSize;
+			const auto secondSize = 4 + members.size() * 4 + 4 + symbols.size() * 2 + namesSize;
+			auto paddedMemberSize = [](size_t size) { return size + (size & 1); };
+			vector<uint32_t> memberOffsets(members.size());
+			size_t nextMemberOffset = 8 + 60 + paddedMemberSize(firstSize) + 60 + paddedMemberSize(secondSize);
+			for (size_t i = 0; i < members.size(); ++i)
+			{
+				memberOffsets[i] = toU32(nextMemberOffset, "import-library member offset");
+				nextMemberOffset += 60 + paddedMemberSize(members[i].contents.size());
+			}
+			Bytes firstIndex;
+			appendBe32(firstIndex, toU32(symbols.size(), "archive symbol count"));
+			for (const auto& symbol : symbols) appendBe32(firstIndex, memberOffsets[symbol.memberIndex]);
+			for (const auto& symbol : symbols)
+			{
+				firstIndex.insert(firstIndex.end(), symbol.name.begin(), symbol.name.end());
+				firstIndex.push_back(0);
+			}
+			Bytes secondIndex;
+			appendLe32(secondIndex, toU32(members.size(), "archive member count"));
+			for (const auto offset : memberOffsets) appendLe32(secondIndex, offset);
+			appendLe32(secondIndex, toU32(symbols.size(), "archive symbol count"));
+			for (const auto& symbol : symbols)
+			{
+				const auto index = static_cast<uint16_t>(symbol.memberIndex + 1);
+				secondIndex.push_back(static_cast<uint8_t>(index));
+				secondIndex.push_back(static_cast<uint8_t>(index >> 8));
+			}
+			for (const auto& symbol : symbols)
+			{
+				secondIndex.insert(secondIndex.end(), symbol.name.begin(), symbol.name.end());
+				secondIndex.push_back(0);
+			}
+			Bytes archive{ '!', '<', 'a', 'r', 'c', 'h', '>', '\n' };
+			auto appendField = [](Bytes& bytes, string value, size_t width)
+				{
+					if (value.size() > width) fail("generated archive header field is too long");
+					value.resize(width, ' ');
+					bytes.insert(bytes.end(), value.begin(), value.end());
+				};
+			auto appendMember = [&](const string& name, const Bytes& contents)
+				{
+					appendField(archive, name, 16);
+					appendField(archive, "0", 12);
+					appendField(archive, "0", 6);
+					appendField(archive, "0", 6);
+					appendField(archive, "100644", 8);
+					appendField(archive, to_string(contents.size()), 10);
+					archive.push_back('`');
+					archive.push_back('\n');
+					archive.insert(archive.end(), contents.begin(), contents.end());
+					if ((archive.size() & 1) != 0) archive.push_back('\n');
+				};
+			appendMember("/", firstIndex);
+			appendMember("/", secondIndex);
+			for (const auto& member : members) appendMember(member.name + "/", member.contents);
+			ofstream output(*options_.importLibrary, ios::binary | ios::trunc);
+			if (!output) fail("cannot create import library '" + options_.importLibrary->string() + "'");
+			output.write(reinterpret_cast<const char*>(archive.data()), static_cast<streamsize>(archive.size()));
+			if (!output) fail("failed writing import library '" + options_.importLibrary->string() + "'");
+		}
+
+		void Linker::prepareDebugSection()
+		{
+			if (!options_.debug) return;
+			random_device random;
+			for (auto& byte : pdbIdentity_.guid) byte = static_cast<uint8_t>(random());
+			pdbIdentity_.guid[6] = static_cast<uint8_t>((pdbIdentity_.guid[6] & 0x0f) | 0x40);
+			pdbIdentity_.guid[8] = static_cast<uint8_t>((pdbIdentity_.guid[8] & 0x3f) | 0x80);
+			pdbIdentity_.age = 1;
+			pdbIdentity_.signature = static_cast<uint32_t>(chrono::system_clock::to_time_t(chrono::system_clock::now()));
+
+			InputSection debug;
+			debug.name = ".rdata";
+			debug.alignment = 4;
+			debug.characteristics = 0x00000040 | SectionMemRead;
+			debugSectionIndex_ = getOutputSection(debug);
+			auto& output = outputSections_[debugSectionIndex_];
+			debugDirectoryOffset_ = alignUp(output.virtualSize, 4);
+			rsdsRecordOffset_ = debugDirectoryOffset_ + 28;
+			const auto pdbName = options_.pdbFile->filename().string();
+			if (pdbName.empty() || pdbName.find('\\0') != string::npos) fail("invalid PDB output filename");
+			const auto requiredSize = rsdsRecordOffset_ + 24 + pdbName.size() + 1;
+			if (output.data.size() < debugDirectoryOffset_) output.data.resize(debugDirectoryOffset_, 0);
+			output.data.resize(requiredSize, 0);
+			output.virtualSize = requiredSize;
+			writeLe(output.data, rsdsRecordOffset_, uint32_t{ 0x53445352 });
+			copy(pdbIdentity_.guid.begin(), pdbIdentity_.guid.end(), output.data.begin() + static_cast<ptrdiff_t>(rsdsRecordOffset_ + 4));
+			writeLe(output.data, rsdsRecordOffset_ + 20, pdbIdentity_.age);
+			copy(pdbName.begin(), pdbName.end(), output.data.begin() + static_cast<ptrdiff_t>(rsdsRecordOffset_ + 24));
+			debugDirectorySize_ = 28;
+		}
+
+		void Linker::finalizeDebugSection()
+		{
+			if (!options_.debug) return;
+			auto& section = outputSections_.at(debugSectionIndex_);
+			writeLe(section.data, debugDirectoryOffset_ + 12, uint32_t{ 2 });
+			writeLe(section.data, debugDirectoryOffset_ + 16, toU32(24 + options_.pdbFile->filename().string().size() + 1, "CodeView debug record size"));
+			writeLe(section.data, debugDirectoryOffset_ + 20, toU32(static_cast<size_t>(section.rva) + rsdsRecordOffset_, "CodeView debug record RVA"));
+			writeLe(section.data, debugDirectoryOffset_ + 24, toU32(static_cast<size_t>(section.rawOffset) + rsdsRecordOffset_, "CodeView debug record file offset"));
+		}
+
+		void Linker::writePdb()
+		{
+			if (!options_.debug) return;
+			codeview::PdbBuilder builder(pdbIdentity_);
+			for (size_t i = 0; i < outputSections_.size(); ++i)
+			{
+				const auto& section = outputSections_[i];
+				builder.addLinkedSection({ static_cast<uint16_t>(i + 1), section.name, section.rva, toU32(max(section.virtualSize, section.data.size()), "PDB section size"), section.characteristics });
+			}
+			for (const auto& [name, definition] : globals_)
+			{
+				if (definition.imported || definition.common || definition.weakUndefined || definition.objectIndex >= objects_.size() || definition.symbolIndex >= objects_[definition.objectIndex].symbols.size()) continue;
+				const auto& symbol = objects_[definition.objectIndex].symbols[definition.symbolIndex];
+				if (symbol.sectionNumber <= 0 || static_cast<size_t>(symbol.sectionNumber) > sectionMaps_[definition.objectIndex].size()) continue;
+				const auto& mapping = sectionMaps_[definition.objectIndex][static_cast<size_t>(symbol.sectionNumber - 1)];
+				if (mapping.outputIndex >= outputSections_.size()) continue;
+				builder.addLinkedSymbol({ name, static_cast<uint16_t>(mapping.outputIndex + 1), toU32(mapping.offset + symbol.value, "PDB symbol offset"), 0 });
+			}
+			for (const auto& object : objects_)
+			{
+				if (!object.hasCodeView) continue;
+				auto codeViewObject = object.codeView;
+				for (size_t sectionIndex = 0; sectionIndex < object.sections.size(); ++sectionIndex)
+				{
+					const auto& input = object.sections[sectionIndex];
+					if (input.discarded || input.linkerDirective || input.codeViewTypes || input.codeViewSymbols) continue;
+					const auto& mapping = sectionMaps_[&object - objects_.data()][sectionIndex];
+					if (mapping.outputIndex >= outputSections_.size()) continue;
+					const auto contributionSize = toU32(max<size_t>(input.virtualSize, input.data.size()), "PDB input section contribution");
+					if (contributionSize == 0) continue;
+					codeViewObject.contributions.push_back({ static_cast<uint16_t>(sectionIndex + 1), 0, contributionSize, static_cast<uint16_t>(mapping.outputIndex + 1), toU32(mapping.offset, "PDB linked contribution offset") });
+				}
+				builder.addCodeViewObject(move(codeViewObject));
+			}
+			builder.write(*options_.pdbFile);
+		}
+
+		void Linker::writeImage()
+		{
+			const auto headersSize = alignUp(0x80u + 4u + 20u + 240u + outputSections_.size() * 40u, options_.fileAlignment);
+			size_t fileSize = headersSize;
+			size_t imageSize = options_.sectionAlignment;
+			uint32_t codeSize = 0;
+			uint32_t initializedSize = 0;
+			uint32_t uninitializedSize = 0;
+			uint32_t baseOfCode = 0;
+			for (const auto& section : outputSections_)
+			{
+				imageSize = max(imageSize, static_cast<size_t>(section.rva) + alignUp(max(section.virtualSize, section.data.size()), options_.sectionAlignment));
+				if (section.rawSize != 0)
+				{
+					fileSize = max(fileSize, static_cast<size_t>(section.rawOffset) + section.rawSize);
+				}
+				if ((section.characteristics & SectionCntCode) != 0)
+				{
+					codeSize += section.rawSize;
+					if (baseOfCode == 0)
+					{
+						baseOfCode = section.rva;
+					}
+				}
+				else if ((section.characteristics & SectionCntUninitializedData) != 0)
+				{
+					uninitializedSize += toU32(section.virtualSize, "uninitialized section size");
+				}
+				else
+				{
+					initializedSize += section.rawSize;
+				}
+			}
+			Bytes image(fileSize, 0);
+			image[0] = 'M';
+			image[1] = 'Z';
+			constexpr string_view dosMessage = "This program cannot be run in DOS mode.\r\n$";
+			copy(dosMessage.begin(), dosMessage.end(), image.begin() + 0x40);
+			writeLe(image, 0x3c, uint32_t{ 0x80 });
+			image[0x80] = 'P';
+			image[0x81] = 'E';
+			const size_t coff = 0x84;
+			writeLe(image, coff, MachineAmd64);
+			writeLe(image, coff + 2, static_cast<uint16_t>(outputSections_.size()));
+			writeLe(image, coff + 16, uint16_t{ 240 });
+			const auto fileCharacteristics = static_cast<uint16_t>(0x0022 | (options_.dll ? 0x2000 : 0) | (relocationDirectorySize_ == 0 ? 0x0001 : 0));
+			writeLe(image, coff + 18, fileCharacteristics);
+			const size_t optional = coff + 20;
+			writeLe(image, optional, uint16_t{ 0x020b });
+			writeLe(image, optional + 4, codeSize);
+			writeLe(image, optional + 8, initializedSize);
+			writeLe(image, optional + 12, uninitializedSize);
+			writeLe(image, optional + 16, entryRva());
+			writeLe(image, optional + 20, baseOfCode);
+			writeLe(image, optional + 24, options_.imageBase);
+			writeLe(image, optional + 32, options_.sectionAlignment);
+			writeLe(image, optional + 36, options_.fileAlignment);
+			writeLe(image, optional + 40, uint16_t{ 6 });
+			writeLe(image, optional + 48, options_.subsystemVersionMajor);
+			writeLe(image, optional + 50, options_.subsystemVersionMinor);
+			writeLe(image, optional + 56, toU32(imageSize, "PE image size"));
+			writeLe(image, optional + 60, toU32(headersSize, "PE headers size"));
+			writeLe(image, optional + 68, options_.subsystem);
+			const auto dllCharacteristics = static_cast<uint16_t>((options_.nxCompat ? 0x0100 : 0) | ((options_.dynamicBase && relocationDirectorySize_ != 0) ? 0x0040 : 0));
+			writeLe(image, optional + 70, dllCharacteristics);
+			writeLe(image, optional + 72, options_.stackReserve);
+			writeLe(image, optional + 80, options_.stackCommit);
+			writeLe(image, optional + 88, options_.heapReserve);
+			writeLe(image, optional + 96, options_.heapCommit);
+			writeLe(image, optional + 108, uint32_t{ 16 });
+			writeLe(image, optional + 112, exportDirectoryRva_);
+			writeLe(image, optional + 116, exportDirectorySize_);
+			writeLe(image, optional + 120, importDirectoryRva_);
+			writeLe(image, optional + 124, importDirectorySize_);
+			if (options_.debug)
+			{
+				writeLe(image, optional + 160, toU32(static_cast<size_t>(outputSections_[debugSectionIndex_].rva) + debugDirectoryOffset_, "PE debug directory RVA"));
+				writeLe(image, optional + 164, debugDirectorySize_);
+			}
+			writeLe(image, optional + 216, delayImportDirectoryRva_);
+			writeLe(image, optional + 220, delayImportDirectorySize_);
+			const auto resourceDirectory = sectionDirectory(".rsrc");
+			const auto exceptionDirectory = sectionDirectory(".pdata");
+			const auto tlsDirectory = symbolDirectory({ "__tls_used", "_tls_used" }, 40, "TLS");
+			const auto loadConfigDirectory = loadConfigurationDirectory();
+			if (resourceDirectory && resourceDirectory->second < 16)
+			{
+				fail("PE resource directory is shorter than IMAGE_RESOURCE_DIRECTORY");
+			}
+			if (exceptionDirectory)
+			{
+				if (exceptionDirectory->second % 12 != 0)
+				{
+					fail("AMD64 exception directory size is not a multiple of RUNTIME_FUNCTION");
+				}
+				const auto pdata = find_if(outputSections_.begin(), outputSections_.end(), [&](const OutputSection& section) { return section.rva == exceptionDirectory->first; });
+				uint32_t previousBegin = 0;
+				for (size_t offset = 0; offset < exceptionDirectory->second; offset += 12)
+				{
+					const auto begin = readLe<uint32_t>(pdata->data, offset, "AMD64 exception directory");
+					const auto end = readLe<uint32_t>(pdata->data, offset + 4, "AMD64 exception directory");
+					if (begin >= end || (offset != 0 && begin < previousBegin))
+					{
+						fail("AMD64 exception directory contains an invalid or unsorted RUNTIME_FUNCTION entry");
+					}
+					previousBegin = begin;
+				}
+			}
+			if (resourceDirectory)
+			{
+				writeLe(image, optional + 128, resourceDirectory->first);
+				writeLe(image, optional + 132, resourceDirectory->second);
+			}
+			if (exceptionDirectory)
+			{
+				writeLe(image, optional + 136, exceptionDirectory->first);
+				writeLe(image, optional + 140, exceptionDirectory->second);
+			}
+			if (tlsDirectory)
+			{
+				writeLe(image, optional + 184, tlsDirectory->first);
+				writeLe(image, optional + 188, tlsDirectory->second);
+			}
+			if (loadConfigDirectory)
+			{
+				writeLe(image, optional + 192, loadConfigDirectory->first);
+				writeLe(image, optional + 196, loadConfigDirectory->second);
+			}
+			writeLe(image, optional + 152, relocationDirectoryRva_);
+			writeLe(image, optional + 156, relocationDirectorySize_);
+			if (idataSection_ != numeric_limits<size_t>::max())
+			{
+				size_t iatStart = numeric_limits<size_t>::max();
+				size_t iatEnd = 0;
+				for (const auto& module : importModules_)
+				{
+					iatStart = min(iatStart, module.iatOffset);
+					iatEnd = max(iatEnd, module.iatOffset + (module.imports.size() + 1) * 8);
+				}
+				writeLe(image, optional + 208, toU32(static_cast<size_t>(outputSections_[idataSection_].rva) + iatStart, "IAT RVA"));
+				writeLe(image, optional + 212, toU32(iatEnd - iatStart, "IAT size"));
+			}
+
+			const auto sectionHeaders = optional + 240;
+			for (size_t i = 0; i < outputSections_.size(); ++i)
+			{
+				const auto& section = outputSections_[i];
+				const auto header = sectionHeaders + i * 40;
+				const auto nameLength = min<size_t>(section.name.size(), 8);
+				copy_n(section.name.begin(), nameLength, image.begin() + header);
+				writeLe(image, header + 8, toU32(max(section.virtualSize, section.data.size()), "section virtual size"));
+				writeLe(image, header + 12, section.rva);
+				writeLe(image, header + 16, section.rawSize);
+				writeLe(image, header + 20, section.rawOffset);
+				const auto characteristics = section.characteristics & ~uint32_t{ 0x00f01000 };
+				writeLe(image, header + 36, characteristics);
+				if (section.rawSize != 0)
+				{
+					copy(section.data.begin(), section.data.end(), image.begin() + section.rawOffset);
+				}
+			}
+
+			ofstream output(options_.output, ios::binary | ios::trunc);
+			if (!output)
+			{
+				fail("cannot create '" + options_.output.string() + "'");
+			}
+			output.write(reinterpret_cast<const char*>(image.data()), static_cast<streamsize>(image.size()));
+			if (!output)
+			{
+				fail("failed writing '" + options_.output.string() + "'");
+			}
+			if (options_.mapFile)
+			{
+				ofstream map(*options_.mapFile);
+				if (!map)
+				{
+					fail("cannot create map file '" + options_.mapFile->string() + "'");
+				}
+				map << "JWlink2 map for " << options_.output.string() << "\n\n";
+				for (const auto& [name, definition] : globals_)
+				{
+					if (definition.weakUndefined)
+					{
+						continue;
+					}
+					uint64_t address = 0;
+					if (definition.imported)
+					{
+						const auto& imported = imports_[definition.importIndex];
+						if (definition.importAddress || !imported.hasFunction)
+						{
+							const auto section = imported.delayed ? delayImportSection_ : idataSection_;
+							const auto offset = imported.delayed ? imported.delayIatOffset : imported.iatOffset;
+							address = options_.imageBase + outputSections_[section].rva + offset;
+						}
+						else
+						{
+							address = options_.imageBase + outputSections_[imported.thunkSection].rva + imported.thunkOffset;
+						}
+					}
+					else if (definition.common)
+					{
+						address = options_.imageBase + outputSections_[definition.outputIndex].rva + definition.outputOffset;
+					}
+					else if (definition.objectIndex < objects_.size() && definition.symbolIndex < objects_[definition.objectIndex].symbols.size())
+					{
+						const auto& symbol = objects_[definition.objectIndex].symbols[definition.symbolIndex];
+						if (symbol.sectionNumber > 0)
+						{
+							const auto& section = sectionMaps_[definition.objectIndex][static_cast<size_t>(symbol.sectionNumber - 1)];
+							address = options_.imageBase + outputSections_[section.outputIndex].rva + section.offset + symbol.value;
+						}
+						else
+						{
+							address = symbol.value;
+						}
+					}
+					map << hex << address << " " << name << "\n";
+				}
+				if (!map)
+				{
+					fail("failed writing map file '" + options_.mapFile->string() + "'");
+				}
+			}
+			writeImportLibrary();
+			cout << "JWlink2: wrote " << options_.output.string() << " (" << image.size() << " bytes)\n";
+
+		} // namespace
+	}
+}

@@ -1,0 +1,6 @@
+﻿option casemap:none
+.data
+public target, _tls_index
+target db 0
+_tls_index dd 0
+end
