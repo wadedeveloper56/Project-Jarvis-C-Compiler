@@ -468,6 +468,7 @@ namespace JWlink2::commandline
 					for (const auto& item : items)
 					{
 						const auto kind = lowerAscii(item);
+						if (kind == "lines" || kind == "types" || kind == "locals") fail("unsupported DEBUG modifier '" + item + "'; selective debug output is not implemented");
 						if (kind != "all" && kind != "codeview") fail("unsupported DEBUG format '" + item + "' (only CodeView/PDB output exists)");
 					}
 					options.push_back("/DEBUG");

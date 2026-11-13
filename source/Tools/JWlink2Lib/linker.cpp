@@ -1079,6 +1079,7 @@ namespace JWlink2
 
 		void parseCodeViewTypeStream(const Bytes& data, codeview::CodeViewObject& object)
 		{
+			if (data.size() >= 4 && readLe<uint32_t>(data, 0, object.objectId) == 1) fail(object.objectId + ": legacy CodeView .debug$T signature 1 is unsupported; /DEBUG requires C13 object data");
 			if (data.size() < 4 || readLe<uint32_t>(data, 0, object.objectId) != CvSignatureC13) fail(object.objectId + ": unsupported .debug$T signature");
 			size_t cursor = 4;
 			uint32_t index = 0x1000;
@@ -1099,6 +1100,7 @@ namespace JWlink2
 
 		void parseCodeViewSymbolStream(const Bytes& data, codeview::CodeViewObject& object)
 		{
+			if (data.size() >= 4 && readLe<uint32_t>(data, 0, object.objectId) == 1) fail(object.objectId + ": legacy CodeView .debug$S signature 1 is unsupported; /DEBUG requires C13 object data");
 			if (data.size() < 4 || readLe<uint32_t>(data, 0, object.objectId) != CvSignatureC13) fail(object.objectId + ": unsupported .debug$S signature");
 			size_t cursor = 4;
 			while (cursor < data.size())
