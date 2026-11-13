@@ -498,15 +498,17 @@ namespace JWlink2
 					}
 				}
 			}
-			for (const auto& section : object.sections)
+			for (size_t sectionIndex = 0; sectionIndex < object.sections.size(); ++sectionIndex)
 			{
+				auto& section = object.sections[sectionIndex];
 				if (section.comdatSelection > 7)
 				{
 					fail(object.name + ": unsupported COMDAT selection type");
 				}
 				if (section.comdatSelection != 0 && section.comdatSelection != 5 && section.comdatKey.empty())
 				{
-					fail(object.name + ": COMDAT section has no external selection key");
+					// MSVC /Gy places static functions in COMDATs with no external symbol; they cannot collide, so key them uniquely.
+					section.comdatKey = "<local>" + object.name + "#" + to_string(sectionIndex + 1);
 				}
 			}
 			for (const auto& section : object.sections)

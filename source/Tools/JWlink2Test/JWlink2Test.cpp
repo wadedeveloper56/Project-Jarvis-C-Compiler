@@ -682,6 +682,104 @@ namespace JWlink2Test
 			return 0;
 		}
 
+		size_t rvaOffset(const Bytes& image, uint32_t rva);
+
+		// Checks the invariants the Windows loader and PE inspection tools (dumpbin, pefile) enforce on an image layout.
+		void validatePeLayout(const Bytes& image)
+		{
+			const auto pe = peHeader(image);
+			const auto optional = optionalHeader(image);
+			const auto count = get16(image, pe + 6);
+			const auto table = sectionTable(image);
+			const auto sectionAlignment = get32(image, optional + 32);
+			const auto fileAlignment = get32(image, optional + 36);
+			const auto imageSize = get32(image, optional + 56);
+			const auto headersSize = get32(image, optional + 60);
+			const auto imageBase = get64(image, optional + 24);
+			Assert::AreEqual<uint16_t>(0x8664, get16(image, pe + 4), L"machine is AMD64");
+			Assert::IsTrue(count > 0 && count <= 96, L"section count is plausible");
+			Assert::IsTrue(sectionAlignment >= 0x1000 && (sectionAlignment & (sectionAlignment - 1)) == 0, L"section alignment is a power of two >= 4 KiB");
+			Assert::IsTrue(fileAlignment >= 0x200 && fileAlignment <= 0x10000 && (fileAlignment & (fileAlignment - 1)) == 0, L"file alignment is a power of two in [512, 64K]");
+			Assert::IsTrue(fileAlignment <= sectionAlignment, L"file alignment does not exceed section alignment");
+			Assert::AreEqual<uint32_t>(0, imageBase & 0xffff, L"image base is 64-KiB aligned");
+			Assert::AreEqual<uint32_t>(0, headersSize % fileAlignment, L"size of headers is file-aligned");
+			Assert::IsTrue(table + static_cast<size_t>(count) * 40 <= headersSize, L"section table fits inside the headers");
+			Assert::AreEqual<uint32_t>(0, imageSize % sectionAlignment, L"size of image is section-aligned");
+
+			uint32_t previousEnd = (headersSize + sectionAlignment - 1) / sectionAlignment * sectionAlignment;
+			uint32_t previousRawEnd = headersSize;
+			uint32_t codeSize = 0, initializedSize = 0, uninitializedSize = 0;
+			bool entryInExecutableSection = get32(image, optional + 16) == 0;
+			for (size_t i = 0; i < count; ++i)
+			{
+				const auto header = table + i * 40;
+				const auto virtualSize = get32(image, header + 8);
+				const auto rva = get32(image, header + 12);
+				const auto rawSize = get32(image, header + 16);
+				const auto rawPointer = get32(image, header + 20);
+				const auto flags = get32(image, header + 36);
+				Assert::AreEqual<uint32_t>(0, rva % sectionAlignment, L"section RVA is section-aligned");
+				Assert::IsTrue(rva >= previousEnd, L"sections ascend in RVA order without overlap");
+				Assert::AreEqual<uint32_t>(0, rawSize % fileAlignment, L"raw size is file-aligned");
+				if (rawSize != 0)
+				{
+					Assert::AreEqual<uint32_t>(0, rawPointer % fileAlignment, L"raw pointer is file-aligned");
+					Assert::IsTrue(rawPointer >= previousRawEnd, L"raw data does not overlap the headers or a prior section");
+					Assert::IsTrue(static_cast<uint64_t>(rawPointer) + rawSize <= image.size(), L"raw data lies inside the file");
+					previousRawEnd = rawPointer + rawSize;
+				}
+				Assert::IsTrue(virtualSize != 0 || rawSize != 0, L"section is not empty");
+				previousEnd = rva + (max(virtualSize, rawSize) + sectionAlignment - 1) / sectionAlignment * sectionAlignment;
+				Assert::IsTrue((flags & 0x20) == 0 || (flags & 0x20000000) != 0, L"code sections are executable");
+				Assert::IsTrue((flags & 0x20000000) == 0 || (flags & 0x80000000) == 0, L"sections are not both executable and writable");
+				if ((flags & 0x20) != 0) codeSize += rawSize;
+				else if ((flags & 0x40) != 0) initializedSize += rawSize;
+				else if ((flags & 0x80) != 0) uninitializedSize += (max(virtualSize, rawSize) + fileAlignment - 1) / fileAlignment * fileAlignment;
+				const auto entry = get32(image, optional + 16);
+				if (entry != 0 && entry >= rva && entry < rva + max(virtualSize, rawSize) && (flags & 0x20000000) != 0) entryInExecutableSection = true;
+			}
+			Assert::AreEqual<uint32_t>(previousEnd, imageSize, L"size of image covers every section");
+			Assert::IsTrue(entryInExecutableSection, L"entry point lies in an executable section");
+			Assert::AreEqual<uint32_t>(codeSize, get32(image, optional + 4), L"size of code matches code sections");
+			Assert::AreEqual<uint32_t>(initializedSize, get32(image, optional + 8), L"size of initialized data matches");
+			Assert::AreEqual<uint32_t>(uninitializedSize, get32(image, optional + 12), L"size of uninitialized data matches");
+
+			const auto directoryCount = get32(image, optional + 108);
+			Assert::IsTrue(directoryCount <= 16 && get16(image, pe + 20) >= 112 + directoryCount * 8, L"data directory count fits the optional header");
+			for (uint32_t i = 0; i < directoryCount; ++i)
+			{
+				const auto rva = get32(image, optional + 112 + i * 8);
+				const auto size = get32(image, optional + 116 + i * 8);
+				if (i == 4 || (rva == 0 && size == 0)) continue;
+				Assert::IsTrue(rva != 0 && size != 0, L"data directory has both an RVA and a size");
+				Assert::IsTrue(static_cast<uint64_t>(rva) + size <= imageSize, L"data directory lies inside the image");
+			}
+
+			if ((peFileCharacteristics(image) & 1) == 0)
+			{
+				const auto relocRva = get32(image, optional + 152);
+				const auto relocSize = get32(image, optional + 156);
+				const auto relocStart = relocSize == 0 ? 0 : rvaOffset(image, relocRva);
+				uint32_t cursor = 0;
+				while (cursor < relocSize)
+				{
+					const auto pageRva = get32(image, relocStart + cursor);
+					const auto blockSize = get32(image, relocStart + cursor + 4);
+					Assert::IsTrue(blockSize >= 8 && blockSize % 4 == 0 && cursor + blockSize <= relocSize, L"base relocation block is well formed");
+					Assert::AreEqual<uint32_t>(0, pageRva % 0x1000, L"base relocation page is 4-KiB aligned");
+					Assert::IsTrue(pageRva < imageSize, L"base relocation page lies inside the image");
+					for (uint32_t entry = 8; entry < blockSize; entry += 2)
+					{
+						const auto value = get16(image, relocStart + cursor + entry);
+						const auto type = value >> 12;
+						Assert::IsTrue(type == 0 || type == 3 || type == 10, L"base relocation type is ABSOLUTE, HIGHLOW, or DIR64");
+						Assert::IsTrue(pageRva + (value & 0xfff) < imageSize, L"base relocation target lies inside the image");
+					}
+					cursor += blockSize;
+				}
+			}
+		}
+
 		size_t rvaOffset(const Bytes& image, uint32_t rva)
 		{
 			const auto pe = peHeader(image);
@@ -1176,6 +1274,129 @@ namespace JWlink2Test
 			assertFailureContains(runLinker(invalidWorkspace, { L"/DLL", L"/EXPORT:missing", invalidWorkspace.file(L"plain.obj").wstring() }), "unresolved external symbol 'missing'");
 			assertFailureContains(runLinker(invalidWorkspace, { L"/DLL", L"/EXPORT:main", L"/EXPORT:main", invalidWorkspace.file(L"plain.obj").wstring() }), "duplicate export name 'main'");
 			assertFailureContains(runLinker(invalidWorkspace, { L"/DLL", L"/EXPORT:main", L"/OUT:" + invalidWorkspace.file(L"same.dll").wstring(), L"/IMPLIB:" + invalidWorkspace.file(L"same.dll").wstring(), invalidWorkspace.file(L"plain.obj").wstring() }), "import-library output path must differ");
+		}
+
+		TEST_METHOD(LinkedImagesSatisfyPeLayoutInvariants)
+		{
+			Workspace workspace;
+			TestSection data{ ".data", Bytes(16, 0), 0xc0000040 };
+			data.relocations = { { 0, 0, 1 } };
+			TestSection text{ ".text",{ 0xc3 } };
+			const auto object = makeObject({ data, text }, { TestSymbol{ "main", 0, 2, 2,{} } });
+			assertSuccess(linkObject(workspace, object));
+			validatePeLayout(workspace.read(L"linked.exe"));
+
+			auto args = outputArgs(workspace, L"aligned.exe");
+			args.insert(args.begin() + 1, L"/ALIGN:8192");
+			args.push_back(workspace.file(L"input.obj").wstring());
+			workspace.write(L"input.obj", object);
+			assertSuccess(runLinker(workspace, args));
+			validatePeLayout(workspace.read(L"aligned.exe"));
+
+			workspace.write(L"dll.obj", makeObject({ TestSection{ ".text",{ 0xc3 } } }, { TestSymbol{ "api", 0, 1, 2,{} } }));
+			assertSuccess(runLinker(workspace, { L"/DLL", L"/NOENTRY", L"/EXPORT:api", L"/OUT:" + workspace.file(L"layout.dll").wstring(), workspace.file(L"dll.obj").wstring() }));
+			validatePeLayout(workspace.read(L"layout.dll"));
+		}
+
+		TEST_METHOD(StaticComdatSectionsWithoutExternalSymbolsAreKept)
+		{
+			Workspace workspace;
+			auto staticComdat = [](uint8_t marker)
+				{
+					TestSection section{ ".text$mn", { marker }, 0x60001020 };
+					TestSymbol sectionSymbol{ ".text$mn", 0, 1, 3,{ sectionAux(1, 0, 2) } };
+					return makeObject({ section }, { sectionSymbol });
+				};
+			workspace.write(L"entry.obj", makeEntryObject());
+			workspace.write(L"first.obj", staticComdat(0x11));
+			workspace.write(L"second.obj", staticComdat(0x22));
+			auto args = outputArgs(workspace);
+			for (const auto& file : { L"entry.obj", L"first.obj", L"second.obj" }) args.push_back(workspace.file(file).wstring());
+			assertSuccess(runLinker(workspace, args));
+			const auto image = workspace.read(L"linked.exe");
+			const auto text = sectionHeader(image, ".text");
+			const auto raw = get32(image, text + 20);
+			const auto end = raw + get32(image, text + 16);
+			Assert::IsTrue(find(image.begin() + raw, image.begin() + end, 0x11) != image.begin() + end, L"first static COMDAT is kept");
+			Assert::IsTrue(find(image.begin() + raw, image.begin() + end, 0x22) != image.begin() + end, L"static COMDATs from different objects never merge");
+		}
+
+		TEST_METHOD(DllIsRebasedByTheWindowsLoaderAndRelocationsAreApplied)
+		{
+			Workspace workspace;
+			// get: mov rax,[rip+slot]; ret    where: lea rax,[rip+slot]; ret
+			TestSection text{ ".text",{ 0x48, 0x8b, 0x05, 0, 0, 0, 0, 0xc3, 0x48, 0x8d, 0x05, 0, 0, 0, 0, 0xc3 } };
+			text.relocations = { { 3, 2, 4 },{ 11, 2, 4 } };
+			TestSection data{ ".data", Bytes(8, 0), 0xc0000040 };
+			data.relocations = { { 0, 2, 1 } };
+			workspace.write(L"dll.obj", makeObject({ text, data }, { TestSymbol{ "get", 0, 1, 2,{} }, TestSymbol{ "where", 8, 1, 2,{} }, TestSymbol{ "slot", 0, 2, 2,{} } }));
+			for (const auto* name : { L"one.dll", L"two.dll" })
+			{
+				assertSuccess(runLinker(workspace, { L"/DLL", L"/NOENTRY", L"/BASE:0x180000000", L"/DYNAMICBASE", L"/EXPORT:get", L"/EXPORT:where", L"/OUT:" + workspace.file(name).wstring(), workspace.file(L"dll.obj").wstring() }));
+			}
+			const auto image = workspace.read(L"one.dll");
+			validatePeLayout(image);
+			Assert::IsTrue((get16(image, optionalHeader(image) + 70) & 0x40) != 0, L"DLL advertises ASLR");
+
+			using Getter = uintptr_t(*)();
+			vector<HMODULE> modules;
+			for (const auto* name : { L"one.dll", L"two.dll" })
+			{
+				const auto module = LoadLibraryExW(workspace.file(name).c_str(), nullptr, 0);
+				Assert::IsNotNull(module, (wstring(L"Windows loader accepts ") + name).c_str());
+				modules.push_back(module);
+				const auto get = reinterpret_cast<Getter>(GetProcAddress(module, "get"));
+				const auto where = reinterpret_cast<Getter>(GetProcAddress(module, "where"));
+				Assert::IsTrue(get && where, L"exports resolve through the loader");
+				Assert::AreEqual<uintptr_t>(where(), get(), L"DIR64 relocation tracks the load address");
+				const auto base = reinterpret_cast<uintptr_t>(module);
+				Assert::IsTrue(where() >= base && where() < base + get32(image, optionalHeader(image) + 56), L"relocated pointer lies inside the loaded image");
+			}
+			Assert::IsTrue(modules[0] != modules[1], L"two images with one preferred base load at distinct addresses");
+			for (const auto module : modules) FreeLibrary(module);
+		}
+
+		TEST_METHOD(DumpbinAcceptsLinkedImagesAndReportsExpectedStructure)
+		{
+			fs::path dumpbin;
+			error_code ignored;
+			wchar_t programFiles[MAX_PATH]{};
+			GetEnvironmentVariableW(L"ProgramFiles", programFiles, MAX_PATH);
+			if (programFiles)
+			{
+				for (const auto& entry : fs::recursive_directory_iterator(fs::path(programFiles) / L"Microsoft Visual Studio", fs::directory_options::skip_permission_denied, ignored))
+				{
+					if (entry.path().filename() == L"dumpbin.exe" && entry.path().parent_path().filename() == L"x64" && entry.path().parent_path().parent_path().filename() == L"Hostx64") dumpbin = entry.path();
+				}
+			}
+			if (dumpbin.empty()) Logger::WriteMessage("dumpbin.exe not found; standard-tool inspection skipped");
+			if (dumpbin.empty()) return;
+
+			Workspace workspace;
+			TestSection data{ ".data", Bytes(16, 0), 0xc0000040 };
+			data.relocations = { { 0, 0, 1 } };
+			TestSection text{ ".text",{ 0xb9, 42, 0, 0, 0, 0xe8, 0, 0, 0, 0, 0xcc } };
+			text.relocations = { { 6, 2, 4 } };
+			workspace.write(L"input.obj", makeObject({ data, text }, { TestSymbol{ "main", 0, 2, 2,{} }, TestSymbol{ "slot", 0, 1, 2,{} }, TestSymbol{ "ExitProcess", 0, 0, 2,{} } }));
+			workspace.write(L"kernel.lib", makeArchive({ { "exit.obj", makeImportObject("ExitProcess", "KERNEL32.dll", "ExitProcess", 0, 4) } }));
+			auto args = outputArgs(workspace);
+			args.push_back(workspace.file(L"input.obj").wstring());
+			args.push_back(workspace.file(L"kernel.lib").wstring());
+			args.insert(args.begin() + 1, L"/BASE:0x140000000");
+			assertSuccess(runLinker(workspace, args));
+			workspace.write(L"dll.obj", makeObject({ TestSection{ ".text",{ 0xc3 } } }, { TestSymbol{ "api", 0, 1, 2,{} } }));
+			assertSuccess(runLinker(workspace, { L"/DLL", L"/NOENTRY", L"/EXPORT:api", L"/OUT:" + workspace.file(L"tool.dll").wstring(), workspace.file(L"dll.obj").wstring() }));
+
+			const auto exe = runExecutable(workspace, dumpbin, { L"/NOLOGO", L"/HEADERS", L"/IMPORTS", L"/RELOCATIONS", workspace.file(L"linked.exe").wstring() });
+			Assert::AreEqual<DWORD>(0, exe.exitCode, wstring(exe.output.begin(), exe.output.end()).c_str());
+			for (const auto* expected : { "PE signature found", "8664 machine (x64)", "PE32+", "Dynamic base", "KERNEL32.dll", "ExitProcess", "DIR64", "section alignment", ".text name" })
+				Assert::IsTrue(exe.output.find(expected) != string::npos, (L"dumpbin output for the executable contains " + wstring(expected, expected + strlen(expected))).c_str());
+			Assert::IsTrue(exe.output.find("warning") == string::npos && exe.output.find("invalid") == string::npos, L"dumpbin reports no PE warnings");
+
+			const auto dll = runExecutable(workspace, dumpbin, { L"/NOLOGO", L"/HEADERS", L"/EXPORTS", workspace.file(L"tool.dll").wstring() });
+			Assert::AreEqual<DWORD>(0, dll.exitCode, L"dumpbin accepts the DLL");
+			for (const auto* expected : { "DLL", "api", "tool.dll" })
+				Assert::IsTrue(dll.output.find(expected) != string::npos, (L"dumpbin output for the DLL contains " + wstring(expected, expected + strlen(expected))).c_str());
 		}
 
 		TEST_METHOD(RepresentativeObjectMatchesJWlinkPeBehavior)
@@ -2049,6 +2270,8 @@ namespace JWlink2Test
 			Workspace workspace;
 			workspace.write(L"input.obj", makeEntryObject());
 			assertFailureContains(runLinker(workspace, { L"/UNKNOWN", workspace.file(L"input.obj").wstring() }), "unsupported option");
+			assertFailureContains(runLinker(workspace, { L"/MANIFEST:EMBED", workspace.file(L"input.obj").wstring() }), "unsupported option");
+			assertFailureContains(runLinker(workspace, { L"/MANIFESTINPUT:app.manifest", workspace.file(L"input.obj").wstring() }), "unsupported option");
 			assertFailureContains(runLinker(workspace, { L"/BASE:0x12345", workspace.file(L"input.obj").wstring() }), "64-KiB-aligned");
 			assertFailureContains(runLinker(workspace, { L"/ALIGN:300", workspace.file(L"input.obj").wstring() }), "/ALIGN must be a power of two");
 			assertFailureContains(runLinker(workspace, { L"/SUBSYSTEM:EFI", workspace.file(L"input.obj").wstring() }), "unsupported subsystem");
