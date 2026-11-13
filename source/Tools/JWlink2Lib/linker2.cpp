@@ -23,6 +23,14 @@ namespace JWlink2
 
 		void Linker::run()
 		{
+			if (options_.machine == 0x014c)
+			{
+				if (options_.dll || options_.importLibrarySpecified || options_.definitionFile || !options_.exports.empty()) fail("x86 DLLs and exports are not yet supported");
+				if (options_.debug || !options_.delayLoadLibraries.empty()) fail("x86 debug and delay-load output are not yet supported");
+				if (options_.manifestMode == LinkOptions::ManifestMode::Embed) fail("x86 embedded manifests are not yet supported");
+				if (!options_.entry) fail("x86 links require an explicit /ENTRY symbol");
+				if (options_.stackReserve > UINT32_MAX || options_.stackCommit > UINT32_MAX || options_.heapReserve > UINT32_MAX || options_.heapCommit > UINT32_MAX) fail("x86 stack and heap sizes must fit in 32 bits");
+			}
 			if (options_.importLibrary && lowerAscii(fs::absolute(*options_.importLibrary).lexically_normal().string()) == lowerAscii(fs::absolute(options_.output).lexically_normal().string()))
 			{
 				fail("import-library output path must differ from the image output path");
@@ -34,6 +42,15 @@ namespace JWlink2
 			loadDefinitionFile();
 			loadInputs();
 			resolveLibraries();
+			if (options_.machine == 0x014c)
+			{
+				if (!options_.delayLoadLibraries.empty() || !options_.exports.empty()) fail("x86 exports and delay-load output are not yet supported");
+				for (const auto& object : objects_) for (const auto& section : object.sections)
+				{
+					const auto name = section.name.substr(0, section.name.find('$'));
+					if (name == ".idata" || name == ".tls" || name == ".pdata" || name == ".loadcfg" || name == ".rsrc") fail(object.name + ": x86 " + name + " metadata is not yet supported");
+				}
+			}
 			addManifestResource();
 			collectCodeViewObjects();
 			prepareDelayLoadImports();
@@ -283,7 +300,7 @@ namespace JWlink2
 			rejectBitcode(bytes, 0, bytes.size(), path.string());
 			if (bytes.size() >= 8 && string_view(reinterpret_cast<const char*>(bytes.data()), 8) == "!<arch>\n")
 			{
-				auto archive = parseArchive(bytes, path.string());
+				auto archive = parseArchive(bytes, path.string(), options_.machine);
 				if (namedWholeArchive) loadedWholeArchivePaths_.insert(identity);
 				if (options_.wholeArchiveAll || namedWholeArchive)
 				{
@@ -306,7 +323,7 @@ namespace JWlink2
 			else
 			{
 				if (namedWholeArchive) fail("/WHOLEARCHIVE requires an archive: '" + path.string() + "'");
-				objects_.push_back(parseObject(bytes, path.string()));
+				objects_.push_back(parseObject(bytes, path.string(), options_.machine));
 				if (options_.verbose)
 				{
 					cout << "jwlink2: object " << path.string() << "\n";
@@ -1137,26 +1154,27 @@ namespace JWlink2
 				}
 				delayImportModules_[found->second].imports.push_back(i);
 			}
+			const size_t pointerSize = options_.machine == 0x014c ? 4 : 8;
 			InputSection idata;
 			idata.name = ".idata";
-			idata.alignment = 8;
+			idata.alignment = static_cast<uint32_t>(pointerSize);
 			idata.characteristics = 0x00000040 | SectionMemRead | SectionMemWrite;
 			const auto descriptorsSize = (importModules_.size() + 1) * 20;
 			idata.data.resize(descriptorsSize, 0);
 			for (auto& module : importModules_)
 			{
-				idata.data.resize(alignUp(idata.data.size(), 8), 0);
+				idata.data.resize(alignUp(idata.data.size(), pointerSize), 0);
 				module.lookupOffset = idata.data.size();
-				idata.data.resize(idata.data.size() + (module.imports.size() + 1) * 8, 0);
+				idata.data.resize(idata.data.size() + (module.imports.size() + 1) * pointerSize, 0);
 			}
 			for (auto& module : importModules_)
 			{
-				idata.data.resize(alignUp(idata.data.size(), 8), 0);
+				idata.data.resize(alignUp(idata.data.size(), pointerSize), 0);
 				module.iatOffset = idata.data.size();
-				idata.data.resize(idata.data.size() + (module.imports.size() + 1) * 8, 0);
+				idata.data.resize(idata.data.size() + (module.imports.size() + 1) * pointerSize, 0);
 				for (size_t i = 0; i < module.imports.size(); ++i)
 				{
-					imports_[module.imports[i]].iatOffset = module.iatOffset + i * 8;
+					imports_[module.imports[i]].iatOffset = module.iatOffset + i * pointerSize;
 				}
 			}
 			for (auto& module : importModules_)
@@ -1181,7 +1199,7 @@ namespace JWlink2
 			idata.virtualSize = toU32(idata.data.size(), "import section size");
 			idataSection_ = getOutputSection(idata);
 			auto& idataOutput = outputSections_[idataSection_];
-			const auto idataOffset = alignUp(idataOutput.virtualSize, 8);
+			const auto idataOffset = alignUp(idataOutput.virtualSize, pointerSize);
 			importDescriptorOffset_ = idataOffset;
 			if (idataOutput.data.size() < idataOffset)
 			{
@@ -1596,11 +1614,11 @@ namespace JWlink2
 				{
 					if (!section.discarded && !section.linkerDirective && !section.codeViewTypes && !section.codeViewSymbols)
 					{
-						count += static_cast<size_t>(count_if(section.relocations.begin(), section.relocations.end(), [](const Relocation& reloc) { return reloc.type == 1 || reloc.type == 2; }));
+						count += static_cast<size_t>(count_if(section.relocations.begin(), section.relocations.end(), [&](const Relocation& reloc) { return options_.machine == 0x014c ? reloc.type == 6 : reloc.type == 1 || reloc.type == 2; }));
 					}
 				}
 			}
-			count += static_cast<size_t>(count_if(imports_.begin(), imports_.end(), [](const ImportRecord& record) { return record.delayed; }));
+			count += static_cast<size_t>(count_if(imports_.begin(), imports_.end(), [&](const ImportRecord& record) { return record.delayed || (options_.machine == 0x014c && record.hasFunction); }));
 			if (count == 0)
 			{
 				return;
@@ -2174,7 +2192,7 @@ namespace JWlink2
 			{
 				fail("PE image exceeds the Windows section-count limit");
 			}
-			const auto headersUnaligned = 0x80u + 4u + 20u + 240u + outputSections_.size() * 40u;
+			const auto headersUnaligned = 0x80u + 4u + 20u + (options_.machine == 0x014c ? 224u : 240u) + outputSections_.size() * 40u;
 			const auto headersSize = alignUp(headersUnaligned, options_.fileAlignment);
 			size_t nextRva = options_.sectionAlignment;
 			size_t nextRaw = headersSize;
@@ -2198,9 +2216,10 @@ namespace JWlink2
 			}
 			const auto imageSize = toU32(nextRva, "PE image size");
 			toU32(nextRaw, "PE file size");
-			if (options_.imageBase > numeric_limits<uint64_t>::max() - imageSize || options_.imageBase > static_cast<uint64_t>(numeric_limits<int64_t>::max()) - imageSize)
+			if (options_.imageBase > numeric_limits<uint64_t>::max() - imageSize || options_.imageBase > static_cast<uint64_t>(numeric_limits<int64_t>::max()) - imageSize ||
+				(options_.machine == 0x014c && options_.imageBase + imageSize > uint64_t{ 0x100000000 }))
 			{
-				fail("image base and image size exceed the supported PE32+ address range");
+				fail("image base and image size exceed the supported target address range");
 			}
 			(void)entryRva();
 		}
@@ -2254,11 +2273,18 @@ namespace JWlink2
 					for (size_t entryIndex = 0; entryIndex < module.imports.size(); ++entryIndex)
 					{
 						const auto& record = imports_[module.imports[entryIndex]];
-						const auto thunk = record.symbol.byOrdinal
-							? (uint64_t{ 1 } << 63) | record.symbol.ordinalOrHint
-							: static_cast<uint64_t>(idata.rva) + record.hintNameOffset;
-						writeLe(idata.data, module.lookupOffset + entryIndex * 8, thunk);
-						writeLe(idata.data, record.iatOffset, thunk);
+						if (options_.machine == 0x014c)
+						{
+							const auto thunk = record.symbol.byOrdinal ? uint32_t{ 0x80000000 } | record.symbol.ordinalOrHint : toU32(static_cast<size_t>(idata.rva) + record.hintNameOffset, "import name RVA");
+							writeLe(idata.data, module.lookupOffset + entryIndex * 4, thunk);
+							writeLe(idata.data, record.iatOffset, thunk);
+						}
+						else
+						{
+							const auto thunk = record.symbol.byOrdinal ? (uint64_t{ 1 } << 63) | record.symbol.ordinalOrHint : static_cast<uint64_t>(idata.rva) + record.hintNameOffset;
+							writeLe(idata.data, module.lookupOffset + entryIndex * 8, thunk);
+							writeLe(idata.data, record.iatOffset, thunk);
+						}
 					}
 				}
 			}
@@ -2306,6 +2332,12 @@ namespace JWlink2
 				const auto& iat = outputSections_.at(record.delayed ? delayImportSection_ : idataSection_);
 				const auto iatOffset = record.delayed ? record.delayIatOffset : record.iatOffset;
 				const auto iatRva = static_cast<int64_t>(iat.rva + iatOffset);
+				if (options_.machine == 0x014c)
+				{
+					writeLe(outputSections_[record.thunkSection].data, record.thunkOffset + 2, static_cast<uint32_t>(options_.imageBase + iatRva));
+					if (options_.dynamicBase) baseRelocations_.push_back({ toU32(static_cast<size_t>(text.rva) + record.thunkOffset + 2, "import thunk base relocation"), 3 });
+					continue;
+				}
 				const auto nextInstruction = static_cast<int64_t>(text.rva + record.thunkOffset + 6);
 				const auto displacement = iatRva - nextInstruction;
 				if (displacement < numeric_limits<int32_t>::min() || displacement > numeric_limits<int32_t>::max())
@@ -2384,7 +2416,25 @@ namespace JWlink2
 						auto target = symbolAddress(objectIndex, relocation.symbolIndex);
 						const auto placeRva = static_cast<uint64_t>(output.rva) + mapping.offset + relocation.offset;
 						const auto outputOffset = mapping.offset + relocation.offset;
-						if (relocation.type == 1)
+						if (options_.machine == 0x014c && (relocation.type == 0x0006 || relocation.type == 0x0007 || relocation.type == 0x0014))
+						{
+							if (input.data.size() - relocation.offset < 4) fail(object.name + ": I386 relocation is outside initialized section data");
+							const auto addend = static_cast<int32_t>(readLe<uint32_t>(output.data, outputOffset, object.name));
+							int64_t value = static_cast<int64_t>(target) + addend;
+							if (relocation.type == 0x0007) value -= static_cast<int64_t>(options_.imageBase);
+							if (relocation.type == 0x0014) value -= static_cast<int64_t>(options_.imageBase + placeRva + 4);
+							const bool relative = relocation.type == 0x0014;
+							if (value < (relative ? static_cast<int64_t>(INT32_MIN) : 0) || value > (relative ? static_cast<int64_t>(INT32_MAX) : static_cast<int64_t>(UINT32_MAX))) fail(object.name + ": I386 relocation result is out of range");
+							writeLe(output.data, outputOffset, static_cast<uint32_t>(value));
+							if (relocation.type == 0x0006 && options_.dynamicBase && symbolAddressIsImageRelative(objectIndex, relocation.symbolIndex)) baseRelocations_.push_back({ toU32(static_cast<size_t>(placeRva), "base relocation RVA"), 3 });
+						}
+						else if (options_.machine == 0x014c && relocation.type != 0x000a && relocation.type != 0x000b)
+						{
+							ostringstream message;
+							message << object.name << ": unsupported I386 relocation type 0x" << hex << relocation.type;
+							fail(message.str());
+						}
+						else if (relocation.type == 1)
 						{
 							if (input.data.size() - relocation.offset < 8)
 							{
@@ -2765,7 +2815,9 @@ namespace JWlink2
 
 		void Linker::writeImage()
 		{
-			const auto headersSize = alignUp(0x80u + 4u + 20u + 240u + outputSections_.size() * 40u, options_.fileAlignment);
+			const bool x86 = options_.machine == 0x014c;
+			const size_t optionalSize = x86 ? 224 : 240;
+			const auto headersSize = alignUp(0x80u + 4u + 20u + optionalSize + outputSections_.size() * 40u, options_.fileAlignment);
 			size_t fileSize = headersSize;
 			size_t imageSize = options_.sectionAlignment;
 			uint32_t codeSize = 0;
@@ -2805,13 +2857,13 @@ namespace JWlink2
 			image[0x80] = 'P';
 			image[0x81] = 'E';
 			const size_t coff = 0x84;
-			writeLe(image, coff, MachineAmd64);
+			writeLe(image, coff, options_.machine);
 			writeLe(image, coff + 2, static_cast<uint16_t>(outputSections_.size()));
-			writeLe(image, coff + 16, uint16_t{ 240 });
-			const auto fileCharacteristics = static_cast<uint16_t>(0x0002 | (options_.largeAddressAware ? 0x0020 : 0) | (options_.dll ? 0x2000 : 0) | (relocationDirectorySize_ == 0 ? 0x0001 : 0));
+			writeLe(image, coff + 16, static_cast<uint16_t>(optionalSize));
+			const auto fileCharacteristics = static_cast<uint16_t>(0x0002 | (x86 ? 0x0100 : 0) | (options_.largeAddressAware ? 0x0020 : 0) | (options_.dll ? 0x2000 : 0) | (relocationDirectorySize_ == 0 ? 0x0001 : 0));
 			writeLe(image, coff + 18, fileCharacteristics);
 			const size_t optional = coff + 20;
-			writeLe(image, optional, uint16_t{ 0x020b });
+			writeLe(image, optional, static_cast<uint16_t>(x86 ? 0x010b : 0x020b));
 			writeLe(image, optional + 2, options_.linkerVersionMajor);
 			writeLe(image, optional + 3, options_.linkerVersionMinor);
 			writeLe(image, optional + 4, codeSize);
@@ -2819,7 +2871,13 @@ namespace JWlink2
 			writeLe(image, optional + 12, uninitializedSize);
 			writeLe(image, optional + 16, entryRva());
 			writeLe(image, optional + 20, baseOfCode);
-			writeLe(image, optional + 24, options_.imageBase);
+			if (x86)
+			{
+				const auto data = find_if(outputSections_.begin(), outputSections_.end(), [](const OutputSection& section) { return (section.characteristics & (SectionCntInitializedData | SectionCntUninitializedData)) != 0; });
+				writeLe(image, optional + 24, data == outputSections_.end() ? uint32_t{ 0 } : data->rva);
+				writeLe(image, optional + 28, static_cast<uint32_t>(options_.imageBase));
+			}
+			else writeLe(image, optional + 24, options_.imageBase);
 			writeLe(image, optional + 32, options_.sectionAlignment);
 			writeLe(image, optional + 36, options_.fileAlignment);
 			writeLe(image, optional + 40, options_.osVersionMajor);
@@ -2833,24 +2891,37 @@ namespace JWlink2
 			writeLe(image, optional + 68, options_.subsystem);
 			const auto dllCharacteristics = static_cast<uint16_t>((options_.nxCompat ? 0x0100 : 0) | ((options_.dynamicBase && relocationDirectorySize_ != 0) ? 0x0040 : 0));
 			writeLe(image, optional + 70, dllCharacteristics);
-			writeLe(image, optional + 72, options_.stackReserve);
-			writeLe(image, optional + 80, options_.stackCommit);
-			writeLe(image, optional + 88, options_.heapReserve);
-			writeLe(image, optional + 96, options_.heapCommit);
-			writeLe(image, optional + 108, uint32_t{ 16 });
-			writeLe(image, optional + 112, exportDirectoryRva_);
-			writeLe(image, optional + 116, exportDirectorySize_);
-			writeLe(image, optional + 120, importDirectoryRva_);
-			writeLe(image, optional + 124, importDirectorySize_);
+			if (x86)
+			{
+				writeLe(image, optional + 72, static_cast<uint32_t>(options_.stackReserve));
+				writeLe(image, optional + 76, static_cast<uint32_t>(options_.stackCommit));
+				writeLe(image, optional + 80, static_cast<uint32_t>(options_.heapReserve));
+				writeLe(image, optional + 84, static_cast<uint32_t>(options_.heapCommit));
+				writeLe(image, optional + 92, uint32_t{ 16 });
+			}
+			else
+			{
+				writeLe(image, optional + 72, options_.stackReserve);
+				writeLe(image, optional + 80, options_.stackCommit);
+				writeLe(image, optional + 88, options_.heapReserve);
+				writeLe(image, optional + 96, options_.heapCommit);
+				writeLe(image, optional + 108, uint32_t{ 16 });
+			}
+			const size_t directories = optional + (x86 ? 96 : 112);
+			writeLe(image, directories, exportDirectoryRva_);
+			writeLe(image, directories + 4, exportDirectorySize_);
+			writeLe(image, directories + 8, importDirectoryRva_);
+			writeLe(image, directories + 12, importDirectorySize_);
 			if (options_.debug)
 			{
 				writeLe(image, optional + 160, toU32(static_cast<size_t>(outputSections_[debugSectionIndex_].rva) + debugDirectoryOffset_, "PE debug directory RVA"));
 				writeLe(image, optional + 164, debugDirectorySize_);
 			}
-			writeLe(image, optional + 216, delayImportDirectoryRva_);
-			writeLe(image, optional + 220, delayImportDirectorySize_);
+			writeLe(image, directories + 104, delayImportDirectoryRva_);
+			writeLe(image, directories + 108, delayImportDirectorySize_);
 			const auto resourceDirectory = sectionDirectory(".rsrc");
 			const auto exceptionDirectory = sectionDirectory(".pdata");
+			if (x86 && (globals_.contains("__tls_used") || globals_.contains("_tls_used") || globals_.contains("__load_config_used") || globals_.contains("_load_config_used"))) fail("x86 TLS and load-configuration metadata are not yet supported");
 			const auto tlsDirectory = symbolDirectory({ "__tls_used", "_tls_used" }, 40, "TLS");
 			const auto loadConfigDirectory = loadConfigurationDirectory();
 			if (resourceDirectory && resourceDirectory->second < 16)
@@ -2878,8 +2949,8 @@ namespace JWlink2
 			}
 			if (resourceDirectory)
 			{
-				writeLe(image, optional + 128, resourceDirectory->first);
-				writeLe(image, optional + 132, resourceDirectory->second);
+				writeLe(image, directories + 16, resourceDirectory->first);
+				writeLe(image, directories + 20, resourceDirectory->second);
 			}
 			if (exceptionDirectory)
 			{
@@ -2896,8 +2967,8 @@ namespace JWlink2
 				writeLe(image, optional + 192, loadConfigDirectory->first);
 				writeLe(image, optional + 196, loadConfigDirectory->second);
 			}
-			writeLe(image, optional + 152, relocationDirectoryRva_);
-			writeLe(image, optional + 156, relocationDirectorySize_);
+			writeLe(image, directories + 40, relocationDirectoryRva_);
+			writeLe(image, directories + 44, relocationDirectorySize_);
 			if (idataSection_ != numeric_limits<size_t>::max())
 			{
 				size_t iatStart = numeric_limits<size_t>::max();
@@ -2905,13 +2976,13 @@ namespace JWlink2
 				for (const auto& module : importModules_)
 				{
 					iatStart = min(iatStart, module.iatOffset);
-					iatEnd = max(iatEnd, module.iatOffset + (module.imports.size() + 1) * 8);
+					iatEnd = max(iatEnd, module.iatOffset + (module.imports.size() + 1) * (x86 ? 4 : 8));
 				}
-				writeLe(image, optional + 208, toU32(static_cast<size_t>(outputSections_[idataSection_].rva) + iatStart, "IAT RVA"));
-				writeLe(image, optional + 212, toU32(iatEnd - iatStart, "IAT size"));
+				writeLe(image, directories + 96, toU32(static_cast<size_t>(outputSections_[idataSection_].rva) + iatStart, "IAT RVA"));
+				writeLe(image, directories + 100, toU32(iatEnd - iatStart, "IAT size"));
 			}
 
-			const auto sectionHeaders = optional + 240;
+			const auto sectionHeaders = optional + optionalSize;
 			for (size_t i = 0; i < outputSections_.size(); ++i)
 			{
 				const auto& section = outputSections_[i];

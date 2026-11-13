@@ -2067,7 +2067,7 @@ namespace JWlink2Test
 				{ { L"/MANIFESTINPUT:missing.manifest", L"input.obj" }, "missing.manifest" },
 				{ { L"/OPT:REF", L"input.obj" }, "unsupported option" },
 				{ { L"/LTCG", L"input.obj" }, "unsupported option" },
-				{ { L"/MACHINE:ARM64", L"input.obj" }, "only supports /MACHINE:X64" },
+				{ { L"/MACHINE:ARM64", L"input.obj" }, "supports /MACHINE:X64 or /MACHINE:X86" },
 				{ { L"/INCREMENTAL", L"input.obj" }, "INCREMENTAL:NO" }
 			};
 			for (const auto& row : matrix)
@@ -3317,6 +3317,119 @@ namespace JWlink2Test
 			assertNoOutput(workspace);
 		}
 
+		TEST_METHOD(I386StaticArchiveProducesRunnablePe32)
+		{
+			Workspace workspace;
+			TestSection text{ ".text",{ 0xe8, 0, 0, 0, 0, 0xc3 } };
+			text.relocations = { { 1, 1, 0x14 } };
+			workspace.write(L"entry.obj", makeObject({ text }, { TestSymbol{ "_main", 0, 1, 2,{} }, TestSymbol{ "_helper", 0, 0, 2,{} } }, 0x14c));
+			TestSection helper{ ".text",{ 0xa1, 0, 0, 0, 0, 0xc3 } };
+			helper.relocations = { { 1, 1, 6 } };
+			workspace.write(L"helper.lib", makeArchive({ { "helper.obj", makeObject({ helper, TestSection{ ".data",{ 42, 0, 0, 0 }, 0xc0000040 } }, { TestSymbol{ "_helper", 0, 1, 2,{} }, TestSymbol{ "_value", 0, 2, 2,{} } }, 0x14c) } }));
+			assertSuccess(runLinker(workspace, { L"/machine:x86", L"/entry:_main", L"/out:x86.exe", L"entry.obj", L"helper.lib" }));
+			const auto image = workspace.read(L"x86.exe");
+			const auto pe = peHeader(image);
+			const auto optional = pe + 24;
+			Assert::AreEqual<uint16_t>(0x14c, get16(image, pe + 4));
+			Assert::AreEqual<uint16_t>(224, get16(image, pe + 20));
+			Assert::AreEqual<uint16_t>(0x10b, get16(image, optional));
+			Assert::AreEqual<uint32_t>(0x400000, get32(image, optional + 28));
+			Assert::AreEqual<uint16_t>(3, get16(image, optional + 68));
+			Assert::IsTrue((get16(image, pe + 22) & 0x0100) != 0, L"32-bit machine characteristic");
+			const auto relocRva = get32(image, optional + 96 + 5 * 8);
+			Assert::IsTrue(relocRva != 0 && get32(image, optional + 96 + 5 * 8 + 4) >= 12, L"DIR32 generates a HIGHLOW relocation directory");
+			const auto table = optional + 224;
+			bool highLow = false;
+			for (size_t i = 0; i < get16(image, pe + 6); ++i)
+			{
+				const auto h = table + 40 * i;
+				if (get32(image, h + 12) == relocRva)
+				{
+					const auto raw = get32(image, h + 20);
+					highLow = (get16(image, raw + 8) >> 12) == 3;
+				}
+			}
+			Assert::IsTrue(highLow, L"base relocation has HIGHLOW type");
+			Assert::AreEqual<DWORD>(42, runExecutable(workspace, workspace.file(L"x86.exe"), {}).exitCode, L"x86 relative and absolute relocations execute");
+			assertFailureContains(runLinker(workspace, { L"/machine:x86", L"/entry:_main", L"/base:0x100000000", L"entry.obj", L"helper.lib" }), "target address range");
+			assertFailureContains(runLinker(workspace, { L"/machine:x86", L"/entry:_main", L"/debug", L"entry.obj" }), "x86 debug");
+			assertFailureContains(runLinker(workspace, { L"/machine:x64", L"/entry:_main", L"helper.lib" }), "expected AMD64");
+		}
+
+		TEST_METHOD(I386RelocationsAndUnsupportedInputsAreChecked)
+		{
+			Workspace workspace;
+			TestSection text{ ".text", Bytes(16, 0) };
+			text.data[0] = 0xc3;
+			text.relocations = { { 1, 1, 7 }, { 5, 1, 0x0a }, { 7, 1, 0x0b } };
+			workspace.write(L"input.obj", makeObject({ text, TestSection{ ".data",{ 42, 0, 0, 0 }, 0xc0000040 } }, { TestSymbol{ "_main", 0, 1, 2,{} }, TestSymbol{ "_data", 0, 2, 2,{} } }, 0x14c));
+			assertSuccess(runLinker(workspace, { L"/machine:x86", L"/entry:_main", L"/out:x86.exe", L"input.obj" }));
+			const auto image = workspace.read(L"x86.exe");
+			const auto pe = peHeader(image);
+			const auto table = pe + 24 + 224;
+			const auto textRaw = get32(image, table + 20);
+			const auto dataRva = get32(image, table + 40 + 12);
+			Assert::AreEqual(dataRva, get32(image, textRaw + 1), L"DIR32NB uses the target RVA");
+			Assert::AreEqual<uint16_t>(2, get16(image, textRaw + 5), L"SECTION uses the output section index");
+			Assert::AreEqual<uint32_t>(0, get32(image, textRaw + 7), L"SECREL uses the output section offset");
+			text.relocations = { { 1, 1, 1 } };
+			workspace.write(L"unsupported.obj", makeObject({ text, TestSection{ ".data",{ 42 }, 0xc0000040 } }, { TestSymbol{ "_main", 0, 1, 2,{} }, TestSymbol{ "_data", 0, 2, 2,{} } }, 0x14c));
+			assertFailureContains(runLinker(workspace, { L"/machine:x86", L"/entry:_main", L"unsupported.obj" }), "unsupported I386 relocation");
+			workspace.write(L"x64.obj", makeEntryObject());
+			assertFailureContains(runLinker(workspace, { L"/machine:x86", L"/entry:main", L"x64.obj" }), "expected I386 COFF object");
+			assertFailureContains(runLinker(workspace, { L"/machine:x86", L"/entry:_main", L"/manifest:embed", L"input.obj" }), "x86 embedded manifests");
+		}
+
+		TEST_METHOD(RealMsvcI386ObjectAndArchiveExecute)
+		{
+			fs::path tools;
+			error_code ignored;
+			wchar_t programFiles[MAX_PATH]{};
+			GetEnvironmentVariableW(L"ProgramFiles", programFiles, MAX_PATH);
+			for (const auto& entry : fs::recursive_directory_iterator(fs::path(programFiles) / L"Microsoft Visual Studio", fs::directory_options::skip_permission_denied, ignored))
+			{
+				if (entry.path().filename() == L"cl.exe" && entry.path().parent_path().filename() == L"x86" && entry.path().parent_path().parent_path().filename() == L"Hostx64" && fs::exists(entry.path().parent_path() / L"lib.exe") && fs::exists(entry.path().parent_path() / L"link.exe") && fs::exists(entry.path().parent_path() / L"dumpbin.exe")) tools = entry.path().parent_path();
+			}
+			if (tools.empty()) { Logger::WriteMessage("MSVC x86 tools unavailable; real x86 comparison skipped"); return; }
+			Workspace workspace;
+			workspace.writeText(L"main.c", L"int helper(void); int main(void) { return helper(); }\n");
+			workspace.writeText(L"helper.c", L"int value = 42; int helper(void) { return value; }\n");
+			for (const auto* file : { L"main.c", L"helper.c" }) assertSuccess(runExecutable(workspace, tools / L"cl.exe", { L"/nologo", L"/c", L"/Od", L"/GS-", L"/Zl", file }));
+			assertSuccess(runExecutable(workspace, tools / L"lib.exe", { L"/nologo", L"/out:helper.lib", L"helper.obj" }));
+			assertSuccess(runLinker(workspace, { L"/machine:x86", L"/entry:_main", L"/out:jw2.exe", L"main.obj", L"helper.lib" }));
+			assertSuccess(runExecutable(workspace, tools / L"link.exe", { L"/nologo", L"/nodefaultlib", L"/machine:x86", L"/safeseh:no", L"/entry:main", L"/subsystem:console", L"/out:msvc.exe", L"main.obj", L"helper.lib" }));
+			for (const auto* name : { L"jw2.exe", L"msvc.exe" })
+			{
+				const auto inspection = runExecutable(workspace, tools / L"dumpbin.exe", { L"/nologo", L"/headers", L"/relocations", name });
+				assertSuccess(inspection);
+				for (const auto* expected : { "14C machine (x86)", "PE32", "HIGHLOW" }) Assert::IsTrue(inspection.output.find(expected) != string::npos, wstring(expected, expected + strlen(expected)).c_str());
+				Assert::AreEqual<DWORD>(42, runExecutable(workspace, workspace.file(name), {}).exitCode, L"Windows executes linked x86 archive member");
+			}
+			wchar_t programFilesX86[MAX_PATH]{};
+			GetEnvironmentVariableW(L"ProgramFiles(x86)", programFilesX86, MAX_PATH);
+			fs::path kernel;
+			for (const auto& entry : fs::directory_iterator(fs::path(programFilesX86) / L"Windows Kits" / L"10" / L"Lib", ignored))
+			{
+				const auto candidate = entry.path() / L"um" / L"x86" / L"kernel32.lib";
+				if (fs::exists(candidate) && (kernel.empty() || candidate.wstring() > kernel.wstring())) kernel = candidate;
+			}
+			if (kernel.empty()) { Logger::WriteMessage("Windows SDK x86 kernel32.lib unavailable; import test skipped"); return; }
+			workspace.writeText(L"import.c", L"__declspec(dllimport) __declspec(noreturn) void __stdcall ExitProcess(unsigned int); void main(void) { ExitProcess(43); }\n");
+			assertSuccess(runExecutable(workspace, tools / L"cl.exe", { L"/nologo", L"/c", L"/Od", L"/GS-", L"/Zl", L"import.c" }));
+			assertSuccess(runLinker(workspace, { L"/machine:x86", L"/entry:_main", L"/out:import.exe", L"import.obj", kernel.wstring() }));
+			const auto inspection = runExecutable(workspace, tools / L"dumpbin.exe", { L"/nologo", L"/headers", L"/imports", L"import.exe" });
+			assertSuccess(inspection);
+			Assert::IsTrue(inspection.output.find("KERNEL32.dll") != string::npos && inspection.output.find("ExitProcess") != string::npos, L"dumpbin reports x86 import");
+			Assert::AreEqual<DWORD>(43, runExecutable(workspace, workspace.file(L"import.exe"), {}).exitCode, L"x86 SDK import executes");
+			workspace.writeText(L"thunk.c", L"__declspec(noreturn) void __stdcall ExitProcess(unsigned int); void main(void) { ExitProcess(44); }\n");
+			assertSuccess(runExecutable(workspace, tools / L"cl.exe", { L"/nologo", L"/c", L"/Od", L"/GS-", L"/Zl", L"thunk.c" }));
+			assertSuccess(runLinker(workspace, { L"/machine:x86", L"/entry:_main", L"/out:thunk.exe", L"thunk.obj", kernel.wstring() }));
+			const auto thunkInspection = runExecutable(workspace, tools / L"dumpbin.exe", { L"/nologo", L"/imports", L"/relocations", L"thunk.exe" });
+			assertSuccess(thunkInspection);
+			Assert::IsTrue(thunkInspection.output.find("ExitProcess") != string::npos && thunkInspection.output.find("HIGHLOW") != string::npos, L"x86 import thunk has a base relocation");
+			Assert::AreEqual<DWORD>(44, runExecutable(workspace, workspace.file(L"thunk.exe"), {}).exitCode, L"x86 function thunk executes");
+		}
+
 		TEST_METHOD(UnresolvedExternalIsReported)
 		{
 			Workspace workspace;
@@ -3448,7 +3561,7 @@ namespace JWlink2Test
 			auto importArgs = outputArgs(importWorkspace);
 			importArgs.push_back(importWorkspace.file(L"input.obj").wstring());
 			importArgs.push_back(importWorkspace.file(L"bad.lib").wstring());
-			assertFailureContains(runLinker(importWorkspace, importArgs), "import library member is not AMD64");
+			assertFailureContains(runLinker(importWorkspace, importArgs), "import library member machine does not match the target");
 		}
 
 		TEST_METHOD(MalformedAndUnsupportedCoffDirectivesAreReported)
@@ -3562,7 +3675,7 @@ namespace JWlink2Test
 			assertFailureContains(runLinker(workspace, { L"/BASE:0x12345", workspace.file(L"input.obj").wstring() }), "64-KiB-aligned");
 			assertFailureContains(runLinker(workspace, { L"/ALIGN:300", workspace.file(L"input.obj").wstring() }), "/ALIGN must be a power of two");
 			assertFailureContains(runLinker(workspace, { L"/SUBSYSTEM:EFI", workspace.file(L"input.obj").wstring() }), "unsupported subsystem");
-			assertFailureContains(runLinker(workspace, { L"/MACHINE:X86", workspace.file(L"input.obj").wstring() }), "only supports /MACHINE:X64");
+			assertFailureContains(runLinker(workspace, { L"/MACHINE:ARM64", workspace.file(L"input.obj").wstring() }), "supports /MACHINE:X64 or /MACHINE:X86");
 			assertFailureContains(runLinker(workspace, { L"/INCREMENTAL", workspace.file(L"input.obj").wstring() }), "INCREMENTAL:NO");
 			assertFailureContains(runLinker(workspace, { L"@missing.rsp" }), "cannot open response file");
 			workspace.writeText(L"bad.rsp", L"/OUT:\"unterminated");

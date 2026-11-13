@@ -216,7 +216,7 @@ namespace JWlink2::commandline
 
 	void printUsage()
 	{
-		cout << "JWlink2 - AMD64 COFF to Windows PE32+ linker\n"
+		cout << "JWlink2 - COFF to Windows PE linker (AMD64 and bounded x86)\n"
 			"Usage: JWlink2 [options] input.obj [input.lib ...]\n"
 			"       JWlink2 format windows pe [dll] option map[=<file>],quiet,start=<sym> file a.obj,b.obj lib c.lib name out.exe\n"
 			"  JWlink directives: format, file, library, libfile, libpath, name, system, runtime, debug, export, anonymousexport, reference, disable, option\n"
@@ -229,6 +229,7 @@ namespace JWlink2::commandline
 			"  /ENTRY:<symbol>             Set the image entry point\n"
 			"  /NOENTRY                    Omit the DLL entry point\n"
 			"  /SUBSYSTEM:CONSOLE|WINDOWS  Select PE subsystem\n"
+			"  /MACHINE:X64|X86            Select target (X86 requires /ENTRY)\n"
 			"  /LIBPATH:<directory>        Search directory for libraries\n"
 			"  /DEFAULTLIB:<library>       Add a library to the link\n"
 			"  /DELAYLOAD:<dll>            Delay-load imports from a DLL\n"
@@ -741,6 +742,7 @@ namespace JWlink2::commandline
 			else if (optionName == "base")
 			{
 				options.imageBase = parseUnsignedOption(requireValue("/BASE"), "/BASE");
+				options.imageBaseSpecified = true;
 				if (options.imageBase == 0 || (options.imageBase & 0xffff) != 0)
 				{
 					fail("/BASE must be a nonzero 64-KiB-aligned address");
@@ -795,10 +797,9 @@ namespace JWlink2::commandline
 			else if (optionName == "machine")
 			{
 				const auto machine = lowerAscii(requireValue("/MACHINE"));
-				if (machine != "x64" && machine != "amd64")
-				{
-					fail("JWlink2 only supports /MACHINE:X64");
-				}
+				if (machine == "x64" || machine == "amd64") options.machine = 0x8664;
+				else if (machine == "x86" || machine == "i386") options.machine = 0x014c;
+				else fail("JWlink2 supports /MACHINE:X64 or /MACHINE:X86");
 			}
 			else if (optionName == "nologo")
 			{
@@ -970,6 +971,7 @@ namespace JWlink2::commandline
 				start = end + 1;
 			}
 		}
+		if (options.machine == 0x014c && !options.imageBaseSpecified) options.imageBase = 0x400000;
 		if (options.noEntry && (!options.dll || options.entrySpecified))
 		{
 			fail("/NOENTRY is valid only for a DLL without /ENTRY");

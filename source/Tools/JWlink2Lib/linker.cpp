@@ -86,7 +86,7 @@ namespace JWlink2
 			return string(reinterpret_cast<const char*>(bytes.data() + start), end - start);
 		}
 
-		ImportedSymbol parseImportObject(const Bytes& bytes, const string& path)
+		ImportedSymbol parseImportObject(const Bytes& bytes, const string& path, uint16_t expectedMachine)
 		{
 			requireRange(bytes, 0, 20, path + " import object");
 			if (readLe<uint16_t>(bytes, 0, path) != 0 || readLe<uint16_t>(bytes, 2, path) != 0xffff)
@@ -94,9 +94,9 @@ namespace JWlink2
 				fail(path + ": malformed COFF import object signature");
 			}
 			const auto machine = readLe<uint16_t>(bytes, 6, path);
-			if (machine != MachineAmd64)
+			if (machine != expectedMachine)
 			{
-				fail(path + ": import library member is not AMD64");
+				fail(path + ": import library member machine does not match the target");
 			}
 			const auto dataSize = readLe<uint32_t>(bytes, 12, path);
 			const auto hint = readLe<uint16_t>(bytes, 16, path);
@@ -274,7 +274,7 @@ namespace JWlink2
 				readLe<uint16_t>(bytes, 4, "BigObj version") >= 2;
 		}
 
-		ObjectFile parseObject(const Bytes& bytes, string name)
+		ObjectFile parseObject(const Bytes& bytes, string name, uint16_t expectedMachine)
 		{
 			requireRange(bytes, 0, 20, name);
 			const bool bigObj = isBigObjCandidate(bytes);
@@ -306,10 +306,10 @@ namespace JWlink2
 				symbolCount = readLe<uint32_t>(bytes, 12, name);
 				sectionTable += readLe<uint16_t>(bytes, 16, name);
 			}
-			if (machine != MachineAmd64)
+			if (machine != expectedMachine)
 			{
 				ostringstream message;
-				message << name << ": expected AMD64 COFF object (machine 0x8664), got 0x" << hex << machine;
+				message << name << ": expected " << (expectedMachine == MachineAmd64 ? "AMD64" : "I386") << " COFF object (machine 0x" << hex << expectedMachine << "), got 0x" << machine;
 				fail(message.str());
 			}
 			if (sectionCount > (numeric_limits<size_t>::max() - sectionTable) / 40)
@@ -712,7 +712,7 @@ namespace JWlink2
 			return symbols;
 		}
 
-		Archive parseArchive(const Bytes& bytes, const string& path)
+		Archive parseArchive(const Bytes& bytes, const string& path, uint16_t expectedMachine)
 		{
 			constexpr string_view magic = "!<arch>\n";
 			if (bytes.size() < magic.size() || !equal(magic.begin(), magic.end(), bytes.begin()))
@@ -800,20 +800,20 @@ namespace JWlink2
 						const auto machine = readLe<uint16_t>(bytes, dataOffset, path);
 						const auto signature = readLe<uint16_t>(bytes, dataOffset + 2, path);
 						const auto anonymousVersion = memberSize >= 6 ? readLe<uint16_t>(bytes, dataOffset + 4, path) : 0;
-						if (signature == 0xffff && anonymousVersion >= 2)
+						if (machine == 0 && signature == 0xffff && anonymousVersion >= 2)
 						{
 							Bytes objectBytes(bytes.begin() + dataOffset, bytes.begin() + dataOffset + memberSize);
-							member.object = parseObject(objectBytes, path + "(" + memberName + ")");
+							member.object = parseObject(objectBytes, path + "(" + memberName + ")", expectedMachine);
 						}
 						else if (machine == 0 && signature == 0xffff)
 						{
 							Bytes importBytes(bytes.begin() + dataOffset, bytes.begin() + dataOffset + memberSize);
-							member.imported = parseImportObject(importBytes, path + "(" + memberName + ")");
+							member.imported = parseImportObject(importBytes, path + "(" + memberName + ")", expectedMachine);
 						}
-						else if (machine == MachineAmd64)
+						else if (machine == MachineAmd64 || machine == 0x014c)
 						{
 							Bytes objectBytes(bytes.begin() + dataOffset, bytes.begin() + dataOffset + memberSize);
-							member.object = parseObject(objectBytes, path + "(" + memberName + ")");
+							member.object = parseObject(objectBytes, path + "(" + memberName + ")", expectedMachine);
 						}
 					}
 					memberByOffset.emplace(position, archive.members.size());

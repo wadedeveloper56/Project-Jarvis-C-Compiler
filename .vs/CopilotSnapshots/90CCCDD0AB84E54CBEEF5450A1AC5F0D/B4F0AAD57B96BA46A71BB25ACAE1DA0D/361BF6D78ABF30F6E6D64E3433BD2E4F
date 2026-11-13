@@ -1,0 +1,374 @@
+﻿#pragma once
+
+#include "codeview_pdb.h"
+#include "command_line.h"
+
+using namespace JWlink2::commandline;
+
+namespace JWlink2
+{
+	using Bytes = vector<uint8_t>;
+
+	namespace LinkerEngine
+	{
+		[[noreturn]] void fail(const string& message);
+
+		void requireRange(const Bytes& bytes, size_t offset, size_t size, string_view what);
+
+		template <typename T>
+		T readLe(const Bytes& bytes, size_t offset, string_view what)
+		{
+			static_assert(is_unsigned_v<T>);
+			requireRange(bytes, offset, sizeof(T), what);
+			uint64_t value = 0;
+			for (size_t i = 0; i < sizeof(T); ++i)
+			{
+				value |= static_cast<uint64_t>(bytes[offset + i]) << (i * 8);
+			}
+			return static_cast<T>(value);
+		}
+
+		template <typename T>
+		void writeLe(Bytes& bytes, size_t offset, T value)
+		{
+			static_assert(is_unsigned_v<T>);
+			if (offset > bytes.size() || sizeof(T) > bytes.size() - offset)
+			{
+				fail("internal PE layout error");
+			}
+			for (size_t i = 0; i < sizeof(T); ++i)
+			{
+				bytes[offset + i] = static_cast<uint8_t>(value >> (i * 8));
+			}
+		}
+
+		size_t alignUp(size_t value, size_t alignment);
+
+		uint32_t toU32(size_t value, string_view what);
+
+		string fixedString(const Bytes& bytes, size_t offset, size_t length);
+
+		string stringAt(const Bytes& bytes, size_t tableOffset, uint32_t tableSize, uint32_t stringOffset, string_view what);
+
+		struct Relocation
+		{
+			uint32_t offset = 0;
+			uint32_t symbolIndex = 0;
+			uint16_t type = 0;
+		};
+
+		struct InputSection
+		{
+			string name;
+			uint32_t virtualSize = 0;
+			uint32_t characteristics = 0;
+			uint32_t alignment = 1;
+			uint8_t comdatSelection = 0;
+			uint32_t associatedSection = 0;
+			string comdatKey;
+			size_t leaderObject = numeric_limits<size_t>::max();
+			size_t leaderSection = numeric_limits<size_t>::max();
+			bool discarded = false;
+			bool linkerDirective = false;
+			bool codeViewTypes = false;
+			bool codeViewSymbols = false;
+			Bytes data;
+			vector<Relocation> relocations;
+		};
+
+		struct CoffSymbol
+		{
+			string name;
+			uint32_t value = 0;
+			int32_t sectionNumber = 0;
+			uint8_t storageClass = 0;
+			uint32_t weakTagIndex = 0;
+			uint32_t weakCharacteristics = 0;
+			bool auxiliary = false;
+		};
+
+		struct ObjectFile
+		{
+			string name;
+			vector<InputSection> sections;
+			vector<CoffSymbol> symbols;
+			vector<string> directives;
+			codeview::CodeViewObject codeView;
+			bool hasCodeView = false;
+		};
+
+		struct ImportedSymbol
+		{
+			string publicName;
+			string dllName;
+			string importName;
+			uint16_t ordinalOrHint = 0;
+			uint8_t type = 0;
+			uint8_t nameType = 0;
+			bool byOrdinal = false;
+		};
+
+		ImportedSymbol parseImportObject(const Bytes& bytes, const string& path);
+
+		bool hasBitcodeMagic(const Bytes& bytes, size_t offset, size_t size);
+
+		void rejectBitcode(const Bytes& bytes, size_t offset, size_t size, const string& inputName);
+
+		uint32_t coffNameOffset(const Bytes& bytes, size_t offset);
+
+		string lowerAscii(string value);
+
+		uint64_t parseDirectiveNumber(string_view text, const string& objectName, string_view option);
+
+		vector<string> tokenizeDirectives(const Bytes& bytes, const string& objectName);
+
+		bool isBigObjCandidate(const Bytes& bytes);
+
+		ObjectFile parseObject(const Bytes& bytes, string name);
+
+		struct ArchiveMember
+		{
+			string name;
+			optional<ObjectFile> object;
+			optional<ImportedSymbol> imported;
+			bool selected = false;
+		};
+
+		struct Archive
+		{
+			vector<ArchiveMember> members;
+			unordered_map<string, vector<size_t>> symbolMembers;
+			bool hasSymbolIndex = false;
+		};
+
+		struct PendingArchiveSymbol
+		{
+			string name;
+			uint64_t memberOffset = 0;
+		};
+
+		size_t parseDecimal(const Bytes& bytes, size_t offset, size_t length, string_view what);
+
+		uint32_t readBigEndian32(const Bytes& bytes, size_t offset, string_view what);
+
+		uint64_t readBigEndian64(const Bytes& bytes, size_t offset, string_view what);
+
+		vector<PendingArchiveSymbol> parseFirstLinkerMember(const Bytes& bytes, size_t offset, size_t size, const string& path);
+
+		vector<PendingArchiveSymbol> parseSecondLinkerMember(const Bytes& bytes, size_t offset, size_t size, const string& path);
+
+		vector<PendingArchiveSymbol> parseSym64LinkerMember(const Bytes& bytes, size_t offset, size_t size, const string& path);;
+
+		Archive parseArchive(const Bytes& bytes, const string& path);
+
+		Bytes readFile(const fs::path& path);
+
+		struct OutputSection
+		{
+			string name;
+			Bytes data;
+			size_t virtualSize = 0;
+			size_t alignment = 1;
+			uint32_t characteristics = 0;
+			uint32_t rva = 0;
+			uint32_t rawOffset = 0;
+			uint32_t rawSize = 0;
+		};
+
+		struct SectionMap
+		{
+			size_t outputIndex = 0;
+			size_t offset = 0;
+		};
+
+		struct GlobalSymbol
+		{
+			size_t objectIndex = 0;
+			size_t symbolIndex = 0;
+			size_t importIndex = numeric_limits<size_t>::max();
+			bool common = false;
+			bool imported = false;
+			bool importAddress = false;
+			bool weakUndefined = false;
+			size_t commonSize = 0;
+			size_t outputIndex = 0;
+			size_t outputOffset = 0;
+		};
+
+		struct ImportRecord
+		{
+			ImportedSymbol symbol;
+			bool hasFunction = false;
+			bool hasData = false;
+			bool hasPublicSymbol = false;
+			bool delayed = false;
+			size_t iatOffset = 0;
+			size_t hintNameOffset = 0;
+			size_t delayIatOffset = 0;
+			size_t delayHintNameOffset = 0;
+			size_t delayModuleNameOffset = 0;
+			size_t thunkOffset = 0;
+			size_t resolverOffset = 0;
+			size_t resolverEndOffset = 0;
+			size_t runtimeFunctionOffset = 0;
+			size_t unwindInfoOffset = 0;
+			size_t thunkSection = numeric_limits<size_t>::max();
+		};
+
+		struct ImportModule
+		{
+			string name;
+			vector<size_t> imports;
+			size_t lookupOffset = 0;
+			size_t iatOffset = 0;
+			size_t nameOffset = 0;
+		};
+
+		struct DelayImportModule
+		{
+			string name;
+			vector<size_t> imports;
+			size_t lookupOffset = 0;
+			size_t iatOffset = 0;
+			size_t nameOffset = 0;
+		};
+
+		enum class RipTargetKind { NormalIat, DelayData };
+
+		struct RipRelativeFixup
+		{
+			size_t section = 0;
+			size_t displacementOffset = 0;
+			size_t instructionEnd = 0;
+			RipTargetKind targetKind = RipTargetKind::DelayData;
+			size_t targetOffset = 0;
+		};
+
+		struct ExportOutput
+		{
+			string name;
+			string internalName;
+			uint16_t ordinal = 0;
+			bool noname = false;
+			bool data = false;
+			bool privateExport = false;
+			size_t addressOffset = 0;
+			size_t nameOffset = 0;
+			size_t ordinalOffset = 0;
+		};
+
+		struct BaseRelocation
+		{
+			uint32_t rva = 0;
+			uint16_t type = 10;
+		};
+
+		void addTypeReference(codeview::CodeViewTypeRecord& type, size_t offset);
+
+		void parseTypeReferenceLayout(codeview::CodeViewTypeRecord& type, string_view objectName);
+
+		void parseCodeViewTypeStream(const Bytes& data, codeview::CodeViewObject& object);
+
+		void parseCodeViewSymbolStream(const Bytes& data, codeview::CodeViewObject& object);
+
+		class Linker
+		{
+		public:
+			explicit Linker(LinkOptions options);
+			void run();
+		private:
+			LinkOptions options_;
+			vector<ObjectFile> objects_;
+			vector<Archive> archives_;
+			vector<OutputSection> outputSections_;
+			vector<vector<SectionMap>> sectionMaps_;
+			unordered_map<string, GlobalSymbol> globals_;
+			vector<ImportRecord> imports_;
+			vector<ImportModule> importModules_;
+			vector<DelayImportModule> delayImportModules_;
+			vector<RipRelativeFixup> delayFixups_;
+			vector<ExportOutput> exportRecords_;
+			vector<BaseRelocation> baseRelocations_;
+			vector<string> pendingDefaultLibraries_;
+			set<string> loadedDefaultLibraryPaths_;
+			set<string> loadedWholeArchivePaths_;
+			size_t nextDefaultLibrary_ = 0;
+			size_t nextDirectiveObject_ = 0;
+			bool directiveAlignmentSpecified_ = false;
+			size_t edataSection_ = numeric_limits<size_t>::max();
+			size_t idataSection_ = numeric_limits<size_t>::max();
+			size_t delayImportSection_ = numeric_limits<size_t>::max();
+			size_t relocSection_ = numeric_limits<size_t>::max();
+			size_t delayLoadLibraryImport_ = numeric_limits<size_t>::max();
+			size_t getProcAddressImport_ = numeric_limits<size_t>::max();
+			size_t raiseExceptionImport_ = numeric_limits<size_t>::max();
+			size_t importDescriptorOffset_ = 0;
+			size_t delayImportDescriptorOffset_ = 0;
+			uint32_t importDirectoryRva_ = 0;
+			uint32_t importDirectorySize_ = 0;
+			uint32_t delayImportDirectoryRva_ = 0;
+			uint32_t delayImportDirectorySize_ = 0;
+			uint32_t exportDirectoryRva_ = 0;
+			uint32_t exportDirectorySize_ = 0;
+			size_t exportFunctionsOffset_ = 0;
+			size_t exportNamesOffset_ = 0;
+			size_t exportOrdinalsOffset_ = 0;
+			size_t exportModuleNameOffset_ = 0;
+			uint32_t exportBaseOrdinal_ = 0;
+			uint32_t exportFunctionCount_ = 0;
+			uint32_t relocationDirectoryRva_ = 0;
+			uint32_t relocationDirectorySize_ = 0;
+			codeview::PdbIdentity pdbIdentity_{};
+			size_t debugSectionIndex_ = numeric_limits<size_t>::max();
+			size_t debugDirectoryOffset_ = 0;
+			size_t rsdsRecordOffset_ = 0;
+			uint32_t debugDirectorySize_ = 0;
+
+			bool isDefined(const CoffSymbol& symbol) const;
+			set<string> unresolvedNames() const;
+			void validateUnresolvedSymbols() const;
+			fs::path resolveInputPath(const fs::path& path) const;
+			void loadInput(const fs::path& inputPath);
+			void queueDefaultLibrary(const string& library);
+			void processDirective(const string& directive, const string& objectName);
+			void processDirectivesAndLibraries();
+			void loadDefinitionFile();
+			void loadInputs();
+			void collectCodeViewObjects();
+			void resolveLibraries();
+			string manifestText() const;
+			void addManifestResource();
+			void writeExternalManifest();
+			void selectComdats();
+			void prepareDelayLoadImports();
+			void prepareImports();
+			void appendDelayResolver(OutputSection& text, size_t textIndex, const ImportRecord& record);
+			void appendDelayUnwindInfo(ImportRecord& record);
+			void prepareExports();
+			void prepareBaseRelocations();
+			size_t getOutputSection(const InputSection& input);
+			void buildSections();
+			size_t commonAlignmentFor(const string& symbolName) const;
+			void resolveGlobals();
+			bool symbolAddressIsImageRelative(size_t objectIndex, size_t symbolIndex) const;
+			uint64_t symbolAddress(size_t objectIndex, size_t symbolIndex) const;
+			size_t symbolOutputSection(size_t objectIndex, size_t symbolIndex) const;
+			string dllModuleName() const;
+			optional<pair<uint32_t, uint32_t>> sectionDirectory(const string& name) const;
+			optional<pair<uint32_t, uint32_t>> symbolDirectory(const vector<string>& names, size_t minimumSize, const string& description) const;
+			optional<pair<uint32_t, uint32_t>> loadConfigurationDirectory() const;
+			uint32_t entryRva() const;
+			void layoutImage();
+			void finalizeGeneratedData();
+			void applyRelocations();
+			void writeImportLibrary();
+			void prepareDebugSection();
+			void finalizeDebugSection();
+			void writePdb();
+			void writeImage();
+		};
+
+	} // namespace
+
+	void runLinker(LinkOptions options);
+}
