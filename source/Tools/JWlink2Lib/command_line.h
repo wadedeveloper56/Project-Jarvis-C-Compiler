@@ -55,6 +55,7 @@ namespace JWlink2::commandline
 		bool entrySpecified = false;
 		bool sectionAlignmentSpecified = false;
 		bool outputSpecified = false;
+		bool jwlinkDirectiveSyntax = false;
 		bool dll = false;
 		bool noEntry = false;
 		bool importLibrarySpecified = false;

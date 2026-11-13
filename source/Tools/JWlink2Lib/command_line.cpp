@@ -534,6 +534,7 @@ namespace JWlink2::commandline
 		set<string> activeResponses;
 		expandResponseFiles(supplied, arguments, activeResponses, 0);
 		const bool directiveSyntax = !arguments.empty() && matchDirective(arguments.front());
+		options.jwlinkDirectiveSyntax = directiveSyntax;
 		if (directiveSyntax)
 		{
 			arguments = translateDirectives(arguments);

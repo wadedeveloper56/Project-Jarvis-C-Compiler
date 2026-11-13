@@ -49,6 +49,10 @@ namespace JWlink2
 			prepareBaseRelocations();
 			prepareDebugSection();
 			layoutImage();
+			if (options_.jwlinkDirectiveSyntax && !options_.entry && !options_.dll)
+			{
+				cerr << "JWlink2: warning: no start address specified; using the first output section\n";
+			}
 			if (options_.verbose)
 			{
 				for (const auto& section : outputSections_)
@@ -173,16 +177,19 @@ namespace JWlink2
 					unresolved.insert(*options_.entry);
 				}
 			}
-			else if (options_.dll)
+			else if (!options_.jwlinkDirectiveSyntax)
 			{
-				if (!options_.noEntry && !defined.contains("DllMainCRTStartup"))
+				if (options_.dll)
 				{
-					unresolved.insert("DllMainCRTStartup");
+					if (!options_.noEntry && !defined.contains("DllMainCRTStartup"))
+					{
+						unresolved.insert("DllMainCRTStartup");
+					}
 				}
-			}
-			else if (!defined.contains("mainCRTStartup") && !defined.contains("main"))
-			{
-				unresolved.insert("mainCRTStartup");
+				else if (!defined.contains("mainCRTStartup") && !defined.contains("main"))
+				{
+					unresolved.insert("mainCRTStartup");
+				}
 			}
 			return unresolved;
 		}
@@ -204,6 +211,20 @@ namespace JWlink2
 			for (const auto& name : unresolved)
 			{
 				message << (first ? "'" : ", '") << name << "'";
+				bool hasSource = false;
+				for (const auto& object : objects_)
+				{
+					const bool referenced = any_of(object.symbols.begin(), object.symbols.end(), [&](const CoffSymbol& symbol)
+						{
+							return !symbol.auxiliary && symbol.name == name && symbol.storageClass == 2 && symbol.sectionNumber == 0 && symbol.value == 0;
+						});
+					if (referenced)
+					{
+						message << (hasSource ? ", " : " (referenced by ") << object.name;
+						hasSource = true;
+					}
+				}
+				if (hasSource) message << ")";
 				first = false;
 			}
 			if (!imports_.empty())
@@ -1706,9 +1727,10 @@ namespace JWlink2
 						continue;
 					}
 					const GlobalSymbol definition{ objectIndex, symbolIndex };
-					if (!globals_.emplace(symbol.name, definition).second)
+					const auto [existing, inserted] = globals_.emplace(symbol.name, definition);
+					if (!inserted)
 					{
-						fail("duplicate definition of symbol '" + symbol.name + "'");
+						fail("duplicate definition of symbol '" + symbol.name + "' in '" + objects_.at(existing->second.objectIndex).name + "' and '" + object.name + "'");
 					}
 				}
 			}
@@ -1994,6 +2016,10 @@ namespace JWlink2
 			if (options_.dll && options_.noEntry)
 			{
 				return 0;
+			}
+			if (options_.jwlinkDirectiveSyntax && !options_.entry)
+			{
+				return options_.dll ? 0 : outputSections_.front().rva;
 			}
 			string entry;
 			if (options_.entry)

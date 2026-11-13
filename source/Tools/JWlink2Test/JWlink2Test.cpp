@@ -1614,6 +1614,41 @@ namespace JWlink2Test
 			Assert::IsTrue(fs::exists(workspace.file(L"m3.dll")) && fs::exists(workspace.file(L"m3.lib")), L"directive DLL link writes the DLL and import library");
 		}
 
+		TEST_METHOD(JwlinkDirectiveDefaultsAndExplicitEntry)
+		{
+			Workspace original;
+			Workspace replacement;
+			const auto object = makeObject({ TestSection{ ".text", { 0x90, 0xc3 } } }, { TestSymbol{ "main", 1, 1, 2,{} } });
+			original.write(L"program.obj", object);
+			replacement.write(L"program.obj", object);
+			const vector<wstring> args{ L"format", L"win", L"pe", L"option", L"start=main", L"file", L"program.obj" };
+			assertSuccess(runExecutable(original, jwlinkPath(), args));
+			assertSuccess(runLinker(replacement, args));
+			const auto expected = original.read(L"program.exe");
+			const auto actual = replacement.read(L"program.exe");
+			for (const auto* image : { &expected, &actual })
+			{
+				Assert::AreEqual<uint16_t>(3, get16(*image, optionalHeader(*image) + 68));
+				const auto entry = get32(*image, optionalHeader(*image) + 16);
+				Assert::AreEqual<uint8_t>(0xc3, (*image)[rvaOffset(*image, entry)], L"explicit start selects main");
+			}
+			const auto defaultResult = runLinker(replacement, { L"format", L"win", L"pe", L"file", L"program.obj", L"name", L"fallback.exe" });
+			assertSuccess(defaultResult);
+			Assert::IsTrue(defaultResult.output.find("warning: no start address") != string::npos);
+			const auto fallback = replacement.read(L"fallback.exe");
+			Assert::AreEqual<uint8_t>(0x90, fallback[rvaOffset(fallback, get32(fallback, optionalHeader(fallback) + 16))], L"directive-mode fallback starts at the first section");
+			const vector<wstring> guiArgs{ L"format", L"win", L"pe", L"runtime", L"windows", L"option", L"start=main", L"file", L"program.obj", L"name", L"gui.exe" };
+			assertSuccess(runExecutable(original, jwlinkPath(), guiArgs));
+			assertSuccess(runLinker(replacement, guiArgs));
+			const auto originalGui = original.read(L"gui.exe");
+			const auto replacementGui = replacement.read(L"gui.exe");
+			Assert::AreEqual<uint16_t>(2, get16(originalGui, optionalHeader(originalGui) + 68));
+			Assert::AreEqual<uint16_t>(2, get16(replacementGui, optionalHeader(replacementGui) + 68));
+			assertSuccess(runLinker(replacement, { L"/OUT:switch.exe", L"program.obj" }));
+			const auto switched = replacement.read(L"switch.exe");
+			Assert::AreEqual<uint8_t>(0xc3, switched[rvaOffset(switched, get32(switched, optionalHeader(switched) + 16))], L"switch-mode default remains main");
+		}
+
 		TEST_METHOD(RepresentativeObjectMatchesJWlinkPeBehavior)
 		{
 			Workspace workspace;
@@ -1971,6 +2006,25 @@ namespace JWlink2Test
 			args.insert(args.begin() + 1, L"/LIBPATH:" + (workspace.path / L"lib").wstring());
 			args.push_back(workspace.file(L"input.obj").wstring());
 			assertSuccess(runLinker(workspace, args));
+		}
+
+		TEST_METHOD(DefaultLibraryExclusionsDoNotSuppressExplicitLibraries)
+		{
+			Workspace workspace;
+			TestSection text{ ".text", Bytes(4, 0) };
+			text.relocations = { { 0, 1, 4 } };
+			const auto object = makeObject({ text, makeDirectiveSection("-defaultlib:helpers.lib") }, { TestSymbol{ "main", 0, 1, 2,{} }, TestSymbol{ "helper", 0, 0, 2,{} } });
+			workspace.write(L"input.obj", object);
+			workspace.write(L"helpers.lib", makeArchive({ { "helper.obj", makeObject({ TestSection{ ".text",{ 0xc3 } } }, { TestSymbol{ "helper", 0, 1, 2,{} } }) } }));
+			for (const auto* exclusion : { L"/NODEFAULTLIB", L"/NODEFAULTLIB:helpers" })
+			{
+				const vector<wstring> args{ L"/ENTRY:main", L"/OUT:excluded.exe", exclusion, L"input.obj" };
+				const auto result = runLinker(workspace, args);
+				assertFailureContains(result, "helper");
+				Assert::AreEqual<DWORD>(1, result.exitCode);
+				Assert::IsFalse(fs::exists(workspace.file(L"excluded.exe")));
+				assertSuccess(runLinker(workspace, { L"/ENTRY:main", L"/OUT:explicit.exe", exclusion, L"input.obj", L"helpers.lib" }));
+			}
 		}
 
 		TEST_METHOD(CoffDirectiveEntryPointIsHonoredAndDirectiveSectionIsConsumed)
@@ -2355,7 +2409,29 @@ namespace JWlink2Test
 			text.relocations = { { 0, 1, 4 } };
 			const auto result = linkObject(workspace, makeObject({ text }, { TestSymbol{ "main", 0, 1, 2,{} }, TestSymbol{ "notFound", 0, 0, 2,{} } }));
 			assertFailureContains(result, "notFound");
+			assertFailureContains(result, "referenced by");
+			assertFailureContains(result, "input.obj");
+			Assert::AreEqual<DWORD>(1, result.exitCode);
 			assertNoOutput(workspace);
+		}
+
+		TEST_METHOD(UnresolvedDiagnosticsIdentifyAllReferencingObjects)
+		{
+			Workspace workspace;
+			const auto object = [](const string& symbol) {
+				TestSection text{ ".text", Bytes(4, 0) };
+				text.relocations = { { 0, 0, 4 } };
+				return makeObject({ text }, { TestSymbol{ symbol, 0, 0, 2,{} } });
+			};
+			workspace.write(L"entry.obj", makeEntryObject());
+			workspace.write(L"first.obj", object("missingA"));
+			workspace.write(L"second.obj", object("missingA"));
+			workspace.write(L"third.obj", object("missingB"));
+			const auto result = runLinker(workspace, { L"/ENTRY:main", L"/OUT:missing.exe", L"entry.obj", L"first.obj", L"second.obj", L"third.obj" });
+			assertFailureContains(result, "'missingA' (referenced by first.obj, second.obj)");
+			assertFailureContains(result, "'missingB' (referenced by third.obj)");
+			Assert::AreEqual<DWORD>(1, result.exitCode);
+			Assert::IsFalse(fs::exists(workspace.file(L"missing.exe")));
 		}
 
 		TEST_METHOD(UnsupportedAmd64RelocationIsReported)
@@ -2394,7 +2470,12 @@ namespace JWlink2Test
 			auto args = outputArgs(workspace);
 			args.push_back(workspace.file(L"first.obj").wstring());
 			args.push_back(workspace.file(L"second.obj").wstring());
-			assertFailureContains(runLinker(workspace, args), "duplicate definition");
+			const auto result = runLinker(workspace, args);
+			assertFailureContains(result, "duplicate definition");
+			assertFailureContains(result, "first.obj");
+			assertFailureContains(result, "second.obj");
+			Assert::AreEqual<DWORD>(1, result.exitCode);
+			assertNoOutput(workspace);
 		}
 
 		TEST_METHOD(ComdatNoDuplicatesAndSizeMismatchAreRejected)
@@ -2578,6 +2659,13 @@ namespace JWlink2Test
 			Workspace workspace;
 			assertFailureContains(runLinker(workspace, {}), "no input object files or libraries");
 			assertFailureContains(runLinker(workspace, { L"missing.obj" }), "cannot open");
+			const vector<wstring> args{ L"format", L"win", L"pe", L"option", L"quiet,start=main", L"file", L"missing.obj", L"name", L"missing.exe" };
+			const auto jwlink = runExecutable(workspace, jwlinkPath(), args);
+			const auto jwlink2 = runLinker(workspace, args);
+			Assert::AreEqual<DWORD>(1, jwlink.exitCode, L"JWlink reports a link failure with exit code 1");
+			Assert::AreEqual(jwlink.exitCode, jwlink2.exitCode, L"JWlink2 reports the same failure status");
+			assertFailureContains(jwlink2, "missing.obj");
+			Assert::IsFalse(fs::exists(workspace.file(L"missing.exe")));
 		}
 	};
 }
