@@ -62,7 +62,6 @@ int main                        // MAIN-LINE FOR DLL DRIVER
 {
     int retcode;                // - return code
 #ifndef __UNIX__
-    int len;
     char *cmd_line;
 #endif
 
@@ -84,16 +83,22 @@ int main                        // MAIN-LINE FOR DLL DRIVER
 #ifndef __UNIX__
     count = count;
     args = args;
-    //len = _bgetcmd( NULL, 0 ) + 1;
-    //cmd_line = malloc( len );
-    //_bgetcmd( cmd_line, len );
     cmd_line = GetCommandLineA();
+    if( *cmd_line == '"' ) {
+        ++cmd_line;
+        while( *cmd_line && *cmd_line != '"' ) ++cmd_line;
+        if( *cmd_line ) ++cmd_line;
+    } else {
+        while( *cmd_line && *cmd_line != ' ' && *cmd_line != '\t' ) ++cmd_line;
+    }
+    while( *cmd_line == ' ' || *cmd_line == '\t' ) ++cmd_line;
     /* Turn on 'ar' mode by setting WLIB$AR env var */
-    if( _stricmp( strrchr( args[ 0 ], '\\' ) + 1, "ar.exe" ) == 0 ) {
+    const char *program_name = strrchr( args[ 0 ], '\\' );
+    program_name = program_name ? program_name + 1 : args[ 0 ];
+    if( _stricmp( program_name, "ar.exe" ) == 0 ) {
         _putenv( AR_MODE_ENV "=ON" );
     }
     retcode = IdeDrvExecDLL( &info, cmd_line );
-//    free( cmd_line );
 #else
     retcode = IdeDrvExecDLLArgv( &info, count, args );
 #endif

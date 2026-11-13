@@ -544,7 +544,7 @@ namespace JWlink2Test
 			string output;
 		};
 
-		ProcessResult runExecutable(const Workspace& workspace, const fs::path& executable, const vector<wstring>& arguments, const vector<pair<wstring, wstring>>& environment = {})
+		ProcessResult runExecutable(const Workspace& workspace, const fs::path& executable, const vector<wstring>& arguments, const vector<pair<wstring, wstring>>& environment = {}, bool quoteAll = true)
 		{
 			SECURITY_ATTRIBUTES security{ sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE };
 			HANDLE readPipe = nullptr;
@@ -562,7 +562,7 @@ namespace JWlink2Test
 			for (const auto& argument : arguments)
 			{
 				command.push_back(L' ');
-				command += quoteArgument(argument);
+				command += quoteAll || argument.empty() || argument.find_first_of(L" \t\"") != wstring::npos ? quoteArgument(argument) : argument;
 			}
 			vector<wchar_t> mutableCommand(command.begin(), command.end());
 			mutableCommand.push_back(L'\0');
@@ -2324,6 +2324,147 @@ namespace JWlink2Test
 			Assert::AreEqual<uint8_t>(0xc3, image[target], L"toolchain-generated archive member code is included");
 		}
 
+		TEST_METHOD(ActualLibrariansSelectLongNamedMembersAndHonorLibraryOrder)
+		{
+			fs::path toolDirectory;
+			error_code ignored;
+			wchar_t programFiles[MAX_PATH]{};
+			GetEnvironmentVariableW(L"ProgramFiles", programFiles, MAX_PATH);
+			for (const auto& entry : fs::recursive_directory_iterator(fs::path(programFiles) / L"Microsoft Visual Studio", fs::directory_options::skip_permission_denied, ignored))
+			{
+				if (entry.path().filename() == L"lib.exe" && entry.path().parent_path().filename() == L"x64" && entry.path().parent_path().parent_path().filename() == L"Hostx64") toolDirectory = entry.path().parent_path();
+			}
+			if (toolDirectory.empty()) { Logger::WriteMessage("MSVC x64 librarian not found; actual MSVC archive test skipped"); return; }
+			Workspace workspace;
+			TestSection text{ ".text",{ 0xe8, 0, 0, 0, 0, 0xc3 } };
+			text.relocations = { { 1, 1, 4 } };
+			workspace.write(L"input.obj", makeObject({ text }, { TestSymbol{ "main", 0, 1, 2,{} }, TestSymbol{ "helper", 0, 0, 2,{} } }));
+			workspace.write(L"long_archive_member_name_first.obj", makeObject({ TestSection{ ".text",{ 0xb8, 37, 0, 0, 0, 0xc3 } } }, { TestSymbol{ "helper", 0, 1, 2,{} } }));
+			workspace.write(L"long_archive_member_name_second.obj", makeObject({ TestSection{ ".text",{ 0xb8, 49, 0, 0, 0, 0xc3 } } }, { TestSymbol{ "helper", 0, 1, 2,{} } }));
+			workspace.write(L"long_archive_member_name_unused.obj", makeObject({ TestSection{ ".text",{ 0xc3 } } }, { TestSymbol{ "other", 0, 1, 2,{} } }));
+			assertSuccess(runExecutable(workspace, toolDirectory / L"lib.exe", { L"/nologo", L"/out:first.lib", L"long_archive_member_name_first.obj", L"long_archive_member_name_unused.obj" }));
+			assertSuccess(runExecutable(workspace, toolDirectory / L"lib.exe", { L"/nologo", L"/out:second.lib", L"long_archive_member_name_second.obj" }));
+			assertSuccess(runExecutable(workspace, toolPath(L"JWlib.exe"), { L"-q", L"-n", L"-fac", L"jw.lib", L"+long_archive_member_name_first.obj", L"+long_archive_member_name_unused.obj" }, {}, false));
+			for (const auto* library : { L"first.lib", L"jw.lib" })
+			{
+				assertSuccess(runLinker(workspace, { L"/entry:main", L"/out:linked.exe", L"/map", L"input.obj", library }));
+				Assert::AreEqual<DWORD>(37, runExecutable(workspace, workspace.file(L"linked.exe"), {}).exitCode, L"actual librarian archive member executes");
+				ifstream mapFile(workspace.file(L"linked.map"));
+				const string map((istreambuf_iterator<char>(mapFile)), istreambuf_iterator<char>());
+				Assert::IsTrue(map.find("long_archive_member_name_first.obj)\n") != string::npos, L"long archive member name is preserved exactly");
+				Assert::IsTrue(map.find("long_archive_member_name_unused.obj") == string::npos, L"unused member is not extracted");
+				mapFile.close();
+				assertSuccess(runLinker(workspace, { L"/entry:main", L"/out:linked.exe", L"/map", L"/include:other", L"input.obj", library }));
+				ifstream bothFile(workspace.file(L"linked.map"));
+				const string both((istreambuf_iterator<char>(bothFile)), istreambuf_iterator<char>());
+				Assert::IsTrue(both.find("long_archive_member_name_unused.obj)\n") != string::npos, L"second long archive name resolves exactly");
+			}
+			assertSuccess(runLinker(workspace, { L"/entry:main", L"/out:order.exe", L"input.obj", L"second.lib", L"first.lib", L"first.lib" }));
+			Assert::AreEqual<DWORD>(49, runExecutable(workspace, workspace.file(L"order.exe"), {}).exitCode, L"first explicit archive wins duplicate symbols");
+			assertSuccess(runLinker(workspace, { L"/entry:main", L"/out:default.exe", L"/defaultlib:first.lib", L"/defaultlib:first.lib", L"input.obj", L"second.lib" }));
+			Assert::AreEqual<DWORD>(49, runExecutable(workspace, workspace.file(L"default.exe"), {}).exitCode, L"explicit libraries precede repeated default libraries");
+		}
+
+		TEST_METHOD(Jwlink2ConsumesJwlibJwasmArchive)
+		{
+			Workspace workspace;
+			workspace.writeText(L"entry.asm", L"option casemap:none\nextern helper:proc\n.code\npublic main\nmain proc\n call helper\n ret\nmain endp\nend\n");
+			workspace.writeText(L"helper.asm", L"option casemap:none\n.code\npublic helper\nhelper proc\n mov eax, 37\n ret\nhelper endp\nend\n");
+			assertSuccess(runExecutable(workspace, toolPath(L"JWasm.exe"), { L"-win64", L"-Foentry.obj", L"entry.asm" }));
+			assertSuccess(runExecutable(workspace, toolPath(L"JWasm.exe"), { L"-win64", L"-Fohelper.obj", L"helper.asm" }));
+			assertSuccess(runExecutable(workspace, toolPath(L"JWlib.exe"), { L"-q", L"-n", L"-fac", L"jw.lib", L"+helper.obj" }, {}, false));
+			assertSuccess(runLinker(workspace, { L"/entry:main", L"/out:new.exe", L"entry.obj", L"jw.lib" }));
+			const auto image = workspace.read(L"new.exe");
+			const Bytes marker{ 0xb8, 37, 0, 0, 0, 0xc3 };
+			Assert::IsTrue(search(image.begin(), image.end(), marker.begin(), marker.end()) != image.end(), L"selected archive code appears in image");
+			Assert::AreEqual<DWORD>(37, runExecutable(workspace, workspace.file(L"new.exe"), {}).exitCode, L"JWasm's empty data section remains loadable");
+		}
+
+		TEST_METHOD(WindowsSdkImportLibraryResolvesAndExecutes)
+		{
+			wchar_t programFiles[MAX_PATH]{};
+			GetEnvironmentVariableW(L"ProgramFiles(x86)", programFiles, MAX_PATH);
+			const auto root = fs::path(programFiles) / L"Windows Kits" / L"10" / L"Lib";
+			fs::path sdkLibrary;
+			error_code ignored;
+			for (const auto& entry : fs::directory_iterator(root, ignored))
+			{
+				const auto candidate = entry.path() / L"um" / L"x64" / L"kernel32.lib";
+				if (fs::exists(candidate) && (sdkLibrary.empty() || candidate.wstring() > sdkLibrary.wstring())) sdkLibrary = candidate;
+			}
+			if (sdkLibrary.empty()) { Logger::WriteMessage("Windows SDK x64 kernel32.lib not found; SDK import test skipped"); return; }
+			Workspace workspace;
+			TestSection text{ ".text",{ 0xb9, 42, 0, 0, 0, 0xe8, 0, 0, 0, 0, 0xcc } };
+			text.relocations = { { 6, 1, 4 } };
+			workspace.write(L"input.obj", makeObject({ text }, { TestSymbol{ "main", 0, 1, 2,{} }, TestSymbol{ "ExitProcess", 0, 0, 2,{} } }));
+			assertSuccess(runLinker(workspace, { L"/entry:main", L"/out:sdk.exe", L"input.obj", sdkLibrary.wstring() }));
+			const auto image = workspace.read(L"sdk.exe");
+			const auto descriptor = rvaOffset(image, get32(image, optionalHeader(image) + 120));
+			Assert::IsTrue(cStringAtRva(image, get32(image, descriptor + 12)) == "KERNEL32.dll", L"SDK import descriptor names KERNEL32.dll");
+			Assert::AreEqual<DWORD>(42, runExecutable(workspace, workspace.file(L"sdk.exe"), {}).exitCode, L"SDK import executes through the Windows loader");
+		}
+
+		TEST_METHOD(MsvcAndJwlink2ImportLibrariesInteroperate)
+		{
+			fs::path toolDirectory;
+			error_code ignored;
+			wchar_t programFiles[MAX_PATH]{};
+			GetEnvironmentVariableW(L"ProgramFiles", programFiles, MAX_PATH);
+			for (const auto& entry : fs::recursive_directory_iterator(fs::path(programFiles) / L"Microsoft Visual Studio", fs::directory_options::skip_permission_denied, ignored))
+			{
+				if (entry.path().filename() == L"lib.exe" && entry.path().parent_path().filename() == L"x64" && entry.path().parent_path().parent_path().filename() == L"Hostx64" && fs::exists(entry.path().parent_path() / L"link.exe")) toolDirectory = entry.path().parent_path();
+			}
+			if (toolDirectory.empty()) { Logger::WriteMessage("MSVC x64 tools not found; import-library interoperability test skipped"); return; }
+			for (const auto* dll : { L"fixture.dll", L"fixture_with_a_long_module_name.dll" })
+			{
+				Workspace workspace;
+				workspace.write(L"dll.obj", makeObject({ TestSection{ ".text",{ 0xb8, 37, 0, 0, 0, 0xc3, 0xb8, 5, 0, 0, 0, 0xc3 } }, TestSection{ ".data",{ 7, 0, 0, 0 }, 0xc0000040 } }, { TestSymbol{ "api", 0, 1, 2,{} }, TestSymbol{ "ordinalFn", 6, 1, 2,{} }, TestSymbol{ "value", 0, 2, 2,{} } }));
+				assertSuccess(runLinker(workspace, { L"/dll", L"/noentry", L"/base:0x180000000", L"/export:api", L"/export:ordinalFn,@5,NONAME", L"/export:value,DATA", wstring(L"/out:") + dll, L"/implib:jw2.lib", L"dll.obj" }));
+				workspace.writeText(L"fixture.def", wstring(L"LIBRARY ") + dll + L"\nEXPORTS\n api\n ordinalFn @5 NONAME\n value DATA\n");
+				assertSuccess(runExecutable(workspace, toolDirectory / L"lib.exe", { L"/nologo", L"/machine:x64", L"/def:fixture.def", L"/out:msvc.lib" }));
+				TestSection text{ ".text",{ 0xe8, 0, 0, 0, 0, 0xc3 } };
+				text.relocations = { { 1, 1, 4 } };
+				workspace.write(L"client.obj", makeObject({ text }, { TestSymbol{ "main", 0, 1, 2,{} }, TestSymbol{ "api", 0, 0, 2,{} } }));
+				assertSuccess(runLinker(workspace, { L"/entry:main", L"/out:jw2-client.exe", L"client.obj", L"msvc.lib" }));
+				Assert::AreEqual<DWORD>(37, runExecutable(workspace, workspace.file(L"jw2-client.exe"), {}).exitCode, L"JWlink2 consumes MSVC import library");
+				if (wstring(dll) == L"fixture.dll")
+				{
+					assertSuccess(runExecutable(workspace, toolPath(L"JWlib.exe"), { L"-q", L"-n", L"-fac", L"-i6", L"-ic", L"jw.lib", L"++api.fixture.api" }, {}, false));
+					assertSuccess(runLinker(workspace, { L"/entry:main", L"/out:jwlib-client.exe", L"client.obj", L"jw.lib" }));
+					Assert::AreEqual<DWORD>(37, runExecutable(workspace, workspace.file(L"jwlib-client.exe"), {}).exitCode, L"JWlink2 consumes JWlib AMD64 import archive");
+					workspace.write(L"other.obj", makeObject({ TestSection{ ".text",{ 0xb8, 49, 0, 0, 0, 0xc3 } } }, { TestSymbol{ "otherApi", 0, 1, 2,{} } }));
+					assertSuccess(runLinker(workspace, { L"/dll", L"/noentry", L"/base:0x190000000", L"/export:otherApi", L"/out:other.dll", L"/implib:other.lib", L"other.obj" }));
+					TestSection pair{ ".text",{ 0xe8, 0, 0, 0, 0, 0xe9, 0, 0, 0, 0 } };
+					pair.relocations = { { 1, 1, 4 }, { 6, 2, 4 } };
+					workspace.write(L"pair.obj", makeObject({ pair }, { TestSymbol{ "main", 0, 1, 2,{} }, TestSymbol{ "api", 0, 0, 2,{} }, TestSymbol{ "otherApi", 0, 0, 2,{} } }));
+					assertSuccess(runExecutable(workspace, toolDirectory / L"link.exe", { L"/nologo", L"/nodefaultlib", L"/subsystem:console", L"/entry:main", L"/out:pair.exe", L"pair.obj", L"jw2.lib", L"other.lib" }));
+					Assert::AreEqual<DWORD>(49, runExecutable(workspace, workspace.file(L"pair.exe"), {}).exitCode, L"MSVC LINK resolves generated libraries for two DLLs");
+				}
+				assertSuccess(runExecutable(workspace, toolDirectory / L"link.exe", { L"/nologo", L"/nodefaultlib", L"/subsystem:console", L"/entry:main", L"/out:msvc-client.exe", L"client.obj", L"jw2.lib" }));
+				Assert::AreEqual<DWORD>(37, runExecutable(workspace, workspace.file(L"msvc-client.exe"), {}).exitCode, L"MSVC LINK consumes JWlink2 import library");
+				TestSection mixed{ ".text",{ 0xe8, 0, 0, 0, 0, 0x48, 0x8b, 0x05, 0, 0, 0, 0, 0x8b, 0x00, 0xc3 } };
+				mixed.relocations = { { 1, 1, 4 }, { 8, 2, 4 } };
+				workspace.write(L"mixed.obj", makeObject({ mixed }, { TestSymbol{ "main", 0, 1, 2,{} }, TestSymbol{ "ordinalFn", 0, 0, 2,{} }, TestSymbol{ "__imp_value", 0, 0, 2,{} } }));
+				for (const auto* library : { L"jw2.lib", L"msvc.lib" })
+				{
+					assertSuccess(runExecutable(workspace, toolDirectory / L"link.exe", { L"/nologo", L"/nodefaultlib", L"/subsystem:console", L"/entry:main", L"/out:mixed.exe", L"mixed.obj", library }));
+					Assert::AreEqual<DWORD>(7, runExecutable(workspace, workspace.file(L"mixed.exe"), {}).exitCode, L"MSVC LINK resolves ordinal and data imports");
+					assertSuccess(runLinker(workspace, { L"/entry:main", L"/out:mixed-jw2.exe", L"mixed.obj", library }));
+					Assert::AreEqual<DWORD>(7, runExecutable(workspace, workspace.file(L"mixed-jw2.exe"), {}).exitCode, L"JWlink2 resolves ordinal and data imports");
+				}
+			}
+		}
+
+		TEST_METHOD(ArchiveLongNameRequiresTerminator)
+		{
+			Workspace workspace;
+			Bytes archive{ '!', '<', 'a', 'r', 'c', 'h', '>', '\n' };
+			appendArchiveMember(archive, "//", Bytes{ 'b', 'a', 'd' });
+			appendArchiveMember(archive, "/0", makeEntryObject());
+			workspace.write(L"bad.lib", archive);
+			assertFailureContains(runLinker(workspace, { L"/entry:main", L"/out:bad.exe", L"bad.lib" }), "unterminated or empty archive long name");
+		}
+
 		TEST_METHOD(MalformedMsvcArchiveIndexIsRejected)
 		{
 			Workspace workspace;
@@ -2448,6 +2589,51 @@ namespace JWlink2Test
 			const auto image = workspace.read(L"linked.exe");
 			const auto data = sectionHeader(image, ".data");
 			Assert::AreEqual<uint8_t>(0x5a, image[get32(image, data + 20)], L"forced archive member contributes its data");
+		}
+
+		TEST_METHOD(MapReportsDeterministicImageAndArchiveContributions)
+		{
+			Workspace workspace;
+			workspace.write(L"input.obj", makeObject({ TestSection{ ".text",{ 0xc3 } } },
+				{ TestSymbol{ "main", 0, 1, 2,{} }, TestSymbol{ "zeta", 0, 1, 2,{} }, TestSymbol{ "alpha", 0, 1, 2,{} } }));
+			workspace.write(L"forced.lib", makeArchive({
+				{ "forced.obj", makeObject({ TestSection{ ".data",{ 0x5a }, 0xc0000040 } }, { TestSymbol{ "forced", 0, 1, 2,{} } }) },
+				{ "unused.obj", makeObject({ TestSection{ ".data",{ 0x33 }, 0xc0000040 } }, { TestSymbol{ "unused", 0, 1, 2,{} } }) } }));
+			auto args = outputArgs(workspace);
+			args.insert(args.begin() + 1, { L"/MAP", L"/INCLUDE:forced" });
+			args.push_back(workspace.file(L"input.obj").wstring());
+			args.push_back(workspace.file(L"forced.lib").wstring());
+			assertSuccess(runLinker(workspace, args));
+			auto readMap = [&]() { ifstream map(workspace.file(L"linked.map")); return string((istreambuf_iterator<char>(map)), istreambuf_iterator<char>()); };
+			const auto contents = readMap();
+			const auto image = workspace.read(L"linked.exe");
+			const auto base = get64(image, optionalHeader(image) + 24);
+			const auto text = sectionHeader(image, ".text");
+			const auto memory = contents.find("\nMemory Map\nAddress Symbol\n");
+			const auto contributions = contents.find("\nInput Contributions\nAddress Size Section Module\n");
+			Assert::IsTrue(memory != string::npos && contributions != string::npos && memory < contributions, L"map tables are present");
+			const auto sectionRow = contents.find(" .text\n");
+			Assert::IsTrue(sectionRow != string::npos && sectionRow < memory, L"output section row is present");
+			const auto sectionStart = contents.rfind('\n', sectionRow) + 1;
+			const auto sizeStart = contents.find(' ', sectionStart) + 1;
+			Assert::AreEqual<uint64_t>(base + get32(image, text + 12), stoull(contents.substr(sectionStart, sizeStart - sectionStart), nullptr, 16), L"section address matches PE header");
+			Assert::AreEqual<uint64_t>(get32(image, text + 8), stoull(contents.substr(sizeStart, sectionRow - sizeStart), nullptr, 16), L"section size matches PE header");
+			const auto alpha = contents.find(" alpha\n", memory);
+			const auto main = contents.find(" main\n", memory);
+			const auto zeta = contents.find(" zeta\n", memory);
+			Assert::IsTrue(alpha < main && main < zeta && zeta < contributions, L"equal-address symbols are sorted by name");
+			const auto line = contents.rfind('\n', alpha);
+			Assert::AreEqual<uint64_t>(base + get32(image, text + 12), stoull(contents.substr(line + 1, alpha - line - 1), nullptr, 16), L"symbol address matches PE layout");
+			Assert::IsTrue(contents.find("forced.lib(forced.obj)", contributions) != string::npos, L"selected archive member is reported");
+			Assert::IsTrue(contents.find("unused.obj", contributions) == string::npos, L"unselected archive member is absent");
+			assertSuccess(runLinker(workspace, args));
+			Assert::IsTrue(contents == readMap(), L"map output is deterministic across links");
+
+			workspace.write(L"reference.obj", makeEntryObject());
+			assertSuccess(runExecutable(workspace, jwlinkPath(), { L"format", L"win", L"pe", L"option", L"quiet,start=main,map=" + workspace.file(L"reference.map").wstring(), L"file", workspace.file(L"reference.obj").wstring(), L"name", workspace.file(L"reference.exe").wstring() }));
+			ifstream referenceFile(workspace.file(L"reference.map"));
+			const string reference((istreambuf_iterator<char>(referenceFile)), istreambuf_iterator<char>());
+			Assert::IsTrue(reference.find("Groups") != string::npos && reference.find("Segments") != string::npos && reference.find("Memory Map") != string::npos && reference.find("main") != string::npos, L"JWlink map uses its own group, segment and symbol tables");
 		}
 
 		TEST_METHOD(CoffAlignDirectiveSetsSectionAndFileAlignment)

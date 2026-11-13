@@ -779,8 +779,14 @@ namespace JWlink2
 						{
 							fail(path + ": invalid archive long-name offset");
 						}
-						const auto end = longNames.find("/\n", nameOffset);
-						memberName = longNames.substr(nameOffset, end == string::npos ? string::npos : end - nameOffset);
+						const auto slashEnd = longNames.find("/\n", nameOffset);
+						const auto nullEnd = longNames.find('\0', nameOffset);
+						const auto end = min(slashEnd, nullEnd);
+						if (end == string::npos || end == nameOffset)
+						{
+							fail(path + ": unterminated or empty archive long name");
+						}
+						memberName = longNames.substr(nameOffset, end - nameOffset);
 					}
 					else if (memberName.size() > 1 && memberName.back() == '/')
 					{

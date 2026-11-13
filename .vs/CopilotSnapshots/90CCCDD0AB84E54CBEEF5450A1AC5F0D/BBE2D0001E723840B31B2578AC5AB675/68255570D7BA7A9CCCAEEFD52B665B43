@@ -1,0 +1,7 @@
+﻿.code
+public main
+main proc
+ mov eax, 42
+ ret
+main endp
+end

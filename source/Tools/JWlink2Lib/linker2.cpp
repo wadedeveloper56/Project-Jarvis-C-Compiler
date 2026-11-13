@@ -2150,7 +2150,7 @@ namespace JWlink2
 			{
 				nextRva = alignUp(nextRva, options_.sectionAlignment);
 				section.rva = toU32(nextRva, "section RVA");
-				const auto virtualSize = max(section.virtualSize, section.data.size());
+				const auto virtualSize = max<size_t>(1, max(section.virtualSize, section.data.size()));
 				if (virtualSize > numeric_limits<size_t>::max() - nextRva)
 				{
 					fail("PE image size overflow");
@@ -2456,20 +2456,80 @@ namespace JWlink2
 				if (options_.importLibrarySpecified) fail("/IMPLIB requested but all DLL exports are PRIVATE");
 				return;
 			}
-			struct ImportMember
-			{
-				string name;
-				Bytes contents;
-			};
 			struct ArchiveSymbol
 			{
 				string name;
 				size_t memberIndex;
 			};
 			const auto dllName = dllModuleName();
-			vector<ImportMember> members;
+			vector<Bytes> members;
 			vector<ArchiveSymbol> symbols;
-			set<string> indexedNames;
+			struct DescriptorSection { string name; Bytes data; uint32_t flags; vector<Relocation> relocations; };
+			struct DescriptorSymbol { string name; uint32_t value; int16_t section; uint8_t storage; };
+			auto makeDescriptorObject = [&](const vector<DescriptorSection>& sections, const vector<DescriptorSymbol>& objectSymbols)
+				{
+					Bytes object(20 + sections.size() * 40, 0);
+					writeLe(object, 0, MachineAmd64);
+					writeLe(object, 2, static_cast<uint16_t>(sections.size()));
+					for (size_t i = 0; i < sections.size(); ++i)
+					{
+						const auto& section = sections[i];
+						const auto header = 20 + i * 40;
+						copy(section.name.begin(), section.name.end(), object.begin() + header);
+						writeLe(object, header + 16, toU32(section.data.size(), "import section size"));
+						writeLe(object, header + 20, toU32(object.size(), "import section offset"));
+						object.insert(object.end(), section.data.begin(), section.data.end());
+						if (!section.relocations.empty())
+						{
+							writeLe(object, header + 24, toU32(object.size(), "import relocation offset"));
+							writeLe(object, header + 32, static_cast<uint16_t>(section.relocations.size()));
+							for (const auto& relocation : section.relocations)
+							{
+								const auto offset = object.size();
+								object.resize(offset + 10, 0);
+								writeLe(object, offset, relocation.offset);
+								writeLe(object, offset + 4, relocation.symbolIndex);
+								writeLe(object, offset + 8, relocation.type);
+							}
+						}
+						writeLe(object, header + 36, section.flags);
+					}
+					writeLe(object, 8, toU32(object.size(), "import symbol table offset"));
+					writeLe(object, 12, toU32(objectSymbols.size(), "import symbol count"));
+					Bytes strings(4, 0);
+					for (const auto& symbol : objectSymbols)
+					{
+						const auto offset = object.size();
+						object.resize(offset + 18, 0);
+						if (symbol.name.size() <= 8) copy(symbol.name.begin(), symbol.name.end(), object.begin() + offset);
+						else
+						{
+							writeLe(object, offset + 4, toU32(strings.size(), "import string offset"));
+							strings.insert(strings.end(), symbol.name.begin(), symbol.name.end());
+							strings.push_back(0);
+						}
+						writeLe(object, offset + 8, symbol.value);
+						writeLe(object, offset + 12, static_cast<uint16_t>(symbol.section));
+						object[offset + 16] = symbol.storage;
+					}
+					writeLe(strings, 0, toU32(strings.size(), "import string table size"));
+					object.insert(object.end(), strings.begin(), strings.end());
+					return object;
+				};
+			const auto module = fs::path(dllName).stem().string();
+			const auto descriptorName = "__IMPORT_DESCRIPTOR_" + module;
+			const auto nullThunkName = string(1, '\x7f') + module + "_NULL_THUNK_DATA";
+			Bytes moduleName(dllName.begin(), dllName.end());
+			moduleName.push_back(0);
+			members.push_back(makeDescriptorObject(
+				{ { ".idata$2", Bytes(20, 0), 0xc0300040, { { 12, 2, 3 }, { 0, 3, 3 }, { 16, 4, 3 } } }, { ".idata$6", moduleName, 0xc0200040, {} } },
+				{ { descriptorName, 0, 1, 2 }, { ".idata$2", 0xc0000040, 1, 104 }, { ".idata$6", 0, 2, 3 }, { ".idata$4", 0xc0000040, 0, 104 }, { ".idata$5", 0xc0000040, 0, 104 }, { "__NULL_IMPORT_DESCRIPTOR", 0, 0, 2 }, { nullThunkName, 0, 0, 2 } }));
+			members.push_back(makeDescriptorObject({ { ".idata$3", Bytes(20, 0), 0xc0300040, {} } }, { { "__NULL_IMPORT_DESCRIPTOR", 0, 1, 2 } }));
+			members.push_back(makeDescriptorObject({ { ".idata$5", Bytes(8, 0), 0xc0400040, {} }, { ".idata$4", Bytes(8, 0), 0xc0400040, {} } }, { { nullThunkName, 0, 1, 2 } }));
+			symbols.push_back({ descriptorName, 0 });
+			symbols.push_back({ "__NULL_IMPORT_DESCRIPTOR", 1 });
+			symbols.push_back({ nullThunkName, 2 });
+			set<string> indexedNames{ descriptorName, "__NULL_IMPORT_DESCRIPTOR", nullThunkName };
 			for (const auto* record : exported)
 			{
 				if (record->name.rfind("__imp_", 0) == 0 || !indexedNames.insert(record->name).second || !indexedNames.insert("__imp_" + record->name).second)
@@ -2494,7 +2554,7 @@ namespace JWlink2
 				writeLe(importObject, 12, toU32(strings.size(), "import-object string size"));
 				importObject.insert(importObject.end(), strings.begin(), strings.end());
 				const auto memberIndex = members.size();
-				members.push_back({ "imp" + to_string(memberIndex) + ".obj", move(importObject) });
+				members.push_back(move(importObject));
 				symbols.push_back({ record->name, memberIndex });
 				symbols.push_back({ "__imp_" + record->name, memberIndex });
 			}
@@ -2526,12 +2586,19 @@ namespace JWlink2
 			const auto firstSize = 4 + symbols.size() * 4 + namesSize;
 			const auto secondSize = 4 + members.size() * 4 + 4 + symbols.size() * 2 + namesSize;
 			auto paddedMemberSize = [](size_t size) { return size + (size & 1); };
+			Bytes longName;
+			if (dllName.size() > 15)
+			{
+				longName.insert(longName.end(), dllName.begin(), dllName.end());
+				longName.push_back(0);
+			}
 			vector<uint32_t> memberOffsets(members.size());
 			size_t nextMemberOffset = 8 + 60 + paddedMemberSize(firstSize) + 60 + paddedMemberSize(secondSize);
+			if (!longName.empty()) nextMemberOffset += 60 + paddedMemberSize(longName.size());
 			for (size_t i = 0; i < members.size(); ++i)
 			{
 				memberOffsets[i] = toU32(nextMemberOffset, "import-library member offset");
-				nextMemberOffset += 60 + paddedMemberSize(members[i].contents.size());
+				nextMemberOffset += 60 + paddedMemberSize(members[i].size());
 			}
 			Bytes firstIndex;
 			appendBe32(firstIndex, toU32(symbols.size(), "archive symbol count"));
@@ -2578,7 +2645,8 @@ namespace JWlink2
 				};
 			appendMember("/", firstIndex);
 			appendMember("/", secondIndex);
-			for (const auto& member : members) appendMember(member.name + "/", member.contents);
+			if (!longName.empty()) appendMember("//", longName);
+			for (const auto& member : members) appendMember(longName.empty() ? dllName + "/" : "/0", member);
 			ofstream output(*options_.importLibrary, ios::binary | ios::trunc);
 			if (!output) fail("cannot create import library '" + options_.importLibrary->string() + "'");
 			output.write(reinterpret_cast<const char*>(archive.data()), static_cast<streamsize>(archive.size()));
@@ -2633,7 +2701,7 @@ namespace JWlink2
 			for (size_t i = 0; i < outputSections_.size(); ++i)
 			{
 				const auto& section = outputSections_[i];
-				builder.addLinkedSection({ static_cast<uint16_t>(i + 1), section.name, section.rva, toU32(max(section.virtualSize, section.data.size()), "PDB section size"), section.characteristics });
+				builder.addLinkedSection({ static_cast<uint16_t>(i + 1), section.name, section.rva, toU32(max<size_t>(1, max(section.virtualSize, section.data.size())), "PDB section size"), section.characteristics });
 			}
 			for (const auto& [name, definition] : globals_)
 			{
@@ -2674,7 +2742,7 @@ namespace JWlink2
 			uint32_t baseOfCode = 0;
 			for (const auto& section : outputSections_)
 			{
-				imageSize = max(imageSize, static_cast<size_t>(section.rva) + alignUp(max(section.virtualSize, section.data.size()), options_.sectionAlignment));
+				imageSize = max(imageSize, static_cast<size_t>(section.rva) + alignUp(max<size_t>(1, max(section.virtualSize, section.data.size())), options_.sectionAlignment));
 				if (section.rawSize != 0)
 				{
 					fileSize = max(fileSize, static_cast<size_t>(section.rawOffset) + section.rawSize);
@@ -2818,7 +2886,7 @@ namespace JWlink2
 				const auto header = sectionHeaders + i * 40;
 				const auto nameLength = min<size_t>(section.name.size(), 8);
 				copy_n(section.name.begin(), nameLength, image.begin() + header);
-				writeLe(image, header + 8, toU32(max(section.virtualSize, section.data.size()), "section virtual size"));
+				writeLe(image, header + 8, toU32(max<size_t>(1, max(section.virtualSize, section.data.size())), "section virtual size"));
 				writeLe(image, header + 12, section.rva);
 				writeLe(image, header + 16, section.rawSize);
 				writeLe(image, header + 20, section.rawOffset);
@@ -2848,12 +2916,16 @@ namespace JWlink2
 					fail("cannot create map file '" + options_.mapFile->string() + "'");
 				}
 				map << "JWlink2 map for " << options_.output.string() << "\n\n";
+				map << "Output Sections\nAddress Size Section\n" << hex;
+				for (const auto& section : outputSections_)
+				{
+					map << options_.imageBase + section.rva << " " << max<size_t>(1, max(section.virtualSize, section.data.size())) << " " << section.name << "\n";
+				}
+				struct MapSymbol { uint64_t address; string name; };
+				vector<MapSymbol> symbols;
 				for (const auto& [name, definition] : globals_)
 				{
-					if (definition.weakUndefined)
-					{
-						continue;
-					}
+					if (definition.weakUndefined) continue;
 					uint64_t address = 0;
 					if (definition.imported)
 					{
@@ -2864,29 +2936,30 @@ namespace JWlink2
 							const auto offset = imported.delayed ? imported.delayIatOffset : imported.iatOffset;
 							address = options_.imageBase + outputSections_[section].rva + offset;
 						}
-						else
-						{
-							address = options_.imageBase + outputSections_[imported.thunkSection].rva + imported.thunkOffset;
-						}
+						else address = options_.imageBase + outputSections_[imported.thunkSection].rva + imported.thunkOffset;
 					}
-					else if (definition.common)
-					{
-						address = options_.imageBase + outputSections_[definition.outputIndex].rva + definition.outputOffset;
-					}
+					else if (definition.common) address = options_.imageBase + outputSections_[definition.outputIndex].rva + definition.outputOffset;
 					else if (definition.objectIndex < objects_.size() && definition.symbolIndex < objects_[definition.objectIndex].symbols.size())
 					{
 						const auto& symbol = objects_[definition.objectIndex].symbols[definition.symbolIndex];
-						if (symbol.sectionNumber > 0)
-						{
-							const auto& section = sectionMaps_[definition.objectIndex][static_cast<size_t>(symbol.sectionNumber - 1)];
-							address = options_.imageBase + outputSections_[section.outputIndex].rva + section.offset + symbol.value;
-						}
-						else
-						{
-							address = symbol.value;
-						}
+						address = symbol.sectionNumber > 0 ? symbolAddress(definition.objectIndex, definition.symbolIndex) : symbol.value;
 					}
-					map << hex << address << " " << name << "\n";
+					symbols.push_back({ address, name });
+				}
+				sort(symbols.begin(), symbols.end(), [](const MapSymbol& left, const MapSymbol& right) { return left.address != right.address ? left.address < right.address : left.name < right.name; });
+				map << "\nMemory Map\nAddress Symbol\n";
+				for (const auto& symbol : symbols) map << symbol.address << " " << symbol.name << "\n";
+				map << "\nInput Contributions\nAddress Size Section Module\n";
+				for (size_t objectIndex = 0; objectIndex < objects_.size(); ++objectIndex)
+				{
+					const auto& object = objects_[objectIndex];
+					for (size_t sectionIndex = 0; sectionIndex < object.sections.size(); ++sectionIndex)
+					{
+						const auto& input = object.sections[sectionIndex];
+						if (input.discarded || input.linkerDirective || input.codeViewTypes || input.codeViewSymbols) continue;
+						const auto& location = sectionMaps_[objectIndex][sectionIndex];
+						map << options_.imageBase + outputSections_[location.outputIndex].rva + location.offset << " " << max<size_t>(input.virtualSize, input.data.size()) << " " << input.name << " " << object.name << "\n";
+					}
 				}
 				if (!map)
 				{
