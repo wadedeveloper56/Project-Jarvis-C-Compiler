@@ -1,0 +1,46 @@
+﻿#include "source/Tools/JWlink2/JWlink2/codeview_pdb.h"
+#include <cassert>
+#include <fstream>
+#include <iterator>
+
+int main() {
+	using namespace jwlink2::codeview;
+	PdbIdentity identity;
+	identity.guid = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+	identity.age = 7;
+	identity.signature = 0x12345678;
+	PdbBuilder pdb(identity);
+	pdb.addLinkedSection({1, ".text", 0x1000, 0x300, 0x60000020});
+	pdb.addLinkedSymbol({"entry", 1, 0x105, 0});
+
+	CodeViewObject object;
+	object.objectId = "sample.obj";
+	object.moduleName = "sample.cpp";
+	object.objectFileName = "sample.obj";
+	object.contributions.push_back({1, 0, 0x100, 1, 0x100});
+	object.types.push_back({0x1000, {6, 0, 1, 0x12, 0, 0, 0, 0}, {}});
+	object.types.push_back({0x1001, {14, 0, 8, 0x10, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0x10, 0, 0}, {{12}}});
+	object.symbols.push_back({1, {7, 0, 8, 0x11, 0, 0x10, 0, 0, 0}, {{4}}, {}});
+	CodeViewSubsection lines;
+	lines.kind = 0xF2;
+	lines.data = {2,0,0,0, 1,0, 0,0, 20,0,0,0,
+				  0,0,0,0, 1,0,0,0, 20,0,0,0,
+				  4,0,0,0, 10,0,0,0};
+	object.subsections.push_back(lines);
+	pdb.addCodeViewObject(std::move(object));
+	CodeViewObject second;
+	second.objectId = "second.obj";
+	second.moduleName = "second.cpp";
+	second.objectFileName = "second.obj";
+	second.contributions.push_back({1, 0, 0x100, 1, 0x100});
+	second.types.push_back({0x1000, {6, 0, 1, 0x12, 0, 0, 0, 0}, {}});
+	second.symbols.push_back({1, {7, 0, 8, 0x11, 0, 0x10, 0, 0, 0}, {{4}}, {}});
+	pdb.addCodeViewObject(std::move(second));
+	pdb.write("pdb_harness.pdb");
+	std::ifstream input("pdb_harness.pdb", std::ios::binary);
+	std::vector<unsigned char> data((std::istreambuf_iterator<char>(input)), {});
+	assert(data.size() >= 4096);
+	const unsigned char magic[] = {'M','i','c','r','o','s','o','f','t',' ','C','/','C','+','+',' ','M','S','F',' ','7','.','0','0','\r','\n',0x1A,'D','S',0,0,0};
+	assert(std::equal(magic, magic + 32, data.begin()));
+	return 0;
+}

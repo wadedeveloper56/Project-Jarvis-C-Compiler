@@ -1,0 +1,44 @@
+﻿
+#include "linkstd.h"
+#include "wlink.h"
+
+extern char** _argv;
+extern int _argc;
+
+class LinkerSubsystems final
+{
+public:
+    LinkerSubsystems()
+    {
+        InitSubSystems();
+    }
+
+    ~LinkerSubsystems()
+    {
+        FiniSubSystems();
+    }
+
+    LinkerSubsystems(const LinkerSubsystems&) = delete;
+    LinkerSubsystems& operator=(const LinkerSubsystems&) = delete;
+};
+
+class LinkerApplication final
+{
+public:
+    int Run(int argc, char** argv) const
+    {
+        _argv = argv;
+        _argc = argc;
+
+        LinkerSubsystems subsystems;
+        LinkMainLine(nullptr);
+        return (LinkState & LINK_ERROR) != 0 ? 1 : 0;
+    }
+};
+
+int main(int argc, char* argv[])
+{
+    return LinkerApplication{}.Run(argc, argv);
+}
+
+

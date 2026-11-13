@@ -1,0 +1,47 @@
+﻿# JWlink2 Missing Features for JWlink Compatibility
+
+This is the working checklist for making JWlink2 a practical drop-in replacement for JWlink in native Windows AMD64 executable builds. It is not a claim of full compatibility with every JWlink target or every Microsoft `link.exe` feature. First capture the repository's real JWlink command lines and input artifacts; use those as the compatibility baseline and expand this list when they reveal gaps.
+
+An item is complete only when implemented, covered by a regression test, and checked against the corresponding JWlink behavior. Keep unsupported behavior explicit rather than silently accepting an option without honoring it.
+
+## Compatibility baseline
+
+- [ ] Inventory actual JWlink command lines, response files, object producers, libraries, and output types used by this repository.
+- [ ] Define and test the supported compatibility boundary (initially native Windows AMD64 PE executables); document any JWlink targets intentionally out of scope.
+- [ ] Add end-to-end comparisons that link representative inputs with JWlink and JWlink2 and verify observable output behavior, not byte-for-byte identity.
+
+## Input objects and libraries
+
+- [ ] Process COFF `.drectve` directives, including default-library, default-alignment, export, and include directives used by supported compilers.
+- [ ] Support additional compiler-produced COFF variants and section/symbol conventions required by the baseline, including BigObj where encountered.
+- [ ] Define handling for LTCG/LLVM bitcode inputs: support them through an appropriate compiler integration or report them as an explicit unsupported case.
+- [ ] Broaden import-library and archive compatibility beyond currently supported AMD64 regular objects and short import objects; test real toolchain-generated archives and symbol indexes.
+- [ ] Audit weak externals, common symbols, COMDAT selection, associative sections, duplicate resolution, and archive extraction against JWlink using compiler-generated fixtures.
+
+## Windows image generation
+
+- [ ] Support DLL output, including exports, `.def` files, `/EXPORT`, import-library generation, and DLL entry-point behavior.
+- [ ] Preserve and correctly emit required runtime metadata and directories, including AMD64 exception/unwind tables, TLS, load configuration, and resources where required by baseline inputs.
+- [ ] Support delay-loaded imports and their associated PE metadata when used by existing builds.
+- [ ] Add debug information support, including CodeView object data and the expected PDB output workflow.
+- [ ] Implement application manifests and resource inputs if required by existing builds.
+- [ ] Validate PE headers, section flags/alignment, data directories, and relocation behavior with Windows loaders and standard PE inspection tools.
+
+## Command-line compatibility
+
+- [ ] Inventory JWlink options used by real builds and implement their semantics; maintain a tested accepted/unsupported option matrix.
+- [ ] Add commonly used missing controls as required by that inventory, such as `/INCLUDE`, `/WHOLEARCHIVE`, `/DLL`, `/DEF`, `/EXPORT`, `/IMPLIB`, `/DEBUG`, `/PDB`, `/MANIFEST`, `/DELAYLOAD`, `/ALIGN`, `/SECTION`, `/MERGE`, `/STACK`, `/HEAP`, and `/VERBOSE`.
+- [ ] Match option precedence, quoting, path resolution, response-file nesting/encoding, environment-variable expansion, and library search order where JWlink relies on them.
+- [ ] Match relevant defaults and diagnostics: output naming, entry point, subsystem, default libraries, duplicate/unresolved symbol reporting, and exit codes.
+
+## Runtime and integration
+
+- [ ] Link representative C and C++ programs with the startup objects and runtime libraries used by this repository; support required CRT initialization, constructors, TLS callbacks, and termination behavior.
+- [ ] Verify compatibility with the repository's compiler, assembler, librarian, and build scripts without requiring source or command-line changes.
+- [ ] Add a migration gate: JWlink2 becomes the default only after the baseline builds and runtime tests pass; retain JWlink as a fallback until then.
+
+## Progress notes
+
+- Current documented support: AMD64 COFF objects, Microsoft archives containing regular AMD64 objects and short import objects, static archive extraction, PE32+ executables, import/IAT generation, selected AMD64 relocations, base relocations, COMDATs, weak externals, map files, response files, and a limited set of linker options. See [README.md](README.md) for details.
+- BigObj/LTCG, debug data, full C/C++ runtime startup, DLL output, and many advanced linker options are not currently documented as supported.
+- Update this checklist alongside feature work and tests; move an item out of the open list only after its acceptance criteria are met.
