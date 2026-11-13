@@ -40,12 +40,19 @@ namespace JWlink2
 				if (!options_.imageBaseSpecified) options_.imageBase = 0x400000;
 				if (options_.dll || options_.importLibrarySpecified || options_.definitionFile || !options_.exports.empty()) fail("x86 DLLs and exports are not yet supported");
 				if (options_.debug || !options_.delayLoadLibraries.empty()) fail("x86 debug and delay-load output are not yet supported");
-				if (options_.manifestMode == LinkOptions::ManifestMode::Embed) fail("x86 embedded manifests are not yet supported");
 				if (options_.stackReserve > UINT32_MAX || options_.stackCommit > UINT32_MAX || options_.heapReserve > UINT32_MAX || options_.heapCommit > UINT32_MAX) fail("x86 stack and heap sizes must fit in 32 bits");
-				for (const auto& object : objects_) for (const auto& section : object.sections)
+				bool resourceObjectSeen = false;
+				for (const auto& object : objects_)
 				{
-					const auto name = section.name.substr(0, section.name.find('$'));
-					if (name == ".idata" || name == ".tls" || name == ".pdata" || name == ".loadcfg" || name == ".rsrc") fail(object.name + ": x86 " + name + " metadata is not yet supported");
+					bool hasResources = false;
+					for (const auto& section : object.sections)
+					{
+						const auto name = section.name.substr(0, section.name.find('$'));
+						if (name == ".idata" || name == ".tls" || name == ".pdata" || name == ".loadcfg") fail(object.name + ": x86 " + name + " metadata is not yet supported");
+						if (name == ".rsrc") hasResources = true;
+					}
+					if (hasResources && resourceObjectSeen) fail("merging x86 resource sections from multiple objects is not yet supported");
+					resourceObjectSeen = resourceObjectSeen || hasResources;
 				}
 			}
 			addManifestResource();
@@ -309,6 +316,7 @@ namespace JWlink2
 				});
 			if (namedWholeArchive && loadedWholeArchivePaths_.contains(identity)) return;
 			const auto bytes = readFile(path);
+			if (lowerAscii(path.extension().string()) == ".res") fail(path.string() + ": .res resource input is not yet supported; convert it to a COFF resource object");
 			rejectBitcode(bytes, 0, bytes.size(), path.string());
 			if (bytes.size() >= 8 && string_view(reinterpret_cast<const char*>(bytes.data()), 8) == "!<arch>\n")
 			{
@@ -852,7 +860,7 @@ namespace JWlink2
 			section.alignment = 4;
 			section.virtualSize = toU32(data.size(), "manifest resource size");
 			section.data = move(data);
-			section.relocations.push_back({ 72, 0, 3 });
+			section.relocations.push_back({ 72, 0, static_cast<uint16_t>(options_.machine == 0x014c ? 7 : 3) });
 			object.sections.push_back(move(section));
 			CoffSymbol symbol;
 			symbol.name = "$manifest";

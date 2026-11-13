@@ -130,7 +130,84 @@ namespace JWlink2Test
 			assertFailureContains(runLinker(workspace, { L"/machine:x86", L"/entry:_main", L"unsupported.obj" }), "unsupported I386 relocation");
 			workspace.write(L"x64.obj", makeEntryObject());
 			assertFailureContains(runLinker(workspace, { L"/machine:x86", L"/entry:main", L"x64.obj" }), "expected I386 COFF object");
-			assertFailureContains(runLinker(workspace, { L"/machine:x86", L"/entry:_main", L"/manifest:embed", L"input.obj" }), "x86 embedded manifests");
+		}
+
+		TEST_METHOD(I386EmbeddedManifestIsAnActivatableResource)
+		{
+			Workspace workspace;
+			workspace.write(L"entry.obj", makeObject({ TestSection{ ".text",{ 0xb8, 0, 0, 0, 0, 0xc3 } } }, { TestSymbol{ "_main", 0, 1, 2,{} } }, 0x14c));
+			const string manifest = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\"><assemblyIdentity type=\"win32\" name=\"JWlink2.Test.Activation\" version=\"1.0.0.0\" processorArchitecture=\"x86\"/></assembly>";
+			workspace.write(L"app.manifest", Bytes(manifest.begin(), manifest.end()));
+			for (const auto& [name, id, option] : vector<tuple<wstring, WORD, wstring>>{ { L"default.exe", 1, L"/manifest:embed" }, { L"custom.exe", 17, L"/manifest:embed,id=17" } })
+			{
+				assertSuccess(runLinker(workspace, { option, L"/manifestinput:app.manifest", L"/out:" + name, L"entry.obj" }));
+				const auto image = workspace.read(name);
+				const auto pe = peHeader(image);
+				Assert::AreEqual<uint16_t>(0x10b, get16(image, pe + 24));
+				Assert::IsTrue(get32(image, pe + 24 + 96 + 16) != 0, L"PE32 resource directory exists");
+				const auto module = LoadLibraryExW(workspace.file(name).c_str(), nullptr, LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE);
+				Assert::IsNotNull(module);
+				const auto info = FindResourceExW(module, MAKEINTRESOURCEW(24), MAKEINTRESOURCEW(id), 0x409);
+				Assert::IsNotNull(info, L"manifest ID and language");
+				const auto data = static_cast<const char*>(LockResource(LoadResource(module, info)));
+				Assert::IsNotNull(data);
+				Assert::AreEqual(manifest, string(data, SizeofResource(module, info)));
+				Assert::IsTrue(FreeLibrary(module) != 0);
+				ACTCTXW context{};
+				context.cbSize = sizeof(context);
+				const auto path = workspace.file(name).wstring();
+				context.lpSource = path.c_str();
+				context.dwFlags = ACTCTX_FLAG_RESOURCE_NAME_VALID;
+				context.lpResourceName = MAKEINTRESOURCEW(id);
+				const auto handle = CreateActCtxW(&context);
+				Assert::IsTrue(handle != INVALID_HANDLE_VALUE, L"Windows creates an activation context from the PE32 manifest");
+				ULONG_PTR cookie = 0;
+				Assert::IsTrue(ActivateActCtx(handle, &cookie) != 0);
+				Assert::IsTrue(DeactivateActCtx(0, cookie) != 0);
+				ReleaseActCtx(handle);
+				Assert::AreEqual<DWORD>(0, runExecutable(workspace, workspace.file(name), {}).exitCode);
+			}
+		}
+
+		TEST_METHOD(I386ResourceObjectFromWindowsTools)
+		{
+			wchar_t programFiles[MAX_PATH]{};
+			wchar_t programFilesX86[MAX_PATH]{};
+			GetEnvironmentVariableW(L"ProgramFiles", programFiles, MAX_PATH);
+			GetEnvironmentVariableW(L"ProgramFiles(x86)", programFilesX86, MAX_PATH);
+			error_code ignored;
+			fs::path resourceCompiler, cvtres;
+			for (const auto& entry : fs::recursive_directory_iterator(fs::path(programFilesX86) / L"Windows Kits" / L"10" / L"bin", fs::directory_options::skip_permission_denied, ignored))
+				if (entry.path().filename() == L"rc.exe" && entry.path().parent_path().filename() == L"x64" && (resourceCompiler.empty() || entry.path().wstring() > resourceCompiler.wstring())) resourceCompiler = entry.path();
+			for (const auto& entry : fs::recursive_directory_iterator(fs::path(programFiles) / L"Microsoft Visual Studio", fs::directory_options::skip_permission_denied, ignored))
+				if (entry.path().filename() == L"cvtres.exe" && entry.path().parent_path().filename() == L"x86" && entry.path().parent_path().parent_path().filename() == L"Hostx64") cvtres = entry.path();
+			if (resourceCompiler.empty() || cvtres.empty()) { Logger::WriteMessage("Windows SDK resource compiler or MSVC cvtres unavailable; x86 resource object test skipped"); return; }
+			Workspace workspace;
+			workspace.write(L"entry.obj", makeObject({ TestSection{ ".text",{ 0xb8, 0, 0, 0, 0, 0xc3 } } }, { TestSymbol{ "_main", 0, 1, 2,{} } }, 0x14c));
+			workspace.writeText(L"resources.rc", L"LANGUAGE 9, 1\n101 RCDATA { 0x1234, 0x5678 }\n102 RCDATA { 0x789a }\nLANGUAGE 12, 1\n101 RCDATA { 0x4321 }\n");
+			assertSuccess(runExecutable(workspace, resourceCompiler, { L"/nologo", L"/foresources.res", L"resources.rc" }));
+			assertSuccess(runExecutable(workspace, cvtres, { L"/nologo", L"/machine:x86", L"/out:resources.obj", L"resources.res" }));
+			assertSuccess(runLinker(workspace, { L"/out:resource.exe", L"entry.obj", L"resources.obj" }));
+			const auto module = LoadLibraryExW(workspace.file(L"resource.exe").c_str(), nullptr, LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE);
+			Assert::IsNotNull(module);
+			for (const auto& [language, expected] : vector<pair<WORD, Bytes>>{ { 0x409, { 0x34, 0x12, 0x78, 0x56 } }, { 0x40c, { 0x21, 0x43 } } })
+			{
+				const auto info = FindResourceExW(module, RT_RCDATA, MAKEINTRESOURCEW(101), language);
+				Assert::IsNotNull(info, L"Windows resolves the language-specific resource");
+				const auto data = static_cast<const uint8_t*>(LockResource(LoadResource(module, info)));
+				Assert::IsNotNull(data);
+				Assert::IsTrue(Bytes(data, data + SizeofResource(module, info)) == expected);
+			}
+			const auto other = FindResourceExW(module, RT_RCDATA, MAKEINTRESOURCEW(102), 0x409);
+			Assert::IsNotNull(other, L"Windows resolves a second resource ID");
+			const auto otherData = static_cast<const uint8_t*>(LockResource(LoadResource(module, other)));
+			Assert::IsNotNull(otherData);
+			Assert::IsTrue(Bytes(otherData, otherData + SizeofResource(module, other)) == Bytes({ 0x9a, 0x78 }));
+			Assert::IsTrue(FreeLibrary(module) != 0);
+			Assert::AreEqual<DWORD>(0, runExecutable(workspace, workspace.file(L"resource.exe"), {}).exitCode);
+			assertFailureContains(runLinker(workspace, { L"entry.obj", L"resources.res" }), ".res resource input is not yet supported");
+			assertFailureContains(runLinker(workspace, { L"/manifest:embed", L"entry.obj", L"resources.obj" }), "already contains a .rsrc");
+			assertFailureContains(runLinker(workspace, { L"entry.obj", L"resources.obj", L"resources.obj" }), "merging x86 resource sections");
 		}
 
 		TEST_METHOD(RealMsvcI386ObjectAndArchiveExecute)
@@ -167,6 +244,13 @@ namespace JWlink2Test
 				if (fs::exists(candidate) && (kernel.empty() || candidate.wstring() > kernel.wstring())) kernel = candidate;
 			}
 			if (kernel.empty()) { Logger::WriteMessage("Windows SDK x86 kernel32.lib unavailable; import test skipped"); return; }
+			workspace.writeText(L"activation.c", L"__declspec(dllimport) int __stdcall FindActCtxSectionStringW(unsigned, const void*, unsigned, const unsigned short*, void*);\n"
+				L"__declspec(dllimport) __declspec(noreturn) void __stdcall ExitProcess(unsigned);\n"
+				L"void main(void) { unsigned long data[64]; data[0] = sizeof(data); ExitProcess(FindActCtxSectionStringW(0,0,3,L\"JWlink2.Test.WindowClass\",data) ? 0 : 46); }\n");
+			workspace.writeText(L"activation.manifest", L"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\"><assemblyIdentity type=\"win32\" name=\"JWlink2.Test.Activation\" version=\"1.0.0.0\" processorArchitecture=\"x86\"/><file name=\"jwlink2-test.dll\"><windowClass versioned=\"no\">JWlink2.Test.WindowClass</windowClass></file></assembly>");
+			assertSuccess(runExecutable(workspace, tools / L"cl.exe", { L"/nologo", L"/c", L"/Od", L"/GS-", L"/Zl", L"activation.c" }));
+			assertSuccess(runLinker(workspace, { L"/manifest:embed", L"/manifestinput:activation.manifest", L"/out:activation.exe", L"activation.obj", kernel.wstring() }));
+			Assert::AreEqual<DWORD>(0, runExecutable(workspace, workspace.file(L"activation.exe"), {}).exitCode, L"Windows automatically activates the embedded process manifest");
 			workspace.writeText(L"import.c", L"__declspec(dllimport) __declspec(noreturn) void __stdcall ExitProcess(unsigned int); void main(void) { ExitProcess(43); }\n");
 			assertSuccess(runExecutable(workspace, tools / L"cl.exe", { L"/nologo", L"/c", L"/Od", L"/GS-", L"/Zl", L"import.c" }));
 			assertSuccess(runLinker(workspace, { L"/machine:x86", L"/entry:_main", L"/out:import.exe", L"import.obj", kernel.wstring() }));

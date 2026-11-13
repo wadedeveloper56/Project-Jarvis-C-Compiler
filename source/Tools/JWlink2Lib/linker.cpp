@@ -347,7 +347,7 @@ namespace JWlink2
 				stringTableOffset = static_cast<size_t>(symbolOffset) + symbolsBytes;
 				requireRange(bytes, stringTableOffset, 4, name + " string table");
 				stringTableSize = readLe<uint32_t>(bytes, stringTableOffset, name + " string table");
-				if (stringTableSize < 4)
+				if (stringTableSize != 0 && stringTableSize < 4)
 				{
 					fail(name + ": invalid COFF string table size");
 				}
