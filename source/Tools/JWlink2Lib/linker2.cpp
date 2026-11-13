@@ -13,6 +13,7 @@ namespace JWlink2
 	{
 		constexpr uint16_t MachineAmd64 = 0x8664;
 		constexpr uint32_t SectionCntCode = 0x00000020;
+		constexpr uint32_t SectionCntInitializedData = 0x00000040;
 		constexpr uint32_t SectionCntUninitializedData = 0x00000080;
 		constexpr uint32_t SectionMemExecute = 0x20000000;
 		constexpr uint32_t SectionMemRead = 0x40000000;
@@ -186,9 +187,23 @@ namespace JWlink2
 						unresolved.insert("DllMainCRTStartup");
 					}
 				}
-				else if (!defined.contains("mainCRTStartup") && !defined.contains("main"))
+				else if (!(options_.subsystem == 2 && defined.contains("WinMainCRTStartup")) &&
+					!defined.contains("mainCRTStartup") && !defined.contains("main"))
 				{
-					unresolved.insert("mainCRTStartup");
+					auto archiveDefines = [&](string_view name)
+						{
+							return any_of(archives_.begin(), archives_.end(), [&](const Archive& archive)
+								{
+									return any_of(archive.members.begin(), archive.members.end(), [&](const auto& member)
+										{
+											return member.object && any_of(member.object->symbols.begin(), member.object->symbols.end(), [&](const CoffSymbol& symbol)
+												{ return !symbol.auxiliary && symbol.name == name && isDefined(symbol); });
+										});
+								});
+						};
+					const bool useGuiStartup = options_.subsystem == 2 &&
+						(archiveDefines("WinMainCRTStartup") || !archiveDefines("mainCRTStartup"));
+					unresolved.insert(useGuiStartup ? "WinMainCRTStartup" : "mainCRTStartup");
 				}
 			}
 			return unresolved;
@@ -2113,6 +2128,10 @@ namespace JWlink2
 				if (!globals_.contains("DllMainCRTStartup")) return 0;
 				entry = "DllMainCRTStartup";
 			}
+			else if (options_.subsystem == 2 && globals_.contains("WinMainCRTStartup"))
+			{
+				entry = "WinMainCRTStartup";
+			}
 			else if (globals_.contains("mainCRTStartup"))
 			{
 				entry = "mainCRTStartup";
@@ -2768,13 +2787,13 @@ namespace JWlink2
 						baseOfCode = section.rva;
 					}
 				}
+				else if ((section.characteristics & SectionCntInitializedData) != 0)
+				{
+					initializedSize += section.rawSize;
+				}
 				else if ((section.characteristics & SectionCntUninitializedData) != 0)
 				{
 					uninitializedSize += toU32(section.virtualSize, "uninitialized section size");
-				}
-				else
-				{
-					initializedSize += section.rawSize;
 				}
 			}
 			Bytes image(fileSize, 0);

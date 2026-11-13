@@ -1475,6 +1475,103 @@ namespace JWlink2Test
 			Assert::IsTrue((get16(image, 0x96) & 0x2000) == 0, L"supported output is a PE executable, not a DLL");
 		}
 
+		TEST_METHOD(WindowsSubsystemSelectsGuiStartupAndKeepsExplicitEntry)
+		{
+			Workspace workspace;
+			TestSection text{ ".text",{ 0xb8, 11, 0, 0, 0, 0xc3, 0xb8, 22, 0, 0, 0, 0xc3, 0xb8, 33, 0, 0, 0, 0xc3 } };
+			workspace.write(L"entry.obj", makeObject({ text }, { TestSymbol{ "main", 0, 1, 2,{} }, TestSymbol{ "mainCRTStartup", 6, 1, 2,{} }, TestSymbol{ "WinMainCRTStartup", 12, 1, 2,{} } }));
+			struct Case { vector<wstring> args; const wchar_t* name; DWORD result; uint16_t subsystem; };
+			const vector<Case> cases{
+				{ { L"/subsystem:windows", L"/out:gui.exe", L"entry.obj" }, L"gui.exe", 33, 2 },
+				{ { L"/subsystem:console", L"/out:console.exe", L"entry.obj" }, L"console.exe", 22, 3 },
+				{ { L"/subsystem:windows", L"/entry:main", L"/out:explicit.exe", L"entry.obj" }, L"explicit.exe", 11, 2 },
+				{ { L"/subsystem:windows", L"/subsystem:console", L"/out:last.exe", L"entry.obj" }, L"last.exe", 22, 3 }
+			};
+			for (const auto& test : cases)
+			{
+				assertSuccess(runLinker(workspace, test.args));
+				const auto image = workspace.read(test.name);
+				Assert::AreEqual(test.subsystem, get16(image, optionalHeader(image) + 68));
+				Assert::AreEqual(test.result, runExecutable(workspace, workspace.file(test.name), {}).exitCode);
+			}
+			workspace.write(L"startup.lib", makeArchive({ { "startup.obj", makeObject({ TestSection{ ".text",{ 0xb8, 44, 0, 0, 0, 0xc3 } } }, { TestSymbol{ "WinMainCRTStartup", 0, 1, 2,{} } }) } }));
+			assertSuccess(runLinker(workspace, { L"/subsystem:windows", L"/out:archive.exe", L"startup.lib" }));
+			Assert::AreEqual<DWORD>(44, runExecutable(workspace, workspace.file(L"archive.exe"), {}).exitCode, L"default GUI startup pulls its archive member");
+			workspace.write(L"console-start.lib", makeArchive({ { "startup.obj", makeObject({ TestSection{ ".text",{ 0xb8, 66, 0, 0, 0, 0xc3 } } }, { TestSymbol{ "mainCRTStartup", 0, 1, 2,{} } }) } }));
+			assertSuccess(runLinker(workspace, { L"/subsystem:windows", L"/out:archive-fallback.exe", L"console-start.lib" }));
+			Assert::AreEqual<DWORD>(66, runExecutable(workspace, workspace.file(L"archive-fallback.exe"), {}).exitCode, L"existing archive-supplied mainCRTStartup fallback remains usable");
+			assertSuccess(runLinker(workspace, { L"/subsystem:windows", L"/out:both-archives.exe", L"console-start.lib", L"startup.lib" }));
+			Assert::AreEqual<DWORD>(44, runExecutable(workspace, workspace.file(L"both-archives.exe"), {}).exitCode, L"GUI startup takes priority when both archive candidates exist");
+			workspace.write(L"fallback.obj", makeObject({ TestSection{ ".text",{ 0xb8, 55, 0, 0, 0, 0xc3 } } }, { TestSymbol{ "main", 0, 1, 2,{} } }));
+			assertSuccess(runLinker(workspace, { L"/subsystem:windows", L"/out:fallback.exe", L"fallback.obj", L"startup.lib" }));
+			Assert::AreEqual<DWORD>(55, runExecutable(workspace, workspace.file(L"fallback.exe"), {}).exitCode, L"an already defined main keeps the existing fallback");
+			assertSuccess(runLinker(workspace, { L"/subsystem:windows", L"/entry:WinMainCRTStartup", L"/out:forced.exe", L"fallback.obj", L"startup.lib" }));
+			Assert::AreEqual<DWORD>(44, runExecutable(workspace, workspace.file(L"forced.exe"), {}).exitCode, L"explicit GUI startup pulls the archive even when main exists");
+			workspace.write(L"bare.obj", makeObject({ TestSection{ ".text",{ 0xc3 } } }, { TestSymbol{ "WinMain", 0, 1, 2,{} } }));
+			assertFailureContains(runLinker(workspace, { L"/subsystem:windows", L"bare.obj" }), "WinMainCRTStartup");
+		}
+
+		TEST_METHOD(UnclassifiedSectionIsNotCountedAsInitializedData)
+		{
+			Workspace workspace;
+			const auto object = makeObject({ TestSection{ ".text",{ 0xc3 } }, TestSection{ ".extra",{ 1, 2, 3 }, 0x40000000 }, TestSection{ ".rdata",{ 4, 5 }, 0x40000040 } }, { TestSymbol{ "main", 0, 1, 2,{} } });
+			assertSuccess(linkObject(workspace, object));
+			const auto image = workspace.read(L"linked.exe");
+			Assert::AreEqual(get32(image, sectionHeader(image, ".rdata") + 16), get32(image, optionalHeader(image) + 8), L"only initialized-data sections contribute to SizeOfInitializedData");
+			validatePeLayout(image);
+		}
+
+		TEST_METHOD(RealGuiExecutableCreatesHiddenWindow)
+		{
+			fs::path toolDirectory;
+			error_code ignored;
+			wchar_t programFiles[MAX_PATH]{};
+			GetEnvironmentVariableW(L"ProgramFiles", programFiles, MAX_PATH);
+			for (const auto& entry : fs::recursive_directory_iterator(fs::path(programFiles) / L"Microsoft Visual Studio", fs::directory_options::skip_permission_denied, ignored))
+			{
+				if (entry.path().filename() == L"cl.exe" && entry.path().parent_path().filename() == L"x64" && entry.path().parent_path().parent_path().filename() == L"Hostx64" && fs::exists(entry.path().parent_path() / L"link.exe") && fs::exists(entry.path().parent_path() / L"dumpbin.exe")) toolDirectory = entry.path().parent_path();
+			}
+			wchar_t programFilesX86[MAX_PATH]{};
+			GetEnvironmentVariableW(L"ProgramFiles(x86)", programFilesX86, MAX_PATH);
+			const auto sdkRoot = fs::path(programFilesX86) / L"Windows Kits" / L"10" / L"Lib";
+			fs::path sdk;
+			for (const auto& entry : fs::directory_iterator(sdkRoot, ignored))
+			{
+				const auto candidate = entry.path() / L"um" / L"x64";
+				if (fs::exists(candidate / L"user32.lib") && fs::exists(candidate / L"kernel32.lib") && (sdk.empty() || candidate.wstring() > sdk.wstring())) sdk = candidate;
+			}
+			if (toolDirectory.empty() || sdk.empty()) { Logger::WriteMessage("MSVC x64 tools or Windows SDK import libraries not found; GUI integration test skipped"); return; }
+			Workspace workspace;
+			workspace.writeText(L"gui.c", L"typedef void *HANDLE; typedef unsigned short WCHAR;\n"
+				L"__declspec(dllimport) HANDLE __stdcall CreateWindowExW(unsigned long,const WCHAR*,const WCHAR*,unsigned long,int,int,int,int,HANDLE,HANDLE,HANDLE,void*);\n"
+				L"__declspec(dllimport) int __stdcall IsWindow(HANDLE);\n"
+				L"__declspec(dllimport) int __stdcall DestroyWindow(HANDLE);\n"
+				L"__declspec(dllimport) __declspec(noreturn) void __stdcall ExitProcess(unsigned int);\n"
+				L"void WinMainCRTStartup(void) { HANDLE w = CreateWindowExW(0,L\"STATIC\",L\"JWlink2 test\",0,0,0,16,16,0,0,0,0); if (!w) ExitProcess(41); if (!IsWindow(w)) ExitProcess(42); if (!DestroyWindow(w)) ExitProcess(43); ExitProcess(0); }\n");
+			assertSuccess(runExecutable(workspace, toolDirectory / L"cl.exe", { L"/nologo", L"/c", L"/Od", L"/GS-", L"/Zl", L"/Fogui.obj", L"gui.c" }));
+			const auto user32 = (sdk / L"user32.lib").wstring();
+			const auto kernel32 = (sdk / L"kernel32.lib").wstring();
+			assertSuccess(runLinker(workspace, { L"/nodefaultlib", L"/subsystem:windows,6.0", L"/out:gui.exe", L"gui.obj", user32, kernel32 }));
+			assertSuccess(runLinker(workspace, { L"system", L"nt_win", L"option", L"start=WinMainCRTStartup", L"file", L"gui.obj", L"library", user32, kernel32, L"name", L"directive.exe" }));
+			assertSuccess(runLinker(workspace, { L"runtime", L"windows=6.0", L"option", L"start=WinMainCRTStartup", L"file", L"gui.obj", L"library", user32, kernel32, L"name", L"runtime.exe" }));
+			assertSuccess(runExecutable(workspace, toolDirectory / L"link.exe", { L"/nologo", L"/nodefaultlib", L"/subsystem:windows,6.0", L"/entry:WinMainCRTStartup", L"/out:msvc.exe", L"gui.obj", user32, kernel32 }));
+			for (const auto* name : { L"gui.exe", L"directive.exe", L"runtime.exe", L"msvc.exe" })
+			{
+				const auto image = workspace.read(name);
+				if (wstring_view(name) != L"msvc.exe") validatePeLayout(image);
+				Assert::AreEqual<uint16_t>(0x8664, get16(image, peHeader(image) + 4), L"AMD64 machine");
+				Assert::AreEqual<uint16_t>(0x20b, get16(image, optionalHeader(image)), L"PE32+ image");
+				Assert::AreEqual<uint16_t>(2, get16(image, optionalHeader(image) + 68), L"Windows GUI subsystem");
+				Assert::AreEqual<uint16_t>(6, get16(image, optionalHeader(image) + 48), L"subsystem major version");
+				Assert::AreEqual<uint16_t>(0, get16(image, optionalHeader(image) + 50), L"subsystem minor version");
+				Assert::IsTrue((get16(image, peHeader(image) + 22) & 0x2000) == 0, L"image is an EXE");
+				Assert::IsTrue(get32(image, optionalHeader(image) + 16) != 0, L"entry RVA is nonzero");
+				const auto inspection = runExecutable(workspace, toolDirectory / L"dumpbin.exe", { L"/nologo", L"/headers", L"/imports", workspace.file(name).wstring() });
+				assertSuccess(inspection);
+				for (const auto* expected : { "8664 machine (x64)", "PE32+", "Windows GUI", "USER32.dll", "CreateWindowExW", "DestroyWindow" }) Assert::IsTrue(inspection.output.find(expected) != string::npos, wstring(expected, expected + strlen(expected)).c_str());
+				Assert::AreEqual<DWORD>(0, runExecutable(workspace, workspace.file(name), {}).exitCode, L"GUI process creates, checks, and destroys a hidden window");
+			}
+		}
 
 		TEST_METHOD(DllExportsGenerateRoundTrippableImportLibrary)
 		{
