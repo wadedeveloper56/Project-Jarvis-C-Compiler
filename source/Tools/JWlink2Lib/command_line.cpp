@@ -1,5 +1,7 @@
 ﻿#include "pch.h"
 #include "command_line.h"
+#define NOMINMAX
+#include <Windows.h>
 
 using namespace std;
 
@@ -86,38 +88,112 @@ namespace JWlink2::commandline
 		return result;
 	}
 
-	void expandResponseFiles(const vector<string>& arguments, vector<string>& expanded, set<fs::path>& active, unsigned depth)
+	optional<string> environmentValue(const string& name)
 	{
-		if (depth > 32)
+		char* value = nullptr;
+		size_t length = 0;
+		if (_dupenv_s(&value, &length, name.c_str()) != 0)
 		{
-			fail("response-file nesting exceeds 32 levels");
+			fail("cannot read environment variable '" + name + "'");
 		}
+		if (!value) return nullopt;
+		string result(value);
+		free(value);
+		return result;
+	}
+
+	string decodeResponse(string bytes, const fs::path& path)
+	{
+		wstring wide;
+		if (bytes.size() >= 2 && static_cast<unsigned char>(bytes[0]) == 0xff && static_cast<unsigned char>(bytes[1]) == 0xfe)
+		{
+			if ((bytes.size() - 2) % 2 != 0) fail(path.string() + ": invalid UTF-16LE response file");
+			for (size_t i = 2; i < bytes.size(); i += 2)
+			{
+				wide.push_back(static_cast<wchar_t>(static_cast<unsigned char>(bytes[i]) | (static_cast<unsigned char>(bytes[i + 1]) << 8)));
+			}
+		}
+		else if (bytes.size() >= 3 && bytes.compare(0, 3, "\xef\xbb\xbf") == 0)
+		{
+			const auto length = bytes.size() - 3;
+			if (length > static_cast<size_t>(numeric_limits<int>::max())) fail(path.string() + ": response file is too large");
+			if (length != 0)
+			{
+				const int count = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, bytes.data() + 3, static_cast<int>(length), nullptr, 0);
+				if (!count) fail(path.string() + ": invalid UTF-8 response file");
+				wide.resize(count);
+				if (!MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, bytes.data() + 3, static_cast<int>(length), wide.data(), count)) fail(path.string() + ": invalid UTF-8 response file");
+			}
+		}
+		else
+		{
+			if (bytes.size() >= 2 && static_cast<unsigned char>(bytes[0]) == 0xfe && static_cast<unsigned char>(bytes[1]) == 0xff) fail(path.string() + ": UTF-16BE response files are unsupported");
+			if (bytes.find('\0') != string::npos) fail(path.string() + ": response file contains a NUL byte");
+			return bytes;
+		}
+		if (wide.find(L'\0') != wstring::npos) fail(path.string() + ": response file contains a NUL character");
+		if (wide.empty()) return {};
+		if (wide.size() > static_cast<size_t>(numeric_limits<int>::max())) fail(path.string() + ": response file is too large");
+		BOOL substituted = FALSE;
+		const auto utf8 = GetACP() == CP_UTF8;
+		const DWORD flags = utf8 ? WC_ERR_INVALID_CHARS : WC_NO_BEST_FIT_CHARS;
+		const auto usedDefault = utf8 ? nullptr : &substituted;
+		const int count = WideCharToMultiByte(CP_ACP, flags, wide.data(), static_cast<int>(wide.size()), nullptr, 0, nullptr, usedDefault);
+		if (!count || substituted) fail(path.string() + ": response file contains characters not representable in the active code page");
+		string result(count, '\0');
+		if (!WideCharToMultiByte(CP_ACP, flags, wide.data(), static_cast<int>(wide.size()), result.data(), count, nullptr, usedDefault) || substituted) fail(path.string() + ": cannot decode response file");
+		return result;
+	}
+
+	void expandResponseFiles(const vector<string>& arguments, vector<string>& expanded, set<string>& active, unsigned depth)
+	{
+		if (depth > 32) fail("response-file nesting exceeds 32 levels");
 		for (const auto& argument : arguments)
 		{
+			if (argument.size() > 1 && argument[0] == '%')
+			{
+				const auto end = argument.find('%', 1);
+				if (end == string::npos || end == 1) fail("invalid environment variable reference '" + argument + "'");
+				const auto name = argument.substr(1, end - 1);
+				const auto value = environmentValue(name);
+				if (!value) fail("environment variable '" + name + "' is not defined");
+				const auto key = "env:" + lowerAscii(name);
+				if (!active.insert(key).second) fail("environment expansion cycle involving '" + name + "'");
+				auto nested = tokenizeResponse(*value + argument.substr(end + 1), fs::path("%" + name + "%"));
+				expandResponseFiles(nested, expanded, active, depth + 1);
+				active.erase(key);
+				continue;
+			}
 			if (argument.size() <= 1 || argument[0] != '@')
 			{
 				expanded.push_back(argument);
 				continue;
 			}
-			const auto path = fs::absolute(fs::path(argument.substr(1))).lexically_normal();
-			if (!active.insert(path).second)
+			const auto name = argument.substr(1);
+			auto path = fs::path(name);
+			if (path.extension().empty()) path += ".lnk";
+			path = fs::absolute(path).lexically_normal();
+			ifstream input(path, ios::binary);
+			string contents;
+			string key;
+			if (input)
 			{
-				fail("response-file cycle involving '" + path.string() + "'");
+				key = "file:" + lowerAscii(path.string());
+				contents.assign(istreambuf_iterator<char>(input), istreambuf_iterator<char>());
+				if (input.bad()) fail("failed reading response file '" + path.string() + "'");
+				contents = decodeResponse(move(contents), path);
 			}
-			ifstream input(path);
-			if (!input)
+			else
 			{
-				fail("cannot open response file '" + path.string() + "'");
+				const auto value = environmentValue(name);
+				if (!value) fail("cannot open response file '" + path.string() + "' and environment variable '" + name + "' is not defined");
+				contents = *value;
+				key = "env:" + lowerAscii(name);
 			}
-			ostringstream content;
-			content << input.rdbuf();
-			if (!input.eof() && input.fail())
-			{
-				fail("failed reading response file '" + path.string() + "'");
-			}
-			auto nested = tokenizeResponse(content.str(), path);
+			if (!active.insert(key).second) fail("response-file or environment cycle involving '" + name + "'");
+			auto nested = tokenizeResponse(contents, path);
 			expandResponseFiles(nested, expanded, active, depth + 1);
-			active.erase(path);
+			active.erase(key);
 		}
 	}
 
@@ -304,6 +380,7 @@ namespace JWlink2::commandline
 		{
 			vector<string> options;
 			vector<string> inputs;
+			vector<string> libraryPathDirectives;
 			optional<string> name;
 			bool dll = false;
 			for (size_t i = 0; i < arguments.size();)
@@ -362,7 +439,7 @@ namespace JWlink2::commandline
 				}
 				else if (keyword == "libpath")
 				{
-					for (const auto& item : items) options.push_back("/LIBPATH:" + item);
+					libraryPathDirectives.insert(libraryPathDirectives.begin(), items.begin(), items.end());
 				}
 				else if (keyword == "name")
 				{
@@ -435,6 +512,7 @@ namespace JWlink2::commandline
 					}
 				}
 			}
+			for (const auto& path : libraryPathDirectives) options.push_back("/LIBPATH:" + path);
 			if (dll) options.push_back("/DLL");
 			if (name) options.push_back("/OUT:" + withDefaultExtension(*name, dll ? ".dll" : ".exe"));
 			else if (!inputs.empty()) options.push_back("/OUT:" + fs::path(inputs.front()).stem().string() + (dll ? ".dll" : ".exe"));
@@ -453,9 +531,10 @@ namespace JWlink2::commandline
 			supplied.emplace_back(argv[i]);
 		}
 		vector<string> arguments;
-		set<fs::path> activeResponses;
+		set<string> activeResponses;
 		expandResponseFiles(supplied, arguments, activeResponses, 0);
-		if (!arguments.empty() && matchDirective(arguments.front()))
+		const bool directiveSyntax = !arguments.empty() && matchDirective(arguments.front());
+		if (directiveSyntax)
 		{
 			arguments = translateDirectives(arguments);
 		}
@@ -684,9 +763,11 @@ namespace JWlink2::commandline
 				if (value && !value->empty())
 				{
 					options.mapFile = fs::path(*value);
+					mapUsesDefaultName = false;
 				}
 				else
 				{
+					options.mapFile.reset();
 					mapUsesDefaultName = true;
 				}
 			}
@@ -825,6 +906,20 @@ namespace JWlink2::commandline
 			else
 			{
 				fail("unsupported option '" + argument + "'");
+			}
+		}
+		for (const auto* name : directiveSyntax ? vector<const char*>{ "LIBPE", "LIB386", "LIB" } : vector<const char*>{ "LIB" })
+		{
+			const auto paths = environmentValue(name);
+			if (!paths) continue;
+			size_t start = 0;
+			while (start <= paths->size())
+			{
+				const auto end = paths->find(';', start);
+				const auto part = paths->substr(start, end == string::npos ? string::npos : end - start);
+				if (!part.empty()) options.libraryPaths.emplace_back(part);
+				if (end == string::npos) break;
+				start = end + 1;
 			}
 		}
 		if (options.noEntry && (!options.dll || options.entrySpecified))

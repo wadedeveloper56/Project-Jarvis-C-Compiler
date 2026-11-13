@@ -35,7 +35,7 @@ The repository's real build (`test\run.bat`) invokes JWlink with Watcom-style di
 | `format windows pe [dll\|exe]` (also `win`, `nt`) | Accepted | `dll` selects `/DLL`; other formats (OS/2, DOS, ELF, bare `format windows`) are rejected |
 | `file a,b` | Accepted | Object inputs; `.obj` is appended when no extension is given |
 | `library x` / `libfile x` | Accepted | Archive inputs; `.lib` is appended when no extension is given |
-| `libpath p;q` | Accepted | `/LIBPATH` |
+| `libpath p;q` | Accepted | Search paths; later `libpath` directives take priority over earlier ones |
 | `name out` | Accepted | `/OUT` (`.exe`/`.dll` appended; defaults to the first `file` stem) |
 | `system nt \| nt_con \| nt_win \| nt_dll` | Accepted | Console or Windows subsystem; `nt_dll` also selects a DLL |
 | `runtime console\|windows[=major.minor]` | Accepted | `/SUBSYSTEM` |
@@ -54,6 +54,14 @@ The repository's real build (`test\run.bat`) invokes JWlink with Watcom-style di
 | `alias`, `import`, `order`, `segment`, `sort`, `reference`, `path`, `commit`, `language`, `modfile`, `modtrace`, `symtrace`; other `option`s (`stack`, `heap`, `eliminate`, ...) | Unsupported | Diagnosed with `unsupported JWlink directive/OPTION` |
 
 Switch-style options not listed in the option summary above (`/OPT`, `/LTCG`, `/MACHINE` other than X64, `/INCREMENTAL` other than `:NO`, and anything else unrecognized) are rejected with `unsupported option`; the `-l<name>` library shorthand applies only to `-` prefixed arguments.
+
+### Command sources and search paths
+
+Response files use double quotes and Windows-style backslash/quote escaping. They may nest to 32 levels; relative response names and input paths are resolved against the process working directory, not the containing response file. `@name` without an extension searches `name.lnk`; if the file cannot be opened, `name` is looked up as an environment variable containing more command text. A token beginning `%NAME%` expands the variable as command text, with any token suffix appended. Expansion cycles and undefined variables are errors. Response files without a BOM use the process ANSI code page; UTF-8 BOM and UTF-16LE BOM files are decoded to that code page with unrepresentable characters rejected. UTF-16BE and embedded NULs are rejected. This BOM handling is a JWlink2 extension, not a claim about JWlink's encoding support.
+
+For names without a directory, JWlink2 checks the current directory first, then explicit search paths, then environment paths. Directive-style `libpath` entries are searched newest directive first, followed by `LIBPE`, `LIB386`, and `LIB`; switch-style `/LIBPATH` entries are searched in command-line order, followed by `LIB`. Semicolon-separated entries are searched left to right. A name with a directory bypasses search paths. `/ENTRY` and `/ALIGN` on the command line override corresponding COFF directives, while repeated scalar switches such as `/OUT` and `/MAP` use the last occurrence. The tests compare environment command expansion with JWlink and exercise the other rules with controlled subprocess environments.
+
+Compatibility is not yet complete: the directive translator splits commas even inside quoted filenames, percent expansion is supported only at the beginning of a token, and JWlink command-file comments, single-quote syntax, initialization files, full source-location-aware precedence, and object-versus-library search distinctions are not implemented. JWlink2 applies the same search paths to unqualified object names. Additional differential tests against JWlink are needed before claiming full parity.
 
 Additional controls (MSVC-style switches; not available as JWlink directives):
 

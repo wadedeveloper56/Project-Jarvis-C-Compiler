@@ -530,7 +530,7 @@ namespace JWlink2Test
 			string output;
 		};
 
-		ProcessResult runExecutable(const Workspace& workspace, const fs::path& executable, const vector<wstring>& arguments)
+		ProcessResult runExecutable(const Workspace& workspace, const fs::path& executable, const vector<wstring>& arguments, const vector<pair<wstring, wstring>>& environment = {})
 		{
 			SECURITY_ATTRIBUTES security{ sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE };
 			HANDLE readPipe = nullptr;
@@ -552,7 +552,29 @@ namespace JWlink2Test
 			}
 			vector<wchar_t> mutableCommand(command.begin(), command.end());
 			mutableCommand.push_back(L'\0');
-			const auto created = CreateProcessW(nullptr, mutableCommand.data(), nullptr, nullptr, TRUE, CREATE_NO_WINDOW, nullptr, workspace.path.c_str(), &startup, &process);
+			vector<wchar_t> block;
+			if (!environment.empty())
+			{
+				auto inherited = GetEnvironmentStringsW();
+				Assert::IsNotNull(inherited, L"could not read process environment");
+				for (const wchar_t* item = inherited; *item; item += wcslen(item) + 1)
+				{
+					const wstring entry(item);
+					const auto equals = entry.find(L'=', entry[0] == L'=' ? 1 : 0);
+					const auto overridden = any_of(environment.begin(), environment.end(), [&](const auto& pair) { return equals != wstring::npos && _wcsicmp(entry.substr(0, equals).c_str(), pair.first.c_str()) == 0; });
+					if (!overridden) { block.insert(block.end(), entry.begin(), entry.end()); block.push_back(L'\0'); }
+				}
+				FreeEnvironmentStringsW(inherited);
+				for (const auto& [name, value] : environment)
+				{
+					if (value.empty()) continue;
+					const auto entry = name + L"=" + value;
+					block.insert(block.end(), entry.begin(), entry.end());
+					block.push_back(L'\0');
+				}
+				block.push_back(L'\0');
+			}
+			const auto created = CreateProcessW(nullptr, mutableCommand.data(), nullptr, nullptr, TRUE, CREATE_NO_WINDOW | (environment.empty() ? 0 : CREATE_UNICODE_ENVIRONMENT), environment.empty() ? nullptr : block.data(), workspace.path.c_str(), &startup, &process);
 			CloseHandle(writePipe);
 			Assert::IsTrue(created != 0, L"could not start linker process");
 			ProcessResult result;
@@ -2456,6 +2478,83 @@ namespace JWlink2Test
 			const auto malformedExport = makeObject({ TestSection{ ".text",{ 0xc3 } }, makeDirectiveSection("-export:api,@1,@2") },
 				{ TestSymbol{ "main", 0, 1, 2,{} }, TestSymbol{ "api", 0, 1, 2,{} } });
 			assertFailureContains(linkObject(exportWorkspace, malformedExport), "specifies more than one ordinal");
+		}
+
+		TEST_METHOD(ResponseFilesHandleNestingEncodingAndCycles)
+		{
+			Workspace workspace;
+			workspace.write(L"input file.obj", makeEntryObject());
+			workspace.writeText(L"outer.rsp", L"@inner.rsp /OUT:first.exe");
+			workspace.writeText(L"inner.rsp", L"/ENTRY:main \"input file.obj\" /OUT:earlier.exe");
+			assertSuccess(runLinker(workspace, { L"@outer.rsp", L"/OUT:last.exe" }));
+			Assert::IsTrue(fs::exists(workspace.file(L"last.exe")), L"the last output option wins across nested response files");
+			Assert::IsFalse(fs::exists(workspace.file(L"earlier.exe")));
+			assertSuccess(runLinker(workspace, { L"@inner.rsp", L"/OUT:map.exe", L"/MAP:explicit.map", L"/MAP" }));
+			Assert::IsTrue(fs::exists(workspace.file(L"map.map")));
+			Assert::IsFalse(fs::exists(workspace.file(L"explicit.map")));
+			workspace.writeText(L"commands.lnk", L"/ENTRY:main /OUT:lnk.exe \"input file.obj\"");
+			assertSuccess(runExecutable(workspace, jwlink2Path(), { L"@commands" }, { { L"commands", L"/UNKNOWN" } }));
+			Assert::IsTrue(fs::exists(workspace.file(L"lnk.exe")), L"the .lnk file wins over an environment variable");
+			const string command = "/ENTRY:main /OUT:utf8.exe \"input file.obj\"";
+			Bytes utf8{ 0xef, 0xbb, 0xbf };
+			utf8.insert(utf8.end(), command.begin(), command.end());
+			workspace.write(L"utf8.rsp", utf8);
+			assertSuccess(runLinker(workspace, { L"@utf8.rsp" }));
+			Assert::IsTrue(fs::exists(workspace.file(L"utf8.exe")));
+			const string command16 = "/ENTRY:main /OUT:utf16.exe \"input file.obj\"";
+			Bytes utf16{ 0xff, 0xfe };
+			for (const auto ch : command16) { utf16.push_back(static_cast<uint8_t>(ch)); utf16.push_back(0); }
+			workspace.write(L"utf16.rsp", utf16);
+			assertSuccess(runLinker(workspace, { L"@utf16.rsp" }));
+			Assert::IsTrue(fs::exists(workspace.file(L"utf16.exe")));
+			workspace.write(L"invalid.rsp", Bytes{ 0xef, 0xbb, 0xbf, 0xff });
+			assertFailureContains(runLinker(workspace, { L"@invalid.rsp" }), "invalid UTF-8");
+			workspace.write(L"odd.rsp", Bytes{ 0xff, 0xfe, 0x41 });
+			assertFailureContains(runLinker(workspace, { L"@odd.rsp" }), "invalid UTF-16LE");
+			workspace.writeText(L"cycle.rsp", L"@CYCLE.RSP");
+			assertFailureContains(runLinker(workspace, { L"@cycle.rsp" }), "cycle involving");
+		}
+
+		TEST_METHOD(JwlinkCommandEnvironmentExpansionAndLibrarySearch)
+		{
+			Workspace workspace;
+			workspace.write(L"input.obj", makeObject({ TestSection{ ".text",{ 0xc3 } } }, { TestSymbol{ "main", 0, 1, 2,{} }, TestSymbol{ "needed", 0, 0, 2,{} } }));
+			for (const auto* dir : { L"first", L"second", L"env" }) fs::create_directories(workspace.file(dir));
+			auto archive = [](uint8_t marker) { return makeArchive({ { "lib.obj", makeObject({ TestSection{ ".text",{ marker, 0xc3 } } }, { TestSymbol{ "needed", 0, 1, 2,{} } }) } }); };
+			workspace.write(L"first\\x.lib", archive(0x71));
+			workspace.write(L"second\\x.lib", archive(0x72));
+			workspace.write(L"env\\x.lib", archive(0x73));
+			const vector<pair<wstring, wstring>> env{ { L"LIBPE", L"" }, { L"LIB386", L"" }, { L"LIB", workspace.file(L"env").wstring() }, { L"JWL2_CMDS", L"format win pe option quiet,start=main file input.obj library x.lib name env.exe" }, { L"JWL2_DIR", L"format win pe" } };
+			assertSuccess(runExecutable(workspace, jwlink2Path(), { L"@JWL2_CMDS" }, env));
+			const auto fromLib = workspace.read(L"env.exe");
+			Assert::AreEqual<uint8_t>(0x73, fromLib[get32(fromLib, sectionHeader(fromLib, ".text") + 20) + 1], L"LIB provides libraries when no explicit path matches");
+			assertSuccess(runExecutable(workspace, jwlink2Path(), { L"%JWL2_DIR%", L"option", L"start=main", L"file", L"input.obj", L"libpath", L"first", L"libpath", L"second", L"library", L"x.lib", L"name", L"order.exe" }, env));
+			const auto image = workspace.read(L"order.exe");
+			const auto raw = get32(image, sectionHeader(image, ".text") + 20);
+			Assert::AreEqual<uint8_t>(0x72, image[raw + 1], L"last LIBPATH wins over earlier paths and LIB");
+			const vector<pair<wstring, wstring>> orderedEnv{ { L"LIBPE", workspace.file(L"first").wstring() }, { L"LIB386", workspace.file(L"second").wstring() }, { L"LIB", workspace.file(L"env").wstring() } };
+			assertSuccess(runExecutable(workspace, jwlink2Path(), { L"format", L"win", L"pe", L"option", L"start=main", L"file", L"input.obj", L"library", L"x.lib", L"name", L"envorder.exe" }, orderedEnv));
+			const auto envImage = workspace.read(L"envorder.exe");
+			Assert::AreEqual<uint8_t>(0x71, envImage[get32(envImage, sectionHeader(envImage, ".text") + 20) + 1], L"LIBPE precedes LIB386 and LIB");
+			assertSuccess(runExecutable(workspace, jwlink2Path(), { L"/ENTRY:main", L"/OUT:switchorder.exe", L"/LIBPATH:first", L"/LIBPATH:second", L"input.obj", L"x.lib" }, orderedEnv));
+			const auto switchImage = workspace.read(L"switchorder.exe");
+			Assert::AreEqual<uint8_t>(0x71, switchImage[get32(switchImage, sectionHeader(switchImage, ".text") + 20) + 1], L"switch-style paths retain command-line order");
+			assertSuccess(runExecutable(workspace, jwlink2Path(), { L"/ENTRY:main", L"/OUT:explicit.exe", L"/LIBPATH:first", L"input.obj", L"second\\x.lib" }, orderedEnv));
+			const auto explicitImage = workspace.read(L"explicit.exe");
+			Assert::AreEqual<uint8_t>(0x72, explicitImage[get32(explicitImage, sectionHeader(explicitImage, ".text") + 20) + 1], L"path-qualified libraries bypass search paths");
+			workspace.write(L"x.lib", archive(0x74));
+			assertSuccess(runExecutable(workspace, jwlink2Path(), { L"format", L"win", L"pe", L"option", L"start=main", L"file", L"input.obj", L"libpath", L"first", L"library", L"x.lib", L"name", L"current.exe" }, orderedEnv));
+			const auto currentImage = workspace.read(L"current.exe");
+			Assert::AreEqual<uint8_t>(0x74, currentImage[get32(currentImage, sectionHeader(currentImage, ".text") + 20) + 1], L"current directory precedes library paths");
+			workspace.write(L"plain.obj", makeEntryObject());
+			assertSuccess(runExecutable(workspace, jwlinkPath(), { L"%JWL2_DIR%", L"option", L"quiet,start=main", L"file", L"plain.obj", L"name", L"original.exe" }, env));
+			Assert::IsTrue(fs::exists(workspace.file(L"original.exe")), L"JWlink accepts the same percent environment expansion");
+			const vector<pair<wstring, wstring>> sourceEnv{ { L"JWL2_SOURCE", L"format win pe option quiet,start=main file plain.obj name originalenv.exe" } };
+			assertSuccess(runExecutable(workspace, jwlinkPath(), { L"@JWL2_SOURCE" }, sourceEnv));
+			Assert::IsTrue(fs::exists(workspace.file(L"originalenv.exe")), L"JWlink accepts environment command sources");
+			const vector<pair<wstring, wstring>> cycle{ { L"JWL2_CYCLE", L"@JWL2_CYCLE" } };
+			assertFailureContains(runExecutable(workspace, jwlink2Path(), { L"@JWL2_CYCLE" }, cycle), "cycle involving");
+			assertFailureContains(runExecutable(workspace, jwlink2Path(), { L"%JWL2_MISSING%" }, { { L"JWL2_MISSING", L"" } }), "not defined");
 		}
 
 		TEST_METHOD(CommandLineAndResponseFileErrorsAreReported)
