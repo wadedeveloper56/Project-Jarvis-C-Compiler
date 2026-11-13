@@ -162,6 +162,14 @@ namespace JWlink2::commandline
 			"  /BASE:<address>             Set preferred image base\n"
 			"  /DYNAMICBASE | /FIXED       Enable ASLR relocations or fixed image\n"
 			"  /MAP[:<file>]               Write a symbol map\n"
+			"  /INCLUDE:<symbol>           Force a symbol to be resolved\n"
+			"  /WHOLEARCHIVE[:<lib>]       Link every object member of an archive\n"
+			"  /STACK:<reserve>[,<commit>] Set stack sizes\n"
+			"  /HEAP:<reserve>[,<commit>]  Set heap sizes\n"
+			"  /MERGE:<from>=<to>          Merge an output section into another\n"
+			"  /SECTION:<name>,[ERWSDKP]   Override section attributes\n"
+			"  /MANIFEST[:NO|:EMBED[,ID=n]] External or embedded manifest; /MANIFESTINPUT:<file>, /MANIFESTFILE:<file>\n"
+			"  /VERBOSE                    Report inputs and the final section layout\n"
 			"  @<file>                     Read additional options from a response file\n"
 			"  -h, --help                  Show this help\n";
 	}
@@ -701,6 +709,111 @@ namespace JWlink2::commandline
 					fail("/NXCOMPAT accepts only YES or NO");
 				}
 				options.nxCompat = !value || lowerAscii(*value) == "yes";
+			}
+			else if (optionName == "include")
+			{
+				const auto symbol = requireValue("/INCLUDE");
+				if (symbol.empty()) fail("/INCLUDE requires a symbol name");
+				if (find(options.includeSymbols.begin(), options.includeSymbols.end(), symbol) == options.includeSymbols.end()) options.includeSymbols.push_back(symbol);
+			}
+			else if (optionName == "wholearchive")
+			{
+				if (!value || value->empty())
+				{
+					options.wholeArchiveAll = true;
+				}
+				else
+				{
+					auto library = lowerAscii(fs::path(*value).filename().string());
+					if (fs::path(library).extension().empty()) library += ".lib";
+					options.wholeArchives.push_back(move(library));
+				}
+			}
+			else if (optionName == "stack" || optionName == "heap")
+			{
+				const auto spelling = optionName == "stack" ? "/STACK" : "/HEAP";
+				const auto text = requireValue(spelling);
+				const auto comma = text.find(',');
+				const auto reserve = parseUnsignedOption(string_view(text).substr(0, comma), spelling);
+				auto commit = optionName == "stack" ? options.stackCommit : options.heapCommit;
+				if (comma != string::npos) commit = parseUnsignedOption(string_view(text).substr(comma + 1), spelling);
+				if (reserve == 0 || commit > reserve) fail(string(spelling) + " reserve must be nonzero and not smaller than commit");
+				(optionName == "stack" ? options.stackReserve : options.heapReserve) = reserve;
+				(optionName == "stack" ? options.stackCommit : options.heapCommit) = commit;
+			}
+			else if (optionName == "merge")
+			{
+				const auto text = requireValue("/MERGE");
+				const auto equals = text.find('=');
+				if (equals == string::npos || equals == 0 || equals + 1 == text.size()) fail("/MERGE requires <from>=<to>");
+				auto from = text.substr(0, equals);
+				auto to = text.substr(equals + 1);
+				for (const auto* name : { &from, &to })
+				{
+					if (name->size() > 8 || (*name)[0] != '.') fail("/MERGE section names must start with '.' and be at most 8 characters");
+					for (const auto* reserved : { ".pdata", ".reloc", ".idata", ".edata", ".rsrc", ".tls", ".didat", ".debug" })
+					{
+						if (*name == reserved) fail("/MERGE cannot move or target the linker-managed section '" + *name + "'");
+					}
+				}
+				if (from == to) fail("/MERGE source and destination are the same section");
+				if (any_of(options.mergeSections.begin(), options.mergeSections.end(), [&](const auto& item) { return item.first == from || item.second == from || item.first == to; })) fail("/MERGE would chain or repeat section '" + from + "'");
+				options.mergeSections.emplace_back(move(from), move(to));
+			}
+			else if (optionName == "section")
+			{
+				const auto text = requireValue("/SECTION");
+				const auto comma = text.find(',');
+				if (comma == string::npos || comma == 0 || comma + 1 == text.size()) fail("/SECTION requires <name>,<attributes>");
+				uint32_t flags = 0;
+				for (const auto ch : lowerAscii(text.substr(comma + 1)))
+				{
+					switch (ch)
+					{
+						case 'e': flags |= 0x20000000; break;
+						case 'r': flags |= 0x40000000; break;
+						case 'w': flags |= 0x80000000; break;
+						case 's': flags |= 0x10000000; break;
+						case 'd': flags |= 0x02000000; break;
+						case 'k': flags |= 0x04000000; break;
+						case 'p': flags |= 0x08000000; break;
+						default: fail(string("/SECTION attribute '") + ch + "' is not one of E R W S D K P");
+					}
+				}
+				options.sectionFlags.emplace_back(text.substr(0, comma), flags);
+			}
+			else if (optionName == "verbose")
+			{
+				if (value) fail("/VERBOSE does not accept a value");
+				options.verbose = true;
+			}
+			else if (optionName == "manifest")
+			{
+				const auto mode = value ? lowerAscii(*value) : string();
+				if (!value || mode == "external") options.manifestMode = LinkOptions::ManifestMode::External;
+				else if (mode == "no") options.manifestMode = LinkOptions::ManifestMode::None;
+				else if (mode == "embed" || mode.rfind("embed,id=", 0) == 0)
+				{
+					options.manifestMode = LinkOptions::ManifestMode::Embed;
+					if (mode.size() > 5)
+					{
+						const auto id = parseUnsignedOption(string_view(mode).substr(9), "/MANIFEST:EMBED,ID");
+						if (id == 0 || id > 65535) fail("/MANIFEST:EMBED,ID must be between 1 and 65535");
+						options.manifestId = static_cast<uint16_t>(id);
+					}
+				}
+				else fail("/MANIFEST accepts NO, EXTERNAL, EMBED, or EMBED,ID=<n>");
+			}
+			else if (optionName == "manifestinput")
+			{
+				options.manifestInput = fs::path(requireValue("/MANIFESTINPUT"));
+				if (options.manifestInput->empty()) fail("/MANIFESTINPUT requires a file");
+				if (options.manifestMode == LinkOptions::ManifestMode::None) options.manifestMode = LinkOptions::ManifestMode::Embed;
+			}
+			else if (optionName == "manifestfile")
+			{
+				options.manifestFile = fs::path(requireValue("/MANIFESTFILE"));
+				if (options.manifestFile->empty()) fail("/MANIFESTFILE requires a path");
 			}
 			else if (optionName == "incremental")
 			{

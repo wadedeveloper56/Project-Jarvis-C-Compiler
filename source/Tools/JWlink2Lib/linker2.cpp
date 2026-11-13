@@ -33,6 +33,7 @@ namespace JWlink2
 			loadDefinitionFile();
 			loadInputs();
 			resolveLibraries();
+			addManifestResource();
 			collectCodeViewObjects();
 			prepareDelayLoadImports();
 			validateUnresolvedSymbols();
@@ -48,11 +49,23 @@ namespace JWlink2
 			prepareBaseRelocations();
 			prepareDebugSection();
 			layoutImage();
+			if (options_.verbose)
+			{
+				for (const auto& section : outputSections_)
+				{
+					cout << "jwlink2: section " << section.name << " rva=0x" << hex << section.rva << " size=0x" << section.virtualSize << " flags=0x" << section.characteristics << dec << "\n";
+				}
+			}
 			applyRelocations();
 			finalizeGeneratedData();
 			finalizeDebugSection();
 			writeImage();
+			writeExternalManifest();
 			writePdb();
+			if (options_.verbose)
+			{
+				cout << "jwlink2: wrote " << options_.output.string() << "\n";
+			}
 		}
 
 		bool Linker::isDefined(const CoffSymbol& symbol) const
@@ -229,11 +242,32 @@ namespace JWlink2
 			if (bytes.size() >= 8 && string_view(reinterpret_cast<const char*>(bytes.data()), 8) == "!<arch>\n")
 			{
 				auto archive = parseArchive(bytes, path.string());
+				const auto libraryName = lowerAscii(path.filename().string());
+				if (options_.wholeArchiveAll || find(options_.wholeArchives.begin(), options_.wholeArchives.end(), libraryName) != options_.wholeArchives.end())
+				{
+					for (auto& member : archive.members)
+					{
+						if (member.object)
+						{
+							member.selected = true;
+							objects_.push_back(move(*member.object));
+							member.object.reset();
+						}
+					}
+				}
+				if (options_.verbose)
+				{
+					cout << "jwlink2: archive " << path.string() << " (" << archive.members.size() << " members)\n";
+				}
 				archives_.push_back(move(archive));
 			}
 			else
 			{
 				objects_.push_back(parseObject(bytes, path.string()));
+				if (options_.verbose)
+				{
+					cout << "jwlink2: object " << path.string() << "\n";
+				}
 			}
 		}
 
@@ -679,6 +713,93 @@ namespace JWlink2
 					return;
 				}
 			}
+		}
+
+		string Linker::manifestText() const
+		{
+			if (options_.manifestInput)
+			{
+				const auto bytes = readFile(*options_.manifestInput);
+				return string(bytes.begin(), bytes.end());
+			}
+			return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\r\n"
+				"<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">\r\n"
+				"  <trustInfo xmlns=\"urn:schemas-microsoft-com:asm.v3\">\r\n"
+				"    <security>\r\n"
+				"      <requestedPrivileges>\r\n"
+				"        <requestedExecutionLevel level=\"asInvoker\" uiAccess=\"false\"/>\r\n"
+				"      </requestedPrivileges>\r\n"
+				"    </security>\r\n"
+				"  </trustInfo>\r\n"
+				"</assembly>\r\n";
+		}
+
+		void Linker::addManifestResource()
+		{
+			if (options_.manifestMode != LinkOptions::ManifestMode::Embed)
+			{
+				return;
+			}
+			for (const auto& object : objects_)
+			{
+				for (const auto& section : object.sections)
+				{
+					if (section.name.substr(0, section.name.find('$')) == ".rsrc")
+					{
+						fail("/MANIFEST:EMBED cannot be combined with an input that already contains a .rsrc resource section (" + object.name + ")");
+					}
+				}
+			}
+			const auto text = manifestText();
+			const auto id = options_.manifestId != 0 ? options_.manifestId : static_cast<uint16_t>(options_.dll ? 2 : 1);
+			// Type 24 (RT_MANIFEST) -> id -> language 0x409 -> data entry -> data.
+			Bytes data(88, 0);
+			const auto put16 = [&](size_t offset, uint16_t value) { data[offset] = static_cast<uint8_t>(value); data[offset + 1] = static_cast<uint8_t>(value >> 8); };
+			const auto put32 = [&](size_t offset, uint32_t value) { put16(offset, static_cast<uint16_t>(value)); put16(offset + 2, static_cast<uint16_t>(value >> 16)); };
+			put16(14, 1);
+			put32(16, 24);
+			put32(20, 0x80000000u | 24);
+			put16(24 + 14, 1);
+			put32(40, id);
+			put32(44, 0x80000000u | 48);
+			put16(48 + 14, 1);
+			put32(64, 0x409);
+			put32(68, 72);
+			put32(72, 88);
+			put32(76, toU32(text.size(), "manifest size"));
+			data.insert(data.end(), text.begin(), text.end());
+			ObjectFile object;
+			object.name = "<manifest>";
+			InputSection section;
+			section.name = ".rsrc";
+			section.characteristics = 0x40000040;
+			section.alignment = 4;
+			section.virtualSize = toU32(data.size(), "manifest resource size");
+			section.data = move(data);
+			section.relocations.push_back({ 72, 0, 3 });
+			object.sections.push_back(move(section));
+			CoffSymbol symbol;
+			symbol.name = "$manifest";
+			symbol.sectionNumber = 1;
+			symbol.storageClass = 3;
+			object.symbols.push_back(move(symbol));
+			objects_.push_back(move(object));
+		}
+
+		void Linker::writeExternalManifest()
+		{
+			if (options_.manifestMode != LinkOptions::ManifestMode::External)
+			{
+				return;
+			}
+			auto path = options_.manifestFile ? *options_.manifestFile : fs::path(options_.output.string() + ".manifest");
+			const auto text = manifestText();
+			ofstream output(path, ios::binary | ios::trunc);
+			if (!output)
+			{
+				fail("cannot create manifest '" + path.string() + "'");
+			}
+			output.write(text.data(), static_cast<streamsize>(text.size()));
 		}
 
 		void Linker::selectComdats()
@@ -1458,19 +1579,42 @@ namespace JWlink2
 		size_t Linker::getOutputSection(const InputSection& input)
 		{
 			const auto subsection = input.name.find('$');
-			const auto outputName = input.name.substr(0, subsection);
+			auto outputName = input.name.substr(0, subsection);
+			for (const auto& merge : options_.mergeSections)
+			{
+				if (merge.first == outputName)
+				{
+					outputName = merge.second;
+					break;
+				}
+			}
+			const auto finishCharacteristics = [&](uint32_t characteristics)
+			{
+				if ((characteristics & 0x40) != 0)
+				{
+					characteristics &= ~0x80u;
+				}
+				for (const auto& override : options_.sectionFlags)
+				{
+					if (override.first == outputName)
+					{
+						characteristics = (characteristics & ~0xFE000000u) | override.second;
+					}
+				}
+				return characteristics;
+			};
 			for (size_t i = 0; i < outputSections_.size(); ++i)
 			{
 				if (outputSections_[i].name == outputName)
 				{
-					outputSections_[i].characteristics |= input.characteristics;
+					outputSections_[i].characteristics = finishCharacteristics(outputSections_[i].characteristics | input.characteristics);
 					outputSections_[i].alignment = max(outputSections_[i].alignment, static_cast<size_t>(input.alignment));
 					return i;
 				}
 			}
 			OutputSection section;
 			section.name = outputName;
-			section.characteristics = input.characteristics;
+			section.characteristics = finishCharacteristics(input.characteristics);
 			section.alignment = input.alignment;
 			outputSections_.push_back(move(section));
 			return outputSections_.size() - 1;
@@ -2469,10 +2613,10 @@ namespace JWlink2
 			writeLe(image, optional + 68, options_.subsystem);
 			const auto dllCharacteristics = static_cast<uint16_t>((options_.nxCompat ? 0x0100 : 0) | ((options_.dynamicBase && relocationDirectorySize_ != 0) ? 0x0040 : 0));
 			writeLe(image, optional + 70, dllCharacteristics);
-			writeLe(image, optional + 72, uint64_t{ 0x100000 });
-			writeLe(image, optional + 80, uint64_t{ 0x1000 });
-			writeLe(image, optional + 88, uint64_t{ 0x100000 });
-			writeLe(image, optional + 96, uint64_t{ 0x1000 });
+			writeLe(image, optional + 72, options_.stackReserve);
+			writeLe(image, optional + 80, options_.stackCommit);
+			writeLe(image, optional + 88, options_.heapReserve);
+			writeLe(image, optional + 96, options_.heapCommit);
 			writeLe(image, optional + 108, uint32_t{ 16 });
 			writeLe(image, optional + 112, exportDirectoryRva_);
 			writeLe(image, optional + 116, exportDirectorySize_);

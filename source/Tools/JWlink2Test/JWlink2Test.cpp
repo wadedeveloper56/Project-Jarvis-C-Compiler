@@ -1418,6 +1418,110 @@ namespace JWlink2Test
 			Assert::IsTrue(workspace.read(L"response.exe") == workspace.read(L"switch.exe"), L"directives in a response file link identically");
 		}
 
+		TEST_METHOD(StackHeapMergeAndSectionControlsAreWrittenToTheImage)
+		{
+			Workspace workspace;
+			TestSection rdata{ ".rdata",{ 1, 2, 3, 4 }, 0x40000040 };
+			TestSection text{ ".text",{ 0xc3 } };
+			TestSection custom{ ".custom",{ 9 }, 0x40000040 };
+			workspace.write(L"input.obj", makeObject({ text, rdata, custom }, { TestSymbol{ "main", 0, 1, 2,{} } }));
+			auto args = outputArgs(workspace);
+			for (const auto* option : { L"/STACK:0x400000,0x8000", L"/HEAP:0x200000,0x4000", L"/MERGE:.rdata=.custom", L"/SECTION:.custom,RW" }) args.insert(args.begin() + 1, option);
+			args.push_back(workspace.file(L"input.obj").wstring());
+			assertSuccess(runLinker(workspace, args));
+			const auto image = workspace.read(L"linked.exe");
+			const auto optional = optionalHeader(image);
+			Assert::AreEqual<uint64_t>(0x400000, get64(image, optional + 72));
+			Assert::AreEqual<uint64_t>(0x8000, get64(image, optional + 80));
+			Assert::AreEqual<uint64_t>(0x200000, get64(image, optional + 88));
+			Assert::AreEqual<uint64_t>(0x4000, get64(image, optional + 96));
+			const auto custom0 = sectionHeader(image, ".custom");
+			Assert::AreEqual<uint32_t>(0xc0000000u, get32(image, custom0 + 36) & 0xfe000000u);
+			const auto raw = get32(image, custom0 + 20);
+			Assert::AreEqual<uint8_t>(1, image[raw], L".rdata bytes lead the merged section");
+			Assert::IsTrue(find(image.begin() + raw, image.begin() + raw + get32(image, custom0 + 16), uint8_t{ 9 }) != image.begin() + raw + get32(image, custom0 + 16), L".custom bytes follow");
+			const auto sectionCount = get16(image, peHeader(image) + 6);
+			for (size_t i = 0; i < sectionCount; ++i)
+			{
+				const auto name = reinterpret_cast<const char*>(image.data() + sectionTable(image) + i * 40);
+				Assert::IsTrue(strncmp(name, ".rdata", 8) != 0, L".rdata was merged away");
+			}
+			validatePeLayout(image);
+		}
+
+		TEST_METHOD(WholeArchiveAndIncludePullInUnreferencedMembers)
+		{
+			Workspace workspace;
+			workspace.write(L"input.obj", makeEntryObject());
+			const auto extra = makeObject({ TestSection{ ".text",{ 0xaa, 0xbb, 0xcc, 0xdd, 0xee } } }, { TestSymbol{ "unused_fn", 0, 1, 2,{} } });
+			workspace.write(L"x.lib", makeArchive({ { "extra.obj", extra } }));
+			const auto contains = [](const Bytes& image) { const Bytes needle{ 0xaa, 0xbb, 0xcc, 0xdd, 0xee }; return search(image.begin(), image.end(), needle.begin(), needle.end()) != image.end(); };
+			auto link = [&](const wstring& out, vector<wstring> extraArgs)
+			{
+				vector<wstring> args{ L"/ENTRY:main", L"/OUT:" + workspace.file(out).wstring() };
+				args.insert(args.end(), extraArgs.begin(), extraArgs.end());
+				args.push_back(workspace.file(L"input.obj").wstring());
+				args.push_back(workspace.file(L"x.lib").wstring());
+				assertSuccess(runLinker(workspace, args));
+				return workspace.read(out);
+			};
+			Assert::IsFalse(contains(link(L"plain.exe", {})), L"unreferenced member stays out by default");
+			Assert::IsTrue(contains(link(L"whole.exe", { L"/WHOLEARCHIVE:x.lib" })), L"/WHOLEARCHIVE pulls in every member");
+			Assert::IsTrue(contains(link(L"all.exe", { L"/WHOLEARCHIVE" })), L"bare /WHOLEARCHIVE applies to all archives");
+			Assert::IsTrue(contains(link(L"inc.exe", { L"/INCLUDE:unused_fn" })), L"/INCLUDE forces the defining member");
+			const auto missing = runLinker(workspace, { L"/ENTRY:main", L"/INCLUDE:nope", L"/OUT:" + workspace.file(L"m.exe").wstring(), workspace.file(L"input.obj").wstring() });
+			assertFailureContains(missing, "nope");
+		}
+
+		TEST_METHOD(VerboseReportsInputsAndLayout)
+		{
+			Workspace workspace;
+			workspace.write(L"input.obj", makeEntryObject());
+			auto args = outputArgs(workspace);
+			args.insert(args.begin() + 1, L"/VERBOSE");
+			args.push_back(workspace.file(L"input.obj").wstring());
+			const auto result = runLinker(workspace, args);
+			assertSuccess(result);
+			Assert::IsTrue(result.output.find("jwlink2: object") != string::npos && result.output.find("jwlink2: section .text") != string::npos && result.output.find("jwlink2: wrote") != string::npos);
+		}
+
+		TEST_METHOD(ManifestIsEmbeddedAsResourceOrWrittenExternally)
+		{
+			Workspace workspace;
+			workspace.write(L"input.obj", makeEntryObject());
+			const auto input = workspace.file(L"input.obj").wstring();
+			assertSuccess(runLinker(workspace, { L"/ENTRY:main", L"/MANIFEST:EMBED", L"/OUT:" + workspace.file(L"embed.exe").wstring(), input }));
+			const auto image = workspace.read(L"embed.exe");
+			validatePeLayout(image);
+			const auto resource = sectionHeader(image, ".rsrc");
+			const auto base = get32(image, resource + 20);
+			const auto directoryRva = get32(image, optionalHeader(image) + 112 + 16);
+			Assert::AreEqual(get32(image, resource + 12), directoryRva, L"resource data directory points at .rsrc");
+			Assert::AreEqual<uint32_t>(24, get32(image, base + 16));
+			Assert::AreEqual<uint32_t>(1, get32(image, base + 24 + 16), L"EXE manifest resource ID is 1");
+			const auto dataRva = get32(image, base + 72);
+			const auto size = get32(image, base + 76);
+			const string text(reinterpret_cast<const char*>(image.data() + base + (dataRva - directoryRva)), size);
+			Assert::IsTrue(text.find("requestedExecutionLevel") != string::npos);
+
+			workspace.writeText(L"app.manifest", L"<assembly>custom</assembly>");
+			assertSuccess(runLinker(workspace, { L"/DLL", L"/NOENTRY", L"/EXPORT:main", L"/MANIFESTINPUT:" + workspace.file(L"app.manifest").wstring(), L"/OUT:" + workspace.file(L"m.dll").wstring(), input }));
+			const auto dll = workspace.read(L"m.dll");
+			const auto dllBase = get32(dll, sectionHeader(dll, ".rsrc") + 20);
+			Assert::AreEqual<uint32_t>(2, get32(dll, dllBase + 24 + 16), L"DLL manifest resource ID is 2");
+			const string custom(reinterpret_cast<const char*>(dll.data() + dllBase + 88), get32(dll, dllBase + 76));
+			Assert::AreEqual<string>("<assembly>custom</assembly>", custom);
+
+			assertSuccess(runLinker(workspace, { L"/ENTRY:main", L"/MANIFEST", L"/OUT:" + workspace.file(L"ext.exe").wstring(), input }));
+			Assert::IsTrue(fs::exists(workspace.file(L"ext.exe.manifest")));
+			Assert::IsTrue(workspace.read(L"ext.exe").size() > 0);
+			Assert::IsTrue(fs::exists(workspace.file(L"ext.exe.manifest")) && !fs::exists(workspace.file(L"plain.manifest")));
+
+			TestSection rsrc{ ".rsrc",{ 0, 0, 0, 0 }, 0x40000040 };
+			workspace.write(L"res.obj", makeObject({ TestSection{ ".text",{ 0xc3 } }, rsrc }, { TestSymbol{ "main", 0, 1, 2,{} } }));
+			assertFailureContains(runLinker(workspace, { L"/ENTRY:main", L"/MANIFEST:EMBED", L"/OUT:" + workspace.file(L"conflict.exe").wstring(), workspace.file(L"res.obj").wstring() }), "already contains a .rsrc");
+		}
+
 		TEST_METHOD(OptionMatrixAcceptsAndRejectsDocumentedForms)
 		{
 			Workspace workspace;
@@ -1456,13 +1560,21 @@ namespace JWlink2Test
 				{ { L"/ENTRY:main", L"/OUT:s1.exe", L"/NOLOGO", L"/MACHINE:X64", L"/INCREMENTAL:NO", L"input.obj" }, nullptr },
 				{ { L"/ENTRY:main", L"/OUT:s2.exe", L"/NXCOMPAT", L"/DYNAMICBASE:NO", L"/SUBSYSTEM:WINDOWS,6.0", L"input.obj" }, nullptr },
 				// Switches whose behavior JWlink2 does not implement are rejected, never silently ignored.
-				{ { L"/MANIFEST:EMBED", L"input.obj" }, "unsupported option" },
-				{ { L"/STACK:0x100000", L"input.obj" }, "unsupported option" },
-				{ { L"/HEAP:0x100000", L"input.obj" }, "unsupported option" },
-				{ { L"/MERGE:.rdata=.text", L"input.obj" }, "unsupported option" },
-				{ { L"/SECTION:.x,R", L"input.obj" }, "unsupported option" },
-				{ { L"/WHOLEARCHIVE:kernel.lib", L"input.obj" }, "unsupported option" },
-				{ { L"/VERBOSE", L"input.obj" }, "unsupported option" },
+				// Controls that are implemented are accepted; invalid arguments are diagnosed.
+				{ { L"/ENTRY:main", L"/OUT:s3.exe", L"/MANIFEST:EMBED", L"/STACK:0x200000,0x2000", L"/HEAP:0x200000", L"/VERBOSE", L"input.obj" }, nullptr },
+				{ { L"/ENTRY:main", L"/OUT:s4.exe", L"/MANIFEST", L"/MERGE:.rdata=.text", L"/SECTION:.text,ER", L"/INCLUDE:main", L"/WHOLEARCHIVE:kernel.lib", L"/WHOLEARCHIVE", L"/MANIFEST:NO", L"input.obj", L"kernel.lib" }, nullptr },
+				{ { L"/MANIFEST:BOGUS", L"input.obj" }, "/MANIFEST accepts" },
+				{ { L"/STACK:0x1000,0x2000", L"input.obj" }, "reserve must be nonzero" },
+				{ { L"/HEAP:abc", L"input.obj" }, "/HEAP" },
+				{ { L"/MERGE:.rdata", L"input.obj" }, "/MERGE requires" },
+				{ { L"/MERGE:.pdata=.text", L"input.obj" }, "linker-managed" },
+				{ { L"/MERGE:.a=.a", L"input.obj" }, "same section" },
+				{ { L"/MERGE:.a=.b", L"/MERGE:.b=.c", L"input.obj" }, "chain" },
+				{ { L"/SECTION:.x,Q", L"input.obj" }, "is not one of" },
+				{ { L"/SECTION:.x", L"input.obj" }, "/SECTION requires" },
+				{ { L"/VERBOSE:1", L"input.obj" }, "does not accept a value" },
+				{ { L"/INCLUDE:", L"input.obj" }, "requires a symbol" },
+				{ { L"/MANIFESTINPUT:missing.manifest", L"input.obj" }, "missing.manifest" },
 				{ { L"/OPT:REF", L"input.obj" }, "unsupported option" },
 				{ { L"/LTCG", L"input.obj" }, "unsupported option" },
 				{ { L"/MACHINE:ARM64", L"input.obj" }, "only supports /MACHINE:X64" },
@@ -2351,8 +2463,7 @@ namespace JWlink2Test
 			Workspace workspace;
 			workspace.write(L"input.obj", makeEntryObject());
 			assertFailureContains(runLinker(workspace, { L"/UNKNOWN", workspace.file(L"input.obj").wstring() }), "unsupported option");
-			assertFailureContains(runLinker(workspace, { L"/MANIFEST:EMBED", workspace.file(L"input.obj").wstring() }), "unsupported option");
-			assertFailureContains(runLinker(workspace, { L"/MANIFESTINPUT:app.manifest", workspace.file(L"input.obj").wstring() }), "unsupported option");
+			assertFailureContains(runLinker(workspace, { L"/MANIFESTINPUT:app.manifest", workspace.file(L"input.obj").wstring() }), "app.manifest");
 			assertFailureContains(runLinker(workspace, { L"/BASE:0x12345", workspace.file(L"input.obj").wstring() }), "64-KiB-aligned");
 			assertFailureContains(runLinker(workspace, { L"/ALIGN:300", workspace.file(L"input.obj").wstring() }), "/ALIGN must be a power of two");
 			assertFailureContains(runLinker(workspace, { L"/SUBSYSTEM:EFI", workspace.file(L"input.obj").wstring() }), "unsupported subsystem");

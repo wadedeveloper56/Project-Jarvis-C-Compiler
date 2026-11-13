@@ -53,7 +53,21 @@ The repository's real build (`test\run.bat`) invokes JWlink with Watcom-style di
 | `option implib[=file]` | Accepted | `/IMPLIB` (requires a DLL) |
 | `alias`, `import`, `order`, `segment`, `sort`, `reference`, `path`, `commit`, `language`, `modfile`, `modtrace`, `symtrace`; other `option`s (`stack`, `heap`, `eliminate`, ...) | Unsupported | Diagnosed with `unsupported JWlink directive/OPTION` |
 
-Switch-style options not listed in the option summary above (`/MANIFEST*`, `/STACK`, `/HEAP`, `/MERGE`, `/SECTION`, `/WHOLEARCHIVE`, `/VERBOSE`, `/OPT`, `/LTCG`, `/MACHINE` other than X64, `/INCREMENTAL` other than `:NO`) are rejected with `unsupported option`; the `-l<name>` library shorthand applies only to `-` prefixed arguments.
-Application manifests and `.res` resource inputs are not implemented because no existing build uses them: `/MANIFEST*` options and `.res` files are rejected explicitly, while resources supplied as COFF `.rsrc` sections (for example from `cvtres`) are passed through to the PE resource directory.
+Switch-style options not listed in the option summary above (`/OPT`, `/LTCG`, `/MACHINE` other than X64, `/INCREMENTAL` other than `:NO`, and anything else unrecognized) are rejected with `unsupported option`; the `-l<name>` library shorthand applies only to `-` prefixed arguments.
+
+Additional controls (MSVC-style switches; not available as JWlink directives):
+
+| Switch | Behavior |
+| --- | --- |
+| `/INCLUDE:<symbol>` | Forces the symbol to be resolved, pulling in the defining archive member. |
+| `/WHOLEARCHIVE[:<lib>]` | Links every object member of the named archive (or of every archive when no name is given). Import-library members stay demand-driven. |
+| `/STACK:<reserve>[,<commit>]`, `/HEAP:<reserve>[,<commit>]` | Written to the PE optional header (defaults 0x100000 / 0x1000); commit may not exceed reserve. |
+| `/MERGE:<from>=<to>` | Merges an output section into another. Linker-managed sections (`.pdata`, `.reloc`, `.idata`, `.edata`, `.rsrc`, `.tls`, `.didat`, `.debug`), self-merges, and chained merges are rejected. |
+| `/SECTION:<name>,[ERWSDKP]` | Replaces the memory attribute flags of the named output section. |
+| `/MANIFEST[:NO\|:EXTERNAL\|:EMBED[,ID=n]]` | `/MANIFEST` writes `<out>.manifest` (or the `/MANIFESTFILE` path); `:EMBED` embeds an `RT_MANIFEST` resource (ID 1 for EXE, 2 for DLL, language 0x409). `/MANIFESTINPUT:<file>` supplies the content and implies embedding; otherwise an `asInvoker` manifest is generated. Embedding fails if an input already has a `.rsrc` section (resource trees are not merged). |
+| `/VERBOSE` | Prints each loaded input, the final section layout, and the output path to stdout. |
+| `/DEBUG`, `/PDB:<file>` | See the debug-information section. |
+
+`.res` inputs are still not implemented; resources supplied as COFF `.rsrc` sections (for example from `cvtres`) pass through to the PE resource directory.
 
 LTCG/LLVM bitcode is not linked:

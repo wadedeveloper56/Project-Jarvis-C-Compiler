@@ -335,6 +335,9 @@ namespace JWlink2
 			void loadInputs();
 			void collectCodeViewObjects();
 			void resolveLibraries();
+			string manifestText() const;
+			void addManifestResource();
+			void writeExternalManifest();
 			void selectComdats();
 			void prepareDelayLoadImports();
 			void prepareImports();

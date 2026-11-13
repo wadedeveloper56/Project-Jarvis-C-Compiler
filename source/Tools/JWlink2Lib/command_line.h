@@ -58,6 +58,19 @@ namespace JWlink2::commandline
 		bool dll = false;
 		bool noEntry = false;
 		bool importLibrarySpecified = false;
+		bool verbose = false;
+		uint64_t stackReserve = 0x100000;
+		uint64_t stackCommit = 0x1000;
+		uint64_t heapReserve = 0x100000;
+		uint64_t heapCommit = 0x1000;
+		vector<pair<string, string>> mergeSections;
+		vector<pair<string, uint32_t>> sectionFlags;
+		vector<string> wholeArchives;
+		bool wholeArchiveAll = false;
+		enum class ManifestMode { None, External, Embed } manifestMode = ManifestMode::None;
+		optional<fs::path> manifestInput;
+		optional<fs::path> manifestFile;
+		uint16_t manifestId = 0;
 		vector<fs::path> inputs;
 	};
 
