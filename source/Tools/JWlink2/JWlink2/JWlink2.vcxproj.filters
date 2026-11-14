@@ -21,4 +21,8 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\MISSING_FEATURES.md" />
+    <None Include="..\README.md" />
+  </ItemGroup>
 </Project>

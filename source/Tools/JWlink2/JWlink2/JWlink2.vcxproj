@@ -125,5 +125,9 @@
       <Project>{3ae64e16-9df7-4a39-b10e-5bcb534646b1}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\MISSING_FEATURES.md" />
+    <None Include="..\README.md" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>
