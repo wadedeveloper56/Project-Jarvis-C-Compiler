@@ -396,7 +396,11 @@ namespace JWlink2
 					fail(object.name + ": unsupported section alignment");
 				}
 				section.alignment = alignmentCode == 0 ? 1u : (1u << (alignmentCode - 1));
-				if (rawSize != 0)
+				if (rawSize != 0 && rawOffset == 0 && (section.characteristics & 0x80) == 0)
+				{
+					fail(object.name + ": initialized section has no raw data offset");
+				}
+				if (rawSize != 0 && rawOffset != 0)
 				{
 					requireRange(bytes, rawOffset, rawSize, object.name + " section data");
 					section.data.assign(bytes.begin() + rawOffset, bytes.begin() + rawOffset + rawSize);

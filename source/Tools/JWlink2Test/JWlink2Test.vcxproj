@@ -185,6 +185,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="I386TlsTests.cpp" />
     <ClCompile Include="TestFixtures.cpp" />
     <ClCompile Include="ObjectAndSectionTests.cpp" />
     <ClCompile Include="DebugTests.cpp" />

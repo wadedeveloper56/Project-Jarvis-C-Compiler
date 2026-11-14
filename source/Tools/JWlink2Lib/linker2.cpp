@@ -48,7 +48,7 @@ namespace JWlink2
 					for (const auto& section : object.sections)
 					{
 						const auto name = section.name.substr(0, section.name.find('$'));
-						if (name == ".idata" || name == ".tls" || name == ".pdata" || name == ".loadcfg") fail(object.name + ": x86 " + name + " metadata is not yet supported");
+						if (name == ".idata" || name == ".pdata" || name == ".loadcfg") fail(object.name + ": x86 " + name + " metadata is not yet supported");
 						if (name == ".rsrc") hasResources = true;
 					}
 					if (hasResources && resourceObjectSeen) fail("merging x86 resource sections from multiple objects is not yet supported");
@@ -2114,10 +2114,11 @@ namespace JWlink2
 				{
 					fail(description + " directory symbol '" + name + "' is not defined in an input section");
 				}
+				const auto& input = objects_[definition.objectIndex].sections[static_cast<size_t>(symbol.sectionNumber - 1)];
 				const auto& mapping = sectionMaps_[definition.objectIndex][static_cast<size_t>(symbol.sectionNumber - 1)];
 				const auto offset = mapping.offset + symbol.value;
 				const auto& output = outputSections_[mapping.outputIndex];
-				if (offset > output.data.size() || minimumSize > output.data.size() - offset || offset > output.virtualSize || minimumSize > output.virtualSize - offset)
+				if (symbol.value > input.data.size() || minimumSize > input.data.size() - symbol.value || offset > output.data.size() || minimumSize > output.data.size() - offset || offset > output.virtualSize || minimumSize > output.virtualSize - offset)
 				{
 					fail(description + " directory structure is truncated");
 				}
@@ -2942,8 +2943,8 @@ namespace JWlink2
 			writeLe(image, directories + 108, delayImportDirectorySize_);
 			const auto resourceDirectory = sectionDirectory(".rsrc");
 			const auto exceptionDirectory = sectionDirectory(".pdata");
-			if (x86 && (globals_.contains("__tls_used") || globals_.contains("_tls_used") || globals_.contains("__load_config_used") || globals_.contains("_load_config_used"))) fail("x86 TLS and load-configuration metadata are not yet supported");
-			const auto tlsDirectory = symbolDirectory({ "__tls_used", "_tls_used" }, 40, "TLS");
+			if (x86 && (globals_.contains("__load_config_used") || globals_.contains("_load_config_used"))) fail("x86 load-configuration metadata is not yet supported");
+			const auto tlsDirectory = symbolDirectory({ "__tls_used", "_tls_used" }, x86 ? 24 : 40, "TLS");
 			const auto loadConfigDirectory = loadConfigurationDirectory();
 			if (resourceDirectory && resourceDirectory->second < 16)
 			{
@@ -2980,8 +2981,8 @@ namespace JWlink2
 			}
 			if (tlsDirectory)
 			{
-				writeLe(image, optional + 184, tlsDirectory->first);
-				writeLe(image, optional + 188, tlsDirectory->second);
+				writeLe(image, directories + 72, tlsDirectory->first);
+				writeLe(image, directories + 76, tlsDirectory->second);
 			}
 			if (loadConfigDirectory)
 			{
