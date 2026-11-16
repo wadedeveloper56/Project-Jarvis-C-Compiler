@@ -11,6 +11,59 @@ namespace JWlink2Test
 	TEST_CLASS(I386Tests)
 	{
 	public:
+		TEST_METHOD(I386OriginalJwlinkDllAndArchiveRuntimeComparison)
+		{
+			fs::path tools, kernel;
+			error_code ignored;
+			wchar_t programFiles[MAX_PATH]{}, programFilesX86[MAX_PATH]{};
+			GetEnvironmentVariableW(L"ProgramFiles", programFiles, MAX_PATH);
+			GetEnvironmentVariableW(L"ProgramFiles(x86)", programFilesX86, MAX_PATH);
+			for (const auto& entry : fs::recursive_directory_iterator(fs::path(programFiles) / L"Microsoft Visual Studio", fs::directory_options::skip_permission_denied, ignored))
+				if (entry.path().filename() == L"cl.exe" && entry.path().parent_path().filename() == L"x86" && entry.path().parent_path().parent_path().filename() == L"Hostx64" && fs::exists(entry.path().parent_path() / L"lib.exe")) tools = entry.path().parent_path();
+			for (const auto& entry : fs::directory_iterator(fs::path(programFilesX86) / L"Windows Kits" / L"10" / L"Lib", ignored))
+			{
+				const auto candidate = entry.path() / L"um" / L"x86" / L"kernel32.lib";
+				if (fs::exists(candidate) && (kernel.empty() || candidate.wstring() > kernel.wstring())) kernel = candidate;
+			}
+			if (tools.empty() || kernel.empty()) { Logger::WriteMessage("MSVC x86 tools or SDK unavailable; original JWlink DLL comparison skipped"); return; }
+			Workspace workspace;
+			workspace.writeText(L"provider.c", L"int helper(void); int value; __declspec(naked) int DllEntry(void) { __asm { mov value,13 } __asm { mov eax,1 } __asm { ret 12 } } int add(int x) { return x+value+helper(); }\n");
+			workspace.writeText(L"helper.c", L"int helper(void) { return 7; }\n");
+			workspace.writeText(L"loader.c", L"typedef void* H; typedef int (__cdecl *Fn)(int);\n"
+				L"__declspec(dllimport) H __stdcall VirtualAlloc(H,unsigned,unsigned,unsigned); __declspec(dllimport) int __stdcall VirtualFree(H,unsigned,unsigned);\n"
+				L"__declspec(dllimport) H __stdcall LoadLibraryA(const char*); __declspec(dllimport) void* __stdcall GetProcAddress(H,const char*); __declspec(dllimport) int __stdcall FreeLibrary(H);\n"
+				L"__declspec(dllimport) __declspec(noreturn) void __stdcall ExitProcess(unsigned);\n"
+				L"void main(void) { const char* names[]={\"jw2.dll\",\"original.dll\"}; H p,m; Fn f; int i; p=VirtualAlloc((H)0x10000000,65536,0x2000,4); if(p!=(H)0x10000000) ExitProcess(61); for(i=0;i<2;++i) { m=LoadLibraryA(names[i]); if(!m || m==p) ExitProcess(62+i); f=(Fn)GetProcAddress(m,\"add\"); if(!f || f(5)!=25) ExitProcess(64+i); if(!FreeLibrary(m)) ExitProcess(66+i); } if(!VirtualFree(p,0,0x8000)) ExitProcess(68); ExitProcess(0); }\n");
+			for (const auto* file : { L"provider.c", L"helper.c", L"loader.c" }) assertSuccess(runExecutable(workspace, tools / L"cl.exe", { L"/nologo", L"/c", L"/Od", L"/GS-", L"/Zl", file }));
+			assertSuccess(runExecutable(workspace, tools / L"lib.exe", { L"/nologo", L"/out:helper.lib", L"helper.obj" }));
+			for (const auto& [linker, output, map] : vector<tuple<fs::path, wstring, wstring>>{ { jwlinkPath(), L"original.dll", L"original.map" }, { jwlink2Path(), L"jw2.dll", L"jw2.map" } })
+			{
+				assertSuccess(runExecutable(workspace, linker, { L"format", L"win", L"pe", L"dll", L"option", L"quiet,offset=0x10000000,start=_DllEntry,map=" + map, L"export", L"add=_add", L"file", L"provider.obj", L"lib", L"helper.lib", L"name", output }, {}, false));
+				const auto image = workspace.read(output);
+				const auto pe = peHeader(image);
+				Assert::AreEqual<uint16_t>(0x14c, get16(image, pe + 4));
+				Assert::AreEqual<uint16_t>(0x10b, get16(image, pe + 24));
+				Assert::AreEqual<uint32_t>(0x10000000, get32(image, pe + 24 + 28), L"reserved address is the DLL preferred base");
+				Assert::IsTrue((get16(image, pe + 22) & 0x2000) != 0 && get32(image, pe + 24 + 96) != 0, L"reference DLL has exports");
+				ifstream mapFile(workspace.file(map));
+				Assert::IsTrue(static_cast<bool>(mapFile), L"requested map is present");
+				const string contents((istreambuf_iterator<char>(mapFile)), istreambuf_iterator<char>());
+				Assert::IsTrue(contents.find("_helper") != string::npos && contents.find("_add") != string::npos, L"map exposes extracted helper and exported function");
+			}
+			for (const auto& [linker, output] : vector<pair<fs::path, wstring>>{ { jwlinkPath(), L"original-loader.exe" }, { jwlink2Path(), L"jw2-loader.exe" } })
+			{
+				assertSuccess(runExecutable(workspace, linker, { L"format", L"win", L"pe", L"runtime", L"console", L"option", L"quiet,start=_main", L"file", L"loader.obj", L"lib", kernel.wstring(), L"name", output }, {}, false));
+				Assert::AreEqual<DWORD>(0, runExecutable(workspace, workspace.file(output), {}).exitCode, L"both linkers' x86 DLLs initialize, rebase, export, and unload");
+			}
+			for (const auto& [linker, output] : vector<pair<fs::path, wstring>>{ { jwlinkPath(), L"original-missing.dll" }, { jwlink2Path(), L"jw2-missing.dll" } })
+			{
+				const auto failure = runExecutable(workspace, linker, { L"format", L"win", L"pe", L"dll", L"option", L"quiet,start=_DllEntry", L"export", L"add=_add", L"file", L"provider.obj", L"name", output }, {}, false);
+				assertFailureContains(failure, "_helper");
+				Assert::IsTrue(failure.exitCode < 256, L"unresolved archive symbol produces a normal error rather than a crash");
+				Assert::IsFalse(fs::exists(workspace.file(output)), L"unresolved symbol produces no DLL");
+			}
+		}
+
 		TEST_METHOD(RealI386DllAndImportLibrariesExecute)
 		{
 			fs::path tools, kernel;

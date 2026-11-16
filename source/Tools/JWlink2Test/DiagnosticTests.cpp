@@ -11,6 +11,20 @@ namespace JWlink2Test
 	TEST_CLASS(DiagnosticTests)
 	{
 	public:
+		TEST_METHOD(ProcessRunnerDrainsOutputAndTimesOut)
+		{
+			Workspace workspace;
+			wchar_t systemDirectory[MAX_PATH]{};
+			Assert::IsTrue(GetSystemDirectoryW(systemDirectory, MAX_PATH) != 0);
+			const auto shell = fs::path(systemDirectory) / L"WindowsPowerShell" / L"v1.0" / L"powershell.exe";
+			const auto output = runExecutable(workspace, shell, { L"-NoProfile", L"-Command", L"1..5000 | ForEach-Object { 'output-line' }; Write-Output 'complete'" });
+			assertSuccess(output);
+			Assert::IsTrue(output.output.size() > 50000 && output.output.find("complete") != string::npos, L"output larger than the pipe buffer is drained");
+			const auto start = GetTickCount64();
+			Assert::ExpectException<runtime_error>([&]() { runExecutable(workspace, shell, { L"-NoProfile", L"-Command", L"Start-Sleep -Seconds 30" }, {}, true, 250); });
+			Assert::IsTrue(GetTickCount64() - start < 5000, L"silent child is terminated promptly");
+		}
+
 		TEST_METHOD(UnresolvedExternalIsReported)
 		{
 			Workspace workspace;

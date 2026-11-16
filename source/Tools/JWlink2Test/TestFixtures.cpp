@@ -497,7 +497,7 @@ namespace JWlink2Test
 			return quoted;
 		}
 
-		ProcessResult runExecutable(const Workspace& workspace, const fs::path& executable, const vector<wstring>& arguments, const vector<pair<wstring, wstring>>& environment, bool quoteAll)
+		ProcessResult runExecutable(const Workspace& workspace, const fs::path& executable, const vector<wstring>& arguments, const vector<pair<wstring, wstring>>& environment, bool quoteAll, DWORD timeoutMs)
 		{
 			SECURITY_ATTRIBUTES security{ sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE };
 			HANDLE readPipe = nullptr;
@@ -546,22 +546,54 @@ namespace JWlink2Test
 			}
 			const auto created = CreateProcessW(nullptr, mutableCommand.data(), nullptr, nullptr, TRUE, CREATE_NO_WINDOW | (environment.empty() ? 0 : CREATE_UNICODE_ENVIRONMENT), environment.empty() ? nullptr : block.data(), workspace.path.c_str(), &startup, &process);
 			CloseHandle(writePipe);
+			if (!created) CloseHandle(readPipe);
 			Assert::IsTrue(created != 0, L"could not start linker process");
 			ProcessResult result;
 			char buffer[2048];
-			DWORD count = 0;
-			while (ReadFile(readPipe, buffer, sizeof(buffer), &count, nullptr) && count != 0) result.output.append(buffer, count);
-			CloseHandle(readPipe);
-			const auto wait = WaitForSingleObject(process.hProcess, 10000);
+			const auto started = GetTickCount64();
+			DWORD wait = WAIT_TIMEOUT;
+			bool pipeError = false;
+			for (;;)
+			{
+				DWORD available = 0;
+				if (!PeekNamedPipe(readPipe, nullptr, 0, nullptr, &available, nullptr))
+				{
+					if (GetLastError() != ERROR_BROKEN_PIPE) pipeError = true;
+				}
+				while (available != 0 && !pipeError)
+				{
+					DWORD count = 0;
+					if (!ReadFile(readPipe, buffer, min<DWORD>(available, sizeof(buffer)), &count, nullptr) || count == 0) { pipeError = true; break; }
+					result.output.append(buffer, count);
+					available -= count;
+				}
+				wait = WaitForSingleObject(process.hProcess, 0);
+				if (wait != WAIT_TIMEOUT || pipeError || GetTickCount64() - started >= timeoutMs) break;
+				Sleep(10);
+			}
+			bool terminationFailed = false;
 			if (wait == WAIT_TIMEOUT)
 			{
-				TerminateProcess(process.hProcess, 0xffff);
-				WaitForSingleObject(process.hProcess, INFINITE);
+				if (!TerminateProcess(process.hProcess, 0xffff) && WaitForSingleObject(process.hProcess, 0) != WAIT_OBJECT_0) terminationFailed = true;
+				if (WaitForSingleObject(process.hProcess, 1000) != WAIT_OBJECT_0) terminationFailed = true;
 			}
-			Assert::IsTrue(wait == WAIT_OBJECT_0, L"linker did not exit within 10 seconds");
-			GetExitCodeProcess(process.hProcess, &result.exitCode);
+			else if (wait == WAIT_OBJECT_0)
+			{
+				DWORD count = 0, available = 0;
+				while (PeekNamedPipe(readPipe, nullptr, 0, nullptr, &available, nullptr) && available != 0)
+				{
+					if (!ReadFile(readPipe, buffer, min<DWORD>(available, sizeof(buffer)), &count, nullptr) || count == 0) { pipeError = true; break; }
+					result.output.append(buffer, count);
+				}
+				if (!GetExitCodeProcess(process.hProcess, &result.exitCode)) pipeError = true;
+			}
+			CloseHandle(readPipe);
 			CloseHandle(process.hThread);
 			CloseHandle(process.hProcess);
+			if (terminationFailed) throw runtime_error("could not terminate timed-out process: " + executable.string());
+			if (pipeError) throw runtime_error("could not read process output or exit status: " + executable.string());
+			if (wait == WAIT_TIMEOUT) throw runtime_error("process timed out: " + executable.string());
+			if (wait != WAIT_OBJECT_0) throw runtime_error("could not wait for process: " + executable.string());
 			return result;
 		}
 

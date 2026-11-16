@@ -92,7 +92,7 @@ namespace JWlink2Test::Fixtures
 	fs::path toolPath(const wchar_t* executableName);
 	fs::path jwlink2Path();
 	fs::path jwlinkPath();
-	ProcessResult runExecutable(const Workspace& workspace, const fs::path& executable, const vector<wstring>& arguments, const vector<pair<wstring, wstring>>& environment = {}, bool quoteAll = true);
+	ProcessResult runExecutable(const Workspace& workspace, const fs::path& executable, const vector<wstring>& arguments, const vector<pair<wstring, wstring>>& environment = {}, bool quoteAll = true, DWORD timeoutMs = 10000);
 	ProcessResult runLinker(const Workspace& workspace, const vector<wstring>& arguments);
 	ProcessResult runJwlink(const Workspace& workspace, const vector<wstring>& inputs, const wstring& outputName);
 	vector<wstring> outputArgs(const Workspace& workspace, const wstring& outputName = L"linked.exe");
