@@ -99,6 +99,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "old", "old", "{94B299EA-4DB
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "new", "new", "{A043333A-942F-46BA-8CB9-6729038B87D4}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7BBF6D43-69BE-4124-B59D-F2EA447327D6}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\README.md = ..\..\README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		All|x64 = All|x64

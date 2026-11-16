@@ -6,14 +6,12 @@ Project jarvis is an IDE, c compiler, assembler, linker, preprocessor, and pedum
 that supports 16, 32, and 64 bit development on a 32 or 64 bit host
 
 ****
-| Project           | Purpose                           | Status        
-| ----------------- | --------------------------------- | ------------- 
-| Compiler          | C to JWASM Compiling               | In Progress   
-| Assembler         | JWASM 2.12pre clone               | Completed 
-| JarvisIDE         | Development Envionment            | In Progress     
-| Linker            | JWlink 2.0                        | Completed
-| Librarian         | JWlib 2.0                         | Completed
-| PEDump            | Dump the contents of a binary file| Completed     
-| Arguments Lib     | Command line arguments processing | Completed  
-| BinaryFormats Lib | Reads the format of binaries      | Completed  
-| PreProcessor Lib  | preprocesses the c code           | Completed  
+| Project           | Purpose                             | Status        
+| ----------------- | ----------------------------------- | ------------- 
+| Compiler          | C99 to JWASM Compiling              | Planned using AI   
+| Assembler         | Full fledged replacement for JWASM  | Planned using AI 
+| Jarvis IDE        | Development Envionment              | Planned using AI     
+| Linker            | Full fledged replacement for JWlink | In Progress using AI
+| Librarian         | Full fledged replacement for JWlib  | Planned using AI
+| Preprocessor      | preprocesses the C99 code           | Planned using AI
+| BinaryDumper      | extracts binary information         | Planned using AI
