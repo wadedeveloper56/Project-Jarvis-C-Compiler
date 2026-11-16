@@ -325,6 +325,7 @@ namespace JWlink2
 			uint32_t debugDirectorySize_ = 0;
 
 			bool isDefined(const CoffSymbol& symbol) const;
+			string resolveX86SymbolName(const string& name) const;
 			string explicitEntryName() const;
 			set<string> unresolvedNames() const;
 			void validateUnresolvedSymbols() const;

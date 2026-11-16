@@ -11,6 +11,97 @@ namespace JWlink2Test
 	TEST_CLASS(I386Tests)
 	{
 	public:
+		TEST_METHOD(RealI386DllAndImportLibrariesExecute)
+		{
+			fs::path tools, kernel;
+			error_code ignored;
+			wchar_t programFiles[MAX_PATH]{}, programFilesX86[MAX_PATH]{};
+			GetEnvironmentVariableW(L"ProgramFiles", programFiles, MAX_PATH);
+			GetEnvironmentVariableW(L"ProgramFiles(x86)", programFilesX86, MAX_PATH);
+			for (const auto& entry : fs::recursive_directory_iterator(fs::path(programFiles) / L"Microsoft Visual Studio", fs::directory_options::skip_permission_denied, ignored))
+				if (entry.path().filename() == L"cl.exe" && entry.path().parent_path().filename() == L"x86" && entry.path().parent_path().parent_path().filename() == L"Hostx64" && fs::exists(entry.path().parent_path() / L"link.exe")) tools = entry.path().parent_path();
+			for (const auto& entry : fs::directory_iterator(fs::path(programFilesX86) / L"Windows Kits" / L"10" / L"Lib", ignored))
+			{
+				const auto candidate = entry.path() / L"um" / L"x86" / L"kernel32.lib";
+				if (fs::exists(candidate) && (kernel.empty() || candidate.wstring() > kernel.wstring())) kernel = candidate;
+			}
+			if (tools.empty() || kernel.empty()) { Logger::WriteMessage("MSVC x86 tools or SDK unavailable; DLL execution test skipped"); return; }
+			Workspace workspace;
+			workspace.writeText(L"provider.c", L"__declspec(dllexport) int value=9;\n"
+				L"__declspec(dllexport) int __cdecl add(int x) { return x+value; }\n"
+				L"__declspec(dllexport) int __stdcall twice(int x) { return x*2; }\n"
+				L"int __stdcall DllMainCRTStartup(void* module, unsigned reason, void* reserved) { if(reason==1) value=13; return 1; }\n");
+			workspace.writeText(L"client.c", L"__declspec(dllimport) int value; __declspec(dllimport) int __cdecl add(int); __declspec(dllimport) int __stdcall twice(int);\n"
+				L"__declspec(dllimport) __declspec(noreturn) void __stdcall ExitProcess(unsigned);\n"
+				L"void main(void) { if(value!=13 || add(5)!=18 || twice(7)!=14) ExitProcess(61); value=21; ExitProcess(add(1)==22 ? 0 : 62); }\n");
+			for (const auto* file : { L"provider.c", L"client.c" }) assertSuccess(runExecutable(workspace, tools / L"cl.exe", { L"/nologo", L"/c", L"/Od", L"/GS-", L"/Zl", file }));
+			assertSuccess(runLinker(workspace, { L"/dll", L"/out:jw-provider.dll", L"provider.obj" }));
+			assertSuccess(runExecutable(workspace, tools / L"link.exe", { L"/nologo", L"/dll", L"/nodefaultlib", L"/safeseh:no", L"/entry:DllMainCRTStartup", L"/out:ms-provider.dll", L"provider.obj" }));
+			for (const auto* provider : { L"jw-provider", L"ms-provider" })
+			{
+				const wstring stem(provider);
+				const auto image = workspace.read(stem + L".dll");
+				const auto pe = peHeader(image), optional = pe + 24;
+				Assert::AreEqual<uint16_t>(0x14c, get16(image, pe + 4));
+				Assert::AreEqual<uint16_t>(0x10b, get16(image, optional));
+				Assert::IsTrue((get16(image, pe + 22) & 0x2000) != 0 && get32(image, optional + 16) != 0 && get32(image, optional + 96) != 0, L"DLL header, entry and exports");
+				assertSuccess(runLinker(workspace, { L"/entry:_main", L"/out:jw-client.exe", L"client.obj", stem + L".lib", kernel.wstring() }));
+				assertSuccess(runExecutable(workspace, tools / L"link.exe", { L"/nologo", L"/nodefaultlib", L"/machine:x86", L"/safeseh:no", L"/subsystem:console", L"/entry:main", L"/out:ms-client.exe", L"client.obj", stem + L".lib", kernel.wstring() }));
+				for (const auto* client : { L"jw-client.exe", L"ms-client.exe" }) Assert::AreEqual<DWORD>(0, runExecutable(workspace, workspace.file(client), {}).exitCode, L"x86 DLL entry, cdecl/stdcall and data exports execute");
+			}
+			workspace.writeText(L"loader.c", L"typedef void* H; typedef int (__cdecl *Fn)(int);\n"
+				L"__declspec(dllimport) H __stdcall VirtualAlloc(H,unsigned,unsigned,unsigned); __declspec(dllimport) int __stdcall VirtualFree(H,unsigned,unsigned);\n"
+				L"__declspec(dllimport) H __stdcall LoadLibraryA(const char*); __declspec(dllimport) void* __stdcall GetProcAddress(H,const char*); __declspec(dllimport) int __stdcall FreeLibrary(H);\n"
+				L"__declspec(dllimport) __declspec(noreturn) void __stdcall ExitProcess(unsigned);\n"
+				L"void main(void) { H p=VirtualAlloc((H)0x10000000,65536,0x2000,0x04), m; Fn f; if(p!=(H)0x10000000) ExitProcess(71); m=LoadLibraryA(\"jw-provider.dll\"); if(!m || m==p) ExitProcess(72); f=(Fn)GetProcAddress(m,\"add\"); if(!f || f(5)!=18) ExitProcess(73); if(!FreeLibrary(m) || !VirtualFree(p,0,0x8000)) ExitProcess(74); ExitProcess(0); }\n");
+			assertSuccess(runExecutable(workspace, tools / L"cl.exe", { L"/nologo", L"/c", L"/Od", L"/GS-", L"/Zl", L"loader.c" }));
+			assertSuccess(runLinker(workspace, { L"/entry:_main", L"/out:loader.exe", L"loader.obj", kernel.wstring() }));
+			Assert::AreEqual<DWORD>(0, runExecutable(workspace, workspace.file(L"loader.exe"), {}).exitCode, L"Windows rebases, initializes, calls and unloads the PE32 DLL");
+			workspace.writeText(L"plain.c", L"int __cdecl internal(int x) { return x+31; } int exportedData=27;\n");
+			workspace.writeText(L"plain.def", L"EXPORTS\n alias=internal @7\n ord=internal @11 NONAME\n table=exportedData @13 DATA\n secret=internal PRIVATE\n");
+			workspace.writeText(L"defclient.c", L"__declspec(dllimport) int __cdecl alias(int); __declspec(dllimport) int __cdecl ord(int); __declspec(dllimport) int table;\n"
+				L"__declspec(dllimport) __declspec(noreturn) void __stdcall ExitProcess(unsigned);\n"
+				L"void main(void) { ExitProcess(alias(1)==32 && ord(2)==33 && table==27 ? 0 : 63); }\n");
+			for (const auto* file : { L"plain.c", L"defclient.c" }) assertSuccess(runExecutable(workspace, tools / L"cl.exe", { L"/nologo", L"/c", L"/Od", L"/GS-", L"/Zl", file }));
+			assertSuccess(runLinker(workspace, { L"/dll", L"/noentry", L"/def:plain.def", L"/out:jw-def.dll", L"plain.obj" }));
+			assertSuccess(runExecutable(workspace, tools / L"link.exe", { L"/nologo", L"/dll", L"/noentry", L"/nodefaultlib", L"/safeseh:no", L"/def:plain.def", L"/out:ms-def.dll", L"plain.obj" }));
+			for (const auto* provider : { L"jw-def", L"ms-def" })
+			{
+				const wstring stem(provider);
+				const auto image = workspace.read(stem + L".dll");
+				Assert::AreEqual<uint32_t>(0, get32(image, peHeader(image) + 24 + 16), L"/NOENTRY suppresses DLL startup");
+				assertSuccess(runLinker(workspace, { L"/entry:_main", L"/out:jw-def-client.exe", L"defclient.obj", stem + L".lib", kernel.wstring() }));
+				assertSuccess(runExecutable(workspace, tools / L"link.exe", { L"/nologo", L"/nodefaultlib", L"/machine:x86", L"/safeseh:no", L"/subsystem:console", L"/entry:main", L"/out:ms-def-client.exe", L"defclient.obj", stem + L".lib", kernel.wstring() }));
+				for (const auto* client : { L"jw-def-client.exe", L"ms-def-client.exe" }) Assert::AreEqual<DWORD>(0, runExecutable(workspace, workspace.file(client), {}).exitCode, L"alias, ordinal and DATA exports execute");
+			}
+		}
+
+		TEST_METHOD(I386DllStartupExportsAndDiagnostics)
+		{
+			Workspace workspace;
+			workspace.write(L"api.obj", makeObject({ TestSection{ ".text", { 0xc3 } } }, { TestSymbol{ "_api", 0, 1, 2,{} } }, 0x14c));
+			workspace.write(L"start.lib", makeArchive({ { "startup.obj", makeObject({ TestSection{ ".text", { 0xb8, 1, 0, 0, 0, 0xc2, 12, 0 } } }, { TestSymbol{ "_DllMainCRTStartup@12", 0, 1, 2,{} } }, 0x14c) } }));
+			assertSuccess(runLinker(workspace, { L"/dll", L"/export:api", L"/out:archive.dll", L"api.obj", L"start.lib" }));
+			const auto archive = workspace.read(L"archive.dll");
+			const auto optional = peHeader(archive) + 24;
+			Assert::IsTrue(get32(archive, optional + 16) != 0, L"decorated DLL startup is selected from an archive");
+			Assert::AreEqual<uint32_t>(0x10000000, get32(archive, optional + 28), L"PE32 DLL default base");
+			assertSuccess(runLinker(workspace, { L"/dll", L"/noentry", L"/export:api", L"/out:noentry.dll", L"api.obj", L"start.lib" }));
+			Assert::AreEqual<uint32_t>(0, get32(workspace.read(L"noentry.dll"), optional + 16));
+			assertSuccess(runLinker(workspace, { L"/dll", L"/entry:_DllMainCRTStartup@12", L"/export:api", L"/out:explicit.dll", L"api.obj", L"start.lib" }));
+			Assert::IsTrue(get32(workspace.read(L"explicit.dll"), optional + 16) != 0, L"explicit stdcall entry forces archive extraction");
+			assertSuccess(runLinker(workspace, { L"system", L"nt_dll", L"option", L"start=_DllMainCRTStartup@12", L"export", L"api=_api", L"file", L"api.obj", L"library", L"start.lib", L"name", L"directive.dll" }));
+			Assert::IsTrue(get32(workspace.read(L"directive.dll"), optional + 16) != 0, L"directive-mode DLL entry");
+			assertSuccess(runLinker(workspace, { L"/dll", L"/noentry", L"/manifest:embed", L"/out:manifest.dll", L"api.obj" }));
+			const auto module = LoadLibraryExW(workspace.file(L"manifest.dll").c_str(), nullptr, LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE);
+			Assert::IsNotNull(module);
+			Assert::IsNotNull(FindResourceExW(module, MAKEINTRESOURCEW(24), MAKEINTRESOURCEW(2), 0x409), L"embedded DLL manifest uses resource ID 2");
+			Assert::IsTrue(FreeLibrary(module) != 0);
+			assertFailureContains(runLinker(workspace, { L"/dll", L"/noentry", L"/entry:_api", L"api.obj" }), "/NOENTRY is valid only for a DLL without /ENTRY");
+			assertFailureContains(runLinker(workspace, { L"/dll", L"/export:missing", L"api.obj" }), "unresolved external symbol '_missing'");
+			assertFailureContains(runLinker(workspace, { L"/dll", L"/export:api", L"/export:_api", L"api.obj" }), "duplicate export name 'api'");
+		}
+
 		TEST_METHOD(ExplicitAmd64RejectsI386Object)
 		{
 			Workspace workspace;

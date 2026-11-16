@@ -37,8 +37,7 @@ namespace JWlink2
 			if (options_.machine == 0) options_.machine = MachineAmd64;
 			if (options_.machine == 0x014c)
 			{
-				if (!options_.imageBaseSpecified) options_.imageBase = 0x400000;
-				if (options_.dll || options_.importLibrarySpecified || options_.definitionFile || !options_.exports.empty()) fail("x86 DLLs and exports are not yet supported");
+				if (!options_.imageBaseSpecified) options_.imageBase = options_.dll ? 0x10000000 : 0x400000;
 				if (options_.debug || !options_.delayLoadLibraries.empty()) fail("x86 debug and delay-load output are not yet supported");
 				if (options_.stackReserve > UINT32_MAX || options_.stackCommit > UINT32_MAX || options_.heapReserve > UINT32_MAX || options_.heapCommit > UINT32_MAX) fail("x86 stack and heap sizes must fit in 32 bits");
 				bool resourceObjectSeen = false;
@@ -99,17 +98,21 @@ namespace JWlink2
 			return symbol.storageClass == 2 && (symbol.sectionNumber > 0 || symbol.sectionNumber == -1 || (symbol.sectionNumber == 0 && symbol.value != 0));
 		}
 
-		string Linker::explicitEntryName() const
+		string Linker::resolveX86SymbolName(const string& name) const
 		{
-			const auto& entry = *options_.entry;
-			if (options_.machine != 0x014c || options_.jwlinkDirectiveSyntax || entry.empty() || entry[0] == '_' || entry[0] == '@' || entry[0] == '?') return entry;
+			if (options_.machine != 0x014c || name.empty() || name[0] == '_' || name[0] == '@' || name[0] == '?') return name;
 			auto defines = [&](const ObjectFile& object)
 				{
-					return any_of(object.symbols.begin(), object.symbols.end(), [&](const CoffSymbol& symbol) { return !symbol.auxiliary && symbol.name == entry && isDefined(symbol); });
+					return any_of(object.symbols.begin(), object.symbols.end(), [&](const CoffSymbol& symbol) { return !symbol.auxiliary && symbol.name == name && isDefined(symbol); });
 				};
-			if (any_of(objects_.begin(), objects_.end(), defines)) return entry;
-			for (const auto& archive : archives_) for (const auto& member : archive.members) if (member.object && defines(*member.object)) return entry;
-			return "_" + entry;
+			if (any_of(objects_.begin(), objects_.end(), defines)) return name;
+			for (const auto& archive : archives_) for (const auto& member : archive.members) if (member.object && defines(*member.object)) return name;
+			return "_" + name;
+		}
+
+		string Linker::explicitEntryName() const
+		{
+			return options_.jwlinkDirectiveSyntax ? *options_.entry : resolveX86SymbolName(*options_.entry);
 		}
 
 		set<string> Linker::unresolvedNames() const
@@ -188,9 +191,10 @@ namespace JWlink2
 			}
 			for (const auto& exportDirective : options_.exports)
 			{
-				if (!defined.contains(exportDirective.internalName))
+				const auto internal = resolveX86SymbolName(exportDirective.internalName);
+				if (!defined.contains(internal))
 				{
-					unresolved.insert(exportDirective.internalName);
+					unresolved.insert(internal);
 				}
 			}
 			for (const auto& imported : imports_)
@@ -217,9 +221,10 @@ namespace JWlink2
 			{
 				if (options_.dll)
 				{
-					if (!options_.noEntry && !defined.contains("DllMainCRTStartup"))
+					const string startup = options_.machine == 0x014c ? "_DllMainCRTStartup@12" : "DllMainCRTStartup";
+					if (!options_.noEntry && !defined.contains(startup))
 					{
-						unresolved.insert("DllMainCRTStartup");
+						unresolved.insert(startup);
 					}
 				}
 				else if (const string prefix = options_.machine == 0x014c ? "_" : "";
@@ -250,7 +255,7 @@ namespace JWlink2
 			auto unresolved = unresolvedNames();
 			if (options_.dll && !options_.entry && !options_.noEntry)
 			{
-				unresolved.erase("DllMainCRTStartup");
+				unresolved.erase(options_.machine == 0x014c ? "_DllMainCRTStartup@12" : "DllMainCRTStartup");
 			}
 			if (unresolved.empty())
 			{
@@ -1495,11 +1500,13 @@ namespace JWlink2
 			set<string> exportNames;
 			for (const auto& directive : options_.exports)
 			{
-				if (!exportNames.insert(directive.name).second)
+				auto exportedName = directive.name;
+				if (options_.machine == 0x014c && exportedName == directive.internalName && exportedName.size() > 1 && exportedName[0] == '_' && exportedName.find('@') == string::npos) exportedName.erase(exportedName.begin());
+				if (!exportNames.insert(exportedName).second)
 				{
-					fail("duplicate export name '" + directive.name + "'");
+					fail("duplicate export name '" + exportedName + "'");
 				}
-				const auto found = globals_.find(directive.internalName);
+				const auto found = globals_.find(resolveX86SymbolName(directive.internalName));
 				if (found == globals_.end())
 				{
 					fail("exported symbol '" + directive.internalName + "' was not found");
@@ -1538,7 +1545,8 @@ namespace JWlink2
 				}
 				ExportOutput output;
 				output.name = directive.name;
-				output.internalName = directive.internalName;
+				if (options_.machine == 0x014c && output.name == directive.internalName && output.name.size() > 1 && output.name[0] == '_' && output.name.find('@') == string::npos) output.name.erase(output.name.begin());
+				output.internalName = resolveX86SymbolName(directive.internalName);
 				output.ordinal = ordinal;
 				output.noname = directive.noname;
 				output.data = directive.data;
@@ -2165,8 +2173,8 @@ namespace JWlink2
 			}
 			else if (options_.dll)
 			{
-				if (!globals_.contains("DllMainCRTStartup")) return 0;
-				entry = "DllMainCRTStartup";
+				entry = options_.machine == 0x014c ? "_DllMainCRTStartup@12" : "DllMainCRTStartup";
+				if (!globals_.contains(entry)) return 0;
 			}
 			else if (options_.subsystem == 2 && globals_.contains(prefix + "WinMainCRTStartup"))
 			{
@@ -2573,7 +2581,7 @@ namespace JWlink2
 			auto makeDescriptorObject = [&](const vector<DescriptorSection>& sections, const vector<DescriptorSymbol>& objectSymbols)
 				{
 					Bytes object(20 + sections.size() * 40, 0);
-					writeLe(object, 0, MachineAmd64);
+					writeLe(object, 0, options_.machine);
 					writeLe(object, 2, static_cast<uint16_t>(sections.size()));
 					for (size_t i = 0; i < sections.size(); ++i)
 					{
@@ -2625,33 +2633,38 @@ namespace JWlink2
 			const auto nullThunkName = string(1, '\x7f') + module + "_NULL_THUNK_DATA";
 			Bytes moduleName(dllName.begin(), dllName.end());
 			moduleName.push_back(0);
+			const bool x86 = options_.machine == 0x014c;
+			const uint16_t rvaRelocation = x86 ? 7 : 3;
+			const size_t pointerSize = x86 ? 4 : 8;
+			const uint32_t pointerFlags = x86 ? 0xc0300040 : 0xc0400040;
 			members.push_back(makeDescriptorObject(
-				{ { ".idata$2", Bytes(20, 0), 0xc0300040, { { 12, 2, 3 }, { 0, 3, 3 }, { 16, 4, 3 } } }, { ".idata$6", moduleName, 0xc0200040, {} } },
+				{ { ".idata$2", Bytes(20, 0), 0xc0300040, { { 12, 2, rvaRelocation }, { 0, 3, rvaRelocation }, { 16, 4, rvaRelocation } } }, { ".idata$6", moduleName, 0xc0200040, {} } },
 				{ { descriptorName, 0, 1, 2 }, { ".idata$2", 0xc0000040, 1, 104 }, { ".idata$6", 0, 2, 3 }, { ".idata$4", 0xc0000040, 0, 104 }, { ".idata$5", 0xc0000040, 0, 104 }, { "__NULL_IMPORT_DESCRIPTOR", 0, 0, 2 }, { nullThunkName, 0, 0, 2 } }));
 			members.push_back(makeDescriptorObject({ { ".idata$3", Bytes(20, 0), 0xc0300040, {} } }, { { "__NULL_IMPORT_DESCRIPTOR", 0, 1, 2 } }));
-			members.push_back(makeDescriptorObject({ { ".idata$5", Bytes(8, 0), 0xc0400040, {} }, { ".idata$4", Bytes(8, 0), 0xc0400040, {} } }, { { nullThunkName, 0, 1, 2 } }));
+			members.push_back(makeDescriptorObject({ { ".idata$5", Bytes(pointerSize, 0), pointerFlags, {} }, { ".idata$4", Bytes(pointerSize, 0), pointerFlags, {} } }, { { nullThunkName, 0, 1, 2 } }));
 			symbols.push_back({ descriptorName, 0 });
 			symbols.push_back({ "__NULL_IMPORT_DESCRIPTOR", 1 });
 			symbols.push_back({ nullThunkName, 2 });
 			set<string> indexedNames{ descriptorName, "__NULL_IMPORT_DESCRIPTOR", nullThunkName };
 			for (const auto* record : exported)
 			{
-				if (record->name.rfind("__imp_", 0) == 0 || !indexedNames.insert(record->name).second || !indexedNames.insert("__imp_" + record->name).second)
+				const auto publicName = x86 && !record->name.empty() && record->name[0] != '_' && record->name[0] != '?' && record->name[0] != '@' ? "_" + record->name : record->name;
+				if (publicName.rfind("__imp_", 0) == 0 || !indexedNames.insert(publicName).second || !indexedNames.insert("__imp_" + publicName).second)
 				{
 					fail("DLL export names conflict in the generated import library");
 				}
 				Bytes importObject(20, 0);
-				const auto importNameType = record->noname ? 0u : 1u;
+				const auto importNameType = record->noname ? 0u : publicName == record->name ? 1u : 2u;
 				const auto typeInfo = static_cast<uint16_t>((record->data ? 1u : 0u) | (importNameType << 2));
 				writeLe(importObject, 0, uint16_t{ 0 });
 				writeLe(importObject, 2, uint16_t{ 0xffff });
 				writeLe(importObject, 4, uint16_t{ 0 });
-				writeLe(importObject, 6, MachineAmd64);
+				writeLe(importObject, 6, options_.machine);
 				writeLe(importObject, 8, uint32_t{ 0 });
 				writeLe(importObject, 16, record->noname ? record->ordinal : uint16_t{ 0 });
 				writeLe(importObject, 18, typeInfo);
 				Bytes strings;
-				strings.insert(strings.end(), record->name.begin(), record->name.end());
+				strings.insert(strings.end(), publicName.begin(), publicName.end());
 				strings.push_back(0);
 				strings.insert(strings.end(), dllName.begin(), dllName.end());
 				strings.push_back(0);
@@ -2659,8 +2672,8 @@ namespace JWlink2
 				importObject.insert(importObject.end(), strings.begin(), strings.end());
 				const auto memberIndex = members.size();
 				members.push_back(move(importObject));
-				symbols.push_back({ record->name, memberIndex });
-				symbols.push_back({ "__imp_" + record->name, memberIndex });
+				symbols.push_back({ publicName, memberIndex });
+				symbols.push_back({ "__imp_" + publicName, memberIndex });
 			}
 			sort(symbols.begin(), symbols.end(), [](const ArchiveSymbol& left, const ArchiveSymbol& right) { return left.name < right.name; });
 			if (members.size() > numeric_limits<uint16_t>::max())
