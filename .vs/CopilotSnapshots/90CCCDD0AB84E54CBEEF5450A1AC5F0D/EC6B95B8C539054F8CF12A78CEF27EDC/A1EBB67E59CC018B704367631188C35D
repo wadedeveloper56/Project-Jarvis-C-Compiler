@@ -1,0 +1,9 @@
+﻿.386
+.model flat
+.code
+public main
+main proc
+ mov eax, 42
+ ret
+main endp
+end

@@ -52,7 +52,7 @@ This PDB workflow is a JWlink2 extension, not JWlink debug-artifact compatibilit
 
 ### JWlink directive syntax and option matrix
 
-The repository's real build (`test\run.bat`) invokes JWlink with Watcom-style directives: `JWlink format win pe option map=<file> file a.obj, b.obj lib x.lib y.lib name out.exe`. JWlink2 accepts that form when the first argument is a directive (abbreviations such as `form`, `fi`, `op`, `na` work; `@response-file` may contain directives), translates it to its switch model, and rejects everything else explicitly. Directives and `/switches` cannot be mixed in one command. `JWlink2Test` (`OptionMatrixAcceptsAndRejectsDocumentedForms`, `JwlinkDirectiveSyntaxLinksLikeEquivalentSwitches`) exercises every row below.
+The repository's real build (`test\run.bat`) invokes JWlink with Watcom-style directives: `JWlink format win pe option map=<file> file a.obj, b.obj lib x.lib y.lib name out.exe`. JWlink2 accepts that form when the first argument is a directive (abbreviations such as `form`, `f`, `fi`, `op`, `na` work; `@response-file` may contain directives), translates it to its switch model, and rejects everything else explicitly. Directives and `/switches` cannot be mixed in one command. `JWlink2Test` (`OptionMatrixAcceptsAndRejectsDocumentedForms`, `JwlinkDirectiveSyntaxLinksLikeEquivalentSwitches`) exercises every row below. A PE32 runtime comparison against the original JWlink verifies `f`, `fi`, `fil`, and `file`; `for` is not accepted as an abbreviation of `format` in that complete command.
 
 | JWlink directive | Status | JWlink2 behavior |
 |---|---|---|

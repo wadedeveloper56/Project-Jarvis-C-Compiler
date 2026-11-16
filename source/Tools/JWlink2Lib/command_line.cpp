@@ -320,7 +320,7 @@ namespace JWlink2::commandline
 
 		// JWlink directives accept abbreviations down to a minimum length; unsupported directives are recognized only so they can be diagnosed.
 		constexpr DirectiveName directiveNames[] = {
-			{ "format", 4, true }, { "file", 2, true }, { "option", 2, true }, { "name", 2, true },
+			{ "format", 4, true }, { "file", 1, true }, { "option", 2, true }, { "name", 2, true },
 			{ "library", 3, true }, { "libpath", 4, true }, { "libfile", 4, true }, { "system", 3, true },
 			{ "debug", 3, true }, { "runtime", 2, true }, { "export", 3, true }, { "disable", 3, true },
 			{ "alias", 3, false }, { "commit", 3, false }, { "import", 3, false }, { "language", 3, false },
@@ -392,7 +392,7 @@ namespace JWlink2::commandline
 					fail("expected a JWlink directive but found '" + arguments[i] + "'; JWlink directives cannot be mixed with /option switches");
 				}
 				vector<string> tokens;
-				for (++i; i < arguments.size() && !matchDirective(arguments[i]); ++i)
+				for (++i; i < arguments.size() && (!matchDirective(arguments[i]) || (tokens.empty() && lowerAscii(arguments[i]) == "f")); ++i)
 				{
 					if (arguments[i].size() > 1 && (arguments[i][0] == '/' || arguments[i][0] == '-') && arguments[i][1] != '\\' && arguments[i][1] != '/')
 					{

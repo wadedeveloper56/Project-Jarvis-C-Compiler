@@ -110,6 +110,32 @@ namespace JWlink2Test
 			assertNoOutput(workspace);
 		}
 
+		TEST_METHOD(I386FileDirectiveAbbreviationsMatchOriginal)
+		{
+			Workspace workspace;
+			workspace.write(L"entry.obj", makeObject({ TestSection{ ".text", { 0xb8, 42, 0, 0, 0, 0xc3 } } }, { TestSymbol{ "main", 0, 1, 2,{} } }, 0x14c));
+			for (const auto* abbreviation : { L"f", L"F", L"fi", L"fil", L"file" })
+			{
+				for (const auto& [linker, output] : vector<pair<fs::path, wstring>>{ { jwlinkPath(), L"original.exe" }, { jwlink2Path(), L"new.exe" } })
+				{
+					assertSuccess(runExecutable(workspace, linker, { L"format", L"win", L"pe", L"option", L"quiet,start=main", abbreviation, L"entry.obj", L"name", output }, {}, false));
+					const auto image = workspace.read(output);
+					Assert::AreEqual<uint16_t>(0x14c, get16(image, peHeader(image) + 4), L"abbreviated directive links an I386 image");
+					Assert::AreEqual<DWORD>(42, runExecutable(workspace, workspace.file(output), {}).exitCode, L"abbreviated directive image executes");
+				}
+			}
+			assertSuccess(runLinker(workspace, { L"f", L"entry.obj", L"format", L"win", L"pe", L"option", L"quiet,start=main", L"name", L"first.exe" }));
+			Assert::AreEqual<DWORD>(42, runExecutable(workspace, workspace.file(L"first.exe"), {}).exitCode);
+			workspace.write(L"f.obj", workspace.read(L"entry.obj"));
+			for (const auto& linker : { jwlinkPath(), jwlink2Path() })
+			{
+				assertSuccess(runExecutable(workspace, linker, { L"format", L"win", L"pe", L"option", L"quiet,start=main", L"file", L"f", L"name", L"f" }, {}, false));
+				Assert::AreEqual<DWORD>(42, runExecutable(workspace, workspace.file(L"f.exe"), {}).exitCode, L"single-letter input and output names remain operands");
+			}
+			assertFailureContains(runExecutable(workspace, jwlinkPath(), { L"for", L"win", L"pe", L"option", L"quiet,start=main", L"file", L"entry.obj", L"name", L"invalid.exe" }, {}, false), "directive error");
+			Assert::IsTrue(runLinker(workspace, { L"for", L"win", L"pe", L"option", L"quiet,start=main", L"file", L"entry.obj", L"name", L"invalid.exe" }).exitCode != 0, L"FORMAT cannot be abbreviated to FOR");
+		}
+
 		TEST_METHOD(I386TargetAndStartupSelection)
 		{
 			Workspace workspace;
@@ -294,6 +320,16 @@ namespace JWlink2Test
 				Assert::IsTrue(Bytes(data, data + SizeofResource(multiple, info)) == expected);
 			}
 			Assert::IsTrue(FreeLibrary(multiple) != 0);
+			workspace.writeText(L"duplicate.rc", L"LANGUAGE 9, 1\n101 RCDATA { 0x1111 }\n");
+			assertSuccess(runExecutable(workspace, resourceCompiler, { L"/nologo", L"/foduplicate.res", L"duplicate.rc" }));
+			const vector<fs::path> references{ jwlinkPath(), L"C:\\watcom\\binnt\\wlink.exe", L"C:\\watcom\\binnt64\\wlink.exe" };
+			for (const auto& reference : references)
+			{
+				if (!fs::exists(reference)) { const string message = reference.string() + " unavailable; duplicate resource comparison skipped"; Logger::WriteMessage(message.c_str()); continue; }
+				const auto duplicate = runExecutable(workspace, reference, { L"format", L"windows", L"pe", L"runtime", L"console", L"option", L"quiet,start=_main", L"file", L"entry.obj", L"resource", L"resources.res,duplicate.res", L"name", L"duplicate.exe" }, {}, false);
+				assertFailureContains(duplicate, "Duplicate rcdata");
+				Assert::IsTrue(duplicate.exitCode < 256, L"duplicate resources produce a normal error exit, not a process crash");
+			}
 			assertSuccess(runLinker(workspace, { L"/out:resource.exe", L"entry.obj", L"resources.obj" }));
 			for (const auto* name : { L"resource.exe", L"original-resource.exe", L"original-option.exe" })
 			{
