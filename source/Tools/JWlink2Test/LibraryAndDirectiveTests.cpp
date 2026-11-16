@@ -55,6 +55,8 @@ namespace JWlink2Test
 			{
 				assertSuccess(runLinker(workspace, { L"/entry:main", L"/out:linked.exe", L"/map", L"input.obj", library }));
 				Assert::AreEqual<DWORD>(37, runExecutable(workspace, workspace.file(L"linked.exe"), {}).exitCode, L"actual librarian archive member executes");
+				assertSuccess(runExecutable(workspace, jwlinkPath(), { L"format", L"windows", L"pe", L"runtime", L"console", L"option", L"quiet,start=main", L"file", L"input.obj", L"library", library, L"name", L"original.exe" }));
+				Assert::AreEqual<DWORD>(37, runExecutable(workspace, workspace.file(L"original.exe"), {}).exitCode, L"original JWlink selects and executes the same archive member");
 				ifstream mapFile(workspace.file(L"linked.map"));
 				const string map((istreambuf_iterator<char>(mapFile)), istreambuf_iterator<char>());
 				Assert::IsTrue(map.find("long_archive_member_name_first.obj)\n") != string::npos, L"long archive member name is preserved exactly");
@@ -67,6 +69,8 @@ namespace JWlink2Test
 			}
 			assertSuccess(runLinker(workspace, { L"/entry:main", L"/out:order.exe", L"input.obj", L"second.lib", L"first.lib", L"first.lib" }));
 			Assert::AreEqual<DWORD>(49, runExecutable(workspace, workspace.file(L"order.exe"), {}).exitCode, L"first explicit archive wins duplicate symbols");
+			assertSuccess(runExecutable(workspace, jwlinkPath(), { L"format", L"windows", L"pe", L"runtime", L"console", L"option", L"quiet,start=main", L"file", L"input.obj", L"library", L"second.lib,first.lib,first.lib", L"name", L"original-order.exe" }));
+			Assert::AreEqual<DWORD>(49, runExecutable(workspace, workspace.file(L"original-order.exe"), {}).exitCode, L"original JWlink selects the first archive despite repeated libraries");
 			assertSuccess(runLinker(workspace, { L"/entry:main", L"/out:default.exe", L"/defaultlib:first.lib", L"/defaultlib:first.lib", L"input.obj", L"second.lib" }));
 			Assert::AreEqual<DWORD>(49, runExecutable(workspace, workspace.file(L"default.exe"), {}).exitCode, L"explicit libraries precede repeated default libraries");
 		}

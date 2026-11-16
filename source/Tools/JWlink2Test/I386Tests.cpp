@@ -187,24 +187,43 @@ namespace JWlink2Test
 			workspace.writeText(L"resources.rc", L"LANGUAGE 9, 1\n101 RCDATA { 0x1234, 0x5678 }\n102 RCDATA { 0x789a }\nLANGUAGE 12, 1\n101 RCDATA { 0x4321 }\n");
 			assertSuccess(runExecutable(workspace, resourceCompiler, { L"/nologo", L"/foresources.res", L"resources.rc" }));
 			assertSuccess(runExecutable(workspace, cvtres, { L"/nologo", L"/machine:x86", L"/out:resources.obj", L"resources.res" }));
-			assertSuccess(runLinker(workspace, { L"/out:resource.exe", L"entry.obj", L"resources.obj" }));
-			const auto module = LoadLibraryExW(workspace.file(L"resource.exe").c_str(), nullptr, LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE);
-			Assert::IsNotNull(module);
-			for (const auto& [language, expected] : vector<pair<WORD, Bytes>>{ { 0x409, { 0x34, 0x12, 0x78, 0x56 } }, { 0x40c, { 0x21, 0x43 } } })
+			assertSuccess(runExecutable(workspace, jwlinkPath(), { L"format", L"windows", L"pe", L"runtime", L"console", L"option", L"quiet,start=_main", L"file", L"entry.obj", L"resource", L"resources.res", L"name", L"original-resource.exe" }, {}, false));
+			assertSuccess(runExecutable(workspace, jwlinkPath(), { L"format", L"windows", L"pe", L"runtime", L"console", L"option", L"quiet,start=_main,resource=resources.res", L"file", L"entry.obj", L"name", L"original-option.exe" }, {}, false));
+			workspace.writeText(L"more.rc", L"LANGUAGE 9, 1\n103 RCDATA { 0x2468 }\n");
+			assertSuccess(runExecutable(workspace, resourceCompiler, { L"/nologo", L"/fomore.res", L"more.rc" }));
+			assertSuccess(runExecutable(workspace, jwlinkPath(), { L"format", L"windows", L"pe", L"runtime", L"console", L"option", L"quiet,start=_main", L"file", L"entry.obj", L"resource", L"resources.res,more.res", L"name", L"original-multiple.exe" }, {}, false));
+			const auto multiple = LoadLibraryExW(workspace.file(L"original-multiple.exe").c_str(), nullptr, LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE);
+			Assert::IsNotNull(multiple);
+			for (const auto& [id, expected] : vector<pair<WORD, Bytes>>{ { 101, { 0x34, 0x12, 0x78, 0x56 } }, { 103, { 0x68, 0x24 } } })
 			{
-				const auto info = FindResourceExW(module, RT_RCDATA, MAKEINTRESOURCEW(101), language);
-				Assert::IsNotNull(info, L"Windows resolves the language-specific resource");
-				const auto data = static_cast<const uint8_t*>(LockResource(LoadResource(module, info)));
+				const auto info = FindResourceExW(multiple, RT_RCDATA, MAKEINTRESOURCEW(id), 0x409);
+				Assert::IsNotNull(info, L"original JWlink merged both resource inputs");
+				const auto data = static_cast<const uint8_t*>(LockResource(LoadResource(multiple, info)));
 				Assert::IsNotNull(data);
-				Assert::IsTrue(Bytes(data, data + SizeofResource(module, info)) == expected);
+				Assert::IsTrue(Bytes(data, data + SizeofResource(multiple, info)) == expected);
 			}
-			const auto other = FindResourceExW(module, RT_RCDATA, MAKEINTRESOURCEW(102), 0x409);
-			Assert::IsNotNull(other, L"Windows resolves a second resource ID");
-			const auto otherData = static_cast<const uint8_t*>(LockResource(LoadResource(module, other)));
-			Assert::IsNotNull(otherData);
-			Assert::IsTrue(Bytes(otherData, otherData + SizeofResource(module, other)) == Bytes({ 0x9a, 0x78 }));
-			Assert::IsTrue(FreeLibrary(module) != 0);
-			Assert::AreEqual<DWORD>(0, runExecutable(workspace, workspace.file(L"resource.exe"), {}).exitCode);
+			Assert::IsTrue(FreeLibrary(multiple) != 0);
+			assertSuccess(runLinker(workspace, { L"/out:resource.exe", L"entry.obj", L"resources.obj" }));
+			for (const auto* name : { L"resource.exe", L"original-resource.exe", L"original-option.exe" })
+			{
+				const auto module = LoadLibraryExW(workspace.file(name).c_str(), nullptr, LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE);
+				Assert::IsNotNull(module);
+				for (const auto& [language, expected] : vector<pair<WORD, Bytes>>{ { 0x409, { 0x34, 0x12, 0x78, 0x56 } }, { 0x40c, { 0x21, 0x43 } } })
+				{
+					const auto info = FindResourceExW(module, RT_RCDATA, MAKEINTRESOURCEW(101), language);
+					Assert::IsNotNull(info, L"Windows resolves the language-specific resource");
+					const auto data = static_cast<const uint8_t*>(LockResource(LoadResource(module, info)));
+					Assert::IsNotNull(data);
+					Assert::IsTrue(Bytes(data, data + SizeofResource(module, info)) == expected);
+				}
+				const auto other = FindResourceExW(module, RT_RCDATA, MAKEINTRESOURCEW(102), 0x409);
+				Assert::IsNotNull(other, L"Windows resolves a second resource ID");
+				const auto otherData = static_cast<const uint8_t*>(LockResource(LoadResource(module, other)));
+				Assert::IsNotNull(otherData);
+				Assert::IsTrue(Bytes(otherData, otherData + SizeofResource(module, other)) == Bytes({ 0x9a, 0x78 }));
+				Assert::IsTrue(FreeLibrary(module) != 0);
+				Assert::AreEqual<DWORD>(0, runExecutable(workspace, workspace.file(name), {}).exitCode);
+			}
 			assertFailureContains(runLinker(workspace, { L"entry.obj", L"resources.res" }), ".res resource input is not yet supported");
 			assertFailureContains(runLinker(workspace, { L"/manifest:embed", L"entry.obj", L"resources.obj" }), "already contains a .rsrc");
 			assertFailureContains(runLinker(workspace, { L"entry.obj", L"resources.obj", L"resources.obj" }), "merging x86 resource sections");
@@ -267,13 +286,9 @@ namespace JWlink2Test
 			Assert::AreEqual<DWORD>(44, runExecutable(workspace, workspace.file(L"thunk.exe"), {}).exitCode, L"x86 function thunk executes");
 			workspace.writeText(L"start.c", L"__declspec(dllimport) __declspec(noreturn) void __stdcall ExitProcess(unsigned); void mainCRTStartup(void) { ExitProcess(45); }\n");
 			assertSuccess(runExecutable(workspace, tools / L"cl.exe", { L"/nologo", L"/c", L"/Od", L"/GS-", L"/Zl", L"start.c" }));
-			const auto original = runExecutable(workspace, jwlinkPath(), { L"format", L"windows", L"pe", L"runtime", L"console", L"option", L"quiet,start=_main", L"file", L"main.obj", L"library", L"helper.lib", L"name", L"original32.exe" });
-			if (original.exitCode == 0) Assert::AreEqual<DWORD>(42, runExecutable(workspace, workspace.file(L"original32.exe"), {}).exitCode);
-			else
-			{
-				Assert::AreEqual<DWORD>(0xc0000005, original.exitCode, L"unexpected JWlink x86 comparison failure");
-				Logger::WriteMessage("JWlink x86 comparison unavailable: bundled JWlink crashed with access violation");
-			}
+			const auto original = runExecutable(workspace, jwlinkPath(), { L"format", L"windows", L"pe", L"runtime", L"console", L"option", L"quiet,start=_main", L"file", L"main.obj", L"library", L"helper.lib", L"name", L"original32.exe" }, {}, false);
+			assertSuccess(original);
+			Assert::AreEqual<DWORD>(42, runExecutable(workspace, workspace.file(L"original32.exe"), {}).exitCode, L"original JWlink x86 archive member executes");
 			assertSuccess(runExecutable(workspace, tools / L"lib.exe", { L"/nologo", L"/out:start.lib", L"start.obj" }));
 			assertSuccess(runLinker(workspace, { L"/out:inferred.exe", L"start.lib", kernel.wstring() }));
 			assertSuccess(runExecutable(workspace, tools / L"link.exe", { L"/nologo", L"/nodefaultlib", L"/machine:x86", L"/safeseh:no", L"/subsystem:console", L"/out:msvc-start.exe", L"start.lib", kernel.wstring() }));
@@ -289,7 +304,8 @@ namespace JWlink2Test
 			assertSuccess(runLinker(workspace, { L"/subsystem:windows", L"/out:gui32.exe", L"gui32.obj", user32.wstring(), kernel.wstring() }));
 			assertSuccess(runLinker(workspace, { L"system", L"nt_win", L"option", L"start=_WinMainCRTStartup", L"file", L"gui32.obj", L"library", user32.wstring(), kernel.wstring(), L"name", L"jwgui32.exe" }));
 			assertSuccess(runExecutable(workspace, tools / L"link.exe", { L"/nologo", L"/nodefaultlib", L"/safeseh:no", L"/subsystem:windows", L"/out:msvc-gui32.exe", L"gui32.obj", user32.wstring(), kernel.wstring() }));
-			for (const auto* name : { L"gui32.exe", L"jwgui32.exe", L"msvc-gui32.exe" })
+			assertSuccess(runExecutable(workspace, jwlinkPath(), { L"format", L"windows", L"pe", L"runtime", L"windows", L"option", L"quiet,start=_WinMainCRTStartup", L"file", L"gui32.obj", L"library", user32.wstring(), L"library", kernel.wstring(), L"name", L"original-gui32.exe" }, {}, false));
+			for (const auto* name : { L"gui32.exe", L"jwgui32.exe", L"msvc-gui32.exe", L"original-gui32.exe" })
 			{
 				const auto image = workspace.read(name);
 				Assert::AreEqual<uint16_t>(2, get16(image, peHeader(image) + 24 + 68));

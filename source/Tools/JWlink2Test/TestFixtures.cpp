@@ -456,7 +456,18 @@ namespace JWlink2Test
 		}
 
 		fs::path jwlink2Path() { return toolPath(L"JWlink2.exe"); }
-		fs::path jwlinkPath() { return toolPath(L"JWlink.exe"); }
+		fs::path jwlinkPath()
+		{
+			auto directory = jwlink2Path().parent_path();
+			while (!directory.empty())
+			{
+				const auto candidate = directory / L"originals" / L"JWlinkb_v20_win32" / L"JWlink.exe";
+				if (fs::exists(candidate)) return candidate;
+				directory = directory.parent_path();
+			}
+			Assert::Fail(L"could not find originals\\JWlinkb_v20_win32\\JWlink.exe");
+			return {};
+		}
 
 		wstring quoteArgument(const wstring& value)
 		{
@@ -501,10 +512,13 @@ namespace JWlink2Test
 			startup.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
 			PROCESS_INFORMATION process{};
 			wstring command = quoteArgument(executable.wstring());
+			// The original linker parses its raw command line and does not accept every directive quoted.
+			static const auto referenceJwlink = jwlinkPath();
+			const bool nativeJwlinkArguments = executable == referenceJwlink;
 			for (const auto& argument : arguments)
 			{
 				command.push_back(L' ');
-				command += quoteAll || argument.empty() || argument.find_first_of(L" \t\"") != wstring::npos ? quoteArgument(argument) : argument;
+				command += (quoteAll && !nativeJwlinkArguments) || argument.empty() || argument.find_first_of(L" \t\"") != wstring::npos ? quoteArgument(argument) : argument;
 			}
 			vector<wchar_t> mutableCommand(command.begin(), command.end());
 			mutableCommand.push_back(L'\0');
