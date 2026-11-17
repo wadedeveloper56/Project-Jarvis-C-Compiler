@@ -216,11 +216,11 @@ namespace JWlink2::commandline
 
 	void printUsage()
 	{
-		cout << "JWlink2 - AMD64 COFF to Windows PE32+ linker\n"
+		cout << "JWlink2 - COFF to Windows PE linker (AMD64 and bounded x86)\n"
 			"Usage: JWlink2 [options] input.obj [input.lib ...]\n"
 			"       JWlink2 format windows pe [dll] option map[=<file>],quiet,start=<sym> file a.obj,b.obj lib c.lib name out.exe\n"
-			"  JWlink directives: format, file, library, libfile, libpath, name, system, runtime, debug, export, disable, option\n"
-			"  JWlink options: map, quiet, start, nodefaultlibs, caseexact, offset, objalign, norelocs, implib (see README.md)\n"
+			"  JWlink directives: format, file, library, libfile, libpath, name, system, runtime, debug, export, anonymousexport, reference, disable, option\n"
+			"  JWlink options: map, quiet, start, nodefaultlibs, caseexact, offset, objalign, norelocs, implib, stack, heapsize, version, osversion, linkversion, nxcompat, largeaddressaware (see README.md)\n"
 			"  /OUT:<file>, -o <file>      Output image (default: a.exe or a.dll)\n"
 			"  /DLL                        Create a DLL\n"
 			"  /DEF:<file>                 Read module name and exports from a .def file\n"
@@ -229,6 +229,7 @@ namespace JWlink2::commandline
 			"  /ENTRY:<symbol>             Set the image entry point\n"
 			"  /NOENTRY                    Omit the DLL entry point\n"
 			"  /SUBSYSTEM:CONSOLE|WINDOWS  Select PE subsystem\n"
+			"  /MACHINE:X64|X86            Select target (otherwise inferred)\n"
 			"  /LIBPATH:<directory>        Search directory for libraries\n"
 			"  /DEFAULTLIB:<library>       Add a library to the link\n"
 			"  /DELAYLOAD:<dll>            Delay-load imports from a DLL\n"
@@ -319,13 +320,13 @@ namespace JWlink2::commandline
 
 		// JWlink directives accept abbreviations down to a minimum length; unsupported directives are recognized only so they can be diagnosed.
 		constexpr DirectiveName directiveNames[] = {
-			{ "format", 4, true }, { "file", 2, true }, { "option", 2, true }, { "name", 2, true },
+			{ "format", 4, true }, { "file", 1, true }, { "option", 2, true }, { "name", 2, true },
 			{ "library", 3, true }, { "libpath", 4, true }, { "libfile", 4, true }, { "system", 3, true },
 			{ "debug", 3, true }, { "runtime", 2, true }, { "export", 3, true }, { "disable", 3, true },
 			{ "alias", 3, false }, { "commit", 3, false }, { "import", 3, false }, { "language", 3, false },
 			{ "modfile", 4, false }, { "modtrace", 4, false }, { "order", 3, false }, { "path", 4, false },
-			{ "reference", 3, false }, { "segment", 3, false }, { "sort", 4, false }, { "symtrace", 4, false },
-			{ "anonymousexport", 4, false }
+			{ "reference", 3, true }, { "segment", 3, false }, { "sort", 2, false }, { "symtrace", 4, false },
+			{ "optlib", 6, false }, { "anonymousexport", 4, true }
 		};
 
 		const DirectiveName* matchDirective(const string& token)
@@ -391,7 +392,7 @@ namespace JWlink2::commandline
 					fail("expected a JWlink directive but found '" + arguments[i] + "'; JWlink directives cannot be mixed with /option switches");
 				}
 				vector<string> tokens;
-				for (++i; i < arguments.size() && !matchDirective(arguments[i]); ++i)
+				for (++i; i < arguments.size() && (!matchDirective(arguments[i]) || (tokens.empty() && lowerAscii(arguments[i]) == "f")); ++i)
 				{
 					if (arguments[i].size() > 1 && (arguments[i][0] == '/' || arguments[i][0] == '-') && arguments[i][1] != '\\' && arguments[i][1] != '/')
 					{
@@ -468,17 +469,31 @@ namespace JWlink2::commandline
 					for (const auto& item : items)
 					{
 						const auto kind = lowerAscii(item);
+						if (kind == "lines" || kind == "types" || kind == "locals") fail("unsupported DEBUG modifier '" + item + "'; selective debug output is not implemented");
 						if (kind != "all" && kind != "codeview") fail("unsupported DEBUG format '" + item + "' (only CodeView/PDB output exists)");
 					}
 					options.push_back("/DEBUG");
 				}
-				else if (keyword == "export")
+				else if (keyword == "export" || keyword == "anonymousexport")
 				{
 					for (const auto& item : items)
 					{
-						if (item.find('.') != string::npos) fail("unsupported EXPORT '" + item + "'; JWlink alias and ordinal syntax is not implemented");
-						options.push_back("/EXPORT:" + item);
+						const auto equals = item.find('=');
+						if (equals != string::npos && item.find('=', equals + 1) != string::npos) fail("unsupported EXPORT import-name alias '" + item + "'");
+						const auto name = item.substr(0, equals);
+						const auto dot = name.find('.');
+						const auto publicName = name.substr(0, dot);
+						if (publicName.empty()) fail("EXPORT requires a name");
+						string exported = "/EXPORT:" + publicName;
+						if (equals != string::npos) exported += "=" + item.substr(equals + 1);
+						if (dot != string::npos) exported += ",@" + name.substr(dot + 1);
+						if (keyword == "anonymousexport") exported += ",NONAME";
+						options.push_back(move(exported));
 					}
+				}
+				else if (keyword == "reference")
+				{
+					for (const auto& item : items) options.push_back("/INCLUDE:" + item);
 				}
 				else if (keyword == "disable")
 				{
@@ -508,6 +523,12 @@ namespace JWlink2::commandline
 						else if (key == "objalign") options.push_back("/ALIGN:" + requireOptionValue());
 						else if (key == "norelocs") options.push_back("/FIXED");
 						else if (key == "implib") options.push_back(value && !value->empty() ? "/IMPLIB:" + *value : "/IMPLIB");
+						else if (key == "stack" || key == "heapsize" || key == "version" || key == "osversion" || key == "linkversion") options.push_back("/jw-" + key + ":" + requireOptionValue());
+						else if (key == "nxcompat" || key == "largeaddressaware" || key == "nolargeaddressaware")
+						{
+							if (value) fail("JWlink OPTION " + key + " does not accept a value");
+							options.push_back("/jw-" + key);
+						}
 						else fail("unsupported JWlink OPTION '" + item + "'");
 					}
 				}
@@ -619,6 +640,7 @@ namespace JWlink2::commandline
 			else if (optionName == "e" || optionName == "entry")
 			{
 				options.entry = requireValue("/ENTRY");
+				if (options.entry->empty()) fail("/ENTRY requires a symbol name");
 				options.entrySpecified = true;
 			}
 			else if (optionName == "subsystem")
@@ -721,6 +743,7 @@ namespace JWlink2::commandline
 			else if (optionName == "base")
 			{
 				options.imageBase = parseUnsignedOption(requireValue("/BASE"), "/BASE");
+				options.imageBaseSpecified = true;
 				if (options.imageBase == 0 || (options.imageBase & 0xffff) != 0)
 				{
 					fail("/BASE must be a nonzero 64-KiB-aligned address");
@@ -775,10 +798,9 @@ namespace JWlink2::commandline
 			else if (optionName == "machine")
 			{
 				const auto machine = lowerAscii(requireValue("/MACHINE"));
-				if (machine != "x64" && machine != "amd64")
-				{
-					fail("JWlink2 only supports /MACHINE:X64");
-				}
+				if (machine == "x64" || machine == "amd64") options.machine = 0x8664;
+				else if (machine == "x86" || machine == "i386") options.machine = 0x014c;
+				else fail("JWlink2 supports /MACHINE:X64 or /MACHINE:X86");
 			}
 			else if (optionName == "nologo")
 			{
@@ -798,6 +820,33 @@ namespace JWlink2::commandline
 				if (symbol.empty()) fail("/INCLUDE requires a symbol name");
 				if (find(options.includeSymbols.begin(), options.includeSymbols.end(), symbol) == options.includeSymbols.end()) options.includeSymbols.push_back(symbol);
 			}
+			else if (directiveSyntax && (optionName == "jw-stack" || optionName == "jw-heapsize"))
+			{
+				const auto number = parseUnsignedOption(requireValue("JWlink size option"), "JWlink size option");
+				if (number > numeric_limits<uint32_t>::max() || (optionName == "jw-heapsize" && number == 0)) fail("invalid JWlink size option");
+				auto& reserve = optionName == "jw-stack" ? options.stackReserve : options.heapReserve;
+				auto& commit = optionName == "jw-stack" ? options.stackCommit : options.heapCommit;
+				reserve = number;
+				commit = min<uint64_t>(0x1000, reserve);
+			}
+			else if (directiveSyntax && (optionName == "jw-nxcompat" || optionName == "jw-largeaddressaware" || optionName == "jw-nolargeaddressaware"))
+			{
+				if (optionName == "jw-nxcompat") options.nxCompat = false;
+				else if (optionName == "jw-nolargeaddressaware") options.largeAddressAware = false;
+			}
+			else if (directiveSyntax && (optionName == "jw-version" || optionName == "jw-osversion" || optionName == "jw-linkversion"))
+			{
+				const auto text = requireValue("JWlink version option");
+				const auto dot = text.find('.');
+				const auto major = parseUnsignedOption(string_view(text).substr(0, dot), "JWlink version option");
+				const auto minor = dot == string::npos ? 0 : parseUnsignedOption(string_view(text).substr(dot + 1), "JWlink version option");
+				const auto maxMajor = optionName == "jw-linkversion" ? 255u : 65535u;
+				const auto maxMinor = optionName == "jw-linkversion" ? 255u : 99u;
+				if (major > maxMajor || minor > maxMinor) fail("invalid JWlink version option");
+				if (optionName == "jw-version") { options.imageVersionMajor = static_cast<uint16_t>(major); options.imageVersionMinor = static_cast<uint16_t>(minor); }
+				else if (optionName == "jw-osversion") { options.osVersionMajor = static_cast<uint16_t>(major); options.osVersionMinor = static_cast<uint16_t>(minor); }
+				else { options.linkerVersionMajor = static_cast<uint8_t>(major); options.linkerVersionMinor = static_cast<uint8_t>(minor); }
+			}
 			else if (optionName == "wholearchive")
 			{
 				if (!value || value->empty())
@@ -806,8 +855,8 @@ namespace JWlink2::commandline
 				}
 				else
 				{
-					auto library = lowerAscii(fs::path(*value).filename().string());
-					if (fs::path(library).extension().empty()) library += ".lib";
+					fs::path library(*value);
+					if (library.extension().empty()) library += ".lib";
 					options.wholeArchives.push_back(move(library));
 				}
 			}
@@ -923,6 +972,7 @@ namespace JWlink2::commandline
 				start = end + 1;
 			}
 		}
+		if (options.machine == 0x014c && !options.imageBaseSpecified) options.imageBase = 0x400000;
 		if (options.noEntry && (!options.dll || options.entrySpecified))
 		{
 			fail("/NOENTRY is valid only for a DLL without /ENTRY");
@@ -969,7 +1019,7 @@ namespace JWlink2::commandline
 			mapPath.replace_extension(".map");
 			options.mapFile = move(mapPath);
 		}
-		if (options.inputs.empty() && options.defaultLibraries.empty())
+		if (options.inputs.empty() && options.defaultLibraries.empty() && options.wholeArchives.empty())
 		{
 			fail("no input object files or libraries were supplied; use --help for usage");
 		}

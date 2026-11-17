@@ -1,5 +1,8 @@
-#pragma once
 
+#ifndef PCH_H
+#define PCH_H
+
+#include "framework.h"
 #include <algorithm>
 #include <array>
 #include <cctype>
@@ -46,3 +49,6 @@
 #pragma warning(disable:4005)
 #pragma warning(disable:6011)
 #pragma warning(disable:26495)
+
+
+#endif 

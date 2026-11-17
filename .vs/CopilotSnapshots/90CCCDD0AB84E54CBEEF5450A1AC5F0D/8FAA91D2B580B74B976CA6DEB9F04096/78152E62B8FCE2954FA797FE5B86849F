@@ -1,0 +1,73 @@
+﻿from pathlib import Path
+import re
+
+root = Path(r'C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\JWlink2Test')
+source = (root / 'JWlink2Test.cpp').read_bytes()
+marker = source.index(b'\tTEST_CLASS(JWlink2LinkerTests)')
+helpers = source[source.index(b'\t\tvoid put16('):marker]
+helpers = re.sub(rb'\s*\}\s*$', b'', helpers, count=1)
+start = helpers.index(b'\t\tclass Workspace')
+end = helpers.index(b'\t\tvoid ModuleAnchor()', start)
+workspace = helpers[start:end]
+workspace = workspace[workspace.index(b'\t\t\tWorkspace()'):workspace.rindex(b'\t\t};')]
+workspace = workspace.replace(b'Workspace()', b'Workspace::Workspace()', 1)
+workspace = workspace.replace(b'~Workspace()', b'Workspace::~Workspace()', 1)
+workspace = workspace.replace(b'\t\t\tfs::path path;\n', b'')
+workspace = workspace.replace(b'fs::path file(const wstring& name) const', b'fs::path Workspace::file(const wstring& name) const', 1)
+workspace = workspace.replace(b'void write(const wstring& name, const Bytes& bytes) const', b'void Workspace::write(const wstring& name, const Bytes& bytes) const', 1)
+workspace = workspace.replace(b'void writeText(const wstring& name, const wstring& text) const', b'void Workspace::writeText(const wstring& name, const wstring& text) const', 1)
+workspace = workspace.replace(b'Bytes read(const wstring& name) const', b'Bytes Workspace::read(const wstring& name) const', 1)
+helpers = helpers[:start] + workspace + helpers[end:]
+start = helpers.index(b'\t\tstruct ProcessResult')
+end = helpers.index(b'\t\tProcessResult runExecutable(', start)
+helpers = helpers[:start] + helpers[end:]
+for old, new in [
+	(b'uint16_t machine = 0x8664)', b'uint16_t machine)'),
+	(b'const string& entry = "main")', b'const string& entry)'),
+	(b'const vector<pair<wstring, wstring>>& environment = {}, bool quoteAll = true)', b'const vector<pair<wstring, wstring>>& environment, bool quoteAll)'),
+	(b'const wstring& outputName = L"linked.exe")', b'const wstring& outputName)'),
+	(b'vector<wstring> args = {})', b'vector<wstring> args)')
+]:
+	if old not in helpers: raise RuntimeError(f'missing helper signature: {old!r}')
+	helpers = helpers.replace(old, new)
+fixture = b'#include "pch.h"\n#include "TestFixtures.h"\n\nnamespace JWlink2Test::Fixtures\n{\n' + helpers + b'\n}\n'
+
+methods = list(re.finditer(rb'(?m)^\t\tTEST_METHOD\((\w+)\)', source[marker:]))
+base = marker
+ends = source.rfind(b'\t};')
+starts = [
+	('ObjectAndSectionTests', 'BigObjSupportsWideSectionNumbersSymbolsAndRelocations'),
+	('DebugTests', 'DebugOptionWritesMatchingPdbAndRemapsCodeViewLines'),
+	('ImageTests', 'ValidAmd64ObjectProducesPe32PlusWithDefaultBaseAndEntry'),
+	('OptionAndJwlinkTests', 'JwlinkDirectiveSyntaxLinksLikeEquivalentSwitches'),
+	('RelocationTests', 'OverflowRelocationsAtBoundaryAndInArchivesAreLinked'),
+	('ImportTests', 'OrdinaryImportsRemainCallableAtRuntime'),
+	('LibraryAndDirectiveTests', 'MsvcToolchainArchiveIndexesSelectRegularObjectMember'),
+	('SymbolTests', 'CommonSymbolAllocatesBssAndAppearsInMap'),
+	('I386Tests', 'ExplicitAmd64RejectsI386Object'),
+	('DiagnosticTests', 'UnresolvedExternalIsReported'),
+]
+start_map = {name: group for group, name in starts}
+if len(methods) != 107: raise RuntimeError(f'unexpected number of methods: {len(methods)}')
+groups = {}
+current = None
+for i, method in enumerate(methods):
+	name = method.group(1).decode('ascii')
+	if name in start_map:
+		current = start_map[name]
+		groups[current] = []
+	if current is None: raise RuntimeError(f'no group for {name}')
+	begin = base + method.start()
+	end = base + methods[i + 1].start() if i + 1 < len(methods) else ends
+	groups[current].append(source[begin:end])
+if len(groups) != len(starts): raise RuntimeError('missing group boundary')
+outputs = {'TestFixtures.cpp': fixture}
+for group, blocks in groups.items():
+	prefix = b'#include "pch.h"\n#include "TestFixtures.h"\n\nusing namespace Microsoft::VisualStudio::CppUnitTestFramework;\nusing namespace std;\nusing namespace JWlink2Test::Fixtures;\nnamespace fs = filesystem;\n\nnamespace JWlink2Test\n{\n\tTEST_CLASS(' + group.encode('ascii') + b')\n\t{\n\tpublic:\n'
+	outputs[group + '.cpp'] = prefix + b''.join(blocks) + b'\t};\n}\n'
+for name in outputs:
+	if (root / name).exists(): raise RuntimeError(f'refusing to overwrite {name}')
+for name, data in outputs.items():
+	(root / name).write_bytes(data)
+print('Created', len(outputs), 'files; preserved', len(methods), 'test methods')
+for group, blocks in groups.items(): print(group, len(blocks))

@@ -1,0 +1,19 @@
+﻿from pathlib import Path
+
+root = Path(r'C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\JWlink2Test')
+names = ['TestFixtures', 'ObjectAndSectionTests', 'DebugTests', 'ImageTests', 'OptionAndJwlinkTests', 'RelocationTests', 'ImportTests', 'LibraryAndDirectiveTests', 'SymbolTests', 'I386Tests', 'DiagnosticTests']
+project = root / 'JWlink2Test.vcxproj'
+filters = root / 'JWlink2Test.vcxproj.filters'
+p = project.read_bytes()
+f = filters.read_bytes()
+def replace_once(data, old, new):
+	if data.count(old) != 1: raise RuntimeError(f'expected exactly one occurrence of {old!r}')
+	return data.replace(old, new, 1)
+p = replace_once(p, b'<ClCompile Include="JWlink2Test.cpp" />', b' '.join(f'<ClCompile Include="{name}.cpp" />'.encode() for name in names))
+p = replace_once(p, b'<ClInclude Include="pch.h" />', b'<ClInclude Include="pch.h" /> <ClInclude Include="TestFixtures.h" />')
+f = replace_once(f, b'<ClCompile Include="JWlink2Test.cpp">', b'<ClCompile Include="TestFixtures.cpp">')
+f = replace_once(f, b'<ClCompile Include="pch.cpp">', b' '.join(f'<ClCompile Include="{name}.cpp"><Filter>Source Files</Filter></ClCompile>'.encode() for name in names[1:]) + b' <ClCompile Include="pch.cpp">')
+f = replace_once(f, b'<ClInclude Include="pch.h">', b'<ClInclude Include="TestFixtures.h"><Filter>Header Files</Filter></ClInclude> <ClInclude Include="pch.h">')
+project.write_bytes(p)
+filters.write_bytes(f)
+print('Registered all split sources and fixture header')

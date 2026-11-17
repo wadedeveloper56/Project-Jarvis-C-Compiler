@@ -1,0 +1,111 @@
+﻿#pragma once
+
+#include "CppUnitTest.h"
+#define NOMINMAX
+#include <Windows.h>
+#include <DbgHelp.h>
+#include <algorithm>
+#include <array>
+#include <atomic>
+#include <cstdint>
+#include <filesystem>
+#include <fstream>
+#include <limits>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <tuple>
+#include <vector>
+
+namespace JWlink2Test::Fixtures
+{
+	using namespace Microsoft::VisualStudio::CppUnitTestFramework;
+	using namespace std;
+	namespace fs = filesystem;
+	using Bytes = vector<uint8_t>;
+
+	struct TestRelocation
+	{
+		uint32_t offset;
+		uint32_t symbolIndex;
+		uint16_t type;
+	};
+
+	struct TestSection
+	{
+		string name;
+		Bytes data;
+		uint32_t characteristics = 0x60000020;
+		vector<TestRelocation> relocations;
+	};
+
+	struct TestSymbol
+	{
+		string name;
+		uint32_t value = 0;
+		int32_t section = 0;
+		uint8_t storageClass = 2;
+		vector<array<uint8_t, 18>> auxiliary;
+		vector<array<uint8_t, 20>> bigObjAuxiliary;
+	};
+
+	class Workspace
+	{
+	public:
+		Workspace();
+		~Workspace();
+		fs::path path;
+		fs::path file(const wstring& name) const;
+		void write(const wstring& name, const Bytes& bytes) const;
+		void writeText(const wstring& name, const wstring& text) const;
+		Bytes read(const wstring& name) const;
+	};
+
+	struct ProcessResult
+	{
+		DWORD exitCode = 0;
+		string output;
+	};
+
+	void put16(Bytes& bytes, size_t offset, uint16_t value);
+	void put32(Bytes& bytes, size_t offset, uint32_t value);
+	void put64(Bytes& bytes, size_t offset, uint64_t value);
+	uint16_t get16(const Bytes& bytes, size_t offset);
+	uint32_t get32(const Bytes& bytes, size_t offset);
+	uint64_t get64(const Bytes& bytes, size_t offset);
+	Bytes makeObject(vector<TestSection> sections, vector<TestSymbol> symbols, uint16_t machine = 0x8664);
+	array<uint8_t, 18> sectionAux(uint32_t dataLength, uint16_t associated, uint8_t selection);
+	array<uint8_t, 20> bigObjSectionAux(uint32_t associated, uint8_t selection);
+	array<uint8_t, 18> weakAux(uint32_t tagIndex, uint32_t characteristics);
+	Bytes makeEntryObject(const string& entry = "main");
+	TestSection makeDirectiveSection(const string& directives);
+	Bytes makeBigObjObject(const vector<TestSection>& sections, const vector<TestSymbol>& symbols);
+	Bytes makeBigObjComdatObject(const string& key, const Bytes& content);
+	Bytes makeComdatObject(const string& key, const Bytes& content, uint8_t selection);
+	Bytes makeAssociativeComdatObject(const Bytes& parentData, const Bytes& childData);
+	Bytes makeImportObject(const string& publicName, const string& dllName, const string& importName, uint16_t hint, uint16_t typeInfo);
+	void appendArchiveMember(Bytes& archive, const string& name, const Bytes& content);
+	Bytes makeArchive(const vector<pair<string, Bytes>>& members);
+	Bytes makeMsvcIndexedArchive();
+	Bytes makeMsvcImportArchive();
+	fs::path jwlink2Path();
+	fs::path jwlinkPath();
+	ProcessResult runExecutable(const Workspace& workspace, const fs::path& executable, const vector<wstring>& arguments, const vector<pair<wstring, wstring>>& environment = {}, bool quoteAll = true);
+	ProcessResult runLinker(const Workspace& workspace, const vector<wstring>& arguments);
+	ProcessResult runJwlink(const Workspace& workspace, const vector<wstring>& inputs, const wstring& outputName);
+	vector<wstring> outputArgs(const Workspace& workspace, const wstring& outputName = L"linked.exe");
+	ProcessResult linkObject(const Workspace& workspace, const Bytes& object, vector<wstring> args = {});
+	void assertSuccess(const ProcessResult& result);
+	void assertFailureContains(const ProcessResult& result, const string& expected);
+	size_t peHeader(const Bytes& image);
+	size_t optionalHeader(const Bytes& image);
+	size_t sectionTable(const Bytes& image);
+	uint16_t peFileCharacteristics(const Bytes& image);
+	bool hasSection(const Bytes& image, const string& name);
+	size_t sectionHeader(const Bytes& image, const string& name);
+	void validatePeLayout(const Bytes& image);
+	size_t rvaOffset(const Bytes& image, uint32_t rva);
+	string cStringAtRva(const Bytes& image, uint32_t rva);
+	void assertHasBaseReloc(const Bytes& image, uint32_t targetRva, uint16_t expectedType);
+	void assertNoOutput(const Workspace& workspace, const wstring& outputName = L"linked.exe");
+}

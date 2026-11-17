@@ -1,0 +1,9 @@
+﻿from pathlib import Path
+path = Path(r'C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\JWlink2Test\JWlink2Test.vcxproj')
+data = path.read_bytes()
+names = ['TestFixtures', 'ObjectAndSectionTests', 'DebugTests', 'ImageTests', 'OptionAndJwlinkTests', 'RelocationTests', 'ImportTests', 'LibraryAndDirectiveTests', 'SymbolTests', 'I386Tests', 'DiagnosticTests']
+items = [f'<ClCompile Include="{name}.cpp" />'.encode() for name in names] + [b'<ClCompile Include="pch.cpp">']
+old = b' '.join(items)
+if data.count(old) != 1: raise RuntimeError('unexpected project items')
+data = data.replace(old, b'\r\n    '.join(items), 1)
+path.write_bytes(data)

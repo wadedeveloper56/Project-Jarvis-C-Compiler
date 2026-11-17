@@ -1,0 +1,14 @@
+﻿from pathlib import Path
+root = Path(r'C:\projects\OSDev\Project-Jarvis-C-Compiler\source\Tools\JWlink2Test')
+names = ['TestFixtures', 'ObjectAndSectionTests', 'DebugTests', 'ImageTests', 'OptionAndJwlinkTests', 'RelocationTests', 'ImportTests', 'LibraryAndDirectiveTests', 'SymbolTests', 'I386Tests', 'DiagnosticTests']
+for filename, formatted in [('JWlink2Test.vcxproj', False), ('JWlink2Test.vcxproj.filters', True)]:
+	path = root / filename
+	data = path.read_bytes()
+	marker = b'<ClCompile Include="pch.cpp">'
+	if data.count(marker) != 1: raise RuntimeError(f'unexpected project contents: {filename}')
+	if formatted:
+		entries = b' '.join(f'<ClCompile Include="{name}.cpp"><Filter>Source Files</Filter></ClCompile>'.encode() for name in names)
+	else:
+		entries = b' '.join(f'<ClCompile Include="{name}.cpp" />'.encode() for name in names)
+	path.write_bytes(data.replace(marker, entries + b' ' + marker, 1))
+print('Registered all split sources')
