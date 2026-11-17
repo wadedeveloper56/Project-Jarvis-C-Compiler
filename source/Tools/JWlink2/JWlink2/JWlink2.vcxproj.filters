@@ -15,6 +15,9 @@
     <Filter Include="Source Files">
       <UniqueIdentifier>{981d7c03-9096-430b-bbae-0c67daa7df15}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{1515558b-d355-4e9a-9aa2-356bed009af6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -27,6 +30,8 @@
     <None Include="..\README.md" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="JWlink2.rc" />
+    <ResourceCompile Include="JWlink2.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>
