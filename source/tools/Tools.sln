@@ -22,6 +22,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JWlink2Lib", "JWlink2Lib\JW
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7BBF6D43-69BE-4124-B59D-F2EA447327D6}"
 	ProjectSection(SolutionItems) = preProject
+		..\..\README.html = ..\..\README.html
 		..\..\README.md = ..\..\README.md
 	EndProjectSection
 EndProject
