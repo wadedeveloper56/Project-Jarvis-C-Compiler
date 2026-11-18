@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".github/instructions/jwasm2.instructions.md" />
+    <File Path=".github/instructions/jwlink2.instructions.md" />
+  </Folder>
+</Solution>

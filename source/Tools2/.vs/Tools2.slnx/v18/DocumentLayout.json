@@ -1,0 +1,92 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\source\\Tools2\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{3790FC7E-D1C3-4348-94E0-408039C8E0A1}|Solution Items{3790FC7E-D1C3-4348-94E0-408039C8E0A1}|C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\source\\Tools2\\.github\\instructions\\jwlink2.instructions.md||{24510B54-A648-4D69-A6C5-F68CBDF07546}",
+      "RelativeMoniker": "D:0:0:{3790FC7E-D1C3-4348-94E0-408039C8E0A1}|Solution Items{3790FC7E-D1C3-4348-94E0-408039C8E0A1}|solutionrelative:.github\\instructions\\jwlink2.instructions.md||{24510B54-A648-4D69-A6C5-F68CBDF07546}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3790FC7E-D1C3-4348-94E0-408039C8E0A1}|Solution Items{3790FC7E-D1C3-4348-94E0-408039C8E0A1}|C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\source\\Tools2\\.github\\instructions\\jwasm2.instructions.md||{24510B54-A648-4D69-A6C5-F68CBDF07546}",
+      "RelativeMoniker": "D:0:0:{3790FC7E-D1C3-4348-94E0-408039C8E0A1}|Solution Items{3790FC7E-D1C3-4348-94E0-408039C8E0A1}|solutionrelative:.github\\instructions\\jwasm2.instructions.md||{24510B54-A648-4D69-A6C5-F68CBDF07546}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "jwlink2.instructions.md",
+              "DocumentMoniker": "C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\source\\Tools2\\.github\\instructions\\jwlink2.instructions.md",
+              "RelativeDocumentMoniker": ".github\\instructions\\jwlink2.instructions.md",
+              "ToolTip": "C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\source\\Tools2\\.github\\instructions\\jwlink2.instructions.md",
+              "RelativeToolTip": ".github\\instructions\\jwlink2.instructions.md",
+              "ViewState": "AgIAABUAAAAAAAAAAAAswC8AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
+              "WhenOpened": "2026-11-18T20:53:03.681Z",
+              "EditorCaption": "",
+              "OwnerCaption": "%3"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "jwasm2.instructions.md",
+              "DocumentMoniker": "C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\source\\Tools2\\.github\\instructions\\jwasm2.instructions.md",
+              "RelativeDocumentMoniker": ".github\\instructions\\jwasm2.instructions.md",
+              "ToolTip": "C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\source\\Tools2\\.github\\instructions\\jwasm2.instructions.md",
+              "RelativeToolTip": ".github\\instructions\\jwasm2.instructions.md",
+              "ViewState": "AgIAACAAAAAAAAAAAAAswDoAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
+              "WhenOpened": "2026-11-18T20:53:02.312Z",
+              "EditorCaption": "",
+              "OwnerCaption": "%3"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:129:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:130:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:132:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:133:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:134:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:135:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:136:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:131:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
