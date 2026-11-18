@@ -7,7 +7,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{BEF06896
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Linker", "Linker", "{113BAFA4-0DEB-4FE4-9EB9-D0F639E17391}"
 	ProjectSection(SolutionItems) = preProject
+		JWlink2\agent mode prompts.md = JWlink2\agent mode prompts.md
+		JWlink2\copilot-instructions.md = JWlink2\copilot-instructions.md
 		JWlink2\MISSING_FEATURES.md = JWlink2\MISSING_FEATURES.md
+		JWlink2\plan mode prompt.md = JWlink2\plan mode prompt.md
+		JWlink2\PLAN.md = JWlink2\PLAN.md
 		JWlink2\README.md = JWlink2\README.md
 	EndProjectSection
 EndProject
