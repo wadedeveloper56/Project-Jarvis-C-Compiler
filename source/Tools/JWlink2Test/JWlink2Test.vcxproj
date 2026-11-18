@@ -208,6 +208,11 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="TestFixtures.h" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\JWasm2Lib\JWasm2Lib.vcxproj">
+      <Project>{60c64c03-7c70-43e6-9f26-befc37c7497f}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
