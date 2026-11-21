@@ -20,7 +20,7 @@ applyTo: "jwlink2/**"
   5. **64-bit Windows PE32+** `.exe` and `.dll` + **COFF Import Library (`.lib`)**
 
 ## Coding & Memory Standards
-- **Language Standard:** C++20 (`/std:c++20` with `/W4 /WX` warning levels).
+- **Language Standard:** Strict ISO C++20 (`/std:c++20` with `/W4 /WX` warning levels, use `std::variant`, `std::span`, `std::string_view`, `std::expected` if available, concepts, and smart pointers; avoid raw new/delete).
 - **Fixed-Width Types:** Strictly use `<cstdint>` types (`uint8_t`, `uint16_t`, `uint32_t`, `uint64_t`) for all file offsets, RVAs, segment selectors, and binary fields. Never use `long` or platform-dependent `int` sizes for binary structures.
 - **Struct Packing & Alignment:** Wrap all on-disk binary header structs (DOS MZ, NE, COFF, PE32, PE32+, OMF records) in `#pragma pack(push, 1)` and `#pragma pack(pop)`. Validate every header struct size with `static_assert(sizeof(...) == ...)` at compile time.
 - **Endianness:** Explicitly write little-endian serialization helpers (`write_u16_le`, `write_u32_le`, `write_u64_le`), plus big-endian helpers (`write_u32_be`) specifically required for COFF `.lib` archive linker member offsets.

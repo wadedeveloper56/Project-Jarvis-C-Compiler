@@ -18,7 +18,6 @@ Execute Phase 2 inside `jwasm2/`:
 2. Create `jwasm2/tools/tablegen.py` and an initial seed `jwasm2/data/x86_isa.def` that compiles into a sorted, binary-searchable `constexpr` C++ header `jwasm2/jwasm2lib/src/generated_isa.inc`.
 3. Add unit tests in `jwasm2/jwasm2test/` verifying table sorting, binary lookup by mnemonic, and metadata integrity.
 4. Run `jwasm2/tools/tablegen.py`, build only `jwasm2lib` and `jwasm2test`, and verify all tests pass with zero `/W4` warnings.
-Use code with caution.
 
 Phase 3 Prompt: Front-End (Lexer, Macro Preprocessor & MASM v8 Parser)
 
