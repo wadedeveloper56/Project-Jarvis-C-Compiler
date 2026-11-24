@@ -17,4 +17,5 @@ Break the plan into 5 concrete implementation phases:
 5. 32/64-Bit Paged Layout, PE32/PE32+ & COFF Import Library Emitters (jwlink2lib, jwlink2test): FileAlignment vs. SectionAlignment, .idata/.edata/.reloc synthesis, PE checksums, COFF short-import .lib generator, and dumpbin integration tests.
  
 List the exact file tree under jwlink2/, jwlink2lib/, and jwlink2test/ and define the core C++20 structs. Wait for my approval before writing code.
+
 ```

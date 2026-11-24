@@ -7,17 +7,17 @@
     <File Path="JWasm2/agent mode prompts.md" />
     <File Path="JWasm2/copilot-instructions.md" />
     <File Path="JWasm2/plan mode prompt.md" />
-    <Project Path="JWasm2/JWasm2/JWasm2.vcxproj" />
-    <Project Path="JWasm2/JWasm2Lib/JWasm2Lib.vcxproj" />
-    <Project Path="JWasm2/JWasm2Test/JWasm2Test.vcxproj" />
+    <Project Path="JWasm2/JWasm2/JWasm2.vcxproj" Id="71bbf77a-439e-4527-8879-5a90437bb355" />
+    <Project Path="JWasm2/JWasm2Lib/JWasm2Lib.vcxproj" Id="82ec4c24-297c-4259-87cd-2eb204d1493b" />
+    <Project Path="JWasm2/JWasm2Test/JWasm2Test.vcxproj" Id="d147c447-dc8c-475c-b995-88701975dc4e" />
   </Folder>
   <Folder Name="/jwcc2/">
     <File Path="JWcc2/agent mode prompts.md" />
     <File Path="JWcc2/copilot-instructions.md" />
     <File Path="JWcc2/plan mode prompt.md" />
-    <Project Path="JWcc2/JWcc2/JWcc2.vcxproj" />
-    <Project Path="JWcc2/JWcc2Lib/JWcc2Lib.vcxproj" />
-    <Project Path="JWcc2/JWcc2Test/JWcc2Test.vcxproj" />
+    <Project Path="JWcc2/JWcc2/JWcc2.vcxproj" Id="1ed949b6-2b06-4001-9b80-f62d0b471f30" />
+    <Project Path="JWcc2/JWcc2Lib/JWcc2Lib.vcxproj" Id="246c9511-2e84-4c28-8356-76711e284f46" />
+    <Project Path="JWcc2/JWcc2Test/JWcc2Test.vcxproj" Id="6f7c3090-2599-45ef-8ba4-f4362700faf6" />
   </Folder>
   <Folder Name="/jwlink2/">
     <File Path="JWlink2/agent mode prompts.md" />
@@ -29,9 +29,9 @@
     <Project Path="JWlink2/JWlink2Test/JWlink2Test.vcxproj" />
   </Folder>
   <Folder Name="/JWrc2/">
-    <Project Path="JWrc2/JWrc2/JWrc2.vcxproj" />
-    <Project Path="JWrc2/JWrc2Lib/JWrc2Lib.vcxproj" />
-    <Project Path="JWrc2/JWrc2Test/JWrc2Test.vcxproj" />
+    <Project Path="JWrc2/JWrc2/JWrc2.vcxproj" Id="e450daaa-b64c-425a-91b6-c02fa5c79676" />
+    <Project Path="JWrc2/JWrc2Lib/JWrc2Lib.vcxproj" Id="5f339236-bc7d-4b9c-b344-f621cdb605b4" />
+    <Project Path="JWrc2/JWrc2Test/JWrc2Test.vcxproj" Id="57727791-5e1d-4b18-817a-3dbe7b3b45f0" />
   </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".github/instructions/jwasm2.instructions.md" />
