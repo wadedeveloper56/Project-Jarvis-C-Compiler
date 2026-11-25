@@ -2,11 +2,14 @@ Create three empty Visual Studio 2026 projects in your solution (jwlink2lib as a
 Prompt:
 
 ```
-Ignore all existing or legacy code in the workspace and design jwlink2 completely from scratch according to .github/copilot-instructions.md. Save the complete architectural plan to .copilot/plans/jwlink2-architecture.md.
+Ignore all existing or legacy code in the workspace and design jwlink2 completely from scratch according to .github/instructions/jwlink2.instructions.md. 
+Save the complete architectural plan to .copilot/plans/jwlink2-architecture.md.
+
 Enforce this exact 3-project structure:
-• jwlink2/ — Contains only main.cpp with main(), forwarding CLI args to jwlink2lib.
-• jwlink2lib/ — Static library containing all linker headers and implementation (include/jwlink2lib/... and src/...).
-• jwlink2test/ — Standalone test runner executable containing unit and integration tests exercising jwlink2lib.
+1. jwlink2/ — Contains only main.cpp with main(), forwarding CLI args to jwlink2lib.
+2. jwlink2lib/ — Static library containing all linker headers and implementation (include/jwlink2lib/... and src/...).
+3. jwlink2test/ — Standalone test runner executable containing unit and integration tests exercising jwlink2lib.
+
 Break the plan into 5 concrete implementation phases:
 1. Core IR & Binary Utilities (jwlink2lib): Little/big-endian stream readers/writers, packed format headers with static_assert checks, PE 32-bit checksum calculator, and unified IR (LinkerContext, TargetMachine, OutputKind for Executable/Dll/Driver/FlatBinary, SubsystemMode for GUI/Console/Native/DOS, InputModule, Section, Symbol, Relocation) supporting both 16-bit segmented (GROUP, paragraph alignment, fixed/movable segment flags) and 32/64-bit linear addressing.
 2. COFF & OMF Parsers (jwlink2lib): COFF .obj (X86/X64) and COFF .lib (standard objects + IMPORT_OBJECT_HEADER short imports); OMF .obj (THEADR, LNAMES, SEGDEF, GRPDEF, PUBDEF, EXTDEF, LEDATA, LIDATA, FIXUPP, MODEND) and OMF .lib (LIBHEAD, page alignment, COMENT 0xA0 IMPDEF, LIBDIC).

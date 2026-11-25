@@ -3,7 +3,7 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Folder Name="/jwasm2/">
+  <Folder Name="/Assembler/">
     <File Path="JWasm2/agent mode prompts.md" />
     <File Path="JWasm2/copilot-instructions.md" />
     <File Path="JWasm2/plan mode prompt.md" />
@@ -11,7 +11,7 @@
     <Project Path="JWasm2/JWasm2Lib/JWasm2Lib.vcxproj" Id="82ec4c24-297c-4259-87cd-2eb204d1493b" />
     <Project Path="JWasm2/JWasm2Test/JWasm2Test.vcxproj" Id="d147c447-dc8c-475c-b995-88701975dc4e" />
   </Folder>
-  <Folder Name="/jwcc2/">
+  <Folder Name="/C Compiler/">
     <File Path="JWcc2/agent mode prompts.md" />
     <File Path="JWcc2/copilot-instructions.md" />
     <File Path="JWcc2/plan mode prompt.md" />
@@ -19,7 +19,7 @@
     <Project Path="JWcc2/JWcc2Lib/JWcc2Lib.vcxproj" Id="246c9511-2e84-4c28-8356-76711e284f46" />
     <Project Path="JWcc2/JWcc2Test/JWcc2Test.vcxproj" Id="6f7c3090-2599-45ef-8ba4-f4362700faf6" />
   </Folder>
-  <Folder Name="/jwlink2/">
+  <Folder Name="/Linker/">
     <File Path="JWlink2/agent mode prompts.md" />
     <File Path="JWlink2/copilot-instructions.md" />
     <File Path="JWlink2/plan mode prompt.md" />
@@ -28,7 +28,7 @@
     <Project Path="JWlink2/JWlink2Lib/JWlink2Lib.vcxproj" Id="b96cd28a-3538-47a7-b01c-4ae2b70b36f1" />
     <Project Path="JWlink2/JWlink2Test/JWlink2Test.vcxproj" />
   </Folder>
-  <Folder Name="/JWrc2/">
+  <Folder Name="/Resource Compiler/">
     <Project Path="JWrc2/JWrc2/JWrc2.vcxproj" Id="e450daaa-b64c-425a-91b6-c02fa5c79676" />
     <Project Path="JWrc2/JWrc2Lib/JWrc2Lib.vcxproj" Id="5f339236-bc7d-4b9c-b344-f621cdb605b4" />
     <Project Path="JWrc2/JWrc2Test/JWrc2Test.vcxproj" Id="57727791-5e1d-4b18-817a-3dbe7b3b45f0" />
