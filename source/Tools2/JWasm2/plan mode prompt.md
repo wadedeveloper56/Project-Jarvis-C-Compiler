@@ -12,7 +12,7 @@ Enforce this exact 3-project structure:
 3. jwasm2/jwasm2test/ — Standalone native unit test runner executable containing unit and integration tests exercising jwasm2lib.
 
 Break the plan into 8 concrete implementation phases:
-1. Project Scaffolding & Isolated Build Pipeline
+1. Project Scaffolding, Diagnostics & Isolated Build Pipeline
 2. Data-Driven ISA Table Generator (tools/ & data/)
 3. Front-End (Lexer, Macro Preprocessor & MASM v8 Parser)
 4. Core Instruction Encoder Engine (16-bit, 32-bit, 64-bit & VEX)

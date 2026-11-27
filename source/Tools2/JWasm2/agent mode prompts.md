@@ -1,11 +1,14 @@
-Phase 1 Prompt: Project Scaffolding & Isolated Build Pipeline
+Phase 1 Prompt: Project Scaffolding, Diagnostics & Isolated Build Pipeline
 ```
-Approved. Using .copilot/plans/jwasm2-architecture.md and .github/instructions/jwasm2.instructions.md Execute Phase 1 inside `jwasm2/` only (do not touch any sibling projects in the solution):
+Approved. Execute Phase 1 inside `jwasm2/` only (do not touch any sibling projects in the solution):
 1. Create three Visual Studio 2026 C++20 (`/std:c++20`, `/W4`, `/permissive-`) projects and add them to the solution:
    - `jwasm2/jwasm2/` (Console App): Contains ONLY `main.cpp` calling `jwasm2lib::Driver::run(argc, argv)`.
-   - `jwasm2/jwasm2lib/` (Static Library): Public headers in `jwasm2/jwasm2lib/include/` and sources in `jwasm2/jwasm2lib/src/`. Implement initial `driver.hpp/.cpp` and `options.hpp/.cpp` supporting `-16`, `-32`, `-64`, `-o <file>`, `-map <file>`, `-I <dir>`, `-D <sym>[=val]`, and `--help`.
+   - `jwasm2/jwasm2lib/` (Static Library): Public headers in `jwasm2/jwasm2lib/include/` and sources in `jwasm2/jwasm2lib/src/`. Implement:
+     * `diagnostics.hpp/.cpp`: Numbered error and warning system (`DiagCode` enum covering `A1000–A5999`, `DiagnosticEngine` storing structured diagnostics with file/line/column/macro-stack, VS/MASM-compatible formatting `file(line,col): error A2006: ...`, warning level filtering `-W0`..`-W4`, `-WX` warnings-as-errors, and `-wd<num>` suppression).
+     * `options.hpp/.cpp`: CLI parser supporting `-16`, `-32`, `-64`, `-o <file>`, `-map <file>`, `-I <dir>`, `-D <sym>[=val]`, `-W0`..`-W4`, `-WX`, `-wd<num>`, and `--help` (reporting invalid options via `A1xxx` diagnostic codes).
+     * `driver.hpp/.cpp`: Orchestrates options, diagnostic reporting, and exit codes.
    - `jwasm2/jwasm2test/` (Unit Test project): Links ONLY against `jwasm2lib` (plus the test framework) with `jwasm2/jwasm2lib/include` in its include directories.
-2. Write unit tests in `jwasm2/jwasm2test/` verifying CLI flag parsing and error handling.
+2. Write unit tests in `jwasm2/jwasm2test/` verifying CLI flag parsing, numbered error emission (`A1xxx`), warning suppression (`-wd`), and warnings-as-errors (`-WX`).
 3. Build ONLY `jwasm2`, `jwasm2lib`, and `jwasm2test` via MSBuild and run `jwasm2test` to confirm a clean build and passing tests.
 ```
 

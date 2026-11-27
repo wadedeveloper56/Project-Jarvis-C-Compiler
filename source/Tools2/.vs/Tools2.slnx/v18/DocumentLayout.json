@@ -3,20 +3,20 @@
   "WorkspaceRootPath": "C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\source\\Tools2\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{B231E545-1D23-4298-7D47-736514E745FD}|Linker{B231E545-1D23-4298-7D47-736514E745FD}|C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\source\\Tools2\\JWlink2\\plan mode prompt.md||{24510B54-A648-4D69-A6C5-F68CBDF07546}",
-      "RelativeMoniker": "D:0:0:{B231E545-1D23-4298-7D47-736514E745FD}|Linker{B231E545-1D23-4298-7D47-736514E745FD}|solutionrelative:JWlink2\\plan mode prompt.md||{24510B54-A648-4D69-A6C5-F68CBDF07546}"
+      "AbsoluteMoniker": "D:0:0:{51E02145-F34A-63E6-DC2C-95825FFA3CF9}|Assembler{51E02145-F34A-63E6-DC2C-95825FFA3CF9}|C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\source\\Tools2\\JWasm2\\agent mode prompts.md||{24510B54-A648-4D69-A6C5-F68CBDF07546}",
+      "RelativeMoniker": "D:0:0:{51E02145-F34A-63E6-DC2C-95825FFA3CF9}|Assembler{51E02145-F34A-63E6-DC2C-95825FFA3CF9}|solutionrelative:JWasm2\\agent mode prompts.md||{24510B54-A648-4D69-A6C5-F68CBDF07546}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{B231E545-1D23-4298-7D47-736514E745FD}|Linker{B231E545-1D23-4298-7D47-736514E745FD}|C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\source\\Tools2\\JWlink2\\agent mode prompts.md||{24510B54-A648-4D69-A6C5-F68CBDF07546}",
-      "RelativeMoniker": "D:0:0:{B231E545-1D23-4298-7D47-736514E745FD}|Linker{B231E545-1D23-4298-7D47-736514E745FD}|solutionrelative:JWlink2\\agent mode prompts.md||{24510B54-A648-4D69-A6C5-F68CBDF07546}"
+      "AbsoluteMoniker": "D:0:0:{51E02145-F34A-63E6-DC2C-95825FFA3CF9}|Assembler{51E02145-F34A-63E6-DC2C-95825FFA3CF9}|C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\source\\Tools2\\JWasm2\\plan mode prompt.md||{24510B54-A648-4D69-A6C5-F68CBDF07546}",
+      "RelativeMoniker": "D:0:0:{51E02145-F34A-63E6-DC2C-95825FFA3CF9}|Assembler{51E02145-F34A-63E6-DC2C-95825FFA3CF9}|solutionrelative:JWasm2\\plan mode prompt.md||{24510B54-A648-4D69-A6C5-F68CBDF07546}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{B231E545-1D23-4298-7D47-736514E745FD}|Linker{B231E545-1D23-4298-7D47-736514E745FD}|C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\source\\Tools2\\JWlink2\\copilot-instructions.md||{24510B54-A648-4D69-A6C5-F68CBDF07546}",
-      "RelativeMoniker": "D:0:0:{B231E545-1D23-4298-7D47-736514E745FD}|Linker{B231E545-1D23-4298-7D47-736514E745FD}|solutionrelative:JWlink2\\copilot-instructions.md||{24510B54-A648-4D69-A6C5-F68CBDF07546}"
+      "AbsoluteMoniker": "D:0:0:{51E02145-F34A-63E6-DC2C-95825FFA3CF9}|Assembler{51E02145-F34A-63E6-DC2C-95825FFA3CF9}|C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\source\\Tools2\\JWasm2\\copilot-instructions.md||{24510B54-A648-4D69-A6C5-F68CBDF07546}",
+      "RelativeMoniker": "D:0:0:{51E02145-F34A-63E6-DC2C-95825FFA3CF9}|Assembler{51E02145-F34A-63E6-DC2C-95825FFA3CF9}|solutionrelative:JWasm2\\copilot-instructions.md||{24510B54-A648-4D69-A6C5-F68CBDF07546}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{089100B1-113F-4E66-888A-E83F3999EAFD}|Solution Items{089100B1-113F-4E66-888A-E83F3999EAFD}|C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\source\\Tools2\\.github\\instructions\\jwlink2.instructions.md||{24510B54-A648-4D69-A6C5-F68CBDF07546}",
-      "RelativeMoniker": "D:0:0:{089100B1-113F-4E66-888A-E83F3999EAFD}|Solution Items{089100B1-113F-4E66-888A-E83F3999EAFD}|solutionrelative:.github\\instructions\\jwlink2.instructions.md||{24510B54-A648-4D69-A6C5-F68CBDF07546}"
+      "AbsoluteMoniker": "D:0:0:{089100B1-113F-4E66-888A-E83F3999EAFD}|Solution Items{089100B1-113F-4E66-888A-E83F3999EAFD}|C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\source\\Tools2\\.github\\instructions\\jwasm2.instructions.md||{24510B54-A648-4D69-A6C5-F68CBDF07546}",
+      "RelativeMoniker": "D:0:0:{089100B1-113F-4E66-888A-E83F3999EAFD}|Solution Items{089100B1-113F-4E66-888A-E83F3999EAFD}|solutionrelative:.github\\instructions\\jwasm2.instructions.md||{24510B54-A648-4D69-A6C5-F68CBDF07546}"
     }
   ],
   "DocumentGroupContainers": [
@@ -26,19 +26,61 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 11,
+          "SelectedChildIndex": 3,
           "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "jwasm2.instructions.md",
+              "DocumentMoniker": "C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\source\\Tools2\\.github\\instructions\\jwasm2.instructions.md",
+              "RelativeDocumentMoniker": ".github\\instructions\\jwasm2.instructions.md",
+              "ToolTip": "C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\source\\Tools2\\.github\\instructions\\jwasm2.instructions.md",
+              "RelativeToolTip": ".github\\instructions\\jwasm2.instructions.md",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAEgAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
+              "WhenOpened": "2026-11-27T02:07:37.071Z",
+              "EditorCaption": "",
+              "OwnerCaption": "%3"
+            },
             {
               "$type": "Document",
               "DocumentIndex": 2,
               "Title": "copilot-instructions.md",
-              "DocumentMoniker": "C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\source\\Tools2\\JWlink2\\copilot-instructions.md",
-              "RelativeDocumentMoniker": "JWlink2\\copilot-instructions.md",
-              "ToolTip": "C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\source\\Tools2\\JWlink2\\copilot-instructions.md",
-              "RelativeToolTip": "JWlink2\\copilot-instructions.md",
-              "ViewState": "AgIAAAsAAAAAAAAAAAAwwDwAAAAAAAAAAAAAAA==",
+              "DocumentMoniker": "C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\source\\Tools2\\JWasm2\\copilot-instructions.md",
+              "RelativeDocumentMoniker": "JWasm2\\copilot-instructions.md",
+              "ToolTip": "C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\source\\Tools2\\JWasm2\\copilot-instructions.md",
+              "RelativeToolTip": "JWasm2\\copilot-instructions.md",
+              "ViewState": "AgIAABUAAAAAAAAAAAAAAAEAAAAUAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
-              "WhenOpened": "2026-11-27T01:43:17.805Z",
+              "WhenOpened": "2026-11-27T02:08:44.461Z",
+              "EditorCaption": "",
+              "OwnerCaption": "%3"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "plan mode prompt.md",
+              "DocumentMoniker": "C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\source\\Tools2\\JWasm2\\plan mode prompt.md",
+              "RelativeDocumentMoniker": "JWasm2\\plan mode prompt.md",
+              "ToolTip": "C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\source\\Tools2\\JWasm2\\plan mode prompt.md",
+              "RelativeToolTip": "JWasm2\\plan mode prompt.md",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAA9AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
+              "WhenOpened": "2026-11-27T02:09:09.092Z",
+              "EditorCaption": "",
+              "OwnerCaption": "%3"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "agent mode prompts.md",
+              "DocumentMoniker": "C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\source\\Tools2\\JWasm2\\agent mode prompts.md",
+              "RelativeDocumentMoniker": "JWasm2\\agent mode prompts.md",
+              "ToolTip": "C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\source\\Tools2\\JWasm2\\agent mode prompts.md",
+              "RelativeToolTip": "JWasm2\\agent mode prompts.md",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
+              "WhenOpened": "2026-11-27T02:19:09.351Z",
               "EditorCaption": "",
               "OwnerCaption": "%3"
             },
@@ -77,48 +119,6 @@
             {
               "$type": "Bookmark",
               "Name": "ST:131:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "jwlink2.instructions.md",
-              "DocumentMoniker": "C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\source\\Tools2\\.github\\instructions\\jwlink2.instructions.md",
-              "RelativeDocumentMoniker": ".github\\instructions\\jwlink2.instructions.md",
-              "ToolTip": "C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\source\\Tools2\\.github\\instructions\\jwlink2.instructions.md",
-              "RelativeToolTip": ".github\\instructions\\jwlink2.instructions.md",
-              "ViewState": "AgIAAAgAAAAAAAAAAAAwwDwAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
-              "WhenOpened": "2026-11-25T20:54:02.772Z",
-              "EditorCaption": "",
-              "OwnerCaption": "%3"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "plan mode prompt.md",
-              "DocumentMoniker": "C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\source\\Tools2\\JWlink2\\plan mode prompt.md",
-              "RelativeDocumentMoniker": "JWlink2\\plan mode prompt.md",
-              "ToolTip": "C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\source\\Tools2\\JWlink2\\plan mode prompt.md",
-              "RelativeToolTip": "JWlink2\\plan mode prompt.md",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAABZAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
-              "WhenOpened": "2026-11-25T20:53:58.716Z",
-              "EditorCaption": "",
-              "OwnerCaption": "%3"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "agent mode prompts.md",
-              "DocumentMoniker": "C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\source\\Tools2\\JWlink2\\agent mode prompts.md",
-              "RelativeDocumentMoniker": "JWlink2\\agent mode prompts.md",
-              "ToolTip": "C:\\projects\\OSDev\\Project-Jarvis-C-Compiler\\source\\Tools2\\JWlink2\\agent mode prompts.md",
-              "RelativeToolTip": "JWlink2\\agent mode prompts.md",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAACgAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
-              "WhenOpened": "2026-11-25T20:53:54.502Z",
-              "EditorCaption": "",
-              "OwnerCaption": "%3"
             }
           ]
         }

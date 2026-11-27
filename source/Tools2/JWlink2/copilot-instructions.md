@@ -1,3 +1,6 @@
+---
+applyTo: "jwlink2/**"
+---
 # Multi-Target Linker Development Guidelines (jwlink2 - C++20)
 
 ## Clean-Room & Solution Architecture Rules
