@@ -14,7 +14,7 @@ applyTo: "jwasm2/**"
 - **Targeted builds:** When verifying builds via terminal or MSBuild, build only `jwasm2`, `jwasm2lib`, and `jwasm2test` rather than rebuilding unrelated solution projects.
 
 ## Target Directory Layout
-```text
+```
 jwasm2/
 ├── tools/
 │   └── tablegen.py          # Compiles ISA definitions into constexpr C++ tables
