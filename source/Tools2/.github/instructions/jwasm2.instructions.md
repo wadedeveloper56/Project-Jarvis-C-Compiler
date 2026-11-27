@@ -5,17 +5,17 @@ applyTo: "jwasm2/**"
 
 ## Solution Coexistence & Single-Root Isolation Rules
 - **Multi-project solution awareness:** This Visual Studio 2026 solution contains other pre-existing project directories outside `jwasm/`. **Do not read, modify, delete, or reference any files, headers, libraries, or build targets outside the `jwasm/` directory.**
-- **Strict `jwasm/` directory scope:** Confine all file creation, edits, searches, and builds strictly inside `jwasm/`:
-  1. `jwasm/jwasm2/` (Console Executable): Contains **only** `main.cpp` with `int main(int argc, char* argv[])`, forwarding immediately to `jwasm2lib::Driver::run(...)`. Zero assembler, parser, encoder, or file-emitting logic belongs here.
-  2. `jwasm/jwasm2lib/` (Static Library): Contains 100% of the C++20 assembler implementation, ISA tables, emitters, and public headers directly under `jwasm/jwasm2lib/include/`, with source files under `jwasm/jwasm2lib/src/`.
-  3. `jwasm/jwasm2test/` (Unit & Integration Test Project): Links **only** against `jwasm2lib` (plus the test framework), includes headers from `jwasm/jwasm2lib/include/`, and tests all assembler functionality.
-  4. `jwasm/tools/` and `jwasm/data/`: Dedicated subdirectories inside `jwasm/` for `tablegen.py` and ISA definition files so they never collide with sibling projects.
+- **Strict `jwasm2/` directory scope:** Confine all file creation, edits, searches, and builds strictly inside `jwasm/`:
+  1. `jwasm2/jwasm2/` (Console Executable): Contains **only** `main.cpp` with `int main(int argc, char* argv[])`, forwarding immediately to `jwasm2lib::Driver::run(...)`. Zero assembler, parser, encoder, or file-emitting logic belongs here.
+  2. `jwasm2/jwasm2lib/` (Static Library): Contains 100% of the C++20 assembler implementation, ISA tables, emitters, and public headers directly under `jwasm/jwasm2lib/include/`, with source files under `jwasm/jwasm2lib/src/`.
+  3. `jwasm2/jwasm2test/` (Unit & Integration Test Project): Links **only** against `jwasm2lib` (plus the test framework), includes headers from `jwasm/jwasm2lib/include/`, and tests all assembler functionality.
+  4. `jwasm2/tools/` and `jwasm2/data/`: Dedicated subdirectories inside `jwasm/` for `tablegen.py` and ISA definition files so they never collide with sibling projects.
 - **Greenfield implementation:** Write all `jwasm2*` code completely from scratch in modern C++20 (`/std:c++20`, `/W4`, `/permissive-`). Do not copy or adapt code from sibling project folders outside `jwasm/`.
 - **Targeted builds:** When verifying builds via terminal or MSBuild, build only `jwasm2`, `jwasm2lib`, and `jwasm2test` rather than rebuilding unrelated solution projects.
 
 ## Target Directory Layout
-```text
-jwasm/
+```
+jwasm2/
 ├── tools/
 │   └── tablegen.py          # Compiles ISA definitions into constexpr C++ tables
 ├── data/

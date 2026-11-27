@@ -21,5 +21,5 @@ Break the plan into 8 concrete implementation phases:
 7. Object Emitters (OMF, COFF) & Optional .map Generator
 8. Differential Verification Against ml.exe & ml64.exe
 
-List the exact file tree under jwasm2/, jwasm2lib/, and jwasm2test/ and define the core C++20 structs. Do not write .cpp files yet
+List the exact file tree under jwasm2/, jwasm2lib/, and jwasm2test/ and define the core C++20 structs and DiagCode catalog. Do not write .cpp files yet
 ```

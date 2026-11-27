@@ -6,9 +6,9 @@ applyTo: "jwlink2/**"
 ## Clean-Room & Solution Architecture Rules
 - **Build From Scratch:** You are implementing **jwlink2** completely from scratch as a greenfield C++20 codebase. **Ignore and do not read, reference, include, or reuse any legacy or existing source files** elsewhere in the workspace outside of `jwlink2/`, `jwlink2lib/`, and `jwlink2test/`.
 - **Strict 3-Project Separation:**
-  1. **`jwlink2lib` (Static Library):** Contains 100% of the linker engine—IR data structures, numbered diagnostic engine, binary readers/writers, OMF/COFF `.obj` and `.lib` parsers, symbol resolver, layout engines, flat/MZ/NE/PE32/PE32+ emitters, import `.lib` generators, and CLI option parsing (`LinkerDriver::run(std::span<const std::string_view>)`).
-  2. **`jwlink2` (Console Executable):** Thin entry-point wrapper only. Contains **only `main(int argc, char* argv[])`**, which forwards command-line arguments into `jwlink2lib` and returns its exit code. Zero linker logic is permitted in `jwlink2`.
-  3. **`jwlink2test` (Test Executable):** Unit and integration test suite linking solely against `jwlink2lib`.
+  1. **`jwlink2/jwlink2lib` (Static Library):** Contains 100% of the linker engine—IR data structures, numbered diagnostic engine, binary readers/writers, OMF/COFF `.obj` and `.lib` parsers, symbol resolver, layout engines, flat/MZ/NE/PE32/PE32+ emitters, import `.lib` generators, and CLI option parsing (`LinkerDriver::run(std::span<const std::string_view>)`).
+  2. **`jwlink2/jwlink2` (Console Executable):** Thin entry-point wrapper only. Contains **only `main(int argc, char* argv[])`**, which forwards command-line arguments into `jwlink2lib` and returns its exit code. Zero linker logic is permitted in `jwlink2`.
+  3. **`jwlink2/jwlink2test` (Test Executable):** Unit and integration test suite linking solely against `jwlink2lib`.
 
 ## Project Scope
 - **Inputs:** 16-bit Intel OMF (`.obj`, `.lib`), 32-bit/64-bit Microsoft COFF (`.obj`, `.lib` archive format).

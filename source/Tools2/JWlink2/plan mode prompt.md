@@ -3,9 +3,9 @@ Prompt:
 ```
 Ignore all existing or legacy code in the workspace and design jwlink2 completely from scratch according to .github/instruction/jwlink2.instructions.md. Save the complete architectural plan to .copilot/plans/jwlink2-architecture.md.
 Enforce this exact 3-project structure:
-• jwlink2/ — Contains only main.cpp with main(), forwarding CLI args to jwlink2lib.
-• jwlink2lib/ — Static library containing all linker headers and implementation (include/... and src/...).
-• jwlink2test/ — Standalone test runner executable containing unit and integration tests exercising jwlink2lib.
+• jwlink2/jwlink2/ — Contains only main.cpp with main(), forwarding CLI args to jwlink2lib.
+• jwlink2/jwlink2lib/ — Static library containing all linker headers and implementation (include/... and src/...).
+• jwlink2/jwlink2test/ — Standalone test runner executable containing unit and integration tests exercising jwlink2lib.
 Break the plan into 5 concrete implementation phases:
 1. Numbered Diagnostic Subsystem, Core IR & Binary Utilities (jwlink2lib):
 	• Implement DiagCode enum (JWL1001–JWL5999), Diagnostic record (Severity, DiagCode, formatted message, file/module/symbol context), and DiagnosticEngine supporting /WX (warnings-as-errors), /NOWARN:<code>, error/warning counters, and structured capture for unit tests.
